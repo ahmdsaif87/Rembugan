@@ -1,0 +1,156 @@
+// KONFIGURASI PRISMA & DATABASE
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. ENTITAS UTAMA (USER & PROFIL)
+model User {
+  id            String    @id @default(uuid())
+  
+  // Kredensial (Multi-Auth)
+  nim           String    @unique // Wajib, identitas utama mahasiswa
+  password      String?   // Wajib jika login via NIM
+  googleId      String?   @unique // Opsional, diisi jika menautkan akun Google
+  email         String?   @unique
+  
+  // Data Profil Dasar
+  full_name     String
+  bio           String?
+  photo_url     String?   // Disimpan berupa URL dari Cloudinary
+  social_links  Json?     // Format JSON: { "github": "...", "linkedin": "..." }
+  
+  // Relasi ke Data Lain
+  skills        UserSkill[]
+  experiences   Experience[]
+  posts         Post[]
+  
+  // Relasi ke Proyek
+  ownedProjects Project[]            @relation("ProjectOwner")
+  memberships   ProjectMember[]
+  applications  ProjectApplication[]
+  
+  // Relasi ke Workspace
+  tasksAssigned Task[]               @relation("TaskAssignee")
+  sentMessages  Message[]            @relation("SentMessages")
+  receivedMsgs  Message[]            @relation("ReceivedMessages")
+
+  // Timestamps
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+}
+
+// 2. ENTITAS SKILL & PENGALAMAN (PORTFOLIO)
+model Skill {
+  id    Int         @id @default(autoincrement())
+  name  String      @unique
+  users UserSkill[]
+}
+
+model UserSkill {
+  user_id  String
+  skill_id Int
+  
+  user     User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  skill    Skill @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, skill_id]) // Composite Primary Key
+}
+
+model Experience {
+  id          Int       @id @default(autoincrement())
+  user_id     String
+  title       String    // Misal: "Frontend Developer"
+  company     String    // Misal: "Lab Informatika"
+  description String?
+  start_date  DateTime
+  end_date    DateTime? // Jika Null berarti "Masih Berlangsung"
+  
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+// 3. ENTITAS PROYEK & MATCHING
+model Project {
+  id              Int                  @id @default(autoincrement())
+  owner_id        String
+  title           String
+  description     String
+  required_skills String[]             // Array of String untuk memudahkan pencarian AI
+  status          String               @default("open") // Status: 'open', 'ongoing', 'completed'
+  
+  owner           User                 @relation("ProjectOwner", fields: [owner_id], references: [id])
+  members         ProjectMember[]
+  applications    ProjectApplication[]
+  tasks           Task[]
+  messages        Message[]
+  
+  created_at      DateTime             @default(now())
+}
+
+model ProjectApplication {
+  id           Int      @id @default(autoincrement())
+  project_id   Int
+  applicant_id String
+  status       String   @default("pending") // Status: 'pending', 'accepted', 'rejected'
+  
+  project      Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  applicant    User     @relation(fields: [applicant_id], references: [id], onDelete: Cascade)
+  applied_at   DateTime @default(now())
+}
+
+model ProjectMember {
+  id         Int      @id @default(autoincrement())
+  project_id Int
+  user_id    String
+  role       String   @default("Anggota") // Role: 'Ketua', 'Anggota', 'Pembimbing'
+  
+  project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+// 4. ENTITAS WORKSPACE (KANBAN & CHAT)
+model Task {
+  id          Int      @id @default(autoincrement())
+  project_id  Int
+  assignee_id String?  // Siapa yang mengerjakan tugas ini
+  title       String
+  status      String   @default("todo") // Kolom Kanban: 'todo', 'doing', 'done'
+  
+  project     Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  assignee    User?    @relation("TaskAssignee", fields: [assignee_id], references: [id], onDelete: SetNull)
+  created_at  DateTime @default(now())
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  content     String
+  sender_id   String
+  
+  // Fleksibilitas Chat: DM atau Group
+  receiver_id String?  // Diisi jika ini adalah DM pribadi (Direct Message)
+  project_id  Int?     // Diisi jika ini adalah Group Chat di dalam Workspace
+  
+  sender      User     @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Cascade)
+  receiver    User?    @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Cascade)
+  project     Project? @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  
+  created_at  DateTime @default(now())
+}
+
+// 5. ENTITAS FEED / FYP
+model Post {
+  id          Int      @id @default(autoincrement())
+  user_id     String
+  content     String
+  media_url   String?  // URL gambar/video dari Cloudinary
+  ai_category String?  // Kategori otomatis yang disematkan AI (Misal: "Web Design")
+  
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now())
+}
