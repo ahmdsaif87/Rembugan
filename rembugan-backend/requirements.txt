@@ -1,0 +1,33 @@
+# ============================================
+# Rembugan Backend — Python Dependencies
+# ============================================
+# Install: pip install -r requirements.txt
+# ============================================
+
+# 1. CORE BACKEND (FastAPI & Server)
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+pydantic
+
+# 2. DATABASE & ORM (Neon Postgres via Prisma)
+prisma
+
+# 3. AUTHENTICATION & CLOUD STORAGE
+firebase-admin
+cloudinary
+PyJWT
+bcrypt
+
+# 4. AI & PDF PROCESSING (Onboarding Module)
+PyMuPDF
+google-genai
+rapidocr-onnxruntime
+pdf2image
+numpy
+# 5. TESTING
+pytest
+pytest-asyncio
+httpx
+pytest-mock
