@@ -37,6 +37,7 @@ async def create_task(
             "title": data.title,
             "assignee_id": data.assignee_id,
             "status": "todo",
+            "deadline": data.deadline,
         },
         include={"assignee": True},
     )
@@ -47,6 +48,7 @@ async def create_task(
         "data": {
             "id": task.id, "title": task.title, "status": task.status,
             "assignee_name": task.assignee.full_name if task.assignee else None,
+            "deadline": task.deadline.isoformat() if task.deadline else None,
             "created_at": task.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
         },
     }
@@ -99,9 +101,39 @@ async def get_project_tasks(
         item = {
             "id": t.id, "title": t.title, "status": t.status,
             "assignee_name": t.assignee.full_name if t.assignee else None,
+            "deadline": t.deadline.isoformat() if t.deadline else None,
             "created_at": t.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
         }
         if t.status in board:
             board[t.status].append(item)
 
     return {"status": "success", "project_id": project_id, "board": board}
+
+@router.post("/{project_id}/end", summary="Akhiri Kolaborasi Proyek")
+async def end_collaboration(
+    project_id: int,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    """Mengakhiri proyek dan memindahkannya ke history dengan mengubah status menjadi 'completed'."""
+    user_id = user_token.get("uid")
+
+    # Validasi proyek ada
+    project = await db.project.find_unique(where={"id": project_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Proyek tidak ditemukan.")
+
+    # Hanya ketua/owner yang bisa mengakhiri
+    if project.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Hanya ketua proyek yang bisa mengakhiri kolaborasi.")
+
+    # Ubah status jadi completed
+    updated = await db.project.update(
+        where={"id": project_id},
+        data={"status": "completed"}
+    )
+
+    return {
+        "status": "success", 
+        "message": f"Proyek '{updated.title}' berhasil diakhiri dan dipindahkan ke history."
+    }

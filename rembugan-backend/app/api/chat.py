@@ -50,13 +50,39 @@ async def websocket_chat(websocket: WebSocket, room_id: str, user_id: str):
             now = datetime.now(timezone.utc)
 
             # Simpan pesan ke database
+            import re
+            
             try:
                 # Cek apakah room_id adalah project (angka) atau DM
                 if room_id.isdigit():
+                    project_id = int(room_id)
                     await db.message.create(data={
                         "content": data, "sender_id": user_id,
-                        "project_id": int(room_id),
+                        "project_id": project_id,
                     })
+                    
+                    # Deteksi mention @nama
+                    mentions = re.findall(r'@(\w+)', data)
+                    if mentions:
+                        sender = await db.user.find_unique(where={"id": user_id})
+                        sender_name = sender.full_name if sender else "Seseorang"
+                        project = await db.project.find_unique(where={"id": project_id})
+                        
+                        for mention in mentions:
+                            # Cari user berdasarkan full_name yang mirip dengan mention
+                            mentioned_user = await db.user.find_first(
+                                where={"full_name": {"contains": mention, "mode": "insensitive"}}
+                            )
+                            if mentioned_user and mentioned_user.id != user_id:
+                                await db.notification.create(
+                                    data={
+                                        "user_id": mentioned_user.id,
+                                        "type": "group_chat_tag",
+                                        "title": f"Anda dimention di grup proyek '{project.title}'",
+                                        "content": f"{sender_name} men-tag anda: {data[:30]}",
+                                        "link": f"/workspace/{project_id}"
+                                    }
+                                )
                 else:
                     # DM: room_id format "dm_{user1}_{user2}"
                     parts = room_id.split("_")
@@ -65,6 +91,20 @@ async def websocket_chat(websocket: WebSocket, room_id: str, user_id: str):
                         "content": data, "sender_id": user_id,
                         "receiver_id": receiver_id,
                     })
+                    
+                    # Notifikasi DM
+                    if receiver_id:
+                        sender = await db.user.find_unique(where={"id": user_id})
+                        sender_name = sender.full_name if sender else "Seseorang"
+                        await db.notification.create(
+                            data={
+                                "user_id": receiver_id,
+                                "type": "chat",
+                                "title": f"Pesan baru dari {sender_name}",
+                                "content": f"{data[:30]}",
+                                "link": f"/chat/{room_id}"
+                            }
+                        )
             except Exception as e:
                 print(f"Gagal simpan pesan ke DB: {e}")
 

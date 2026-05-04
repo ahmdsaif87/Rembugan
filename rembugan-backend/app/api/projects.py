@@ -205,3 +205,28 @@ async def get_project_detail(
             "created_at": project.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
         },
     }
+
+@router.post("/{project_id}/archive", summary="Archive a project (set status to completed)")
+async def archive_project(
+    project_id: int,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    """Archive a project by setting its status to 'completed'. Only the owner can do this."""
+    uid = user_token.get("uid")
+    # Verify ownership
+    project = await db.project.find_unique(
+        where={"id": project_id},
+        select={"owner_id": True, "status": True},
+    )
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found.")
+    if project.owner_id != uid:
+        raise HTTPException(status_code=403, detail="Only the owner can archive the project.")
+    # Update status
+    updated = await db.project.update(
+        where={"id": project_id},
+        data={"status": "completed"},
+        select={"id": True, "status": True},
+    )
+    return {"status": "success", "data": updated}

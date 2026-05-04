@@ -3,7 +3,9 @@ from fastapi import FastAPI
 from app.core.config import setup_cloudinary
 from app.core.security import setup_firebase
 from app.core.database import db
-from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace
+from fastapi.middleware.cors import CORSMiddleware
+from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections
+from app.api.admin import router as admin_router
 
 # 1. Inisialisasi Layanan External
 setup_cloudinary()
@@ -37,7 +39,21 @@ app.include_router(collaboration.router)
 app.include_router(showcase.router)
 app.include_router(chat.router)
 app.include_router(workspace.router)
+app.include_router(competitions.router)
+app.include_router(fyp.router)
+app.include_router(profile.router)
+app.include_router(notifications.router)
+app.include_router(connections.router)
+app.include_router(admin_router)
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/", tags=["0. Root"])
 async def root():

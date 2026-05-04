@@ -42,6 +42,13 @@ model User {
   sentMessages  Message[]            @relation("SentMessages")
   receivedMsgs  Message[]            @relation("ReceivedMessages")
 
+  // Relasi ke Interaksi Sosial & Notifikasi
+  likes         ShowcaseLike[]
+  comments      ShowcaseComment[]
+  sentConnections Connection[]       @relation("SentConnections")
+  receivedConnections Connection[]   @relation("ReceivedConnections")
+  notifications Notification[]
+
   // Timestamps
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
@@ -123,6 +130,7 @@ model Task {
   assignee_id String?  // Siapa yang mengerjakan tugas ini
   title       String
   status      String   @default("todo") // Kolom Kanban: 'todo', 'doing', 'done'
+  deadline    DateTime? // Batas waktu tugas
   
   project     Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   assignee    User?    @relation("TaskAssignee", fields: [assignee_id], references: [id], onDelete: SetNull)
@@ -158,4 +166,60 @@ model Showcase {
   // Relasi
   author            User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
   project           Project? @relation(fields: [linked_project_id], references: [id], onDelete: SetNull)
+  likes             ShowcaseLike[]
+  comments          ShowcaseComment[]
+}
+
+// 6. INTERAKSI SHOWCASE (LIKE & KOMENTAR)
+model ShowcaseLike {
+  id          Int      @id @default(autoincrement())
+  showcase_id String
+  user_id     String
+  created_at  DateTime @default(now())
+
+  showcase    Showcase @relation(fields: [showcase_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([showcase_id, user_id])
+}
+
+model ShowcaseComment {
+  id          Int               @id @default(autoincrement())
+  showcase_id String
+  user_id     String
+  content     String
+  parent_id   Int?              // Untuk balas-balasan
+  created_at  DateTime          @default(now())
+
+  showcase    Showcase          @relation(fields: [showcase_id], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  parent      ShowcaseComment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
+  replies     ShowcaseComment[] @relation("CommentReplies")
+}
+
+// 7. KONEKSI & NOTIFIKASI
+model Connection {
+  id          Int      @id @default(autoincrement())
+  sender_id   String
+  receiver_id String
+  status      String   @default("pending") // 'pending', 'accepted', 'rejected'
+  created_at  DateTime @default(now())
+
+  sender      User     @relation("SentConnections", fields: [sender_id], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedConnections", fields: [receiver_id], references: [id], onDelete: Cascade)
+
+  @@unique([sender_id, receiver_id])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  user_id     String   // Penerima notif
+  type        String   // 'like', 'comment', 'chat', 'group_chat_tag', 'todo_deadline', 'connection_request', 'connection_accepted'
+  title       String
+  content     String
+  is_read     Boolean  @default(false)
+  link        String?  // Link menuju ke detail (misal: /showcase/xxx)
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }

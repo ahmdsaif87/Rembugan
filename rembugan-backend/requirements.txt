@@ -22,7 +22,6 @@ bcrypt
 
 # 4. AI & PDF PROCESSING (Onboarding Module)
 PyMuPDF
-google-genai
 rapidocr-onnxruntime
 pdf2image
 numpy
@@ -31,3 +30,6 @@ pytest
 pytest-asyncio
 httpx
 pytest-mock
+
+# 6. LLM
+groq

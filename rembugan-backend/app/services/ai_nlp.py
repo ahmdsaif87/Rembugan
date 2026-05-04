@@ -3,11 +3,11 @@ import json
 import numpy as np
 from rapidocr_onnxruntime import RapidOCR
 from pdf2image import convert_from_bytes
-from google import genai
+from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
-client = genai.Client()
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 print("Memuat model RapidOCR (Super Ringan)...")
 engine = RapidOCR()
@@ -28,90 +28,102 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
         print(f"Gagal memproses OCR: {e}")
         return ""
 
-def process_resume_with_gemini(raw_text: str):
+def process_resume_with_ai(raw_text: str):
     """
     Satu fungsi AI untuk MERAPIKAN hasil OCR yang berantakan.
-    Gemini dipaksa bertindak sebagai Data Extractor yang disiplin.
+    Menggunakan Groq (Qwen) sebagai Data Extractor yang disiplin.
     """
     if not raw_text.strip():
         return {"nama": "Tidak Terdeteksi", "skills": [], "bio_suggestion": ""}
 
-    # PROMPT KETAT: Paksa AI agar cuma nge-list, bukan ngarang!
+    # PROMPT KETAT & EFISIEN
     prompt = f"""
-    Kamu adalah sistem Data Extraction yang sangat presisi. 
-    Teks di bawah ini adalah hasil OCR dari sebuah CV yang mungkin berantakan:
-    
+    Ekstrak data dari teks OCR CV berikut:
     "{raw_text}"
     
-    Tugasmu:
-    1. Cari dan ekstrak NAMA LENGKAP kandidat (Hanya nama orang, BUKAN judul seperti 'Ringkasan' atau 'Curriculum Vitae').
-    2. Cari dan ekstrak HANYA kata kunci skill/keahliannya (Misal: "Pengelasan MIG", "TIG", "AutoCAD"). JANGAN masukkan kalimat deskripsi panjang atau pengalaman kerja ke dalam array skills!
-    3. Buatkan satu paragraf bio singkat (maksimal 3 kalimat) dengan bahasa Indonesia yang kasual khas mahasiswa/pekerja lapangan.
+    Aturan:
+    1. Ambil "nama" lengkap.
+    2. Ekstrak "skills" teknis penting saja dalam bentuk array string.
+    3. Buat "bio_suggestion" (1-2 kalimat kasual mahasiswa/pekerja).
     
-    Kembalikan output HANYA dalam format JSON murni tanpa markdown (```json):
+    Keluarkan HANYA JSON murni (tanpa markdown).
+    Format:
     {{
-        "nama": "Nama Asli Orang",
+        "nama": "Nama Asli",
         "skills": ["Skill 1", "Skill 2"],
-        "bio_suggestion": "Teks bio yang kamu buat..."
+        "bio_suggestion": "Bio singkat..."
     }}
     """
     
     try:
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview", 
-            contents=prompt
+        response = client.chat.completions.create(
+            model="qwen-2.5-32b", 
+            messages=[
+                {"role": "system", "content": "You are a precise JSON data extractor. Output ONLY valid JSON, nothing else."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1
         )
         
-        result_text = response.text.replace("```json", "").replace("```", "").strip()
-        parsed_data = json.loads(result_text)
+        result_text = response.choices[0].message.content.strip()
+        # Clean up possible markdown block just in case
+        if result_text.startswith("```json"):
+            result_text = result_text[7:]
+        if result_text.endswith("```"):
+            result_text = result_text[:-3]
+            
+        parsed_data = json.loads(result_text.strip())
         return parsed_data
         
     except Exception as e:
         print(f"Gagal memproses AI: {e}")
         return {"nama": "Tidak Terdeteksi", "skills": [], "bio_suggestion": ""}
 
-def draft_project_with_gemini(ide_kasar: str) -> dict:
+def draft_project_with_ai(ide_kasar: str) -> dict:
     """
     Menyulap ide kasar proyek mahasiswa menjadi spesifikasi proyek profesional
-    yang siap di-posting di aplikasi CollabFinder.
+    menggunakan Groq (Qwen).
     """
     if not ide_kasar.strip():
         return {"error": "Ide proyek tidak boleh kosong"}
 
     prompt = f"""
-    Kamu adalah Project Manager profesional. Ada seorang mahasiswa yang ingin mencari partner untuk proyeknya. 
-    Ini adalah ide kasarnya: "{ide_kasar}"
+    Rerapikan ide proyek ini menjadi lowongan yang profesional:
+    "{ide_kasar}"
     
-    Tugasmu adalah merapikan ide tersebut menjadi sebuah draf lowongan proyek (Project Offering) yang menarik.
-    
-    Kembalikan output HANYA dalam format JSON murni persis seperti ini (tanpa markdown blok):
+    Keluarkan HANYA JSON murni (tanpa markdown blok).
+    Format:
     {{
-        "judul_proyek": "Beri judul yang *catchy* dan profesional",
-        "deskripsi": "Deskripsi proyek 1-2 paragraf yang jelas, menarik, dan kasual khas mahasiswa",
-        "kategori": "Pilih satu: [Teknologi, Riset, Bisnis, Desain, Sosial]",
+        "judul_proyek": "Judul menarik",
+        "deskripsi": "Deskripsi singkat, kasual",
+        "kategori": "[Teknologi, Riset, Bisnis, Desain, Sosial]",
         "roles_dibutuhkan": [
             {{
-                "nama_role": "Misal: UI/UX Designer",
-                "deskripsi_tugas": "Apa yang harus dia kerjakan",
-                "skills": ["Figma", "Wireframing", "User Research"]
-            }},
-            {{
-                "nama_role": "Misal: Backend Developer",
-                "deskripsi_tugas": "Apa yang harus dia kerjakan",
-                "skills": ["FastAPI", "PostgreSQL", "Python"]
+                "nama_role": "Nama Peran",
+                "deskripsi_tugas": "Tugas utama",
+                "skills": ["Skill 1", "Skill 2"]
             }}
         ]
     }}
     """
     
     try:
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview", 
-            contents=prompt
+        response = client.chat.completions.create(
+            model="qwen-2.5-32b", 
+            messages=[
+                {"role": "system", "content": "You are a Project Manager AI. Output ONLY valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
         )
         
-        result_text = response.text.replace("```json", "").replace("```", "").strip()
-        parsed_data = json.loads(result_text)
+        result_text = response.choices[0].message.content.strip()
+        if result_text.startswith("```json"):
+            result_text = result_text[7:]
+        if result_text.endswith("```"):
+            result_text = result_text[:-3]
+            
+        parsed_data = json.loads(result_text.strip())
         return parsed_data
         
     except Exception as e:

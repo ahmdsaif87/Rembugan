@@ -6,19 +6,19 @@ from app.core.security import verify_token
 from app.core.database import get_db
 from app.schemas.user import UserProfileInput
 from app.services.ai_vision import extract_photo_from_pdf
-from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_gemini
+from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_ai
 from app.services.storage import upload_image_to_cloudinary
 
 router = APIRouter(prefix="/onboarding", tags=["1. AI & Onboarding"])
 
 
-@router.post("/extract-cv", summary="Ekstrak Data CV (OCR + Gemini)")
+@router.post("/extract-cv", summary="Ekstrak Data CV (OCR + AI)")
 async def extract_cv_data(file: UploadFile = File(...)):
     """
     Upload file PDF CV, lalu:
     1. Ekstrak foto profil dari PDF
     2. OCR seluruh teks dari PDF
-    3. Gemini AI merapikan teks menjadi data terstruktur (nama, skills, bio)
+    3. AI (Groq) merapikan teks menjadi data terstruktur (nama, skills, bio)
     """
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Format file harus PDF!")
@@ -37,8 +37,8 @@ async def extract_cv_data(file: UploadFile = File(...)):
     # 2. Ekstrak teks mentah via OCR
     raw_text = extract_text_from_pdf(file_bytes)
 
-    # 3. Rapikan teks menjadi JSON pakai Gemini
-    ai_result = process_resume_with_gemini(raw_text)
+    # 3. Rapikan teks menjadi JSON pakai AI
+    ai_result = process_resume_with_ai(raw_text)
 
     return {
         "status": "success",
