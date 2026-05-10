@@ -1,0 +1,229 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/theme.dart';
+import '../controllers/onboarding_controller.dart';
+
+class OnboardingView extends GetView<OnboardingController> {
+  const OnboardingView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.neutralLight,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Logo di atas
+            Padding(
+              padding: const EdgeInsets.only(top: 24, bottom: 16),
+              child: Text(
+                'Rembugan.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+
+            // PageView content
+            Expanded(
+              child: PageView.builder(
+                controller: controller.pageController,
+                onPageChanged: controller.onPageChanged,
+                itemCount: controller.onboardingData.length,
+                itemBuilder: (context, index) {
+                  final data = controller.onboardingData[index];
+                  return _OnboardingPage(
+                    imagePath: data['image']!,
+                    title: data['title']!,
+                    description: data['description']!,
+                  );
+                },
+              ),
+            ),
+
+            // Dot indicator
+            Obx(
+              () => _DotIndicator(
+                currentPage: controller.currentPage.value,
+                totalPages: controller.onboardingData.length,
+              ),
+            ),
+
+            const SizedBox(height: 32), // Jarak dari dot ke tombol
+            // Button
+            Obx(() {
+              final data =
+                  controller.onboardingData[controller.currentPage.value];
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                ), // Disesuaikan agar selebar teks
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton(
+                    onPressed: controller.nextPage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryNormal,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          12,
+                        ), // Mengikuti standar modern
+                      ),
+                    ),
+                    child: Text(
+                      data['buttonText']!,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 25),
+
+            // Lewati button (hidden on last page)
+            Obx(() {
+              final isLastPage =
+                  controller.currentPage.value ==
+                  controller.onboardingData.length - 1;
+              return AnimatedOpacity(
+                opacity: isLastPage ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 250),
+                child: GestureDetector(
+                  onTap: isLastPage ? null : controller.skipOnboarding,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'Lewati',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors
+                            .primaryNormal, // Diberi warna utama agar jelas bisa di-klik
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 40), // Jarak aman layar bawah
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Widget: Halaman Onboarding (Gambar + Teks)
+// ────────────────────────────────────────────────────────────────
+class _OnboardingPage extends StatelessWidget {
+  final String imagePath;
+  final String title;
+  final String description;
+
+  const _OnboardingPage({
+    required this.imagePath,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          // 1. Berikan sedikit jarak aman dari header/logo
+          const SizedBox(height: 20),
+
+          // 2. Gambar ilustrasi diberi flex: 5 agar proporsinya pas
+          Expanded(
+            flex: 5,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Image.asset(imagePath, fit: BoxFit.contain),
+            ),
+          ),
+
+          // Jarak fix dari gambar ke judul
+          const SizedBox(height: 24),
+
+          // Judul
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 36,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              height: 1.2,
+            ),
+          ),
+
+          // Jarak fix dari judul ke deskripsi
+          const SizedBox(height: 15),
+
+          // Deskripsi
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.neutralDarker,
+              height: 1.5,
+            ),
+          ),
+
+          // 3. INI KUNCINYA: Spacer di bawah teks akan mendorong teks ke atas
+          const Spacer(flex: 2),
+        ],
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Widget: Dot Indicator (Page Indicator)
+// ────────────────────────────────────────────────────────────────
+class _DotIndicator extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+
+  const _DotIndicator({required this.currentPage, required this.totalPages});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(totalPages, (index) {
+        final isActive = index == currentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: isActive ? 24 : 8, // Sedikit dihaluskan dimensinya
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive
+                ? AppColors.primaryNormal
+                : AppColors.primaryNormal.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
+    );
+  }
+}
