@@ -22,6 +22,7 @@ model User {
   
   // Data Profil Dasar
   full_name     String
+  major         String
   bio           String?
   photo_url     String?   
   social_links  Json?

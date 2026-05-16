@@ -15,8 +15,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { FolderKanban, Search, ChevronLeft, ChevronRight, FolderX } from "lucide-react"
-import { fetchProjects } from "@/lib/api"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { FolderKanban, Search, ChevronLeft, ChevronRight, FolderX, Trash2 } from "lucide-react"
+import { fetchProjects, deleteProject } from "@/lib/api"
 
 interface Project {
   id: number
@@ -60,6 +71,13 @@ export default function ProjectsPage() {
       console.error('Error loading projects:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDelete(id: string) {
+    const response = await deleteProject(id)
+    if (response.status === 'success') {
+      setProjects(projects.filter(p => String(p.id) !== id))
     }
   }
 
@@ -181,6 +199,7 @@ export default function ProjectsPage() {
                   <TableHead className="text-muted-foreground">Members</TableHead>
                   <TableHead className="text-muted-foreground">Tasks</TableHead>
                   <TableHead className="text-muted-foreground">Created</TableHead>
+                  <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -226,11 +245,35 @@ export default function ProjectsPage() {
                       <TableCell className="text-muted-foreground">
                         {new Date(project.created_at).toLocaleDateString()}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the project
+                                and all its associated data.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(String(project.id))} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center">
+                    <TableCell colSpan={9} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-2 text-muted-foreground">
                         <FolderX className="h-8 w-8 opacity-30" />
                         <p className="text-sm">No projects found</p>

@@ -1,22 +1,26 @@
-import httpx
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
+from motor.motor_asyncio import AsyncIOMotorClient
 from app.core.security import verify_token
 from app.core.database import get_db
 
 router = APIRouter(prefix="/competitions", tags=["Lomba / Competitions"])
 
-LOMBA_URL = "https://raw.githubusercontent.com/ahmdsaif87/competition_scraper/main/api_collabfinder.json"
+MONGO_URI = os.getenv("MONGO_URI")
+client = AsyncIOMotorClient(MONGO_URI)
+db_mongo = client["competition_scraper"]
+collection = db_mongo["competition"]
 
 @router.get("/all", summary="Lihat Semua Lomba")
 async def get_all_competitions():
-    """Ambil semua data lomba langsung dari JSON github."""
+    """Ambil semua data lomba langsung dari MongoDB."""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(LOMBA_URL)
-            response.raise_for_status()
-            data = response.json()
-            return {"status": "success", "total": len(data), "data": data}
+        cursor = collection.find({})
+        data = await cursor.to_list(length=None)
+        for item in data:
+            item["_id"] = str(item["_id"])
+        return {"status": "success", "total": len(data), "data": data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memuat data lomba: {str(e)}")
 
@@ -39,10 +43,10 @@ async def get_relevant_competitions(
     user_skills = [s.skill.name.lower() for s in user.skills] if user.skills else []
     
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(LOMBA_URL)
-            response.raise_for_status()
-            data = response.json()
+        cursor = collection.find({})
+        data = await cursor.to_list(length=None)
+        for item in data:
+            item["_id"] = str(item["_id"])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memuat data lomba: {str(e)}")
         

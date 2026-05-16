@@ -7,20 +7,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections
 from app.api.admin import router as admin_router
 
-# 1. Inisialisasi Layanan External
+# Inisialisasi Layanan External
 setup_cloudinary()
 setup_firebase()
 
-# 2. Lifecycle: Connect & Disconnect Database
+# Lifecycle: Connect & Disconnect Database
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect()
-    print("✅ Database terhubung!")
+    print("Database terhubung!")
     yield
     await db.disconnect()
-    print("🔌 Database terputus.")
+    print("Database terputus.")
 
-# 3. Inisialisasi App
+# Inisialisasi App
 app = FastAPI(
     title="REMBUGAN API",
     description=(
@@ -31,7 +31,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# 4. Daftarkan Semua Endpoint (Routers)
+# Daftarkan Semua Endpoint
 app.include_router(auth.router)
 app.include_router(onboarding.router)
 app.include_router(projects.router)
@@ -46,7 +46,7 @@ app.include_router(notifications.router)
 app.include_router(connections.router)
 app.include_router(admin_router)
 
-
+# Middleware CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173"],
