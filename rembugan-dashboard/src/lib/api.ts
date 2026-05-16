@@ -82,3 +82,70 @@ export async function fetchCompetitions() {
     return { status: 'error', data: [] }
   }
 }
+
+// DELETE endpoints
+export async function deleteUser(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, { method: 'DELETE', headers })
+    if (!response.ok) throw new Error('Failed to delete user')
+    return response.json()
+  } catch (error) {
+    console.error('Error deleting user:', error)
+    return { status: 'error' }
+  }
+}
+
+export async function deleteProject(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/projects/${id}`, { method: 'DELETE', headers })
+    if (!response.ok) throw new Error('Failed to delete project')
+    return response.json()
+  } catch (error) {
+    console.error('Error deleting project:', error)
+    return { status: 'error' }
+  }
+}
+
+export async function deleteShowcase(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/showcases/${id}`, { method: 'DELETE', headers })
+    if (!response.ok) throw new Error('Failed to delete showcase')
+    return response.json()
+  } catch (error) {
+    console.error('Error deleting showcase:', error)
+    return { status: 'error' }
+  }
+}
+
+export async function deleteTask(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/tasks/${id}`, { method: 'DELETE', headers })
+    if (!response.ok) throw new Error('Failed to delete task')
+    return response.json()
+  } catch (error) {
+    console.error('Error deleting task:', error)
+    return { status: 'error' }
+  }
+}
+
+export async function deleteApplication(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/applications/${id}`, { method: 'DELETE', headers })
+    if (!response.ok) throw new Error('Failed to delete application')
+    return response.json()
+  } catch (error) {
+    console.error('Error deleting application:', error)
+    return { status: 'error' }
+  }
+}
+
+export async function deleteCompetition(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/competitions/${id}`, { method: 'DELETE', headers })
+    if (!response.ok) throw new Error('Failed to delete competition')
+    return response.json()
+  } catch (error) {
+    console.error('Error deleting competition:', error)
+    return { status: 'error' }
+  }
+}

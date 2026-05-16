@@ -8,8 +8,19 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Sparkles, Search, ChevronLeft, ChevronRight, ImageOff } from "lucide-react"
-import { fetchShowcases } from "@/lib/api"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Sparkles, Search, ChevronLeft, ChevronRight, ImageOff, Trash2 } from "lucide-react"
+import { fetchShowcases, deleteShowcase } from "@/lib/api"
 
 interface Showcase {
   id: string
@@ -44,6 +55,13 @@ export default function ShowcasesPage() {
       console.error('Error loading showcases:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDelete(id: string) {
+    const response = await deleteShowcase(id)
+    if (response.status === 'success') {
+      setShowcases(showcases.filter(s => s.id !== id))
     }
   }
 
@@ -139,6 +157,7 @@ export default function ShowcasesPage() {
                   <TableHead className="text-muted-foreground">Likes</TableHead>
                   <TableHead className="text-muted-foreground">Comments</TableHead>
                   <TableHead className="text-muted-foreground">Created</TableHead>
+                  <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -182,11 +201,35 @@ export default function ShowcasesPage() {
                       <TableCell className="text-muted-foreground">
                         {new Date(showcase.created_at).toLocaleDateString()}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the showcase
+                                and all its associated data.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(showcase.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center">
+                    <TableCell colSpan={9} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-2 text-muted-foreground">
                         <ImageOff className="h-8 w-8 opacity-30" />
                         <p className="text-sm">No showcases found</p>

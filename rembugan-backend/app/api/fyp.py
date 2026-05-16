@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from app.core.security import verify_token
 from app.core.database import get_db
 from app.services.matchmaking import calculate_match_score
-from app.api.competitions import LOMBA_URL
+from app.api.competitions import collection as competition_collection
 
 router = APIRouter(prefix="/fyp", tags=["Halaman Beranda (FYP)"])
 
@@ -78,25 +78,24 @@ async def get_fyp(
     # 3. Ambil Lomba (Limit 5 paling relevan)
     competition_data = []
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(LOMBA_URL)
-            if response.status_code == 200:
-                lomba_json = response.json()
-                for item in lomba_json:
-                    score = 0
-                    text_to_search = f"{item.get('judul', '')} {item.get('caption', '')}".lower()
-                    for us in user_skills_lower:
-                        if us in text_to_search:
-                            score += 1
-                    
-                    if score > 0 or len(user_skills) == 0:
-                        c_item = dict(item)
-                        c_item["type"] = "competition"
-                        c_item["match_score"] = score
-                        competition_data.append(c_item)
-                
-                competition_data.sort(key=lambda x: x.get('match_score', 0), reverse=True)
-                competition_data = competition_data[:5]
+        cursor = competition_collection.find({})
+        lomba_data = await cursor.to_list(length=None)
+        for item in lomba_data:
+            item["_id"] = str(item["_id"])
+            score = 0
+            text_to_search = f"{item.get('judul', '')} {item.get('caption', '')}".lower()
+            for us in user_skills_lower:
+                if us in text_to_search:
+                    score += 1
+            
+            if score > 0 or len(user_skills) == 0:
+                c_item = dict(item)
+                c_item["type"] = "competition"
+                c_item["match_score"] = score
+                competition_data.append(c_item)
+        
+        competition_data.sort(key=lambda x: x.get('match_score', 0), reverse=True)
+        competition_data = competition_data[:5]
     except Exception as e:
         # Jangan sampai gagalkan endpoint ini jika API Lomba mati
         print(f"Error fetching lomba: {e}")

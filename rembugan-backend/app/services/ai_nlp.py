@@ -1,29 +1,40 @@
 import os
 import json
-import numpy as np
-from rapidocr_onnxruntime import RapidOCR
-from pdf2image import convert_from_bytes
+import re
 from groq import Groq
 from dotenv import load_dotenv
+from mistralai.client import Mistral
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-print("Memuat model RapidOCR (Super Ringan)...")
-engine = RapidOCR()
+mistral_client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    """Membaca teks dari PDF (termasuk hasil scan) menggunakan RapidOCR."""
+    """Membaca teks dari PDF (termasuk hasil scan) menggunakan Mistral OCR."""
     try:
-        images = convert_from_bytes(pdf_bytes)
-        full_text = []
-        for img in images:
-            img_np = np.array(img)
-            result, elapse = engine(img_np)
-            if result:
-                for item in result:
-                    full_text.append(item[1]) 
-        return "\n".join(full_text)
+        uploaded_file = mistral_client.files.upload(
+            file={
+                "file_name": "document.pdf",
+                "content": pdf_bytes,
+            },
+            purpose="ocr"
+        )
+
+        signed_url = mistral_client.files.get_signed_url(file_id=uploaded_file.id)
+
+        ocr_response = mistral_client.ocr.process(
+            model="mistral-ocr-latest",
+            document={
+                "type": "document_url",
+                "document_url": signed_url.url,
+            }
+        )
+
+        full_text = [page.markdown for page in ocr_response.pages]
+
+        mistral_client.files.delete(file_id=uploaded_file.id)
+
+        return "\n\n".join(full_text)
     except Exception as e:
         print(f"Gagal memproses OCR: {e}")
         return ""
@@ -57,7 +68,7 @@ def process_resume_with_ai(raw_text: str):
     
     try:
         response = client.chat.completions.create(
-            model="qwen-2.5-32b", 
+            model="qwen/qwen3-32b", 
             messages=[
                 {"role": "system", "content": "You are a precise JSON data extractor. Output ONLY valid JSON, nothing else."},
                 {"role": "user", "content": prompt}
@@ -66,6 +77,10 @@ def process_resume_with_ai(raw_text: str):
         )
         
         result_text = response.choices[0].message.content.strip()
+        
+        # Remove <think>...</think> block if present
+        result_text = re.sub(r'<think>.*?</think>', '', result_text, flags=re.DOTALL).strip()
+        
         # Clean up possible markdown block just in case
         if result_text.startswith("```json"):
             result_text = result_text[7:]
@@ -109,7 +124,7 @@ def draft_project_with_ai(ide_kasar: str) -> dict:
     
     try:
         response = client.chat.completions.create(
-            model="qwen-2.5-32b", 
+            model="qwen/qwen3-32b", 
             messages=[
                 {"role": "system", "content": "You are a Project Manager AI. Output ONLY valid JSON."},
                 {"role": "user", "content": prompt}
@@ -118,6 +133,10 @@ def draft_project_with_ai(ide_kasar: str) -> dict:
         )
         
         result_text = response.choices[0].message.content.strip()
+        
+        # Remove <think>...</think> block if present
+        result_text = re.sub(r'<think>.*?</think>', '', result_text, flags=re.DOTALL).strip()
+        
         if result_text.startswith("```json"):
             result_text = result_text[7:]
         if result_text.endswith("```"):

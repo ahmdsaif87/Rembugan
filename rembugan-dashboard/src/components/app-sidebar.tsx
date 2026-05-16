@@ -11,6 +11,7 @@ import {
   ListChecks,
   FileText,
   MessageSquare,
+  Trophy,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -28,6 +29,7 @@ import {
 
 const navItems = [
   { title: "Overview", url: "/", icon: BarChart3 },
+  { title: "Competitions", url: "/competitions", icon: Trophy },
   { title: "Users", url: "/users", icon: Users },
   { title: "Projects", url: "/projects", icon: FolderKanban },
   { title: "Showcases", url: "/showcases", icon: Sparkles },

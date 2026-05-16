@@ -15,8 +15,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Users as UsersIcon, Search, ChevronLeft, ChevronRight, UserX } from "lucide-react"
-import { fetchUsers } from "@/lib/api"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Users as UsersIcon, Search, ChevronLeft, ChevronRight, UserX, Trash2 } from "lucide-react"
+import { fetchUsers, deleteUser } from "@/lib/api"
 
 interface User {
   id: string
@@ -54,6 +65,13 @@ export default function UsersPage() {
       console.error('Error loading users:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDelete(id: string) {
+    const response = await deleteUser(id)
+    if (response.status === 'success') {
+      setUsers(users.filter(u => u.id !== id))
     }
   }
 
@@ -175,6 +193,7 @@ export default function UsersPage() {
                   <TableHead className="text-muted-foreground">Skills</TableHead>
                   <TableHead className="text-muted-foreground">Projects</TableHead>
                   <TableHead className="text-muted-foreground">Joined</TableHead>
+                  <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -219,11 +238,35 @@ export default function UsersPage() {
                       <TableCell className="text-muted-foreground">
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the user
+                                and remove their data from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(user.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center">
+                    <TableCell colSpan={8} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-2 text-muted-foreground">
                         <UserX className="h-8 w-8 opacity-30" />
                         <p className="text-sm">No users found</p>

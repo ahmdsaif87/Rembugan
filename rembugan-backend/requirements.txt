@@ -22,9 +22,7 @@ bcrypt
 
 # 4. AI & PDF PROCESSING (Onboarding Module)
 PyMuPDF
-rapidocr-onnxruntime
-pdf2image
-numpy
+mistralai
 # 5. TESTING
 pytest
 pytest-asyncio
@@ -33,3 +31,7 @@ pytest-mock
 
 # 6. LLM
 groq
+
+# 7. MONGODB
+pymongo
+motor

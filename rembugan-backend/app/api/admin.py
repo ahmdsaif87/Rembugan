@@ -3,7 +3,6 @@ from prisma import Prisma
 from app.core.database import get_db
 from app.core.security import verify_token
 from typing import List, Dict, Any
-import httpx
 
 router = APIRouter(prefix="/admin", tags=["Admin Dashboard"])
 
@@ -32,16 +31,10 @@ async def get_dashboard_stats(
     # Get total tasks
     total_tasks = await db.task.count()
 
-    # Get competitions count from external API
+    # Get competitions count from MongoDB
     try:
-        import httpx
-        LOMBA_URL = "https://raw.githubusercontent.com/ahmdsaif87/competition_scraper/main/api_collabfinder.json"
-
-        async with httpx.AsyncClient() as client:
-            response = await client.get(LOMBA_URL)
-            response.raise_for_status()
-            data = response.json()
-            scraped_competitions = len(data)
+        from app.api.competitions import collection as competition_collection
+        scraped_competitions = await competition_collection.count_documents({})
     except:
         scraped_competitions = 0
 
@@ -230,28 +223,110 @@ async def get_recent_competitions(
     limit: int = 20,
 ):
     """
-    Get recent competitions from external API
+    Get recent competitions from MongoDB
     """
     try:
-        import httpx
-        LOMBA_URL = "https://raw.githubusercontent.com/ahmdsaif87/competition_scraper/main/api_collabfinder.json"
+        from app.api.competitions import collection as competition_collection
+        cursor = competition_collection.find({}).limit(limit)
+        recent_data = await cursor.to_list(length=None)
+        for item in recent_data:
+            item["_id"] = str(item["_id"])
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(LOMBA_URL)
-            response.raise_for_status()
-            data = response.json()
-
-            # Take only recent ones (limit)
-            recent_data = data[:limit] if len(data) > limit else data
-
-            return {
-                "status": "success",
-                "data": recent_data,
-                "total": len(recent_data)
-            }
+        return {
+            "status": "success",
+            "data": recent_data,
+            "total": len(recent_data)
+        }
     except Exception as e:
         return {
             "status": "error",
             "data": [],
             "message": f"Failed to fetch competitions: {str(e)}"
         }
+
+@router.delete("/users/{user_id}", summary="Delete User for Admin")
+async def delete_user(
+    user_id: str,
+    db: Prisma = Depends(get_db),
+):
+    """
+    Delete a user
+    """
+    try:
+        await db.user.delete(where={"id": user_id})
+        return {"status": "success", "message": "User deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/projects/{project_id}", summary="Delete Project for Admin")
+async def delete_project(
+    project_id: str,
+    db: Prisma = Depends(get_db),
+):
+    """
+    Delete a project
+    """
+    try:
+        await db.project.delete(where={"id": project_id})
+        return {"status": "success", "message": "Project deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/showcases/{showcase_id}", summary="Delete Showcase for Admin")
+async def delete_showcase(
+    showcase_id: str,
+    db: Prisma = Depends(get_db),
+):
+    """
+    Delete a showcase
+    """
+    try:
+        await db.showcase.delete(where={"id": showcase_id})
+        return {"status": "success", "message": "Showcase deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/tasks/{task_id}", summary="Delete Task for Admin")
+async def delete_task(
+    task_id: str,
+    db: Prisma = Depends(get_db),
+):
+    """
+    Delete a task
+    """
+    try:
+        await db.task.delete(where={"id": task_id})
+        return {"status": "success", "message": "Task deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/applications/{application_id}", summary="Delete Application for Admin")
+async def delete_application(
+    application_id: str,
+    db: Prisma = Depends(get_db),
+):
+    """
+    Delete a project application
+    """
+    try:
+        await db.projectapplication.delete(where={"id": application_id})
+        return {"status": "success", "message": "Application deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/competitions/{competition_id}", summary="Delete Competition for Admin")
+async def delete_competition(
+    competition_id: str,
+):
+    """
+    Delete a competition from MongoDB
+    """
+    try:
+        from app.api.competitions import collection as competition_collection
+        from bson.objectid import ObjectId
+        result = await competition_collection.delete_one({"_id": ObjectId(competition_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Competition not found")
+        return {"status": "success", "message": "Competition deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
