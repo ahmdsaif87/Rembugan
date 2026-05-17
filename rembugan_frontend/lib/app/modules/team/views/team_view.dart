@@ -447,7 +447,6 @@ class TeamView extends GetView<TeamController> {
                 child: Stack(
                   children: members.asMap().entries.map((entry) {
                     final index = entry.key;
-                    final url = entry.value;
                     return Positioned(
                       left: index * 16.0,
                       child: CircleAvatar(
