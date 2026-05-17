@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme.dart';
 import '../controllers/onboarding_controller.dart';
 
@@ -19,7 +18,7 @@ class OnboardingView extends GetView<OnboardingController> {
               padding: const EdgeInsets.only(top: 24, bottom: 16),
               child: Text(
                 'Rembugan.',
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.generalSansStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -78,7 +77,7 @@ class OnboardingView extends GetView<OnboardingController> {
                     ),
                     child: Text(
                       data['buttonText']!,
-                      style: GoogleFonts.inter(
+                      style: AppFonts.generalSansStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
@@ -105,7 +104,7 @@ class OnboardingView extends GetView<OnboardingController> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
                       'Lewati',
-                      style: GoogleFonts.inter(
+                      style: AppFonts.generalSansStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors
@@ -164,7 +163,7 @@ class _OnboardingPage extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.generalSansStyle(
               fontSize: 36,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
@@ -179,7 +178,7 @@ class _OnboardingPage extends StatelessWidget {
           Text(
             description,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: AppFonts.generalSansStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.neutralDarker,

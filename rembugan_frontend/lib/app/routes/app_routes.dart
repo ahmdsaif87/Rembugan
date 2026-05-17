@@ -11,6 +11,16 @@ abstract class Routes {
   static const EXPLORE = _Paths.EXPLORE;
   static const TEAM = _Paths.TEAM;
   static const PROFILE = _Paths.PROFILE;
+  static const OTHER_PROFILE = _Paths.OTHER_PROFILE;
+  static const COMMENTS = _Paths.COMMENTS;
+  static const CREATE_POST = _Paths.CREATE_POST;
+  static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
+  static const SETTINGS = _Paths.SETTINGS;
+  static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
+  static const SAVED = _Paths.SAVED;
+  static const EMPTY_STATE = _Paths.EMPTY_STATE;
+  static const LOADING_STATE = _Paths.LOADING_STATE;
+  static const GUEST_LANDING = _Paths.GUEST_LANDING;
   static const PERSONALIZATION = _Paths.PERSONALIZATION;
 }
 
@@ -24,5 +34,15 @@ abstract class _Paths {
   static const EXPLORE = '/explore';
   static const TEAM = '/team';
   static const PROFILE = '/profile';
+  static const OTHER_PROFILE = '/profile/user';
+  static const COMMENTS = '/comments';
+  static const CREATE_POST = '/create-post';
+  static const EDIT_PROFILE = '/edit-profile';
+  static const SETTINGS = '/settings';
+  static const NOTIFICATIONS = '/notifications';
+  static const SAVED = '/saved';
+  static const EMPTY_STATE = '/empty-state';
+  static const LOADING_STATE = '/loading-state';
+  static const GUEST_LANDING = '/guest';
   static const PERSONALIZATION = '/personalization';
 }
