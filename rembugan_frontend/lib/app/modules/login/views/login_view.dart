@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import '../../../core/theme/theme.dart';
 import '../controllers/login_controller.dart';
@@ -17,7 +16,7 @@ class LoginView extends GetView<LoginController> {
           // 1. BACKGROUND PALING BAWAH (Warna Paling Gelap)
           Container(
             height: Get.height * 0.45, // Ambil sekitar 45% layar atas
-            color: const Color(0xFF53121E),
+            color: AppColors.textPrimary,
           ),
 
           // 2. LENGKUNGAN KANAN ATAS (Warna Tengah)
@@ -29,7 +28,7 @@ class LoginView extends GetView<LoginController> {
               height: 450,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: Color(0xFF5D1422), // Sama dengan AppColors.primaryNormal
+                color: Color(0xFF242424),
               ),
             ),
           ),
@@ -43,7 +42,7 @@ class LoginView extends GetView<LoginController> {
               height: 450,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: Color(0xFF681726), // Sama dengan AppColors.primaryNormal
+                color: Color(0xFF353535),
               ),
             ),
           ),
@@ -66,7 +65,7 @@ class LoginView extends GetView<LoginController> {
                   // Judul
                   Text(
                     'Selamat Datang di',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.generalSansStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -75,7 +74,7 @@ class LoginView extends GetView<LoginController> {
                   ),
                   Text(
                     'Rembugan.',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.generalSansStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -87,7 +86,7 @@ class LoginView extends GetView<LoginController> {
                   // Subjudul
                   Text(
                     'Masuk ke akunmu untuk menemukan rekan dan proyek hebat hari ini.',
-                    style: GoogleFonts.inter(
+                    style: AppFonts.generalSansStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: Colors.white.withValues(alpha: 0.8),
@@ -133,9 +132,9 @@ class LoginView extends GetView<LoginController> {
             width: 1.2,
           ),
         ),
-        child: Center(
-          child: PhosphorIcon(
-            PhosphorIconsRegular.arrowLeft,
+        child: const Center(
+          child: Icon(
+            FluentIcons.arrow_left_24_regular,
             color: Colors.white,
             size: 20,
           ),
@@ -198,7 +197,7 @@ class LoginView extends GetView<LoginController> {
   Widget _buildInputLabel(String label) {
     return Text(
       label,
-      style: GoogleFonts.inter(
+      style: AppFonts.generalSansStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -211,18 +210,21 @@ class LoginView extends GetView<LoginController> {
     return TextFormField(
       controller: controller.emailOrNimController,
       keyboardType: TextInputType.emailAddress,
-      style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
-      decoration: InputDecoration(
+      style: AppFonts.generalSansStyle(
+        fontSize: 14,
+        color: AppColors.textPrimary,
+      ),
+      decoration: const InputDecoration(
         hintText: 'nanda@gmail.com or 23090122',
         prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: PhosphorIcon(
-            PhosphorIconsRegular.identificationCard,
+          padding: EdgeInsets.symmetric(horizontal: 14),
+          child: Icon(
+            FluentIcons.contact_card_24_regular,
             color: AppColors.neutralDarker,
             size: 22,
           ),
         ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 50, minHeight: 0),
+        prefixIconConstraints: BoxConstraints(minWidth: 50, minHeight: 0),
       ),
     );
   }
@@ -233,13 +235,16 @@ class LoginView extends GetView<LoginController> {
       () => TextFormField(
         controller: controller.passwordController,
         obscureText: controller.isPasswordHidden.value,
-        style: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
+        style: AppFonts.generalSansStyle(
+          fontSize: 14,
+          color: AppColors.textPrimary,
+        ),
         decoration: InputDecoration(
           hintText: 'Masukan kata sandi',
-          prefixIcon: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: PhosphorIcon(
-              PhosphorIconsRegular.lock,
+          prefixIcon: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14),
+            child: Icon(
+              FluentIcons.lock_closed_24_regular,
               color: AppColors.neutralDarker,
               size: 22,
             ),
@@ -252,10 +257,10 @@ class LoginView extends GetView<LoginController> {
             onTap: controller.togglePasswordVisibility,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: PhosphorIcon(
+              child: Icon(
                 controller.isPasswordHidden.value
-                    ? PhosphorIconsRegular.eyeSlash
-                    : PhosphorIconsRegular.eye,
+                    ? FluentIcons.eye_off_24_regular
+                    : FluentIcons.eye_24_regular,
                 color: AppColors.neutralDarker,
                 size: 20,
               ),
@@ -278,7 +283,7 @@ class LoginView extends GetView<LoginController> {
         onTap: controller.onForgotPassword,
         child: Text(
           'Lupa kata sandi',
-          style: GoogleFonts.inter(
+          style: AppFonts.generalSansStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: AppColors.primaryNormal,
@@ -300,7 +305,7 @@ class LoginView extends GetView<LoginController> {
               onPressed: controller.onLogin,
               child: Text(
                 'Masuk',
-                style: GoogleFonts.inter(
+                style: AppFonts.generalSansStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
@@ -309,27 +314,6 @@ class LoginView extends GetView<LoginController> {
             ),
           ),
         ),
-
-        // // Tombol Biometrik (Square OutlinedButton)
-        // SizedBox(
-        //   width: 52,
-        //   height: 52,
-        //   child: OutlinedButton(
-        //     onPressed: controller.onBiometricLogin,
-        //     style: OutlinedButton.styleFrom(
-        //       padding: EdgeInsets.zero,
-        //       side: const BorderSide(color: AppColors.neutralDark, width: 1.2),
-        //       shape: RoundedRectangleBorder(
-        //         borderRadius: BorderRadius.circular(12),
-        //       ),
-        //     ),
-        //     child: PhosphorIcon(
-        //       PhosphorIconsRegular.scan,
-        //       color: AppColors.textPrimary,
-        //       size: 24,
-        //     ),
-        //   ),
-        // ),
       ],
     );
   }
@@ -338,19 +322,23 @@ class LoginView extends GetView<LoginController> {
   Widget _buildOrDivider() {
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.neutralDark, thickness: 0.8)),
+        const Expanded(
+          child: Divider(color: AppColors.neutralDark, thickness: 0.8),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Atau',
-            style: GoogleFonts.inter(
+            style: AppFonts.generalSansStyle(
               fontSize: 13,
               fontWeight: FontWeight.w400,
               color: AppColors.neutralDarker,
             ),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.neutralDark, thickness: 0.8)),
+        const Expanded(
+          child: Divider(color: AppColors.neutralDark, thickness: 0.8),
+        ),
       ],
     );
   }
@@ -377,7 +365,7 @@ class LoginView extends GetView<LoginController> {
             const SizedBox(width: 12),
             Text(
               'Login with Google',
-              style: GoogleFonts.inter(
+              style: AppFonts.generalSansStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -407,15 +395,15 @@ class LoginView extends GetView<LoginController> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            PhosphorIcon(
-              PhosphorIconsRegular.ghost,
+            const Icon(
+              FluentIcons.guest_24_regular,
               color: AppColors.textPrimary,
               size: 22,
             ),
             const SizedBox(width: 12),
             Text(
               'Masuk sebagai tamu',
-              style: GoogleFonts.inter(
+              style: AppFonts.generalSansStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,

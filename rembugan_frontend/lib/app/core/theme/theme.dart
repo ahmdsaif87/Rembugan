@@ -1,30 +1,139 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF681726);
-  static const Color primaryHover = Color(0xFF5E1522);
+  static const Color primary = Color(0xFF111111);
+  static const Color primaryHover = Color(0xFF242424);
+  static const Color primaryPressed = Color(0xFF000000);
+  static const Color primarySoft = Color(0xFFF7F7F7);
+  static const Color primaryTint = Color(0xFFE5E5E5);
+  static const Color brandAccent = Color(0xFF681726);
 
-  static const Color secondary = Color(0xFFE3D5CA);
+  static const Color secondary = Color(0xFFE8D8CE);
+  static const Color accentBlue = Color(0xFF315BD6);
+  static const Color accentGreen = Color(0xFF16A34A);
+  static const Color accentPink = Color(0xFFDB2777);
+  static const Color accentOrange = Color(0xFFFF6B2C);
 
-  static const Color background = Color(0xFFFFFDFB);
+  static const Color background = Color(0xFFFFFFFF);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceSecondary = Color(0xFFFAF6F2);
+  static const Color surfaceElevated = Color(0xFFFFFFFF);
+  static const Color surfaceSecondary = Color(0xFFF7F7F7);
+  static const Color surfaceWarm = Color(0xFFFFFFFF);
 
-  static const Color textPrimary = Color(0xFF1E1E1E);
-  static const Color textSecondary = Color(0xFF595856);
+  static const Color textPrimary = Color(0xFF111111);
+  static const Color textSecondary = Color(0xFF5F6368);
+  static const Color textTertiary = Color(0xFF9A9A9A);
 
-  static const Color border = Color(0xFFE6E0DA);
+  static const Color border = Color(0xFFEAEAEA);
+  static const Color borderStrong = Color(0xFFDADADA);
 
   static const Color success = Color(0xFF16A34A);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFDC2626);
 
-  // Missing colors used in views
+  // Aliases used in views
   static const Color primaryNormal = primary;
   static const Color neutralDarker = textPrimary;
   static const Color neutralDark = textSecondary;
   static const Color neutralLight = surfaceSecondary;
+}
+
+class AppSpacing {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double xxl = 32;
+}
+
+class AppRadius {
+  static const double sm = 10;
+  static const double md = 14;
+  static const double lg = 18;
+  static const double xl = 24;
+  static const double pill = 999;
+}
+
+class AppShadows {
+  static List<BoxShadow> get soft => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.018),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
+    ),
+  ];
+
+  static List<BoxShadow> get medium => [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.05),
+      blurRadius: 18,
+      offset: const Offset(0, 10),
+    ),
+  ];
+
+  static List<BoxShadow> get brand => [
+    BoxShadow(
+      color: AppColors.primary.withValues(alpha: 0.16),
+      blurRadius: 16,
+      offset: const Offset(0, 8),
+    ),
+  ];
+}
+
+class AppFonts {
+  static const String generalSans = 'GeneralSans';
+  static const String inter = 'Inter';
+
+  static TextStyle headingStyle({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.w400,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return TextStyle(
+      fontFamily: generalSans,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+  }
+
+  static TextStyle interStyle({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.w400,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return TextStyle(
+      fontFamily: inter,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+  }
+
+  static TextStyle generalSansStyle({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.w400,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return interStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+  }
 }
 
 class AppTheme {
@@ -42,42 +151,46 @@ class AppTheme {
     );
 
     final textTheme = TextTheme(
-      displayLarge: GoogleFonts.plusJakartaSans(
+      displayLarge: AppFonts.headingStyle(
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
+        height: 1.08,
       ),
-      headlineLarge: GoogleFonts.plusJakartaSans(
-        fontSize: 24,
+      headlineLarge: AppFonts.headingStyle(
+        fontSize: 26,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
+        height: 1.15,
       ),
-      titleLarge: GoogleFonts.plusJakartaSans(
+      titleLarge: AppFonts.headingStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      titleMedium: GoogleFonts.plusJakartaSans(
+      titleMedium: AppFonts.interStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      bodyLarge: GoogleFonts.inter(
+      bodyLarge: AppFonts.interStyle(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
+        height: 1.5,
       ),
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: AppFonts.interStyle(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
+        height: 1.45,
       ),
-      bodySmall: GoogleFonts.inter(
+      bodySmall: AppFonts.interStyle(
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
       ),
-      labelLarge: GoogleFonts.inter(
+      labelLarge: AppFonts.interStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -85,16 +198,29 @@ class AppTheme {
     );
 
     return ThemeData(
-      useMaterial3: false,
+      useMaterial3: true,
+      fontFamily: AppFonts.inter,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       textTheme: textTheme,
+      splashColor: AppColors.primary.withValues(alpha: 0.08),
+      highlightColor: AppColors.primary.withValues(alpha: 0.04),
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
 
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           side: const BorderSide(color: AppColors.border),
         ),
         margin: EdgeInsets.zero,
@@ -103,13 +229,14 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.textPrimary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          textStyle: GoogleFonts.inter(
+          minimumSize: const Size(48, 48),
+          textStyle: AppFonts.interStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -122,15 +249,16 @@ class AppTheme {
           side: const BorderSide(color: AppColors.border),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
+          minimumSize: const Size(48, 48),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        hintStyle: GoogleFonts.inter(
+        hintStyle: AppFonts.interStyle(
           fontSize: 14,
           color: AppColors.textSecondary,
         ),
@@ -139,16 +267,20 @@ class AppTheme {
           vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
       ),
 

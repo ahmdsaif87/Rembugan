@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/team_controller.dart';
 
@@ -13,37 +13,39 @@ class TeamView extends GetView<TeamController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Off-white clean background
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header ──
-              _buildHeader(),
-              const SizedBox(height: 24),
+      backgroundColor: AppColors.background,
+      body: AppLayeredBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header ──
+                _buildHeader(),
+                const SizedBox(height: 24),
 
-              // ── Quick Stats (Dashboard Style) ──
-              _buildQuickStats(),
-              const SizedBox(height: 28),
+                // ── Quick Stats (Dashboard Style) ──
+                _buildQuickStats(),
+                const SizedBox(height: 28),
 
-              // ── Section: Urgent Tasks ──
-              _buildSectionHeader('Tugas Prioritas', 'Lihat Semua'),
-              const SizedBox(height: 12),
-              _buildUrgentTasks(),
-              const SizedBox(height: 28),
+                // ── Section: Urgent Tasks ──
+                _buildSectionHeader('Tugas Prioritas', 'Lihat Semua'),
+                const SizedBox(height: 12),
+                _buildUrgentTasks(),
+                const SizedBox(height: 28),
 
-              // ── Section: My Teams (Workspace Folders) ──
-              _buildSectionHeader('Workspace Tim', 'Tambah'),
-              const SizedBox(height: 12),
-              _buildWorkspaceTeams(),
-              const SizedBox(height: 24),
-            ],
+                // ── Section: My Teams (Workspace Folders) ──
+                _buildSectionHeader('Workspace Tim', 'Tambah'),
+                const SizedBox(height: 12),
+                _buildWorkspaceTeams(),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: const AppBottomNav(current: AppNavDestination.team),
     );
   }
 
@@ -57,7 +59,7 @@ class TeamView extends GetView<TeamController> {
           children: [
             Text(
               'Workspace',
-              style: GoogleFonts.plusJakartaSans(
+              style: AppFonts.generalSansStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -65,7 +67,7 @@ class TeamView extends GetView<TeamController> {
             ),
             Text(
               'Pusat kendali proyek dan tim Anda.',
-              style: GoogleFonts.inter(
+              style: AppFonts.generalSansStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
               ),
@@ -77,16 +79,16 @@ class TeamView extends GetView<TeamController> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 5,
               ),
             ],
           ),
-          child: const PhosphorIcon(
-            PhosphorIconsRegular.bell,
+          child: const Icon(
+            FluentIcons.alert_24_regular,
             color: AppColors.textPrimary,
             size: 20,
           ),
@@ -100,14 +102,14 @@ class TeamView extends GetView<TeamController> {
     return Row(
       children: [
         _buildStatCard(
-          icon: PhosphorIconsFill.briefcase,
+          icon: FluentIcons.briefcase_24_filled,
           count: '3',
           label: 'Tim Aktif',
           color: AppColors.primary,
         ),
         const SizedBox(width: 16),
         _buildStatCard(
-          icon: PhosphorIconsFill.checkCircle,
+          icon: FluentIcons.checkmark_circle_24_filled,
           count: '5',
           label: 'Tugas Selesai',
           color: const Color(0xFF16A34A),
@@ -117,7 +119,7 @@ class TeamView extends GetView<TeamController> {
   }
 
   Widget _buildStatCard({
-    required PhosphorIconData icon,
+    required IconData icon,
     required String count,
     required String label,
     required Color color,
@@ -128,10 +130,10 @@ class TeamView extends GetView<TeamController> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border.withOpacity(0.5)),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -142,10 +144,10 @@ class TeamView extends GetView<TeamController> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: PhosphorIcon(icon, color: color, size: 20),
+              child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 12),
             Column(
@@ -153,7 +155,7 @@ class TeamView extends GetView<TeamController> {
               children: [
                 Text(
                   count,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -161,7 +163,7 @@ class TeamView extends GetView<TeamController> {
                 ),
                 Text(
                   label,
-                  style: GoogleFonts.inter(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -181,7 +183,7 @@ class TeamView extends GetView<TeamController> {
       children: [
         Text(
           title,
-          style: GoogleFonts.plusJakartaSans(
+          style: AppFonts.generalSansStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -196,7 +198,7 @@ class TeamView extends GetView<TeamController> {
           ),
           child: Text(
             actionText,
-            style: GoogleFonts.inter(
+            style: AppFonts.generalSansStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
@@ -239,10 +241,10 @@ class TeamView extends GetView<TeamController> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.01),
+            color: Colors.black.withValues(alpha: 0.01),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -253,12 +255,16 @@ class TeamView extends GetView<TeamController> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: isUrgent ? const Color(0xFFFEF2F2) : const Color(0xFFF1F5F9),
+              color: isUrgent
+                  ? const Color(0xFFFEF2F2)
+                  : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.circle_outlined,
-              color: isUrgent ? const Color(0xFFDC2626) : AppColors.textSecondary,
+              FluentIcons.circle_24_regular,
+              color: isUrgent
+                  ? const Color(0xFFDC2626)
+                  : AppColors.textSecondary,
               size: 16,
             ),
           ),
@@ -269,7 +275,7 @@ class TeamView extends GetView<TeamController> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -277,7 +283,7 @@ class TeamView extends GetView<TeamController> {
                 ),
                 Text(
                   team,
-                  style: GoogleFonts.inter(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,
                   ),
@@ -288,15 +294,19 @@ class TeamView extends GetView<TeamController> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isUrgent ? const Color(0xFFFEF2F2) : const Color(0xFFF1F5F9),
+              color: isUrgent
+                  ? const Color(0xFFFEF2F2)
+                  : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               dueDate,
-              style: GoogleFonts.inter(
+              style: AppFonts.generalSansStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: isUrgent ? const Color(0xFFDC2626) : AppColors.textSecondary,
+                color: isUrgent
+                    ? const Color(0xFFDC2626)
+                    : AppColors.textSecondary,
               ),
             ),
           ),
@@ -344,10 +354,10 @@ class TeamView extends GetView<TeamController> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -362,43 +372,54 @@ class TeamView extends GetView<TeamController> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   category,
-                  style: GoogleFonts.inter(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
                 ),
               ),
-              const PhosphorIcon(PhosphorIconsRegular.dotsThreeVertical, color: AppColors.textSecondary, size: 20),
+              const Icon(
+                FluentIcons.more_vertical_24_regular,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             title,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.generalSansStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Progress Bar
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Progress Proyek',
-                style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
+                style: AppFonts.generalSansStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               Text(
                 '${(progress * 100).toInt()}%',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                style: AppFonts.generalSansStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -408,11 +429,13 @@ class TeamView extends GetView<TeamController> {
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: const Color(0xFFE2E8F0),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
               minHeight: 6,
             ),
           ),
-          
+
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -447,7 +470,11 @@ class TeamView extends GetView<TeamController> {
                         color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const PhosphorIcon(PhosphorIconsFill.paperPlaneTilt, color: AppColors.textPrimary, size: 16),
+                      child: const Icon(
+                        FluentIcons.send_24_filled,
+                        color: AppColors.textPrimary,
+                        size: 16,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -456,14 +483,17 @@ class TeamView extends GetView<TeamController> {
                       Get.snackbar('Info', 'Membuka workspace tim...');
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'Buka',
-                        style: GoogleFonts.inter(
+                        style: AppFonts.generalSansStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -483,16 +513,12 @@ class TeamView extends GetView<TeamController> {
   // 6. Bottom Navigation Bar
   Widget _buildBottomNavigationBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -503,31 +529,58 @@ class TeamView extends GetView<TeamController> {
         children: [
           GestureDetector(
             onTap: () => Get.offAllNamed(Routes.HOME),
-            child: _buildNavItem(PhosphorIconsRegular.house, 'Beranda', false),
+            child: _buildNavItem(FluentIcons.home_24_regular, 'Beranda', false),
           ),
           GestureDetector(
             onTap: () => Get.toNamed(Routes.EXPLORE),
-            child: _buildNavItem(PhosphorIconsRegular.binoculars, 'Proyek', false),
+            child: _buildNavItem(
+              FluentIcons.globe_24_regular,
+              'Jelajah',
+              false,
+            ),
           ),
-          GestureDetector(
-            onTap: () => Get.toNamed(Routes.CHAT),
-            child: _buildNavItem(PhosphorIconsRegular.paperPlaneTilt, 'Pesan', false),
-          ),
-          _buildNavItem(PhosphorIconsFill.briefcase, 'Tim', true),
+          _buildCenterFAB(),
+          _buildNavItem(FluentIcons.apps_24_filled, 'Proyek', true),
           GestureDetector(
             onTap: () => Get.toNamed(Routes.PROFILE),
-            child: _buildNavItem(PhosphorIconsRegular.user, 'Profil', false),
+            child: _buildNavItem(
+              FluentIcons.person_24_regular,
+              'Profil',
+              false,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(PhosphorIconData icon, String label, bool isActive) {
+  // Center FAB in nav bar
+  Widget _buildCenterFAB() {
+    return GestureDetector(
+      onTap: () {
+        // TODO: handle create action
+      },
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: const Color(0xFF4A1521),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(
+          FluentIcons.add_24_filled,
+          color: Colors.white,
+          size: 26,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, bool isActive) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        PhosphorIcon(
+        Icon(
           icon,
           color: isActive ? AppColors.primary : AppColors.textSecondary,
           size: 24,
@@ -535,7 +588,7 @@ class TeamView extends GetView<TeamController> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: AppFonts.generalSansStyle(
             fontSize: 11,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
             color: isActive ? AppColors.primary : AppColors.textSecondary,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_chrome.dart';
 import '../controllers/room_chat_controller.dart';
 
 class RoomChatView extends GetView<RoomChatController> {
@@ -12,55 +12,59 @@ class RoomChatView extends GetView<RoomChatController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          // ── Chat Messages ──
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Date Divider
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Text(
-                      'Hari ini',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
+      body: AppLayeredBackground(
+        child: Column(
+          children: [
+            // ── Chat Messages ──
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Date Divider
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'Hari ini',
+                        style: AppFonts.generalSansStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                // Left Message
-                _buildMessageBubble(
-                  message: 'lorem ipsum lorem ipsum lorem ipsum lorem awdkowakdokawod awdwa',
-                  time: '18.35',
-                  isMe: false,
-                  avatarUrl: 'https://i.pravatar.cc/100?img=60',
-                ),
+                  // Left Message
+                  _buildMessageBubble(
+                    message:
+                        'lorem ipsum lorem ipsum lorem ipsum lorem awdkowakdokawod awdwa',
+                    time: '18.35',
+                    isMe: false,
+                    avatarUrl: 'https://i.pravatar.cc/100?img=60',
+                  ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // Right Message
-                _buildMessageBubble(
-                  message: 'lorem ipsum lorem ipsum lorem ipsum lorem awdkowakdokawod awdwa',
-                  time: '18.35',
-                  isMe: true,
-                  avatarUrl: 'https://i.pravatar.cc/100?img=33',
-                  isRead: true,
-                ),
-              ],
+                  // Right Message
+                  _buildMessageBubble(
+                    message:
+                        'lorem ipsum lorem ipsum lorem ipsum lorem awdkowakdokawod awdwa',
+                    time: '18.35',
+                    isMe: true,
+                    avatarUrl: 'https://i.pravatar.cc/100?img=33',
+                    isRead: true,
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // ── Input Bar ──
-          _buildInputBar(),
-        ],
+            // ── Input Bar ──
+            _buildInputBar(),
+          ],
+        ),
       ),
     );
   }
@@ -68,10 +72,14 @@ class RoomChatView extends GetView<RoomChatController> {
   // 1. AppBar Widget
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white.withValues(alpha: 0.96),
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       leading: IconButton(
-        icon: const PhosphorIcon(PhosphorIconsRegular.arrowLeft, color: AppColors.textPrimary),
+        icon: const Icon(
+          FluentIcons.arrow_left_24_regular,
+          color: AppColors.textPrimary,
+        ),
         onPressed: () => Get.back(),
       ),
       title: Row(
@@ -87,7 +95,7 @@ class RoomChatView extends GetView<RoomChatController> {
               children: [
                 Text(
                   'Dede Fernanda',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -95,7 +103,7 @@ class RoomChatView extends GetView<RoomChatController> {
                 ),
                 Text(
                   'Typing...',
-                  style: GoogleFonts.inter(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 12,
                     color: Colors.green, // "Typing..." is often green or gray
                     fontWeight: FontWeight.w500,
@@ -108,16 +116,16 @@ class RoomChatView extends GetView<RoomChatController> {
       ),
       actions: [
         IconButton(
-          icon: const PhosphorIcon(PhosphorIconsRegular.dotsThreeVertical, color: AppColors.textPrimary),
+          icon: const Icon(
+            FluentIcons.more_vertical_24_regular,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () {},
         ),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(
-          color: AppColors.border,
-          height: 1,
-        ),
+        child: Container(color: AppColors.border, height: 1),
       ),
     );
   }
@@ -135,22 +143,26 @@ class RoomChatView extends GetView<RoomChatController> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (!isMe) ...[
-          CircleAvatar(
-            radius: 14,
-            backgroundImage: NetworkImage(avatarUrl),
-          ),
+          CircleAvatar(radius: 14, backgroundImage: NetworkImage(avatarUrl)),
           const SizedBox(width: 8),
         ],
-        
+
         // Message Content
         Flexible(
           child: Column(
-            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isMe
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isMe ? const Color(0xFF3B82F6) : const Color(0xFFF3F4F6),
+                  color: isMe ? AppColors.textPrimary : AppColors.surface,
+                  border: isMe ? null : Border.all(color: AppColors.border),
+                  boxShadow: isMe ? AppShadows.soft : const [],
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -160,7 +172,7 @@ class RoomChatView extends GetView<RoomChatController> {
                 ),
                 child: Text(
                   message,
-                  style: GoogleFonts.inter(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 14,
                     color: isMe ? Colors.white : AppColors.textPrimary,
                     height: 1.4,
@@ -174,7 +186,7 @@ class RoomChatView extends GetView<RoomChatController> {
                   if (isMe && isRead) ...[
                     Text(
                       'Dibaca ',
-                      style: GoogleFonts.inter(
+                      style: AppFonts.generalSansStyle(
                         fontSize: 10,
                         color: AppColors.textSecondary,
                       ),
@@ -182,7 +194,7 @@ class RoomChatView extends GetView<RoomChatController> {
                   ],
                   Text(
                     time,
-                    style: GoogleFonts.inter(
+                    style: AppFonts.generalSansStyle(
                       fontSize: 10,
                       color: AppColors.textSecondary,
                     ),
@@ -192,13 +204,10 @@ class RoomChatView extends GetView<RoomChatController> {
             ],
           ),
         ),
-        
+
         if (isMe) ...[
           const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 14,
-            backgroundImage: NetworkImage(avatarUrl),
-          ),
+          CircleAvatar(radius: 14, backgroundImage: NetworkImage(avatarUrl)),
         ],
       ],
     );
@@ -208,11 +217,9 @@ class RoomChatView extends GetView<RoomChatController> {
   Widget _buildInputBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: AppColors.border, width: 1),
-        ),
+        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
       ),
       child: Row(
         children: [
@@ -221,12 +228,13 @@ class RoomChatView extends GetView<RoomChatController> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(22),
             ),
             child: const Icon(
-              Icons.add,
-              color: AppColors.textPrimary,
+              FluentIcons.add_24_regular,
+              color: AppColors.textSecondary,
               size: 24,
             ),
           ),
@@ -238,13 +246,14 @@ class RoomChatView extends GetView<RoomChatController> {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
+                color: AppColors.surface,
+                border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(22),
               ),
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Ketik pesan',
-                  hintStyle: GoogleFonts.inter(
+                  hintStyle: AppFonts.generalSansStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
@@ -254,19 +263,19 @@ class RoomChatView extends GetView<RoomChatController> {
               ),
             ),
           ),
-          
-          // Send Button (Optional but good for UX)
+
+          // Send Button
           const SizedBox(width: 12),
           Container(
             width: 44,
             height: 44,
             decoration: const BoxDecoration(
-              color: Color(0xFF3B82F6),
+              color: AppColors.textPrimary,
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: PhosphorIcon(
-                PhosphorIconsRegular.paperPlaneTilt,
+              child: Icon(
+                FluentIcons.send_24_filled,
                 color: Colors.white,
                 size: 20,
               ),

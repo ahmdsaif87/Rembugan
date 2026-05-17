@@ -35,8 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   get: ^4.7.3
-  google_fonts: ^6.1.0
-  phosphor_flutter: ^2.1.0
+  fluentui_system_icons: ^1.1.273
   forui: ^0.21.3
 
 dev_dependencies:
@@ -64,6 +63,26 @@ flutter:
   assets:
     - lib/assets/img/
     - lib/assets/icons/
+    - lib/assets/fonts/
+
+  fonts:
+    - family: GeneralSans
+      fonts:
+        - asset: lib/assets/fonts/GeneralSans-Extralight.otf
+          weight: 200
+        - asset: lib/assets/fonts/GeneralSans-Light.otf
+          weight: 300
+        - asset: lib/assets/fonts/GeneralSans-Regular.otf
+          weight: 400
+        - asset: lib/assets/fonts/GeneralSans-Medium.otf
+          weight: 500
+        - asset: lib/assets/fonts/GeneralSans-Semibold.otf
+          weight: 600
+        - asset: lib/assets/fonts/GeneralSans-Bold.otf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: lib/assets/fonts/Inter.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

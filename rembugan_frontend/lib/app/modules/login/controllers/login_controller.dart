@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:rembugan_frontend/app/core/services/session_service.dart';
 import 'package:rembugan_frontend/app/routes/app_pages.dart';
 
 class LoginController extends GetxController {
@@ -20,6 +21,7 @@ class LoginController extends GetxController {
   void onLogin() {
     if (formKey.currentState!.validate()) {
       // TODO: Implementasi logika login
+      Get.find<SessionService>().enterAuthenticatedMode();
       Get.snackbar('Login', 'Berhasil Masuk!');
       Get.offAllNamed(Routes.PERSONALIZATION);
     }
@@ -36,9 +38,9 @@ class LoginController extends GetxController {
   }
 
   void onGuestLogin() {
-    // TODO: Implementasi login sebagai tamu
+    Get.find<SessionService>().enterGuestMode();
     Get.snackbar('Tamu', 'Masuk sebagai tamu');
-    Get.offAllNamed(Routes.PERSONALIZATION);
+    Get.offAllNamed(Routes.GUEST_LANDING);
   }
 
   void onForgotPassword() {

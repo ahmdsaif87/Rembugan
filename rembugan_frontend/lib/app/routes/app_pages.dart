@@ -16,6 +16,16 @@ import '../modules/team/bindings/team_binding.dart';
 import '../modules/team/views/team_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
+import '../modules/social/views/comment_view.dart';
+import '../modules/social/views/create_post_view.dart';
+import '../modules/social/views/edit_profile_view.dart';
+import '../modules/social/views/empty_state_view.dart';
+import '../modules/social/views/guest_landing_view.dart';
+import '../modules/social/views/loading_state_view.dart';
+import '../modules/social/views/notification_view.dart';
+import '../modules/social/views/other_profile_view.dart';
+import '../modules/social/views/saved_view.dart';
+import '../modules/social/views/settings_view.dart';
 import '../modules/personalization/bindings/personalization_binding.dart';
 import '../modules/personalization/views/personalization_view.dart';
 
@@ -67,6 +77,16 @@ class AppPages {
       page: () => const ProfileView(),
       binding: ProfileBinding(),
     ),
+    GetPage(name: _Paths.OTHER_PROFILE, page: () => const OtherProfileView()),
+    GetPage(name: _Paths.COMMENTS, page: () => const CommentView()),
+    GetPage(name: _Paths.CREATE_POST, page: () => const CreatePostView()),
+    GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfileView()),
+    GetPage(name: _Paths.SETTINGS, page: () => const SettingsView()),
+    GetPage(name: _Paths.NOTIFICATIONS, page: () => const NotificationView()),
+    GetPage(name: _Paths.SAVED, page: () => const SavedView()),
+    GetPage(name: _Paths.EMPTY_STATE, page: () => const EmptyStateView()),
+    GetPage(name: _Paths.LOADING_STATE, page: () => const LoadingStateView()),
+    GetPage(name: _Paths.GUEST_LANDING, page: () => const GuestLandingView()),
     GetPage(
       name: _Paths.PERSONALIZATION,
       page: () => const PersonalizationView(),

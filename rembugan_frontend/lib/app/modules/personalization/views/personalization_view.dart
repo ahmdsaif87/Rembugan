@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/personalization_controller.dart';
 
@@ -13,18 +13,22 @@ class PersonalizationView extends GetView<PersonalizationController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Off-white
-      body: SafeArea(
-        child: Obx(() {
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            child: controller.isUploading.value
-                ? _buildScanningState()
-                : controller.isScanned.value
-                    ? _buildResultState()
-                    : _buildInitialState(),
-          );
-        }),
+      backgroundColor: AppColors.background,
+      body: AppLayeredBackground(
+        child: SafeArea(
+          child: Obx(() {
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: controller.isUploading.value
+                  ? _buildScanningState()
+                  : controller.isScanned.value
+                  ? _buildResultState()
+                  : _buildInitialState(),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -39,7 +43,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
           const SizedBox(height: 20),
           Text(
             'Personalisasi Profil',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.generalSansStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -48,7 +52,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
           const SizedBox(height: 8),
           Text(
             'Bantu AI kami memahami keahlian Anda untuk mencarikan tim yang paling cocok.',
-            style: GoogleFonts.inter(
+            style: AppFonts.generalSansStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
               height: 1.5,
@@ -66,13 +70,13 @@ class PersonalizationView extends GetView<PersonalizationController> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   width: 2,
                   style: BorderStyle.solid,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.05),
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -83,11 +87,11 @@ class PersonalizationView extends GetView<PersonalizationController> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const PhosphorIcon(
-                      PhosphorIconsFill.fileArrowUp,
+                    child: const Icon(
+                      FluentIcons.arrow_upload_24_filled,
                       color: AppColors.primary,
                       size: 32,
                     ),
@@ -95,7 +99,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
                   const SizedBox(height: 16),
                   Text(
                     'Unggah CV / Resume',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.generalSansStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -104,14 +108,17 @@ class PersonalizationView extends GetView<PersonalizationController> {
                   const SizedBox(height: 4),
                   Text(
                     'Format PDF atau Word (Maks. 5MB)',
-                    style: GoogleFonts.inter(
+                    style: AppFonts.generalSansStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(8),
@@ -119,11 +126,15 @@ class PersonalizationView extends GetView<PersonalizationController> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const PhosphorIcon(PhosphorIconsFill.sparkle, color: AppColors.primary, size: 14),
+                        const Icon(
+                          FluentIcons.sparkle_24_filled,
+                          color: AppColors.primary,
+                          size: 14,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Didukung AI OCR',
-                          style: GoogleFonts.inter(
+                          style: AppFonts.generalSansStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
@@ -147,7 +158,10 @@ class PersonalizationView extends GetView<PersonalizationController> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'atau',
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary),
+                  style: AppFonts.generalSansStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
               const Expanded(child: Divider(color: AppColors.border)),
@@ -172,11 +186,15 @@ class PersonalizationView extends GetView<PersonalizationController> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const PhosphorIcon(PhosphorIconsRegular.pencilSimple, color: AppColors.textPrimary, size: 18),
+                  const Icon(
+                    FluentIcons.edit_24_regular,
+                    color: AppColors.textPrimary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Isi Profil Secara Manual',
-                    style: GoogleFonts.inter(
+                    style: AppFonts.generalSansStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -186,16 +204,16 @@ class PersonalizationView extends GetView<PersonalizationController> {
               ),
             ),
           ),
-          
+
           const Spacer(),
-          
+
           // Skip for now
           Center(
             child: TextButton(
               onPressed: () => Get.offAllNamed(Routes.HOME),
               child: Text(
                 'Lewati untuk sekarang',
-                style: GoogleFonts.inter(
+                style: AppFonts.generalSansStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -225,7 +243,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
           const SizedBox(height: 32),
           Text(
             'Menganalisis CV Anda...',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.generalSansStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -234,7 +252,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
           const SizedBox(height: 8),
           Text(
             'AI sedang mengekstrak keahlian dan minat Anda.',
-            style: GoogleFonts.inter(
+            style: AppFonts.generalSansStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
             ),
@@ -249,13 +267,17 @@ class PersonalizationView extends GetView<PersonalizationController> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const PhosphorIcon(PhosphorIconsFill.terminal, color: Color(0xFF10B981), size: 16),
+                const Icon(
+                  FluentIcons.code_24_filled,
+                  color: Color(0xFF10B981),
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Reading document structure...',
-                  style: GoogleFonts.firaCode(
+                  style: AppFonts.generalSansStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -282,12 +304,16 @@ class PersonalizationView extends GetView<PersonalizationController> {
                   color: Color(0xFF16A34A),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 16),
+                child: const Icon(
+                  FluentIcons.checkmark_24_filled,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
               const SizedBox(width: 12),
               Text(
                 'Analisis Selesai!',
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.generalSansStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
@@ -298,7 +324,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
           const SizedBox(height: 8),
           Text(
             'Berikut adalah ringkasan yang ditemukan oleh AI kami.',
-            style: GoogleFonts.inter(
+            style: AppFonts.generalSansStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
@@ -308,7 +334,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
           // Bio Result
           Text(
             'Deskripsi Singkat',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.generalSansStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -325,7 +351,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
             ),
             child: Text(
               controller.bio.value,
-              style: GoogleFonts.inter(
+              style: AppFonts.generalSansStyle(
                 fontSize: 13,
                 color: AppColors.textPrimary,
                 height: 1.5,
@@ -338,7 +364,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
           // Interests Result
           Text(
             'Keahlian & Minat Terdeteksi',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.generalSansStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -350,20 +376,29 @@ class PersonalizationView extends GetView<PersonalizationController> {
             runSpacing: 8,
             children: controller.interests.map((interest) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const PhosphorIcon(PhosphorIconsFill.sparkle, color: AppColors.primary, size: 14),
+                    const Icon(
+                      FluentIcons.sparkle_24_filled,
+                      color: AppColors.primary,
+                      size: 14,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       interest,
-                      style: GoogleFonts.inter(
+                      style: AppFonts.generalSansStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
@@ -393,7 +428,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
                     child: Center(
                       child: Text(
                         'Ulangi',
-                        style: GoogleFonts.inter(
+                        style: AppFonts.generalSansStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -414,7 +449,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.2),
+                          color: AppColors.primary.withValues(alpha: 0.2),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -423,7 +458,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
                     child: Center(
                       child: Text(
                         'Sesuai, Lanjut',
-                        style: GoogleFonts.inter(
+                        style: AppFonts.generalSansStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
