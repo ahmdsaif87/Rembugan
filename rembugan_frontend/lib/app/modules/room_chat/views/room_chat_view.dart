@@ -86,7 +86,7 @@ class RoomChatView extends GetView<RoomChatController> {
         children: [
           const CircleAvatar(
             radius: 20,
-            backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=60'),
+            backgroundImage: AssetImage('lib/assets/img/avatar.png'),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -143,7 +143,7 @@ class RoomChatView extends GetView<RoomChatController> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (!isMe) ...[
-          CircleAvatar(radius: 14, backgroundImage: NetworkImage(avatarUrl)),
+          CircleAvatar(radius: 14, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
           const SizedBox(width: 8),
         ],
 
@@ -207,7 +207,7 @@ class RoomChatView extends GetView<RoomChatController> {
 
         if (isMe) ...[
           const SizedBox(width: 8),
-          CircleAvatar(radius: 14, backgroundImage: NetworkImage(avatarUrl)),
+          CircleAvatar(radius: 14, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
         ],
       ],
     );

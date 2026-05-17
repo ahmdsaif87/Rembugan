@@ -28,8 +28,8 @@ class OtherProfileView extends StatelessWidget {
                   children: [
                     const CircleAvatar(
                       radius: 38,
-                      backgroundImage: NetworkImage(
-                        'https://i.pravatar.cc/150?img=47',
+                      backgroundImage: AssetImage(
+                        'lib/assets/img/avatar.png',
                       ),
                     ),
                     const SizedBox(width: 16),

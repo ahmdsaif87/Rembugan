@@ -452,7 +452,7 @@ class TeamView extends GetView<TeamController> {
                       left: index * 16.0,
                       child: CircleAvatar(
                         radius: 14,
-                        backgroundImage: NetworkImage(url),
+                        backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
                         backgroundColor: Colors.white,
                       ),
                     );

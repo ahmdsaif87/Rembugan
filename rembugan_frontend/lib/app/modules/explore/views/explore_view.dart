@@ -918,9 +918,7 @@ class _ProjectCard extends StatelessWidget {
                                 ),
                                 child: CircleAvatar(
                                   radius: 13,
-                                  backgroundImage: NetworkImage(
-                                    project.memberAvatars[i],
-                                  ),
+                                  backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
                                 ),
                               ),
                             ),
@@ -1373,7 +1371,7 @@ class _TeamMember extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CircleAvatar(radius: 18, backgroundImage: NetworkImage(avatarUrl)),
+        CircleAvatar(radius: 18, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
         const SizedBox(height: 6),
         Text(
           name,
@@ -1437,7 +1435,7 @@ class _OwnerTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundImage: NetworkImage(project.avatarUrl),
+            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1621,7 +1619,7 @@ class _PersonCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundImage: NetworkImage(avatarUrl),
+                backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
               ),
               const SizedBox(width: 12),
               Expanded(
