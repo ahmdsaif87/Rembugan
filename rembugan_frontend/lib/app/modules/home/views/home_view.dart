@@ -197,7 +197,7 @@ class HomeView extends GetView<HomeController> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.primarySoft,
-                    backgroundImage: NetworkImage(avatarUrl),
+                    backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
                   ),
                   const SizedBox(width: 10),
                   Expanded(

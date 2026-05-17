@@ -95,14 +95,14 @@ class ChatView extends GetView<ChatController> {
                     height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Jaga koordinasi tim tetap rapi.',
-                  style: AppFonts.generalSansStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                // const SizedBox(height: 4),
+                // Text(
+                //   'Jaga koordinasi tim tetap rapi.',
+                //   style: AppFonts.generalSansStyle(
+                //     fontSize: 12,
+                //     color: AppColors.textSecondary,
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -213,7 +213,7 @@ class ChatView extends GetView<ChatController> {
                   CircleAvatar(
                     radius: 26,
                     backgroundColor: AppColors.primarySoft,
-                    backgroundImage: NetworkImage(avatarUrl),
+                    backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
                   ),
                   Positioned(
                     right: 1,

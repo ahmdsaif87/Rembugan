@@ -376,9 +376,9 @@ class _NavItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: active ? AppColors.border : Colors.transparent,
-              ),
+              // border: Border.all(
+              //   color: active ? AppColors.border : Colors.transparent,
+              // ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

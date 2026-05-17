@@ -60,7 +60,7 @@ class LoginView extends GetView<LoginController> {
                   // Tombol Kembali
                   _buildBackButton(),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 60),
 
                   // Judul
                   Text(
@@ -102,7 +102,7 @@ class LoginView extends GetView<LoginController> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              height: Get.height * 0.73, // Mengambil 65% layar bawah
+              height: Get.height * 0.65, // Mengambil 65% layar bawah
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(

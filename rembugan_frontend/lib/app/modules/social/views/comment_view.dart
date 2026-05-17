@@ -132,7 +132,7 @@ class _CommentTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 18, backgroundImage: NetworkImage(avatarUrl)),
+          CircleAvatar(radius: 18, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -309,7 +309,7 @@ class _ReplyComposer extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 18,
-            backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=60'),
+            backgroundImage: AssetImage('lib/assets/img/avatar.png'),
           ),
           const SizedBox(width: 10),
           Expanded(

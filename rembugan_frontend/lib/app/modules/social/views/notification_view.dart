@@ -121,7 +121,7 @@ class _NotificationTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundImage: NetworkImage(avatarUrl),
+                  backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
                 ),
                 if (unread)
                   Positioned(

@@ -20,12 +20,12 @@ class ChatModel {
 
 class ChatController extends GetxController {
   // 0: Belum dibaca, 1: Semua
-  var filterIndex = 0.obs;
+  var filterIndex = 1.obs;
 
   // Dummy Chat Data
   var allChats = <ChatModel>[
     ChatModel(
-      name: 'Dede Fernanda (Unread)',
+      name: 'Dede Fernanda',
       message: 'Lorem ipsum lorem ipsum lorem ipsum lorem..adwaddwa.',
       time: '18.30',
       avatarUrl: 'https://i.pravatar.cc/100?img=60',
@@ -33,14 +33,14 @@ class ChatController extends GetxController {
       unreadCount: 1,
     ),
     ChatModel(
-      name: 'Dede Fernanda (Read)',
+      name: 'Dede Fernanda',
       message: 'Lorem ipsum lorem ipsum lorem ipsum lorem..adwaddwa.',
       time: '18.30',
       avatarUrl: 'https://i.pravatar.cc/100?img=60',
       isUnread: false,
     ),
     ChatModel(
-      name: 'Dede Fernanda (Unread 2)',
+      name: 'Dede Fernanda',
       message: 'Lorem ipsum lorem ipsum lorem ipsum lorem..adwaddwa.',
       time: '18.30',
       avatarUrl: 'https://i.pravatar.cc/100?img=60',

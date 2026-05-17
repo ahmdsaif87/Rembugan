@@ -105,7 +105,7 @@ class SocialPostCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 22, backgroundImage: NetworkImage(avatarUrl)),
+          CircleAvatar(radius: 22, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

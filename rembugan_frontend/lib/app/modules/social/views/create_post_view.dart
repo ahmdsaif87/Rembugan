@@ -67,8 +67,8 @@ class _CreatePostViewState extends State<CreatePostView> {
                   children: [
                     const CircleAvatar(
                       radius: 22,
-                      backgroundImage: NetworkImage(
-                        'https://i.pravatar.cc/150?img=60',
+                      backgroundImage: AssetImage(
+                        'lib/assets/img/avatar.png',
                       ),
                     ),
                     const SizedBox(width: 12),

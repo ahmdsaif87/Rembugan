@@ -32,8 +32,8 @@ class EditProfileView extends StatelessWidget {
               children: [
                 const CircleAvatar(
                   radius: 44,
-                  backgroundImage: NetworkImage(
-                    'https://i.pravatar.cc/150?img=60',
+                  backgroundImage: AssetImage(
+                    'lib/assets/img/avatar.png',
                   ),
                 ),
                 Positioned(

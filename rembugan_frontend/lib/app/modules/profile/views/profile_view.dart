@@ -30,8 +30,8 @@ class ProfileView extends GetView<ProfileController> {
                       children: [
                         const CircleAvatar(
                           radius: 38,
-                          backgroundImage: NetworkImage(
-                            'https://i.pravatar.cc/150?img=60',
+                          backgroundImage: AssetImage(
+                            'lib/assets/img/avatar.png',
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -46,7 +46,7 @@ class ProfileView extends GetView<ProfileController> {
                                       'Dede Fernanda',
                                       style: AppFonts.headingStyle(
                                         fontSize: 24,
-                                        fontWeight: FontWeight.w900,
+                                        fontWeight: FontWeight.w600,
                                         color: AppColors.textPrimary,
                                         height: 1.1,
                                       ),
