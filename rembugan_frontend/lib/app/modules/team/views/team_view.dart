@@ -52,7 +52,7 @@ class TeamView extends GetView<TeamController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Tim Saya',
+                            'Proyek Tim',
                             style: AppFonts.headingStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w700,
