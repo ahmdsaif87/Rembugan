@@ -18,9 +18,9 @@ class OnboardingView extends GetView<OnboardingController> {
               padding: const EdgeInsets.only(top: 24, bottom: 16),
               child: Text(
                 'Rembugan.',
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -77,7 +77,7 @@ class OnboardingView extends GetView<OnboardingController> {
                     ),
                     child: Text(
                       data['buttonText']!,
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
@@ -104,7 +104,7 @@ class OnboardingView extends GetView<OnboardingController> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
                       'Lewati',
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors
@@ -163,9 +163,9 @@ class _OnboardingPage extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 36,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
               height: 1.2,
             ),
@@ -178,7 +178,7 @@ class _OnboardingPage extends StatelessWidget {
           Text(
             description,
             textAlign: TextAlign.center,
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.neutralDarker,

@@ -28,9 +28,7 @@ class OtherProfileView extends StatelessWidget {
                   children: [
                     const CircleAvatar(
                       radius: 38,
-                      backgroundImage: AssetImage(
-                        'lib/assets/img/avatar.png',
-                      ),
+                      backgroundImage: AssetImage('lib/assets/img/avatar.png'),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -62,7 +60,7 @@ class OtherProfileView extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   'UI/UX Designer dan product thinker. Mendesain produk kolaborasi kampus dengan fokus pada clarity, flow, dan UX research.',
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 14,
                     height: 1.5,
                     color: AppColors.textPrimary,
@@ -101,20 +99,14 @@ class OtherProfileView extends StatelessWidget {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          if (GuestGuard.blockIfGuest('mengikuti profil')) {
-                            return;
-                          }
-                        },
+                        onPressed: () {},
                         child: const Text('Ikuti'),
                       ),
                     ),
                     const SizedBox(width: 10),
                     AppIconButton(
                       icon: FluentIcons.chat_24_regular,
-                      onTap: () {
-                        if (GuestGuard.blockIfGuest('membuka chat')) return;
-                      },
+                      onTap: () {},
                     ),
                   ],
                 ),
@@ -165,7 +157,7 @@ class _ProfileMetric extends StatelessWidget {
           value,
           style: AppFonts.interStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),
@@ -196,7 +188,7 @@ class _ProfileTab extends StatelessWidget {
         label,
         style: AppFonts.interStyle(
           fontSize: 14,
-          fontWeight: active ? FontWeight.w900 : FontWeight.w700,
+          fontWeight: active ? FontWeight.w600 : FontWeight.w600,
           color: active ? AppColors.textPrimary : AppColors.textSecondary,
         ),
       ),

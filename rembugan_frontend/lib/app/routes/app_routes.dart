@@ -20,7 +20,6 @@ abstract class Routes {
   static const SAVED = _Paths.SAVED;
   static const EMPTY_STATE = _Paths.EMPTY_STATE;
   static const LOADING_STATE = _Paths.LOADING_STATE;
-  static const GUEST_LANDING = _Paths.GUEST_LANDING;
   static const PERSONALIZATION = _Paths.PERSONALIZATION;
 }
 
@@ -43,6 +42,5 @@ abstract class _Paths {
   static const SAVED = '/saved';
   static const EMPTY_STATE = '/empty-state';
   static const LOADING_STATE = '/loading-state';
-  static const GUEST_LANDING = '/guest';
   static const PERSONALIZATION = '/personalization';
 }

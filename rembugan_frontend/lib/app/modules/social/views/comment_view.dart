@@ -55,7 +55,7 @@ class CommentView extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: AppFonts.headingStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -132,7 +132,10 @@ class _CommentTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 18, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
+          CircleAvatar(
+            radius: 18,
+            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -142,16 +145,16 @@ class _CommentTile extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       '12m',
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 12,
                         color: AppColors.textTertiary,
                       ),
@@ -161,7 +164,7 @@ class _CommentTile extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   body,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 13,
                     height: 1.45,
                     color: AppColors.textPrimary,
@@ -173,21 +176,13 @@ class _CommentTile extends StatelessWidget {
                     _CommentAction(
                       icon: FluentIcons.arrow_reply_24_regular,
                       label: 'Balas',
-                      onTap: () {
-                        if (GuestGuard.blockIfGuest('membalas komentar')) {
-                          return;
-                        }
-                      },
+                      onTap: () {},
                     ),
                     const SizedBox(width: 16),
                     _CommentAction(
                       icon: FluentIcons.heart_24_regular,
                       label: '8',
-                      onTap: () {
-                        if (GuestGuard.blockIfGuest('menyukai komentar')) {
-                          return;
-                        }
-                      },
+                      onTap: () {},
                     ),
                   ],
                 ),
@@ -225,15 +220,15 @@ class _ReplyTile extends StatelessWidget {
                 children: [
                   TextSpan(
                     text: '$name ',
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   TextSpan(
                     text: body,
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                       height: 1.4,
@@ -274,9 +269,9 @@ class _CommentAction extends StatelessWidget {
             const SizedBox(width: 5),
             Text(
               label,
-              style: AppFonts.generalSansStyle(
+              style: AppFonts.satoshiStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -292,8 +287,6 @@ class _ReplyComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locked = GuestGuard.isGuest;
-
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -314,24 +307,14 @@ class _ReplyComposer extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
-              readOnly: locked,
-              onTap: () {
-                if (GuestGuard.blockIfGuest('membalas komentar')) return;
-              },
-              decoration: InputDecoration(
-                hintText: locked
-                    ? 'Masuk untuk membalas komentar'
-                    : 'Tulis komentar...',
-              ),
+              decoration: const InputDecoration(hintText: 'Tulis komentar...'),
             ),
           ),
           const SizedBox(width: 10),
           AppIconButton(
             icon: FluentIcons.send_24_filled,
             isPrimary: true,
-            onTap: () {
-              if (GuestGuard.blockIfGuest('membalas komentar')) return;
-            },
+            onTap: () {},
           ),
         ],
       ),

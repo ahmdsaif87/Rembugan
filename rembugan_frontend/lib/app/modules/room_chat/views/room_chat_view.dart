@@ -28,7 +28,7 @@ class RoomChatView extends GetView<RoomChatController> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
                         'Hari ini',
-                        style: AppFonts.generalSansStyle(
+                        style: AppFonts.satoshiStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
@@ -95,17 +95,17 @@ class RoomChatView extends GetView<RoomChatController> {
               children: [
                 Text(
                   'Dede Fernanda',
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
                   'Typing...',
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 12,
-                    color: Colors.green, // "Typing..." is often green or gray
+                    color: AppColors.success,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -143,7 +143,10 @@ class RoomChatView extends GetView<RoomChatController> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (!isMe) ...[
-          CircleAvatar(radius: 14, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
+          CircleAvatar(
+            radius: 14,
+            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+          ),
           const SizedBox(width: 8),
         ],
 
@@ -172,7 +175,7 @@ class RoomChatView extends GetView<RoomChatController> {
                 ),
                 child: Text(
                   message,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 14,
                     color: isMe ? Colors.white : AppColors.textPrimary,
                     height: 1.4,
@@ -186,7 +189,7 @@ class RoomChatView extends GetView<RoomChatController> {
                   if (isMe && isRead) ...[
                     Text(
                       'Dibaca ',
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 10,
                         color: AppColors.textSecondary,
                       ),
@@ -194,7 +197,7 @@ class RoomChatView extends GetView<RoomChatController> {
                   ],
                   Text(
                     time,
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 10,
                       color: AppColors.textSecondary,
                     ),
@@ -207,7 +210,10 @@ class RoomChatView extends GetView<RoomChatController> {
 
         if (isMe) ...[
           const SizedBox(width: 8),
-          CircleAvatar(radius: 14, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
+          CircleAvatar(
+            radius: 14,
+            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+          ),
         ],
       ],
     );
@@ -253,7 +259,7 @@ class RoomChatView extends GetView<RoomChatController> {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Ketik pesan',
-                  hintStyle: AppFonts.generalSansStyle(
+                  hintStyle: AppFonts.satoshiStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
                   ),

@@ -22,7 +22,7 @@ class OnboardingController extends GetxController {
       'buttonText': 'Lanjut',
     },
     {
-      'image': 'lib/assets/img/onboarding 3.png',
+      'image': 'lib/assets/img/onboarding3.png',
       'title': 'Satu Workspace\nTerintegrasi',
       'description':
           'Kelola pembagian tugas, diskusi dengan tim, dan pantau perkembangan proyek dari satu aplikasi.',

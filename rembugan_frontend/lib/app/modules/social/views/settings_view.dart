@@ -66,15 +66,15 @@ class _SettingTile extends StatelessWidget {
         leading: Icon(icon, color: AppColors.textPrimary),
         title: Text(
           title,
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 12,
             color: AppColors.textSecondary,
           ),

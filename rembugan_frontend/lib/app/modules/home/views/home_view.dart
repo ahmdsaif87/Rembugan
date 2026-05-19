@@ -90,39 +90,23 @@ class HomeView extends GetView<HomeController> {
                   'Beranda',
                   style: AppFonts.headingStyle(
                     fontSize: 26,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Temukan diskusi dan peluang kolaborasi.',
-                  style: AppFonts.generalSansStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          const GuestModeBadge(),
-          const SizedBox(width: 8),
           AppIconButton(
             icon: FluentIcons.alert_24_regular,
             badge: true,
-            onTap: () {
-              if (GuestGuard.blockIfGuest('melihat notifikasi')) return;
-              Get.toNamed(Routes.NOTIFICATIONS);
-            },
+            onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
           ),
           const SizedBox(width: 10),
           AppIconButton(
             icon: FluentIcons.chat_empty_24_regular,
-            onTap: () {
-              if (GuestGuard.blockIfGuest('membuka chat')) return;
-              Get.toNamed(Routes.CHAT);
-            },
+            onTap: () => Get.toNamed(Routes.CHAT),
           ),
         ],
       ),
@@ -163,9 +147,9 @@ class HomeView extends GetView<HomeController> {
         ),
         child: Text(
           label,
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 13,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w600,
             color: active ? AppColors.textPrimary : AppColors.textSecondary,
           ),
         ),
@@ -197,7 +181,9 @@ class HomeView extends GetView<HomeController> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.primarySoft,
-                    backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+                    backgroundImage: const AssetImage(
+                      'lib/assets/img/avatar.png',
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -206,9 +192,9 @@ class HomeView extends GetView<HomeController> {
                       children: [
                         Text(
                           name,
-                          style: AppFonts.generalSansStyle(
+                          style: AppFonts.satoshiStyle(
                             fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -217,7 +203,7 @@ class HomeView extends GetView<HomeController> {
                           subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppFonts.generalSansStyle(
+                          style: AppFonts.satoshiStyle(
                             fontSize: 11.5,
                             color: AppColors.textTertiary,
                           ),
@@ -226,9 +212,7 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      if (GuestGuard.blockIfGuest('mengikuti profil')) return;
-                    },
+                    onPressed: () {},
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       foregroundColor: AppColors.textPrimary,
@@ -241,9 +225,9 @@ class HomeView extends GetView<HomeController> {
                     ),
                     child: Text(
                       'Ikuti',
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -259,7 +243,7 @@ class HomeView extends GetView<HomeController> {
               const SizedBox(height: 10),
               Text(
                 content,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 14,
                   color: AppColors.textPrimary.withValues(alpha: 0.88),
                   height: 1.56,
@@ -328,7 +312,6 @@ class HomeView extends GetView<HomeController> {
           showCommentsSheet(Get.context!);
           return;
         }
-        if (GuestGuard.blockIfGuest(feature)) return;
       },
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Padding(
@@ -340,7 +323,7 @@ class HomeView extends GetView<HomeController> {
               const SizedBox(width: 8),
               Text(
                 count,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,

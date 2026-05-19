@@ -62,7 +62,7 @@ class ChatView extends GetView<ChatController> {
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                   child: Text(
                     'Your personal messages are end-to-end encrypted',
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 11,
                       color: AppColors.textTertiary,
                     ),
@@ -88,9 +88,9 @@ class ChatView extends GetView<ChatController> {
               children: [
                 Text(
                   'Pesan',
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 26,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     height: 1.1,
                   ),
@@ -98,7 +98,7 @@ class ChatView extends GetView<ChatController> {
                 // const SizedBox(height: 4),
                 // Text(
                 //   'Jaga koordinasi tim tetap rapi.',
-                //   style: AppFonts.generalSansStyle(
+                //   style: AppFonts.satoshiStyle(
                 //     fontSize: 12,
                 //     color: AppColors.textSecondary,
                 //   ),
@@ -181,9 +181,9 @@ class ChatView extends GetView<ChatController> {
           ),
           child: Text(
             label,
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 13,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w600,
               color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
             ),
           ),
@@ -213,7 +213,9 @@ class ChatView extends GetView<ChatController> {
                   CircleAvatar(
                     radius: 26,
                     backgroundColor: AppColors.primarySoft,
-                    backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+                    backgroundImage: const AssetImage(
+                      'lib/assets/img/avatar.png',
+                    ),
                   ),
                   Positioned(
                     right: 1,
@@ -242,21 +244,21 @@ class ChatView extends GetView<ChatController> {
                             name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppFonts.generalSansStyle(
+                            style: AppFonts.satoshiStyle(
                               fontSize: 15,
                               fontWeight: isUnread
-                                  ? FontWeight.w800
-                                  : FontWeight.w700,
+                                  ? FontWeight.w600
+                                  : FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
                         ),
                         Text(
                           time,
-                          style: AppFonts.generalSansStyle(
+                          style: AppFonts.satoshiStyle(
                             fontSize: 11,
                             fontWeight: isUnread
-                                ? FontWeight.w700
+                                ? FontWeight.w600
                                 : FontWeight.w500,
                             color: isUnread
                                 ? AppColors.primary
@@ -273,7 +275,7 @@ class ChatView extends GetView<ChatController> {
                             message,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: AppFonts.generalSansStyle(
+                            style: AppFonts.satoshiStyle(
                               fontSize: 13,
                               fontWeight: isUnread
                                   ? FontWeight.w600
@@ -300,10 +302,10 @@ class ChatView extends GetView<ChatController> {
                             child: Text(
                               unreadCount.toString(),
                               textAlign: TextAlign.center,
-                              style: AppFonts.generalSansStyle(
+                              style: AppFonts.satoshiStyle(
                                 color: Colors.white,
                                 fontSize: 10,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),

@@ -48,7 +48,7 @@ class SocialScaffold extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: AppFonts.headingStyle(
                               fontSize: 20,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
@@ -57,7 +57,7 @@ class SocialScaffold extends StatelessWidget {
                               subtitle!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppFonts.generalSansStyle(
+                              style: AppFonts.satoshiStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -105,7 +105,10 @@ class SocialPostCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 22, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
+          CircleAvatar(
+            radius: 22,
+            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -118,9 +121,9 @@ class SocialPostCard extends StatelessWidget {
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppFonts.generalSansStyle(
+                        style: AppFonts.satoshiStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -128,7 +131,7 @@ class SocialPostCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       handle,
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 12,
                         color: AppColors.textTertiary,
                       ),
@@ -138,7 +141,7 @@ class SocialPostCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   body,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 14,
                     height: 1.45,
                     color: AppColors.textPrimary,
@@ -181,7 +184,7 @@ class _Metric extends StatelessWidget {
         const SizedBox(width: 5),
         Text(
           label,
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -228,9 +231,9 @@ class AppTextPill extends StatelessWidget {
           ],
           Text(
             label,
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: active ? AppColors.primary : AppColors.textSecondary,
             ),
           ),

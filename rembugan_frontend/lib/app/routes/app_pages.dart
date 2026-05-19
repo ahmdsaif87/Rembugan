@@ -20,7 +20,6 @@ import '../modules/social/views/comment_view.dart';
 import '../modules/social/views/create_post_view.dart';
 import '../modules/social/views/edit_profile_view.dart';
 import '../modules/social/views/empty_state_view.dart';
-import '../modules/social/views/guest_landing_view.dart';
 import '../modules/social/views/loading_state_view.dart';
 import '../modules/social/views/notification_view.dart';
 import '../modules/social/views/other_profile_view.dart';
@@ -86,7 +85,6 @@ class AppPages {
     GetPage(name: _Paths.SAVED, page: () => const SavedView()),
     GetPage(name: _Paths.EMPTY_STATE, page: () => const EmptyStateView()),
     GetPage(name: _Paths.LOADING_STATE, page: () => const LoadingStateView()),
-    GetPage(name: _Paths.GUEST_LANDING, page: () => const GuestLandingView()),
     GetPage(
       name: _Paths.PERSONALIZATION,
       page: () => const PersonalizationView(),

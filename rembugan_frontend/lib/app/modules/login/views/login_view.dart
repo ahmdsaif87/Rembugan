@@ -16,7 +16,7 @@ class LoginView extends GetView<LoginController> {
           // 1. BACKGROUND PALING BAWAH (Warna Paling Gelap)
           Container(
             height: Get.height * 0.45, // Ambil sekitar 45% layar atas
-            color: AppColors.textPrimary,
+            color: Color(0xFF000000),
           ),
 
           // 2. LENGKUNGAN KANAN ATAS (Warna Tengah)
@@ -65,18 +65,18 @@ class LoginView extends GetView<LoginController> {
                   // Judul
                   Text(
                     'Selamat Datang di',
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                       height: 1.3,
                     ),
                   ),
                   Text(
                     'Rembugan.',
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                       height: 1.3,
                     ),
@@ -86,7 +86,7 @@ class LoginView extends GetView<LoginController> {
                   // Subjudul
                   Text(
                     'Masuk ke akunmu untuk menemukan rekan dan proyek hebat hari ini.',
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: Colors.white.withValues(alpha: 0.8),
@@ -182,10 +182,6 @@ class LoginView extends GetView<LoginController> {
 
             // ── Tombol Login Google ──
             _buildGoogleButton(),
-            const SizedBox(height: 12),
-
-            // ── Tombol Masuk sebagai Tamu ──
-            _buildGuestButton(),
             const SizedBox(height: 32),
           ],
         ),
@@ -197,7 +193,7 @@ class LoginView extends GetView<LoginController> {
   Widget _buildInputLabel(String label) {
     return Text(
       label,
-      style: AppFonts.generalSansStyle(
+      style: AppFonts.satoshiStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
@@ -210,10 +206,7 @@ class LoginView extends GetView<LoginController> {
     return TextFormField(
       controller: controller.emailOrNimController,
       keyboardType: TextInputType.emailAddress,
-      style: AppFonts.generalSansStyle(
-        fontSize: 14,
-        color: AppColors.textPrimary,
-      ),
+      style: AppFonts.satoshiStyle(fontSize: 14, color: AppColors.textPrimary),
       decoration: const InputDecoration(
         hintText: 'nanda@gmail.com or 23090122',
         prefixIcon: Padding(
@@ -235,7 +228,7 @@ class LoginView extends GetView<LoginController> {
       () => TextFormField(
         controller: controller.passwordController,
         obscureText: controller.isPasswordHidden.value,
-        style: AppFonts.generalSansStyle(
+        style: AppFonts.satoshiStyle(
           fontSize: 14,
           color: AppColors.textPrimary,
         ),
@@ -283,7 +276,7 @@ class LoginView extends GetView<LoginController> {
         onTap: controller.onForgotPassword,
         child: Text(
           'Lupa kata sandi',
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: AppColors.primaryNormal,
@@ -305,7 +298,7 @@ class LoginView extends GetView<LoginController> {
               onPressed: controller.onLogin,
               child: Text(
                 'Masuk',
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
@@ -329,7 +322,7 @@ class LoginView extends GetView<LoginController> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Atau',
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 13,
               fontWeight: FontWeight.w400,
               color: AppColors.neutralDarker,
@@ -365,45 +358,7 @@ class LoginView extends GetView<LoginController> {
             const SizedBox(width: 12),
             Text(
               'Login with Google',
-              style: AppFonts.generalSansStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Tombol Masuk sebagai Tamu
-  Widget _buildGuestButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: controller.onGuestLogin,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.neutralDark, width: 1.2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              FluentIcons.guest_24_regular,
-              color: AppColors.textPrimary,
-              size: 22,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Masuk sebagai tamu',
-              style: AppFonts.generalSansStyle(
+              style: AppFonts.satoshiStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,

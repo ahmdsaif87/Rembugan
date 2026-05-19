@@ -2,7 +2,6 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../services/session_service.dart';
 import '../../routes/app_pages.dart';
 import '../theme/theme.dart';
 
@@ -117,7 +116,7 @@ class AppIconButton extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: AppColors.error,
+                      color: AppColors.danger,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
@@ -156,9 +155,9 @@ class AppSectionHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -166,7 +165,7 @@ class AppSectionHeader extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   subtitle!,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -186,9 +185,9 @@ class AppSectionHeader extends StatelessWidget {
             ),
             child: Text(
               actionText!,
-              style: AppFonts.generalSansStyle(
+              style: AppFonts.satoshiStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: AppColors.primary,
               ),
             ),
@@ -227,8 +226,8 @@ class AppEmptyState extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.accentBlue.withValues(alpha: 0.14),
-                      AppColors.warning.withValues(alpha: 0.10),
+                      AppColors.info100.withValues(alpha: 0.72),
+                      AppColors.warning100.withValues(alpha: 0.42),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -236,19 +235,15 @@ class AppEmptyState extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.border),
                 ),
-                child: Icon(
-                  icon,
-                  color: AppColors.accentBlue.withValues(alpha: 0.82),
-                  size: 26,
-                ),
+                child: Icon(icon, color: AppColors.info700, size: 26),
               ),
               const SizedBox(height: 14),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -256,7 +251,7 @@ class AppEmptyState extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
                   height: 1.4,
@@ -329,14 +324,6 @@ class AppBottomNav extends StatelessWidget {
 
   void _go(String route) {
     if (Get.currentRoute == route) return;
-    if (route == Routes.CHAT && GuestGuard.isGuest) {
-      GuestGuard.showLoginPrompt(feature: 'membuka chat');
-      return;
-    }
-    if (route == Routes.PROFILE && GuestGuard.isGuest) {
-      Get.toNamed(Routes.GUEST_LANDING);
-      return;
-    }
     if (route == Routes.HOME) {
       Get.offAllNamed(route);
     } else {
@@ -389,9 +376,9 @@ class _NavItem extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 10.5,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w600,
                     color: color,
                   ),
                 ),
@@ -413,10 +400,6 @@ class _CreateButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            if (GuestGuard.isGuest) {
-              GuestGuard.showLoginPrompt(feature: 'membuat postingan');
-              return;
-            }
             Get.toNamed(Routes.CREATE_POST);
           },
           borderRadius: BorderRadius.circular(18),
@@ -437,133 +420,5 @@ class _CreateButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class GuestGuard {
-  static bool get isGuest => Get.find<SessionService>().isGuest.value;
-
-  static bool blockIfGuest(String feature) {
-    if (!isGuest) return false;
-    showLoginPrompt(feature: feature);
-    return true;
-  }
-
-  static void showLoginPrompt({required String feature}) {
-    Get.dialog<void>(
-      Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: const Icon(
-                  FluentIcons.lock_closed_24_regular,
-                  color: AppColors.textPrimary,
-                  size: 21,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Masuk untuk $feature',
-                style: AppFonts.headingStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Mode tamu bisa membaca konten publik. Untuk berinteraksi, chat, menyimpan, atau membuat konten, masuk dengan akun Rembugan.',
-                style: AppFonts.interStyle(
-                  fontSize: 13,
-                  height: 1.45,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: Get.back,
-                      child: const Text('Nanti'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back<void>();
-                        Get.offAllNamed(Routes.LOGIN);
-                      },
-                      child: const Text('Masuk'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class GuestModeBadge extends StatelessWidget {
-  const GuestModeBadge({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      if (!Get.find<SessionService>().isGuest.value) {
-        return const SizedBox.shrink();
-      }
-
-      return InkWell(
-        onTap: () => Get.toNamed(Routes.GUEST_LANDING),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                FluentIcons.eye_24_regular,
-                size: 13,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'Guest',
-                style: AppFonts.interStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    });
   }
 }

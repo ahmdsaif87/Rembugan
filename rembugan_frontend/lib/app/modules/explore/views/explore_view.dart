@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
@@ -104,7 +105,7 @@ class ExploreView extends GetView<ExploreController> {
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
       itemCount: controller.filteredProjects.length + 1,
       separatorBuilder: (_, index) =>
-          index == 0 ? const SizedBox(height: 12) : const SizedBox(height: 14),
+          index == 0 ? const SizedBox(height: 14) : const SizedBox(height: 18),
       itemBuilder: (context, index) {
         if (index == 0) {
           return Padding(
@@ -119,7 +120,9 @@ class ExploreView extends GetView<ExploreController> {
         final project = controller.filteredProjects[index - 1];
         return _ProjectCard(
           project: project,
-          matchLabel: index == 1 ? 'Paling Cocok' : 'Cocok untuk Anda',
+          matchLabel: index == 1
+              ? 'Paling cocok untuk kamu'
+              : 'Skill yang sama',
           onDetail: () => _showProjectSheet(context, project),
         );
       },
@@ -139,12 +142,12 @@ class ExploreView extends GetView<ExploreController> {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
           sliver: SliverGrid.builder(
             itemCount: controller.competitions.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              mainAxisSpacing: 16,
+              mainAxisSpacing: 20,
               crossAxisSpacing: 16,
               childAspectRatio: 0.72,
             ),
@@ -166,11 +169,11 @@ class ExploreView extends GetView<ExploreController> {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
       itemCount: 3,
-      separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 12 : 14),
+      separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 14 : 18),
       itemBuilder: (context, index) {
         if (index == 0) {
           return const _SectionHeader(
-            title: 'Orang yang cocok',
+            title: 'Orang Disekitar',
             trailing: '12 hasil',
           );
         }
@@ -181,12 +184,14 @@ class ExploreView extends GetView<ExploreController> {
             'Flutter Developer',
             'https://i.pravatar.cc/100?img=60',
             ['Flutter', 'Figma'],
+            'Skill yang sama',
           ),
           (
             'Raka Pratama',
             'UI/UX Designer',
             'https://i.pravatar.cc/100?img=47',
             ['Design', 'Research'],
+            'Paling cocok untuk kamu',
           ),
         ];
         final person = people[index - 1];
@@ -195,6 +200,7 @@ class ExploreView extends GetView<ExploreController> {
           role: person.$2,
           avatarUrl: person.$3,
           tags: person.$4,
+          matchLabel: person.$5,
         );
       },
     );
@@ -247,7 +253,7 @@ class ExploreView extends GetView<ExploreController> {
                   title,
                   style: AppFonts.headingStyle(
                     fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -259,25 +265,12 @@ class ExploreView extends GetView<ExploreController> {
                     color: AppColors.textSecondary,
                   ),
                 ),
+                if (tab.isPeople) ...[
+                  const SizedBox(height: 14),
+                  const _ProfileFilterPreview(),
+                ],
                 const SizedBox(height: 22),
-                _FilterGroup(
-                  title: 'Urutkan',
-                  options: const ['Terbaru', 'Populer', 'Paling cocok'],
-                ),
-                const Divider(height: 28, color: AppColors.border),
-                _FilterGroup(
-                  title: tab.isPeople ? 'Skill' : 'Kategori',
-                  options: tab.isCompetition
-                      ? const ['UI/UX', 'Hackathon', 'Bisnis', 'Riset']
-                      : const ['Flutter', 'Backend', 'UI/UX', 'Research'],
-                ),
-                const Divider(height: 28, color: AppColors.border),
-                _FilterGroup(
-                  title: tab.isPeople ? 'Divisi' : 'Status',
-                  options: tab.isCompetition
-                      ? const ['Pendaftaran buka', 'Deadline dekat', 'Gratis']
-                      : const ['Terbuka', 'Butuh anggota', 'Remote'],
-                ),
+                _FilterSheetContent(tab: tab),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -328,7 +321,7 @@ class ExploreView extends GetView<ExploreController> {
                   _Pill(
                     project.faculty,
                     const Color(0xFFEAF2FF),
-                    const Color(0xFF315BD6),
+                    AppColors.info600,
                   ),
                   _Pill('FTIK', const Color(0xFFF3F4F6), _muted),
                 ],
@@ -336,9 +329,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 18),
               Text(
                 project.title,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   height: 1.15,
                   color: _ink,
                 ),
@@ -350,7 +343,7 @@ class ExploreView extends GetView<ExploreController> {
                   const SizedBox(width: 5),
                   Text(
                     'Deadline ${project.deadline}',
-                    style: AppFonts.generalSansStyle(
+                    style: AppFonts.satoshiStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: _muted,
@@ -361,7 +354,7 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 18),
               Text(
                 'Rembugan adalah platform kolaborasi berbasis mobile untuk ekosistem kampus. Kami butuh Flutter dev berpengalaman state management dan seorang UI/UX designer.',
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   height: 1.55,
                   color: const Color(0xFF666D78),
@@ -370,9 +363,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 22),
               Text(
                 'Skill Dibutuhkan',
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: _ink,
                 ),
               ),
@@ -388,9 +381,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 24),
               Text(
                 'Anggota Tim',
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: _ink,
                 ),
               ),
@@ -429,7 +422,6 @@ class ExploreView extends GetView<ExploreController> {
                     child: _PrimaryAction(
                       label: 'Minta Bergabung',
                       onTap: () {
-                        if (GuestGuard.blockIfGuest('apply proyek')) return;
                         Navigator.of(context).pop();
                       },
                     ),
@@ -457,14 +449,14 @@ class ExploreView extends GetView<ExploreController> {
               _Pill(
                 competition.category,
                 const Color(0xFFEAF2FF),
-                const Color(0xFF315BD6),
+                AppColors.info600,
               ),
               const SizedBox(height: 18),
               Text(
                 competition.title,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   height: 1.18,
                   color: _ink,
                 ),
@@ -472,14 +464,12 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 12),
               Text(
                 competition.caption,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   height: 1.55,
                   color: const Color(0xFF666D78),
                 ),
               ),
-              const SizedBox(height: 18),
-              _LinkBox(link: competition.registrationLink),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -494,10 +484,7 @@ class ExploreView extends GetView<ExploreController> {
                     flex: 2,
                     child: _PrimaryAction(
                       label: 'Daftar Lomba',
-                      onTap: () {
-                        if (GuestGuard.blockIfGuest('mendaftar lomba')) return;
-                        Navigator.of(context).pop();
-                      },
+                      onTap: () => _openRegistrationLink(competition),
                     ),
                   ),
                 ],
@@ -506,6 +493,17 @@ class ExploreView extends GetView<ExploreController> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _openRegistrationLink(Competition competition) async {
+    await Clipboard.setData(ClipboardData(text: competition.registrationLink));
+    Get.back<void>();
+    Get.snackbar(
+      'Link pendaftaran siap',
+      competition.registrationLink,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 3),
     );
   }
 }
@@ -535,7 +533,7 @@ class _SearchBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   hint,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 13,
                     color: ExploreView._muted,
                     fontWeight: FontWeight.w500,
@@ -565,57 +563,429 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _FilterGroup extends StatelessWidget {
-  const _FilterGroup({required this.title, required this.options});
+class _FilterSheetContent extends StatelessWidget {
+  const _FilterSheetContent({required this.tab});
 
-  final String title;
+  final ExploreTab tab;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLomba = tab.isCompetition;
+    final isPeople = tab.isPeople;
+
+    return Column(
+      children: [
+        _SortSelector(isPeople: isPeople),
+        const SizedBox(height: 12),
+        _FilterSelectField(
+          label: 'Jurusan',
+          value: 'Semua jurusan',
+          icon: Icons.school_outlined,
+          options: const [
+            'Semua jurusan',
+            'Teknik Informatika',
+            'Sistem Informasi',
+            'DKV',
+            'Manajemen',
+          ],
+        ),
+        const SizedBox(height: 12),
+        _FilterSelectField(
+          label: isPeople ? 'Skill' : 'Kategori',
+          value: isPeople
+              ? 'Semua skill'
+              : isLomba
+              ? 'Semua kategori lomba'
+              : 'Semua kategori proyek',
+          icon: isPeople ? Icons.code : FluentIcons.tag_24_regular,
+          options: isPeople
+              ? const ['Semua skill', 'Flutter', 'UI/UX', 'Firebase', 'React']
+              : isLomba
+              ? const ['Semua kategori', 'Hackathon', 'UI/UX', 'Bisnis', 'Data']
+              : const [
+                  'Semua kategori',
+                  'Mobile App',
+                  'Web App',
+                  'UI/UX',
+                  'Riset',
+                ],
+        ),
+        const SizedBox(height: 12),
+        _FilterSelectField(
+          label: isPeople
+              ? 'Ketersediaan'
+              : isLomba
+              ? 'Deadline pendaftaran'
+              : 'Slot tersisa',
+          value: isPeople
+              ? 'Terbuka kolaborasi'
+              : isLomba
+              ? '1 minggu'
+              : 'Semua slot',
+          icon: isPeople
+              ? FluentIcons.people_24_regular
+              : isLomba
+              ? Icons.calendar_today_outlined
+              : FluentIcons.people_24_regular,
+          options: isPeople
+              ? const [
+                  'Terbuka kolaborasi',
+                  'Aktif minggu ini',
+                  'Ada portfolio',
+                ]
+              : isLomba
+              ? const ['< 1 minggu', '1 minggu', '2 minggu', 'Bulan ini']
+              : const ['Semua slot', '1 slot', '2 slot', '3+ slot'],
+        ),
+      ],
+    );
+  }
+}
+
+class _SortSelector extends StatelessWidget {
+  const _SortSelector({required this.isPeople});
+
+  final bool isPeople;
+
+  @override
+  Widget build(BuildContext context) {
+    return _FilterPanel(
+      label: 'Urutan',
+      child: Row(
+        children: [
+          const Expanded(
+            child: _SortOption(
+              label: 'Paling relevan',
+              icon: FluentIcons.sparkle_24_filled,
+              selected: true,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _SortOption(
+              label: isPeople ? 'Terpopuler' : 'Terbaru',
+              icon: isPeople ? Icons.trending_up : FluentIcons.clock_24_regular,
+              selected: false,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SortOption extends StatelessWidget {
+  const _SortOption({
+    required this.label,
+    required this.icon,
+    required this.selected,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 45,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.textPrimary : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: selected ? AppColors.textPrimary : AppColors.border,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: selected ? Colors.white : AppColors.textSecondary,
+          ),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterSelectField extends StatelessWidget {
+  const _FilterSelectField({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.options,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
   final List<String> options;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: AppFonts.interStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+    return _FilterPanel(
+      label: label,
+      child: InkWell(
+        onTap: () => _showOptions(context),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
           ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (var i = 0; i < options.length; i++)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: i == 0 ? AppColors.textPrimary : AppColors.border,
-                  ),
-                ),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.textTertiary),
+              const SizedBox(width: 10),
+              Expanded(
                 child: Text(
-                  options[i],
-                  style: AppFonts.interStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: i == 0
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
+              const Icon(
+                FluentIcons.chevron_down_24_regular,
+                size: 16,
+                color: AppColors.textTertiary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showOptions(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          _SearchableFilterSheet(title: label, value: value, options: options),
+    );
+  }
+}
+
+class _SearchableFilterSheet extends StatefulWidget {
+  const _SearchableFilterSheet({
+    required this.title,
+    required this.value,
+    required this.options,
+  });
+
+  final String title;
+  final String value;
+  final List<String> options;
+
+  @override
+  State<_SearchableFilterSheet> createState() => _SearchableFilterSheetState();
+}
+
+class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.options
+        .where((option) => option.toLowerCase().contains(_query.toLowerCase()))
+        .toList();
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.78,
+        ),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          MediaQuery.of(context).padding.bottom + 20,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderStrong,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              widget.title,
+              style: AppFonts.satoshiStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              autofocus: true,
+              onChanged: (value) => setState(() => _query = value),
+              decoration: InputDecoration(
+                hintText: 'Cari ${widget.title.toLowerCase()}',
+                prefixIcon: const Icon(
+                  FluentIcons.search_24_regular,
+                  size: 18,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: filtered.length,
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 1, color: AppColors.border),
+                itemBuilder: (context, index) {
+                  final option = filtered[index];
+                  final selected = option == widget.value;
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      option,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    trailing: selected
+                        ? const Icon(
+                            FluentIcons.checkmark_24_filled,
+                            size: 18,
+                            color: AppColors.textPrimary,
+                          )
+                        : null,
+                    onTap: () => Navigator.of(context).pop(),
+                  );
+                },
+              ),
+            ),
           ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _FilterPanel extends StatelessWidget {
+  const _FilterPanel({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppFonts.satoshiStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 9),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileFilterPreview extends StatelessWidget {
+  const _ProfileFilterPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 18,
+            backgroundImage: AssetImage('lib/assets/img/avatar.png'),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Preview hasil orang',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Filter membantu menemukan calon kolaborator yang relevan.',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -659,7 +1029,7 @@ class _SegmentButton extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: AppFonts.generalSansStyle(
+                style: AppFonts.satoshiStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: active ? Colors.white : const Color(0xFF6B7280),
@@ -691,7 +1061,7 @@ class _SectionHeader extends StatelessWidget {
               title,
               style: AppFonts.headingStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: ExploreView._ink,
                 height: 1.1,
               ),
@@ -699,7 +1069,7 @@ class _SectionHeader extends StatelessWidget {
           ),
           Text(
             trailing,
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 11,
               color: AppColors.textTertiary,
               fontWeight: FontWeight.w500,
@@ -711,7 +1081,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _ProjectCard extends StatelessWidget {
+class _ProjectCard extends StatefulWidget {
   const _ProjectCard({
     required this.project,
     required this.matchLabel,
@@ -722,12 +1092,101 @@ class _ProjectCard extends StatelessWidget {
   final String matchLabel;
   final VoidCallback onDetail;
 
+  @override
+  State<_ProjectCard> createState() => _ProjectCardState();
+}
+
+class _ProjectCardState extends State<_ProjectCard> {
+  bool _hasRequested = false;
+
   Color get _progressColor {
-    if (project.openSlots <= 1) return const Color(0xFFF59E0B);
-    if (project.filledSlots / project.totalSlots >= 0.7) {
+    if (widget.project.openSlots <= 1) return AppColors.warning;
+    if (widget.project.filledSlots / widget.project.totalSlots >= 0.7) {
       return AppColors.success;
     }
     return const Color(0xFF4B5563);
+  }
+
+  void _confirmJoinRequest() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.info50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.info100),
+                ),
+                child: const Icon(
+                  FluentIcons.people_team_add_24_regular,
+                  color: AppColors.info700,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Minta bergabung?',
+                style: AppFonts.headingStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Permintaan kamu akan dikirim ke pemilik proyek "${widget.project.title}".',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  height: 1.45,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Batal'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        setState(() => _hasRequested = true);
+                        Get.snackbar(
+                          'Permintaan terkirim',
+                          'Kamu akan mendapat update saat diterima.',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.success50,
+                          colorText: AppColors.success800,
+                          duration: const Duration(seconds: 3),
+                        );
+                      },
+                      child: const Text('Kirim'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -736,12 +1195,12 @@ class _ProjectCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: const Color(0xFFECECEC), width: 0.8),
+        border: Border.all(color: const Color(0xFFDDE2EA), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.016),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -750,7 +1209,7 @@ class _ProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: onDetail,
+          onTap: widget.onDetail,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 13, 14, 14),
             child: Column(
@@ -763,31 +1222,20 @@ class _ProjectCard extends StatelessWidget {
                       child: Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
                         spacing: 8,
+                        runSpacing: 6,
                         children: [
-                          Text(
-                            project.category.toUpperCase(),
-                            style: AppFonts.generalSansStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: ExploreView._brand,
-                            ),
+                          _ProjectTag(
+                            label: widget.project.category,
+                            background: const Color(0xFFFFF1E7),
+                            foreground: const Color(0xFFFF6B2C),
                           ),
-                          Text(
-                            '-',
-                            style: AppFonts.generalSansStyle(
-                              fontSize: 10,
-                              color: ExploreView._muted,
+                          _ProjectTag(
+                            label: widget.project.faculty.replaceAll(
+                              'Teknik Informatika',
+                              'TI',
                             ),
-                          ),
-                          Text(
-                            project.faculty
-                                .replaceAll('Teknik Informatika', 'TI')
-                                .toUpperCase(),
-                            style: AppFonts.generalSansStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: ExploreView._muted,
-                            ),
+                            background: const Color(0xFFEAF2FF),
+                            foreground: AppColors.info600,
                           ),
                         ],
                       ),
@@ -801,13 +1249,13 @@ class _ProjectCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  project.title,
+                  widget.project.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 18,
                     height: 1.18,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: ExploreView._ink,
                   ),
                 ),
@@ -816,7 +1264,7 @@ class _ProjectCard extends StatelessWidget {
                   'Aplikasi mobile untuk mempertemukan mahasiswa yang ingin berkolaborasi dalam proyek teknologi, riset, maupun startup.',
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 12,
                     height: 1.45,
                     fontWeight: FontWeight.w400,
@@ -824,11 +1272,11 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _MatchBadge(label: matchLabel),
+                _MatchBadge(label: widget.matchLabel),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
-                  children: project.skills
+                  children: widget.project.skills
                       .map(
                         (skill) => _MiniChip(
                           label: skill,
@@ -847,8 +1295,8 @@ class _ProjectCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${project.filledSlots} bergabung',
-                      style: AppFonts.generalSansStyle(
+                      '${widget.project.filledSlots} bergabung',
+                      style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textSecondary,
@@ -856,8 +1304,8 @@ class _ProjectCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 7),
                     Text(
-                      '- ${project.openSlots} slot terbuka',
-                      style: AppFonts.generalSansStyle(
+                      '- ${widget.project.openSlots} slot terbuka',
+                      style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: ExploreView._brand,
@@ -875,10 +1323,10 @@ class _ProjectCard extends StatelessWidget {
                         border: Border.all(color: AppColors.border),
                       ),
                       child: Text(
-                        '${project.filledSlots}/${project.totalSlots} terisi',
-                        style: AppFonts.generalSansStyle(
+                        '${widget.project.filledSlots}/${widget.project.totalSlots} terisi',
+                        style: AppFonts.satoshiStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           color: ExploreView._brand,
                         ),
                       ),
@@ -889,10 +1337,11 @@ class _ProjectCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: project.filledSlots / project.totalSlots,
+                    value:
+                        widget.project.filledSlots / widget.project.totalSlots,
                     minHeight: 3,
                     color: _progressColor.withValues(alpha: 0.54),
-                    backgroundColor: const Color(0xFFF2F3F5),
+                    backgroundColor: AppColors.surfaceSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -903,7 +1352,11 @@ class _ProjectCard extends StatelessWidget {
                       height: 28,
                       child: Stack(
                         children: [
-                          for (var i = 0; i < project.memberAvatars.length; i++)
+                          for (
+                            var i = 0;
+                            i < widget.project.memberAvatars.length;
+                            i++
+                          )
                             Positioned(
                               left: i * 19,
                               child: Container(
@@ -918,19 +1371,21 @@ class _ProjectCard extends StatelessWidget {
                                 ),
                                 child: CircleAvatar(
                                   radius: 13,
-                                  backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+                                  backgroundImage: const AssetImage(
+                                    'lib/assets/img/avatar.png',
+                                  ),
                                 ),
                               ),
                             ),
                           Positioned(
-                            left: project.memberAvatars.length * 22,
+                            left: widget.project.memberAvatars.length * 22,
                             child: const CircleAvatar(
                               radius: 14,
                               backgroundColor: AppColors.surfaceSecondary,
                               child: Icon(
                                 Icons.add,
                                 size: 14,
-                                color: Color(0xFFB0B7C2),
+                                color: AppColors.textTertiary,
                               ),
                             ),
                           ),
@@ -938,26 +1393,26 @@ class _ProjectCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      project.postedAgo,
-                      style: AppFonts.generalSansStyle(
+                      widget.project.postedAgo,
+                      style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF7D8591),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const Spacer(),
                     const Icon(
                       Icons.schedule,
                       size: 18,
-                      color: Color(0xFF9AA2AF),
+                      color: AppColors.textTertiary,
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      project.deadline,
-                      style: AppFonts.generalSansStyle(
+                      widget.project.deadline,
+                      style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF7D8591),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -968,17 +1423,15 @@ class _ProjectCard extends StatelessWidget {
                     Expanded(
                       child: _OutlineAction(
                         label: 'Lihat detail',
-                        onTap: onDetail,
+                        onTap: widget.onDetail,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
-                      child: _PrimaryAction(
-                        label: 'Minta Bergabung',
-                        onTap: () {
-                          if (GuestGuard.blockIfGuest('apply proyek')) return;
-                        },
+                      child: _RequestJoinAction(
+                        requested: _hasRequested,
+                        onTap: _hasRequested ? null : _confirmJoinRequest,
                       ),
                     ),
                   ],
@@ -986,6 +1439,82 @@ class _ProjectCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectTag extends StatelessWidget {
+  const _ProjectTag({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: AppFonts.satoshiStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w600,
+          color: foreground,
+        ),
+      ),
+    );
+  }
+}
+
+class _RequestJoinAction extends StatelessWidget {
+  const _RequestJoinAction({required this.requested, required this.onTap});
+
+  final bool requested;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 38,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: requested ? AppColors.success50 : AppColors.primary,
+          borderRadius: BorderRadius.circular(14),
+          border: requested ? Border.all(color: AppColors.success100) : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              requested
+                  ? FluentIcons.checkmark_circle_24_filled
+                  : FluentIcons.people_add_24_regular,
+              size: 15,
+              color: requested ? AppColors.success700 : Colors.white,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              requested ? 'Permintaan terkirim' : 'Minta Bergabung',
+              style: AppFonts.satoshiStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: requested ? AppColors.success800 : Colors.white,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1015,96 +1544,108 @@ class _CompetitionCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(competition.color.start),
-                    Color(competition.color.end),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: _Badge(label: competition.badge),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: const Color(0xFFDDE2EA), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(competition.color.start),
+                      Color(competition.color.end),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  Center(child: Icon(icon, size: 34, color: Colors.white)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 5,
-            runSpacing: 4,
-            children: [
-              Text(
-                competition.category,
-                style: AppFonts.generalSansStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF475569),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: _Badge(label: competition.badge),
+                    ),
+                    Center(child: Icon(icon, size: 34, color: Colors.white)),
+                  ],
                 ),
               ),
-              _TinyTag(label: competition.campusTag),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            competition.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppFonts.generalSansStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
-              color: ExploreView._ink,
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            competition.organizer,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppFonts.generalSansStyle(
-              fontSize: 9,
-              color: ExploreView._muted,
-            ),
-          ),
-          const SizedBox(height: 7),
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_today_outlined,
-                size: 11,
-                color: index == 3
-                    ? const Color(0xFFFF4B5F)
-                    : ExploreView._muted,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                competition.deadline,
-                style: AppFonts.generalSansStyle(
-                  fontSize: 9,
-                  color: index == 3
-                      ? const Color(0xFFFF4B5F)
-                      : ExploreView._muted,
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 5,
+              runSpacing: 4,
+              children: [
+                _TinyTag(label: index == 0 ? 'Paling cocok' : 'Sesuai jurusan'),
+                Text(
+                  competition.category,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
+                _TinyTag(label: competition.campusTag),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              competition.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+                color: ExploreView._ink,
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 3),
+            Text(
+              competition.organizer,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 9,
+                color: ExploreView._muted,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 11,
+                  color: index == 3 ? AppColors.danger : ExploreView._muted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  competition.deadline,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 9,
+                    color: index == 3 ? AppColors.danger : ExploreView._muted,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1119,41 +1660,41 @@ class _MatchBadge extends StatelessWidget {
     final value = label.toLowerCase();
     if (value.contains('cocok')) {
       return const _StatusTone(
-        background: Color(0xFFEFF8F2),
-        border: Color(0xFFD8F0E0),
-        foreground: Color(0xFF248A45),
+        background: AppColors.success50,
+        border: AppColors.success100,
+        foreground: AppColors.success700,
         icon: Icons.check_circle_outline,
       );
     }
     if (value.contains('ditutup') || value.contains('deadline')) {
       return const _StatusTone(
-        background: Color(0xFFFFF7ED),
-        border: Color(0xFFFED7AA),
-        foreground: Color(0xFFC56A09),
+        background: AppColors.warning50,
+        border: AppColors.warning100,
+        foreground: AppColors.warning700,
         icon: Icons.schedule,
       );
     }
     if (value.contains('penuh')) {
       return const _StatusTone(
-        background: Color(0xFFFEF2F2),
-        border: Color(0xFFFECACA),
-        foreground: Color(0xFFB42318),
+        background: AppColors.danger50,
+        border: AppColors.danger100,
+        foreground: AppColors.danger600,
         icon: Icons.block,
       );
     }
     if (value.contains('trending')) {
       return const _StatusTone(
-        background: Color(0xFFEFF6FF),
-        border: Color(0xFFDBEAFE),
-        foreground: Color(0xFF2563EB),
+        background: AppColors.info50,
+        border: AppColors.info100,
+        foreground: AppColors.info600,
         icon: Icons.trending_up,
       );
     }
     if (value.contains('baru')) {
       return const _StatusTone(
         background: Color(0xFFF5F3FF),
-        border: Color(0xFFEDE9FE),
-        foreground: Color(0xFF6D28D9),
+        border: Color(0xFFF5F3FF),
+        foreground: Color(0xFF8B5CF6),
         icon: Icons.auto_awesome,
       );
     }
@@ -1182,9 +1723,9 @@ class _MatchBadge extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 10,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: style.foreground,
             ),
           ),
@@ -1225,14 +1766,14 @@ class _Badge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star, size: 9, color: Color(0xFFFFD166)),
+          const Icon(Icons.star, size: 9, color: AppColors.warning),
           const SizedBox(width: 3),
           Text(
             label,
-            style: AppFonts.generalSansStyle(
+            style: AppFonts.satoshiStyle(
               fontSize: 8,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF475569),
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -1251,15 +1792,15 @@ class _TinyTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF2F7),
+        color: const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         label,
-        style: AppFonts.generalSansStyle(
+        style: AppFonts.satoshiStyle(
           fontSize: 8,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF7B8190),
+          fontWeight: FontWeight.w600,
+          color: AppColors.textTertiary,
         ),
       ),
     );
@@ -1294,7 +1835,7 @@ class _DetailSheetFrame extends StatelessWidget {
               width: 48,
               height: 5,
               decoration: BoxDecoration(
-                color: const Color(0xFFD4D9E2),
+                color: AppColors.borderStrong,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -1324,9 +1865,9 @@ class _Pill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppFonts.generalSansStyle(
+        style: AppFonts.satoshiStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: foreground,
         ),
       ),
@@ -1351,7 +1892,7 @@ class _MiniChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppFonts.generalSansStyle(
+        style: AppFonts.satoshiStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
           color: AppColors.textSecondary,
@@ -1371,13 +1912,16 @@ class _TeamMember extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CircleAvatar(radius: 18, backgroundImage: const AssetImage('lib/assets/img/avatar.png')),
+        CircleAvatar(
+          radius: 18,
+          backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+        ),
         const SizedBox(height: 6),
         Text(
           name,
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 10,
-            color: const Color(0xFF6B7280),
+            color: AppColors.textSecondary,
           ),
         ),
       ],
@@ -1398,18 +1942,18 @@ class _EmptyMember extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: const Color(0xFFCBD5E1),
+              color: AppColors.borderStrong,
               style: BorderStyle.solid,
             ),
           ),
-          child: const Icon(Icons.add, size: 18, color: Color(0xFFCBD5E1)),
+          child: const Icon(Icons.add, size: 18, color: AppColors.borderStrong),
         ),
         const SizedBox(height: 6),
         Text(
           'Terbuka',
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 10,
-            color: const Color(0xFF9CA3AF),
+            color: AppColors.textTertiary,
           ),
         ),
       ],
@@ -1444,22 +1988,22 @@ class _OwnerTile extends StatelessWidget {
               children: [
                 Text(
                   'Diposting oleh',
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 10,
                     color: ExploreView._muted,
                   ),
                 ),
                 Text(
                   project.postedBy,
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: ExploreView._ink,
                   ),
                 ),
                 Text(
                   '${project.posterRole} - FTIK',
-                  style: AppFonts.generalSansStyle(
+                  style: AppFonts.satoshiStyle(
                     fontSize: 10,
                     color: ExploreView._muted,
                   ),
@@ -1476,45 +2020,8 @@ class _OwnerTile extends StatelessWidget {
             ),
             child: Text(
               'Profil',
-              style: AppFonts.generalSansStyle(
+              style: AppFonts.satoshiStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: ExploreView._brand,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LinkBox extends StatelessWidget {
-  const _LinkBox({required this.link});
-
-  final String link;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ExploreView._line),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.link, size: 18, color: ExploreView._brand),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              link,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppFonts.generalSansStyle(
-                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: ExploreView._brand,
               ),
@@ -1540,12 +2047,12 @@ class _PrimaryAction extends StatelessWidget {
         height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFF2B2F36),
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
           label,
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: Colors.white,
@@ -1576,10 +2083,10 @@ class _OutlineAction extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: AppFonts.generalSansStyle(
+          style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF4B5563),
+            color: AppColors.textSecondary,
           ),
         ),
       ),
@@ -1593,12 +2100,14 @@ class _PersonCard extends StatelessWidget {
     required this.role,
     required this.avatarUrl,
     required this.tags,
+    required this.matchLabel,
   });
 
   final String name;
   final String role;
   final String avatarUrl;
   final List<String> tags;
+  final String matchLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -1612,8 +2121,14 @@ class _PersonCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: ExploreView._line),
-            boxShadow: AppShadows.soft,
+            border: Border.all(color: const Color(0xFFDDE2EA), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 7),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -1626,17 +2141,19 @@ class _PersonCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _MatchBadge(label: matchLabel),
+                    const SizedBox(height: 8),
                     Text(
                       name,
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: ExploreView._ink,
                       ),
                     ),
                     Text(
                       role,
-                      style: AppFonts.generalSansStyle(
+                      style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         color: ExploreView._muted,
                       ),
