@@ -62,7 +62,7 @@ class _UploadState extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'Pilih cara paling nyaman. Kamu bisa scan resume, isi sendiri, atau lanjut dulu dan rapikan nanti.',
+          'Pilih cara paling nyaman. Kamu bisa scan CV, isi sendiri, atau lanjut dulu dan rapikan nanti.',
           style: AppFonts.satoshiStyle(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -73,9 +73,9 @@ class _UploadState extends StatelessWidget {
         _ActionCard(
           onTap: controller.simulateUpload,
           icon: FluentIcons.document_pdf_24_regular,
-          title: 'Scan resume',
+          title: 'Scan CV',
           description:
-              'AI bantu membaca resume dan membuat draft bio, skill, dan experience.',
+              'AI bantu membaca dan membuat draft bio, skill, dan experience dari CV kamu.',
           badge: 'Paling cepat',
         ),
         const SizedBox(height: 12),
@@ -102,7 +102,7 @@ class _UploadState extends StatelessWidget {
         _FlowStep(
           icon: FluentIcons.arrow_upload_24_regular,
           title: 'Scan atau isi sendiri',
-          description: 'Mulai dari resume, atau tulis profil secara manual.',
+          description: 'Mulai dari CV, atau tulis profil secara manual.',
         ),
         _FlowStep(
           icon: FluentIcons.sparkle_24_regular,

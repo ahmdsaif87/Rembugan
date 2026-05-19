@@ -147,32 +147,29 @@ class _OnboardingPage extends StatelessWidget {
           // 1. Berikan sedikit jarak aman dari header/logo
           const SizedBox(height: 20),
 
-          // 2. Gambar ilustrasi diberi flex: 5 agar proporsinya pas
+          // 2. Gambar ilustrasi diberi flex agar proporsinya pas
           Expanded(
-            flex: 5,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Image.asset(imagePath, fit: BoxFit.contain),
-            ),
+            flex: 6,
+            child: Image.asset(imagePath, fit: BoxFit.contain),
           ),
 
           // Jarak fix dari gambar ke judul
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
           // Judul
           Text(
             title,
             textAlign: TextAlign.center,
             style: AppFonts.satoshiStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w600,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
               height: 1.2,
             ),
           ),
 
           // Jarak fix dari judul ke deskripsi
-          const SizedBox(height: 15),
+          const SizedBox(height: 12),
 
           // Deskripsi
           Text(
