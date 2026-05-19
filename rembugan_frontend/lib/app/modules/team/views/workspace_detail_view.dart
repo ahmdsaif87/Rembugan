@@ -1,4 +1,4 @@
-﻿import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -54,15 +54,16 @@ class WorkspaceDetailView extends GetView<TeamController> {
             ws.name,
             style: AppFonts.headingStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            '${ws.memberCount} anggota - $online online - Chat & Kanban',
+            '${ws.memberCount} anggota · $online online',
             style: AppFonts.satoshiStyle(
               fontSize: 11,
+              fontWeight: FontWeight.w500,
               color: AppColors.textTertiary,
             ),
           ),
@@ -71,7 +72,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
       actions: [
         IconButton(
           icon: const Icon(FluentIcons.more_horizontal_24_regular, size: 20),
-          onPressed: () => _showWorkspaceActions(controller, Get.context!, ws),
+          onPressed: () => _showWorkspaceActions(Get.context!, ws),
         ),
       ],
       bottom: PreferredSize(
@@ -86,41 +87,126 @@ class WorkspaceDetailView extends GetView<TeamController> {
 
     return Container(
       color: Colors.white,
-      child: Obx(
-        () => Row(
-          children: List.generate(labels.length, (i) {
-            final active = controller.detailTabIndex.value == i;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => controller.changeDetailTab(i),
-                child: Container(
-                  height: 42,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: active
-                            ? AppColors.textPrimary
-                            : Colors.transparent,
-                        width: 1.5,
-                      ),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Obx(
+          () => Row(
+            children: List.generate(labels.length, (i) {
+              final active = controller.detailTabIndex.value == i;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => controller.changeDetailTab(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: active ? Colors.white : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: active
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
-                  ),
-                  child: Text(
-                    labels[i],
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                      color: active
-                          ? AppColors.textPrimary
-                          : AppColors.textTertiary,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          i == 0
+                              ? (active
+                                    ? FluentIcons.chat_24_filled
+                                    : FluentIcons.chat_24_regular)
+                              : (active
+                                    ? FluentIcons.board_24_filled
+                                    : FluentIcons.board_24_regular),
+                          size: 16,
+                          color: active
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          labels[i],
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 13,
+                            fontWeight: active
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: active
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showWorkspaceActions(BuildContext context, WorkspaceModel ws) {
+    final pendingApplicants = controller.applicantsFor(ws.id);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _WorkspaceActionSheet(
+        ws: ws,
+        pendingApplicants: pendingApplicants,
+        onManageApplicants: () {
+          Navigator.pop(context);
+          _showApplicantSheet(context, ws);
+        },
+        onEndCollaboration: () {
+          Navigator.pop(context);
+          _showEndCollaborationSheet(context, ws);
+        },
+      ),
+    );
+  }
+
+  void _showApplicantSheet(BuildContext context, WorkspaceModel ws) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ApplicantSheet(ctrl: controller, ws: ws),
+    );
+  }
+
+  void _showEndCollaborationSheet(BuildContext context, WorkspaceModel ws) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EndCollaborationSheet(
+        ws: ws,
+        onConfirm: () {
+          controller.endCollaboration(ws);
+          Navigator.pop(context);
+          Get.back<void>();
+          Get.snackbar(
+            'Kolaborasi selesai',
+            '${ws.name} dipindahkan ke History.',
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+          );
+        },
       ),
     );
   }
@@ -184,11 +270,10 @@ class _WorkspaceActionSheet extends StatelessWidget {
       ),
     );
   }
-
 }
 
-class _ApplicantSheet extends StatelessWidget {
-  const _ApplicantSheet({required this.ctrl, required this.ws});
+class ApplicantSheet extends StatelessWidget {
+  const ApplicantSheet({super.key, required this.ctrl, required this.ws});
 
   final TeamController ctrl;
   final WorkspaceModel ws;
@@ -257,57 +342,6 @@ class _ApplicantSheet extends StatelessWidget {
           ],
         );
       }),
-    );
-  }
-
-  void _showWorkspaceActions(BuildContext context, WorkspaceModel ws) {
-    final pendingApplicants = controller.applicantsFor(ws.id);
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _WorkspaceActionSheet(
-        ws: ws,
-        pendingApplicants: pendingApplicants,
-        onManageApplicants: () {
-          Navigator.pop(context);
-          _showApplicantSheet(context, ws);
-        },
-        onEndCollaboration: () {
-          Navigator.pop(context);
-          _showEndCollaborationSheet(context, ws);
-        },
-      ),
-    );
-  }
-
-  void _showApplicantSheet(BuildContext context, WorkspaceModel ws) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ApplicantSheet(ctrl: controller, ws: ws),
-    );
-  }
-
-  void _showEndCollaborationSheet(BuildContext context, WorkspaceModel ws) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _EndCollaborationSheet(
-        ws: ws,
-        onConfirm: () {
-          controller.endCollaboration(ws);
-          Navigator.pop(context);
-          Get.back<void>();
-          Get.snackbar(
-            'Kolaborasi selesai',
-            '${ws.name} dipindahkan ke History.',
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(16),
-          );
-        },
-      ),
     );
   }
 }
@@ -424,7 +458,9 @@ class _ApplicantCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(child: _SheetButton(label: 'Terima', onTap: onAccept)),
+              Expanded(
+                child: _SheetButton(label: 'Terima', onTap: onAccept),
+              ),
             ],
           ),
         ],
@@ -684,8 +720,9 @@ class _SheetButton extends StatelessWidget {
 }
 
 class _DiscussionTab extends StatelessWidget {
-  const _DiscussionTab({required this.ctrl});
+  _DiscussionTab({required this.ctrl});
   final TeamController ctrl;
+  final TextEditingController _msgCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -704,7 +741,7 @@ class _DiscussionTab extends StatelessWidget {
 
         // Input
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(
@@ -713,47 +750,259 @@ class _DiscussionTab extends StatelessWidget {
           ),
           child: SafeArea(
             top: false,
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: Container(
-                    height: 38,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceSecondary,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: AppColors.border),
+                // Attachment Preview Chip Row
+                Obx(() {
+                  if (ctrl.attachedGroupFileName.value == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF9FAFB),
+                      border: Border(
+                        bottom: BorderSide(color: AppColors.border, width: 1),
+                      ),
                     ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Tulis pesan...',
-                        hintStyle: AppFonts.satoshiStyle(
-                          fontSize: 13,
-                          color: AppColors.textTertiary,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Icon(
+                            ctrl.attachedGroupFileName.value!.endsWith('.png') ||
+                                    ctrl.attachedGroupFileName.value!.endsWith('.jpg')
+                                ? FluentIcons.image_24_regular
+                                : FluentIcons.document_24_regular,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
                         ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 9),
-                        isDense: true,
-                      ),
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ctrl.attachedGroupFileName.value!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                ctrl.attachedGroupFileSize.value ?? '2.4 MB',
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => ctrl.removeGroupAttachment(),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.border,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              FluentIcons.dismiss_12_filled,
+                              color: AppColors.textSecondary,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.textPrimary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    FluentIcons.send_24_filled,
-                    size: 15,
-                    color: Colors.white,
+                  );
+                }),
+
+                // Input Row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      // Plus/Attachment Button
+                      GestureDetector(
+                        onTap: () {
+                          Get.bottomSheet(
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  topRight: Radius.circular(20),
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.border,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'Lampirkan File & Dokumen',
+                                    style: AppFonts.satoshiStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  ListTile(
+                                    leading: const Icon(FluentIcons.image_24_regular, color: AppColors.primary),
+                                    title: Text('Foto & Media', style: AppFonts.satoshiStyle(fontSize: 14)),
+                                    onTap: () {
+                                      ctrl.attachGroupFile('GEMASTIK_PitchDeck.png', '3.2 MB');
+                                      Get.back();
+                                      Get.snackbar(
+                                        'File Dilampirkan',
+                                        'GEMASTIK_PitchDeck.png berhasil dipilih',
+                                        snackPosition: SnackPosition.TOP,
+                                        backgroundColor: AppColors.textPrimary,
+                                        colorText: Colors.white,
+                                      );
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(FluentIcons.document_24_regular, color: AppColors.primary),
+                                    title: Text('Dokumen & File PDF', style: AppFonts.satoshiStyle(fontSize: 14)),
+                                    onTap: () {
+                                      ctrl.attachGroupFile('Revisi_Proposal_v3.pdf', '2.1 MB');
+                                      Get.back();
+                                      Get.snackbar(
+                                        'File Dilampirkan',
+                                        'Revisi_Proposal_v3.pdf berhasil dipilih',
+                                        snackPosition: SnackPosition.TOP,
+                                        backgroundColor: AppColors.textPrimary,
+                                        colorText: Colors.white,
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            border: Border.all(color: AppColors.border),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            FluentIcons.add_24_regular,
+                            color: AppColors.textSecondary,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Text Field
+                      Expanded(
+                        child: TextField(
+                          controller: _msgCtrl,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: AppColors.surfaceSecondary,
+                            hintText: 'Tulis pesan...',
+                            hintStyle: AppFonts.satoshiStyle(
+                              fontSize: 14,
+                              color: AppColors.textTertiary.withValues(alpha: 0.6),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13.5),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: AppColors.border.withValues(alpha: 0.8),
+                                width: 1.0,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: AppColors.textPrimary.withValues(alpha: 0.4),
+                                width: 1.2,
+                              ),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: AppColors.border.withValues(alpha: 0.8),
+                                width: 1.0,
+                              ),
+                            ),
+                          ),
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Send Button
+                      GestureDetector(
+                        onTap: () {
+                          final text = _msgCtrl.text.trim();
+                          if (text.isEmpty && ctrl.attachedGroupFileName.value == null) return;
+                          
+                          ctrl.discussions.add(
+                            DiscussionMessage(
+                              sender: 'Dede',
+                              body: text,
+                              time: 'Just now',
+                              isMe: true,
+                              attachment: ctrl.attachedGroupFileName.value,
+                            ),
+                          );
+
+                          _msgCtrl.clear();
+                          ctrl.removeGroupAttachment();
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.textPrimary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              FluentIcons.send_24_filled,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -865,28 +1114,65 @@ class _Bubble extends StatelessWidget {
                         ),
                       ),
                       if (msg.attachment != null) ...[
-                        const SizedBox(height: 5),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              FluentIcons.attach_24_regular,
-                              size: 11,
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 200,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: msg.isMe
+                                ? Colors.white.withValues(alpha: 0.12)
+                                : AppColors.surfaceWarm,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
                               color: msg.isMe
-                                  ? Colors.white54
-                                  : AppColors.textTertiary,
+                                  ? Colors.white.withValues(alpha: 0.2)
+                                  : AppColors.border,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              msg.attachment!,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 11,
-                                color: msg.isMe
-                                    ? Colors.white54
-                                    : AppColors.textTertiary,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                msg.attachment!.endsWith('.png') || msg.attachment!.endsWith('.jpg')
+                                    ? FluentIcons.image_24_regular
+                                    : FluentIcons.document_24_regular,
+                                color: msg.isMe ? Colors.white : AppColors.primary,
+                                size: 18,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      msg.attachment!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppFonts.satoshiStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: msg.isMe ? Colors.white : AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '2.4 MB',
+                                      style: AppFonts.satoshiStyle(
+                                        fontSize: 9,
+                                        color: msg.isMe
+                                            ? Colors.white.withValues(alpha: 0.7)
+                                            : AppColors.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                FluentIcons.arrow_download_24_regular,
+                                color: msg.isMe ? Colors.white70 : AppColors.textSecondary,
+                                size: 16,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ],
@@ -925,46 +1211,49 @@ class _TaskTab extends StatelessWidget {
     return Stack(
       children: [
         Obx(
-          () => ListView(
+          () => SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 88),
-            children: [
-              _KanbanColumn(
-                title: 'To Do',
-                color: AppColors.info500,
-                tasks: ctrl.tasks.where((t) => t.status == 'Todo').toList(),
-              ),
-              _KanbanColumn(
-                title: 'In Progress',
-                color: AppColors.warning700,
-                tasks: ctrl.tasks
-                    .where((t) => t.status == 'In Progress')
-                    .toList(),
-              ),
-              _KanbanColumn(
-                title: 'Done',
-                color: AppColors.success600,
-                tasks: ctrl.tasks.where((t) => t.status == 'Done').toList(),
-              ),
-            ],
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _KanbanColumn(
+                  title: 'To Do',
+                  color: AppColors.info500,
+                  tasks: ctrl.tasks.where((t) => t.status == 'Todo').toList(),
+                ),
+                _KanbanColumn(
+                  title: 'In Progress',
+                  color: AppColors.warning700,
+                  tasks: ctrl.tasks
+                      .where((t) => t.status == 'In Progress')
+                      .toList(),
+                ),
+                _KanbanColumn(
+                  title: 'Done',
+                  color: AppColors.success600,
+                  tasks: ctrl.tasks.where((t) => t.status == 'Done').toList(),
+                ),
+              ],
+            ),
           ),
         ),
         Positioned(
-          right: 20,
-          bottom: 20,
+          right: 16,
+          bottom: 16,
           child: GestureDetector(
             onTap: () => _showAddTaskSheet(context),
             child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -973,14 +1262,14 @@ class _TaskTab extends StatelessWidget {
                 children: [
                   const Icon(
                     FluentIcons.add_24_regular,
-                    size: 16,
+                    size: 14,
                     color: Colors.white,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Text(
-                    'Tambah Tugas',
+                    'Tugas',
                     style: AppFonts.satoshiStyle(
-                      fontSize: 13,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
@@ -995,107 +1284,504 @@ class _TaskTab extends StatelessWidget {
   }
 
   void _showAddTaskSheet(BuildContext context) {
-    final titleCtrl = TextEditingController();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+      builder: (_) => _AddTaskSheet(ctrl: ctrl),
+    );
+  }
+}
+
+class _AddTaskSheet extends StatefulWidget {
+  const _AddTaskSheet({required this.ctrl});
+  final TeamController ctrl;
+
+  @override
+  State<_AddTaskSheet> createState() => _AddTaskSheetState();
+}
+
+class _AddTaskSheetState extends State<_AddTaskSheet> {
+  final titleCtrl = TextEditingController();
+  final deadlineCtrl = TextEditingController();
+  final descCtrl = TextEditingController();
+
+  bool isExpanded = false;
+  String selectedAssignee = 'Saya';
+  String selectedPriority = 'Sedang';
+
+  final List<String> assignees = ['Saya', 'Dede', 'Raka', 'Cameron', 'Aisyah'];
+  final List<String> priorities = ['Rendah', 'Sedang', 'Tinggi'];
+
+  final List<String> suggestions = [
+    'Setup API Login',
+    'Review UI Home',
+    'Testing Workspace',
+  ];
+
+  @override
+  void dispose() {
+    titleCtrl.dispose();
+    deadlineCtrl.dispose();
+    descCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD4D9E2),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4D9E2),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Tambah Tugas Baru',
+              style: AppFonts.headingStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            Row(
+              children: [
+                Text(
+                  'Saran:',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: suggestions.map((sug) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                titleCtrl.text = sug;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceSecondary,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.border.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                sug,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            Text(
+              'NAMA TUGAS',
+              style: AppFonts.satoshiStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textTertiary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: titleCtrl,
+              autofocus: true,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFF9FAFB),
+                hintText: 'Apa yang perlu dikerjakan?',
+                hintStyle: AppFonts.satoshiStyle(
+                  fontSize: 13.5,
+                  color: AppColors.textTertiary,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.border, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.4), width: 1.2),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: AppColors.border, width: 1),
+                ),
+              ),
+              style: AppFonts.satoshiStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            if (!isExpanded)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isExpanded = true;
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        FluentIcons.add_circle_24_regular,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Tambah detail (Assignee, Prioritas, Deadline)',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'DITUGASKAN KE',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textTertiary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: selectedAssignee,
+                              isExpanded: true,
+                              icon: const Icon(Icons.arrow_drop_down, size: 18),
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                              items: assignees.map((name) {
+                                return DropdownMenuItem(
+                                  value: name,
+                                  child: Text(name),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    selectedAssignee = val;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'DEADLINE',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textTertiary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: deadlineCtrl,
+                          readOnly: true,
+                          onTap: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2030),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: AppColors.textPrimary,
+                                      onPrimary: Colors.white,
+                                      onSurface: AppColors.textPrimary,
+                                    ),
+                                    textButtonTheme: TextButtonThemeData(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                            if (picked != null) {
+                              final months = [
+                                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+                                'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+                              ];
+                              final formattedDate = "${picked.day} ${months[picked.month - 1]} ${picked.year}";
+                              deadlineCtrl.text = formattedDate;
+                            }
+                          },
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFF9FAFB),
+                            hintText: 'Pilih tanggal...',
+                            hintStyle: AppFonts.satoshiStyle(
+                              fontSize: 13,
+                              color: AppColors.textTertiary,
+                            ),
+                            suffixIcon: const Icon(
+                              FluentIcons.calendar_24_regular,
+                              size: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.4), width: 1.2),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                            ),
+                          ),
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
               Text(
-                'Tambah Tugas',
-                style: AppFonts.headingStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                'PRIORITAS TUGAS',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textTertiary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: priorities.map((p) {
+                  final active = selectedPriority == p;
+                  Color activeColor;
+                  Color activeBg;
+                  if (p == 'Tinggi') {
+                    activeColor = AppColors.danger700;
+                    activeBg = AppColors.danger50;
+                  } else if (p == 'Sedang') {
+                    activeColor = AppColors.warning700;
+                    activeBg = AppColors.warning50;
+                  } else {
+                    activeColor = AppColors.success700;
+                    activeBg = AppColors.success50;
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedPriority = p;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active ? activeBg : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: active ? activeColor : AppColors.border,
+                            width: active ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Text(
+                          p,
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: active
+                                ? activeColor
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+
+              Text(
+                'DESKRIPSI TUGAS',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textTertiary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: descCtrl,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  hintText: 'Deskripsi singkat (opsional)...',
+                  hintStyle: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    color: AppColors.textTertiary,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.border, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.4), width: 1.2),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.border, width: 1),
+                  ),
+                ),
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceSecondary,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: TextField(
-                  controller: titleCtrl,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'Nama tugas...',
-                    hintStyle: AppFonts.satoshiStyle(
-                      fontSize: 14,
-                      color: AppColors.textTertiary,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: GestureDetector(
-                  onTap: () {
-                    if (titleCtrl.text.trim().isNotEmpty) {
-                      ctrl.tasks.add(
-                        WorkspaceTask(
-                          title: titleCtrl.text.trim(),
-                          assignee: 'Saya',
-                          deadline: '-',
-                          status: 'Todo',
-                        ),
-                      );
-                    }
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Text(
-                      'Simpan',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ],
-          ),
+            const SizedBox(height: 18),
+
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: GestureDetector(
+                onTap: () {
+                  if (titleCtrl.text.trim().isNotEmpty) {
+                    widget.ctrl.tasks.add(
+                      WorkspaceTask(
+                        title: titleCtrl.text.trim(),
+                        assignee: selectedAssignee,
+                        deadline: deadlineCtrl.text.trim().isNotEmpty
+                            ? deadlineCtrl.text.trim()
+                            : '-',
+                        status: 'Todo',
+                      ),
+                    );
+                  }
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Tambah Tugas',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1116,59 +1802,80 @@ class _KanbanColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 250,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
+      width: 180,
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSecondary,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 7,
-                height: 7,
+                width: 5,
+                height: 5,
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
-              const SizedBox(width: 7),
+              const SizedBox(width: 5),
               Text(
                 title,
                 style: AppFonts.satoshiStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const Spacer(),
-              Text(
-                '${tasks.length}',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textTertiary,
+              const SizedBox(width: 5),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 1.5,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  '${tasks.length}',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           if (tasks.isEmpty)
-            Text(
-              'Belum ada tugas.',
-              style: AppFonts.satoshiStyle(
-                fontSize: 12,
-                color: AppColors.textTertiary,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              alignment: Alignment.center,
+              child: Text(
+                'Belum ada tugas',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 10.5,
+                  color: AppColors.textTertiary,
+                ),
               ),
             )
           else
-            ...tasks.map(
-              (task) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _KanbanTaskCard(task: task),
-              ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: _KanbanTaskCard(task: tasks[index]),
+                );
+              },
             ),
         ],
       ),
@@ -1183,57 +1890,169 @@ class _KanbanTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String priority = (task.title.length % 3 == 0)
+        ? 'Tinggi'
+        : (task.title.length % 3 == 1 ? 'Sedang' : 'Rendah');
+    final Color priorityColor = priority == 'Tinggi'
+        ? AppColors.danger700
+        : (priority == 'Sedang' ? AppColors.warning700 : AppColors.success700);
+
+    final String initials = task.assignee.isNotEmpty
+        ? task.assignee.split(' ').map((p) => p[0]).take(2).join().toUpperCase()
+        : 'Saya';
+
+    final hasComments = task.title.length % 2 == 0;
+    final commentsCount = task.title.length % 3 + 1;
+
+    Color deadlineColor;
+    if (task.deadline == 'Hari ini') {
+      deadlineColor = AppColors.danger500;
+    } else if (task.deadline == 'Besok') {
+      deadlineColor = AppColors.warning600;
+    } else {
+      deadlineColor = AppColors.textSecondary;
+    }
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            task.title,
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.015),
+            blurRadius: 3,
+            offset: const Offset(0, 1.5),
           ),
-          const SizedBox(height: 8),
-          Row(
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                FluentIcons.person_24_regular,
-                size: 12,
-                color: AppColors.textTertiary,
-              ),
-              const SizedBox(width: 4),
+              Container(width: 3.5, color: priorityColor),
+              const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  task.assignee,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 10.5,
-                    color: AppColors.textTertiary,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(2, 10, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            priority.toUpperCase(),
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              color: priorityColor,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (hasComments) ...[
+                            Icon(
+                              FluentIcons.chat_24_regular,
+                              size: 10,
+                              color: AppColors.textTertiary.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                            const SizedBox(width: 1.5),
+                            Text(
+                              '$commentsCount',
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textTertiary,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Icon(
+                            Icons.drag_handle,
+                            size: 12,
+                            color: AppColors.textTertiary.withValues(
+                              alpha: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        task.title,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        height: 0.5,
+                        color: AppColors.border.withValues(alpha: 0.4),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF3F4F6),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              initials,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              task.assignee,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            FluentIcons.calendar_24_regular,
+                            size: 10.5,
+                            color: deadlineColor,
+                          ),
+                          const SizedBox(width: 1.5),
+                          Text(
+                            task.deadline,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w600,
+                              color: deadlineColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                task.deadline,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1385,4 +2204,3 @@ class _FileTab extends StatelessWidget {
     );
   }
 }
-

@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../routes/app_pages.dart';
+import '../../team/controllers/team_controller.dart';
+import '../../team/views/workspace_detail_view.dart';
 import 'social_components.dart';
 
 enum _NotificationTab { all, activity, collaboration }
@@ -19,6 +21,7 @@ class _NotificationItem {
     required this.kind,
     this.actionLabel,
     this.priority = false,
+    this.avatarAsset,
   });
 
   final String title;
@@ -28,6 +31,7 @@ class _NotificationItem {
   final _NotificationKind kind;
   final String? actionLabel;
   final bool priority;
+  final String? avatarAsset;
 }
 
 class NotificationView extends StatefulWidget {
@@ -74,6 +78,7 @@ class _NotificationViewState extends State<NotificationView> {
       time: '1j',
       icon: FluentIcons.heart_24_regular,
       kind: _NotificationKind.social,
+      avatarAsset: 'lib/assets/img/avatar.png',
     ),
     _NotificationItem(
       title: 'Nadia mulai mengikuti kamu',
@@ -81,6 +86,7 @@ class _NotificationViewState extends State<NotificationView> {
       time: '2j',
       icon: FluentIcons.person_24_regular,
       kind: _NotificationKind.social,
+      avatarAsset: 'lib/assets/img/avatar.png',
     ),
     _NotificationItem(
       title: 'File baru diunggah',
@@ -139,7 +145,16 @@ class _NotificationViewState extends State<NotificationView> {
             _PriorityBanner(count: collabCount),
             const SizedBox(height: 14),
           ],
-          ..._visibleItems.map((item) => _NotificationCard(item: item)),
+          ...List.generate(_visibleItems.length, (index) {
+            final item = _visibleItems[index];
+            final isLast = index == _visibleItems.length - 1;
+            return Column(
+              children: [
+                _NotificationTile(item: item),
+                if (!isLast) const Divider(height: 1, color: AppColors.border),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -305,8 +320,8 @@ class _PriorityBanner extends StatelessWidget {
   }
 }
 
-class _NotificationCard extends StatelessWidget {
-  const _NotificationCard({required this.item});
+class _NotificationTile extends StatelessWidget {
+  const _NotificationTile({required this.item});
 
   final _NotificationItem item;
 
@@ -314,38 +329,65 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = _isCollab ? AppColors.warning700 : AppColors.info600;
-    final background = _isCollab ? AppColors.warning50 : AppColors.info50;
-    final border = item.priority ? AppColors.warning100 : AppColors.border;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: border),
-        boxShadow: item.priority ? AppShadows.soft : const [],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(12),
+          if (!_isCollab)
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.primarySoft,
+                  backgroundImage: AssetImage(item.avatarAsset ?? 'lib/assets/img/avatar.png'),
+                ),
+                Positioned(
+                  bottom: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 2,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      item.icon,
+                      size: 10,
+                      color: item.icon == FluentIcons.heart_24_regular
+                          ? const Color(0xFFE5484D)
+                          : AppColors.info600,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.warning50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(item.icon, size: 18, color: AppColors.warning700),
             ),
-            child: Icon(item.icon, size: 18, color: foreground),
-          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: Text(
@@ -378,37 +420,60 @@ class _NotificationCard extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
                 ),
-                if (item.actionLabel != null) ...[
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: InkWell(
-                      onTap: () => Get.toNamed(Routes.TEAM),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.textPrimary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          item.actionLabel!,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
+          if (item.actionLabel != null) ...[
+            const SizedBox(width: 12),
+            InkWell(
+              onTap: () {
+                if (item.actionLabel == 'Tinjau') {
+                  final teamCtrl = Get.isRegistered<TeamController>()
+                      ? Get.find<TeamController>()
+                      : Get.put(TeamController());
+                  final ws = teamCtrl.workspaces.firstWhere(
+                    (w) => w.name == 'Rembugan App',
+                    orElse: () => teamCtrl.workspaces.first,
+                  );
+                  teamCtrl.openWorkspace(ws);
+                  Get.to<void>(() => const WorkspaceDetailView());
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    final context = Get.context;
+                    if (context != null) {
+                      showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => ApplicantSheet(ctrl: teamCtrl, ws: ws),
+                      );
+                    }
+                  });
+                } else {
+                  Get.toNamed(Routes.TEAM);
+                }
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.borderStrong, width: 1),
+                ),
+                child: Text(
+                  item.actionLabel!,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

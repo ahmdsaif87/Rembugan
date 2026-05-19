@@ -180,6 +180,20 @@ class TeamController extends GetxController {
   var detailTabIndex = 0.obs;
   final selectedWorkspace = Rxn<WorkspaceModel>();
 
+  // Group Chat File Attachment State
+  final attachedGroupFileName = RxnString();
+  final attachedGroupFileSize = RxnString();
+
+  void attachGroupFile(String name, String size) {
+    attachedGroupFileName.value = name;
+    attachedGroupFileSize.value = size;
+  }
+
+  void removeGroupAttachment() {
+    attachedGroupFileName.value = null;
+    attachedGroupFileSize.value = null;
+  }
+
   final workspaces = <WorkspaceModel>[
     WorkspaceModel(
       id: '1',

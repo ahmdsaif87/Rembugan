@@ -128,26 +128,6 @@ class TeamView extends GetView<TeamController> {
                         (ws) => _WorkspaceRow(ws: ws, onTap: () => _open(ws)),
                       ),
                     ],
-
-                    const SizedBox(height: 24),
-
-                    // AKTIVITAS
-                    _sectionTitle('Aktivitas Terkini'),
-                    const SizedBox(height: 12),
-                    ...controller.recentActivities.asMap().entries.expand((e) {
-                      final item = _ActivityItem(
-                        activity: e.value,
-                        isLast: e.key == controller.recentActivities.length - 1,
-                      );
-                      if (e.key == 0) return [item];
-                      return [
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Divider(height: 1, color: _divider),
-                        ),
-                        item,
-                      ];
-                    }),
                   ],
                 ),
               ),
@@ -217,22 +197,113 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
     return _green;
   }
 
+  // Generates a beautiful gradient based on workspace name
+  LinearGradient _generateWorkspaceGradient(String name) {
+    final hash = name.hashCode;
+    
+    // Premium desaturated slate, navy, teal, violet gradient pairings
+    final List<List<Color>> palettes = [
+      [const Color(0xFF1E293B), const Color(0xFF475569)], // Slate Charcoal
+      [const Color(0xFF0F172A), const Color(0xFF334155)], // Dark Indigo Slate
+      [const Color(0xFF2E1065), const Color(0xFF5B21B6)], // Deep Royal Violet
+      [const Color(0xFF064E3B), const Color(0xFF0F766E)], // Rich Emerald Teal
+      [const Color(0xFF1C1917), const Color(0xFF44403C)], // Warm Stone
+      [const Color(0xFF172554), const Color(0xFF1E3A8A)], // Deep Navy
+    ];
+    
+    final palette = palettes[hash.abs() % palettes.length];
+    return LinearGradient(
+      colors: palette,
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Overlapping circular member avatar stack
+  Widget _buildMemberPresenceStack(List<WorkspaceMember> members) {
+    if (members.isEmpty) return const SizedBox.shrink();
+    
+    final limit = members.take(3).toList();
+    final double stackWidth = (14.0 * (limit.length - 1)) + 20.0;
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 20,
+          width: stackWidth,
+          child: Stack(
+            children: limit.asMap().entries.map((entry) {
+              final index = entry.key;
+              final member = entry.value;
+              final initials = member.initials.isNotEmpty
+                  ? member.initials
+                  : (member.name.isNotEmpty ? member.name.substring(0, 1).toUpperCase() : '?');
+              
+              final hash = member.name.hashCode;
+              final List<Color> colors = [
+                const Color(0xFF475569), // Slate
+                const Color(0xFF64748B), // Light Slate
+                const Color(0xFF3B82F6), // Blue
+                const Color(0xFF10B981), // Emerald
+                const Color(0xFF8B5CF6), // Violet
+                const Color(0xFFEC4899), // Pink
+                const Color(0xFFF59E0B), // Amber
+              ];
+              final circleColor = colors[hash.abs() % colors.length];
+
+              return Positioned(
+                left: index * 14.0,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: circleColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        if (members.length > 3) ...[
+          const SizedBox(width: 4),
+          Text(
+            '+${members.length - 3}',
+            style: AppFonts.satoshiStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: _faint,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ws = widget.ws;
     final pending = ws.totalTasks - ws.doneTasks;
     final hasUnread = ws.unreadCount > 0;
-
-    final subtitleWidget = Text(
-      ws.activityCue ?? ws.lastActivity,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: AppFonts.satoshiStyle(
-        fontSize: 12,
-        color: hasUnread ? AppColors.textSecondary : AppColors.textTertiary,
-        fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
-      ),
-    );
+    final double progress = ws.totalTasks > 0 ? ws.doneTasks / ws.totalTasks : 0.0;
 
     return AnimatedScale(
       duration: const Duration(milliseconds: 120),
@@ -246,9 +317,22 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
           color: _hovered ? const Color(0xFFFAFAFA) : AppColors.background,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: _hovered ? AppColors.borderStrong : AppColors.border,
+            color: _pressed
+                ? _ink
+                : (_hovered ? AppColors.borderStrong : AppColors.border),
+            width: _pressed ? 1.5 : 1.0,
           ),
-          boxShadow: _pressed ? const [] : AppShadows.soft,
+          boxShadow: _pressed
+              ? const []
+              : (_hovered
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : AppShadows.soft),
         ),
         child: Material(
           color: Colors.transparent,
@@ -261,122 +345,226 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
             borderRadius: BorderRadius.circular(AppRadius.lg),
             onTap: widget.onTap,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-              child: Row(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Workspace icon + status dot ──
-                  Stack(
+                  // ── Row 1: Workspace Icon + Name/Category + Chevron ──
+                  Row(
                     children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: ws.isOwned
-                              ? _ink.withValues(alpha: 0.05)
-                              : const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(13),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          ws.name.substring(0, 1).toUpperCase(),
-                          style: AppFonts.headingStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w600,
-                            color: _ink,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: _accentDot,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.background,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-
-                  // ── Name + subtitle ──
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                ws.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 15,
-                                  fontWeight: hasUnread
-                                      ? FontWeight.w600
-                                      : FontWeight.w600,
-                                  color: _ink,
+                      // Avatar/Icon
+                      Stack(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              gradient: _generateWorkspaceGradient(ws.name),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              ws.name.substring(0, 1).toUpperCase(),
+                              style: AppFonts.headingStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 2,
-                              ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: 11,
+                              height: 11,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                ws.category,
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
-                                  color: _faint,
+                                color: _accentDot,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.background,
+                                  width: 2.0,
                                 ),
                               ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+
+                      // Name + Category
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    ws.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppFonts.satoshiStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: _ink,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F4F6),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Text(
+                                    ws.category,
+                                    style: AppFonts.satoshiStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      color: _sub,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  ws.userRole,
+                                  style: AppFonts.satoshiStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: _faint,
+                                  ),
+                                ),
+                                _buildMemberPresenceStack(ws.members),
+                              ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        subtitleWidget,
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Chevron right
+                      const Icon(
+                        FluentIcons.chevron_right_24_regular,
+                        size: 18,
+                        color: AppColors.textTertiary,
+                      ),
+                    ],
+                  ),
+
+                  // ── Row 1.5: Progress Bar Subtle ──
+                  if (ws.totalTasks > 0) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 3.5,
+                              backgroundColor: const Color(0xFFE5E7EB),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                progress < 0.35
+                                    ? const Color(0xFFEF4444) // Merah
+                                    : (progress < 0.75
+                                        ? const Color(0xFFF59E0B) // Kuning
+                                        : const Color(0xFF10B981)), // Hijau
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${(progress * 100).toInt()}%',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: progress < 0.35
+                                ? const Color(0xFFEF4444)
+                                : (progress < 0.75
+                                    ? const Color(0xFFD97706) // Darker yellow for text readability
+                                    : const Color(0xFF10B981)),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
+                  ],
 
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 12),
 
-                  // ── Right: badges + meta ──
-                  _WorkspaceMetaStack(
-                    unread: ws.unreadCount,
-                    pendingTasks: pending,
-                    applicants: ws.applicants,
-                  ),
-
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.border),
+                  // ── Row 2: Last Activity / status singkat ──
+                  if (ws.activityCue != null || ws.lastActivity.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: Text(
+                        ws.activityCue ?? ws.lastActivity,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 13,
+                          color: hasUnread ? AppColors.textPrimary : AppColors.textSecondary,
+                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                          height: 1.45,
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      FluentIcons.chevron_right_24_regular,
-                      size: 17,
-                      color: AppColors.textSecondary,
-                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // ── Row 3: Bottom badges: unread message, task count ──
+                  Row(
+                    children: [
+                      // Horizontal items stack
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (ws.unreadCount > 0)
+                              _WorkspaceMetaPill(
+                                icon: FluentIcons.chat_24_regular,
+                                value: '${ws.unreadCount} unread',
+                                color: _blue,
+                                background: _blueBg,
+                              ),
+                            if (pending > 0)
+                              _WorkspaceMetaPill(
+                                icon: FluentIcons.task_list_ltr_24_regular,
+                                value: '$pending task',
+                                color: _amber,
+                                background: _amberBg,
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Last updated metadata
+                      Text(
+                        ws.lastActivity,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11,
+                          color: _faint,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -388,107 +576,38 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  COUNT BADGE (semantic color)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _WorkspaceMetaStack extends StatelessWidget {
-  const _WorkspaceMetaStack({
-    required this.unread,
-    required this.pendingTasks,
-    required this.applicants,
-  });
-
-  final int unread;
-  final int pendingTasks;
-  final int applicants;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = <Widget>[
-      if (unread > 0)
-        _WorkspaceMetaPill(
-          icon: FluentIcons.chat_24_regular,
-          value: unread,
-          label: 'unread',
-          color: _blue,
-          background: _blueBg,
-        ),
-      if (pendingTasks > 0)
-        _WorkspaceMetaPill(
-          icon: FluentIcons.task_list_ltr_24_regular,
-          value: pendingTasks,
-          label: 'task',
-          color: _amber,
-          background: _amberBg,
-        ),
-      if (applicants > 0)
-        _WorkspaceMetaPill(
-          icon: FluentIcons.person_add_24_regular,
-          value: applicants,
-          label: 'pelamar',
-          color: _green,
-          background: _greenBg,
-        ),
-    ];
-
-    if (items.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        for (var i = 0; i < items.length && i < 2; i++) ...[
-          if (i > 0) const SizedBox(height: 5),
-          items[i],
-        ],
-      ],
-    );
-  }
-}
-
 class _WorkspaceMetaPill extends StatelessWidget {
   const _WorkspaceMetaPill({
     required this.icon,
     required this.value,
-    required this.label,
     required this.color,
     required this.background,
   });
 
   final IconData icon;
-  final int value;
-  final String label;
+  final String value;
   final Color color;
   final Color background;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: color),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
-            '$value',
+            value,
             style: AppFonts.satoshiStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: AppFonts.satoshiStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
@@ -498,97 +617,4 @@ class _WorkspaceMetaPill extends StatelessWidget {
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  ACTIVITY ITEM (typed)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-class _ActivityItem extends StatelessWidget {
-  const _ActivityItem({required this.activity, this.isLast = false});
-  final RecentActivity activity;
-  final bool isLast;
-
-  (IconData, Color, Color) get _visual => switch (activity.type) {
-    'message' => (FluentIcons.chat_24_regular, _blue, _blueBg),
-    'file' => (FluentIcons.document_24_regular, _amber, _amberBg),
-    'task' => (FluentIcons.checkmark_circle_24_regular, _green, _greenBg),
-    'member' => (
-      FluentIcons.person_add_24_regular,
-      _ink,
-      const Color(0xFFF3F4F6),
-    ),
-    'mention' => (FluentIcons.mention_24_regular, _blue, _blueBg),
-    _ => (FluentIcons.pulse_24_regular, _faint, const Color(0xFFF3F4F6)),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final (icon, color, bg) = _visual;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Icon circle (tinted)
-          Container(
-            width: 32,
-            height: 32,
-            margin: const EdgeInsets.only(top: 2),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 16, color: color),
-          ),
-          const SizedBox(width: 12),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  activity.text,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 13.5,
-                    color: _ink,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      activity.workspace,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: _sub,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      width: 3,
-                      height: 3,
-                      decoration: const BoxDecoration(
-                        color: _faint,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      activity.time,
-                      style: AppFonts.satoshiStyle(fontSize: 11, color: _faint),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

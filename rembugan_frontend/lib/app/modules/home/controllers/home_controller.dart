@@ -1,23 +1,9 @@
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
-  //TODO: Implement HomeController
+  final activeTab = 0.obs; // 0 for 'Untukmu', 1 for 'Mengikuti'
 
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
+  void setTab(int index) {
+    activeTab.value = index;
   }
-
-  @override
-  void onReady() {
-    super.onReady();
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
 }

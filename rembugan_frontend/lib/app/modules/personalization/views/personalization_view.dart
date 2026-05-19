@@ -1,6 +1,7 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
@@ -227,18 +228,12 @@ class _ScanningState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 108,
-              height: 108,
-              decoration: BoxDecoration(
-                color: AppColors.textPrimary,
-                borderRadius: BorderRadius.circular(34),
-                boxShadow: AppShadows.brand,
-              ),
-              child: const Icon(
-                FluentIcons.document_24_regular,
-                color: Colors.white,
-                size: 42,
+            SizedBox(
+              width: 260,
+              height: 260,
+              child: Lottie.asset(
+                'lib/assets/animations/OCR- Black & White.json',
+                fit: BoxFit.contain,
               ),
             ),
             const SizedBox(height: 28),
@@ -403,60 +398,182 @@ class _ExtractionResult extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          const SizedBox(height: 14),
           _ExtractionCard(
             title: 'Skill',
-            action: SizedBox(
-              width: 128,
-              child: TextField(
-                controller: skillInput,
-                onSubmitted: (value) {
-                  controller.addSkill(value);
-                  skillInput.clear();
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Cari atau tambah',
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: profile.skills.map((skill) {
-                return InputChip(
-                  label: Text(skill),
-                  onDeleted: () => controller.removeSkill(skill),
-                  backgroundColor: AppColors.primarySoft,
-                  side: const BorderSide(color: AppColors.border),
-                  labelStyle: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
+            child: StatefulBuilder(
+              builder: (context, setStateBuilder) {
+                if (!skillInput.hasListeners) {
+                  skillInput.addListener(() {
+                    setStateBuilder(() {});
+                  });
+                }
+
+                final query = skillInput.text.trim().toLowerCase();
+                final List<String> suggestions = _popularSkills.where((s) {
+                  final matchesQuery = s.toLowerCase().contains(query);
+                  final alreadyAdded = profile.skills.contains(s);
+                  return matchesQuery && !alreadyAdded;
+                }).toList();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: TextField(
+                              controller: skillInput,
+                              style: AppFonts.satoshiStyle(fontSize: 13),
+                              onSubmitted: (value) {
+                                if (value.trim().isNotEmpty) {
+                                  controller.addSkill(value);
+                                  skillInput.clear();
+                                }
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Cari atau ketik skill baru...',
+                                hintStyle: AppFonts.satoshiStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textTertiary,
+                                ),
+                                prefixIcon: const Icon(
+                                  FluentIcons.search_16_regular,
+                                  size: 16,
+                                  color: AppColors.textSecondary,
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 9,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            if (skillInput.text.trim().isNotEmpty) {
+                              controller.addSkill(skillInput.text);
+                              skillInput.clear();
+                            }
+                          },
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.textPrimary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              FluentIcons.add_16_regular,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (skillInput.text.isNotEmpty && suggestions.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Rekomendasi skill:',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: suggestions.take(6).map((s) {
+                          return GestureDetector(
+                            onTap: () {
+                              controller.addSkill(s);
+                              skillInput.clear();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Text(
+                                s,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: profile.skills.map((skill) {
+                        return InputChip(
+                          label: Text(skill),
+                          onDeleted: () => controller.removeSkill(skill),
+                          backgroundColor: AppColors.primarySoft,
+                          side: const BorderSide(color: AppColors.border),
+                          labelStyle: AppFonts.satoshiStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 );
-              }).toList(),
+              },
             ),
           ),
           const SizedBox(height: 14),
           _ExtractionCard(
             title: 'Experience',
             action: TextButton.icon(
-              onPressed: controller.addExperience,
+              onPressed: () => _showExperienceDialog(context, controller),
               icon: const Icon(FluentIcons.add_24_regular, size: 16),
               label: const Text('Tambah'),
             ),
             child: Column(
-              children: profile.experiences
-                  .map(
-                    (experience) => _ExperiencePreview(
-                      experience: experience,
-                      onDelete: () => controller.removeExperience(experience),
-                    ),
-                  )
-                  .toList(),
+              children: profile.experiences.asMap().entries.map((entry) {
+                final index = entry.key;
+                final experience = entry.value;
+                return _ExperiencePreview(
+                  experience: experience,
+                  onDelete: () => controller.removeExperience(experience),
+                  onEdit: () => _showExperienceDialog(
+                    context,
+                    controller,
+                    index: index,
+                    experience: experience,
+                  ),
+                );
+              }).toList(),
             ),
           ),
           const SizedBox(height: 22),
@@ -598,51 +715,172 @@ class _ManualInputState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          const SizedBox(height: 14),
           _ExtractionCard(
             title: 'Skill',
-            action: SizedBox(
-              width: 150,
-              child: TextField(
-                controller: skillInput,
-                onSubmitted: (value) {
-                  controller.addSkill(value);
-                  skillInput.clear();
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Cari atau tambah',
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-            ),
-            child: profile.skills.isEmpty
-                ? Text(
-                    'Skill membantu sistem merekomendasikan proyek yang relevan.',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
+            child: StatefulBuilder(
+              builder: (context, setStateBuilder) {
+                if (!skillInput.hasListeners) {
+                  skillInput.addListener(() {
+                    setStateBuilder(() {});
+                  });
+                }
+
+                final query = skillInput.text.trim().toLowerCase();
+                final List<String> suggestions = _popularSkills.where((s) {
+                  final matchesQuery = s.toLowerCase().contains(query);
+                  final alreadyAdded = profile.skills.contains(s);
+                  return matchesQuery && !alreadyAdded;
+                }).toList();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: TextField(
+                              controller: skillInput,
+                              style: AppFonts.satoshiStyle(fontSize: 13),
+                              onSubmitted: (value) {
+                                if (value.trim().isNotEmpty) {
+                                  controller.addSkill(value);
+                                  skillInput.clear();
+                                }
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Cari atau ketik skill baru...',
+                                hintStyle: AppFonts.satoshiStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textTertiary,
+                                ),
+                                prefixIcon: const Icon(
+                                  FluentIcons.search_16_regular,
+                                  size: 16,
+                                  color: AppColors.textSecondary,
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 9,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            if (skillInput.text.trim().isNotEmpty) {
+                              controller.addSkill(skillInput.text);
+                              skillInput.clear();
+                            }
+                          },
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.textPrimary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              FluentIcons.add_16_regular,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  )
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: profile.skills.map((skill) {
-                      return InputChip(
-                        label: Text(skill),
-                        onDeleted: () => controller.removeSkill(skill),
-                        backgroundColor: AppColors.primarySoft,
-                        side: const BorderSide(color: AppColors.border),
-                      );
-                    }).toList(),
-                  ),
+                    if (skillInput.text.isNotEmpty && suggestions.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Rekomendasi skill:',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: suggestions.take(6).map((s) {
+                          return GestureDetector(
+                            onTap: () {
+                              controller.addSkill(s);
+                              skillInput.clear();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Text(
+                                s,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    profile.skills.isEmpty
+                        ? Text(
+                            'Skill membantu sistem merekomendasikan proyek yang relevan.',
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          )
+                        : Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: profile.skills.map((skill) {
+                              return InputChip(
+                                label: Text(skill),
+                                onDeleted: () => controller.removeSkill(skill),
+                                backgroundColor: AppColors.primarySoft,
+                                side: const BorderSide(color: AppColors.border),
+                                labelStyle: AppFonts.satoshiStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ],
+                );
+              },
+            ),
           ),
           const SizedBox(height: 14),
           _ExtractionCard(
             title: 'Experience',
             action: TextButton.icon(
-              onPressed: controller.addExperience,
+              onPressed: () => _showExperienceDialog(context, controller),
               icon: const Icon(FluentIcons.add_24_regular, size: 16),
               label: const Text('Tambah'),
             ),
@@ -655,15 +893,20 @@ class _ManualInputState extends StatelessWidget {
                     ),
                   )
                 : Column(
-                    children: profile.experiences
-                        .map(
-                          (experience) => _ExperiencePreview(
-                            experience: experience,
-                            onDelete: () =>
-                                controller.removeExperience(experience),
-                          ),
-                        )
-                        .toList(),
+                    children: profile.experiences.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final experience = entry.value;
+                      return _ExperiencePreview(
+                        experience: experience,
+                        onDelete: () => controller.removeExperience(experience),
+                        onEdit: () => _showExperienceDialog(
+                          context,
+                          controller,
+                          index: index,
+                          experience: experience,
+                        ),
+                      );
+                    }).toList(),
                   ),
           ),
           const SizedBox(height: 22),
@@ -741,10 +984,15 @@ class _ExtractionCard extends StatelessWidget {
 }
 
 class _ExperiencePreview extends StatelessWidget {
-  const _ExperiencePreview({required this.experience, required this.onDelete});
+  const _ExperiencePreview({
+    required this.experience,
+    required this.onDelete,
+    required this.onEdit,
+  });
 
   final ProfileExperience experience;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -811,9 +1059,23 @@ class _ExperiencePreview extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(FluentIcons.delete_24_regular, size: 18),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: onEdit,
+                icon: const Icon(FluentIcons.edit_24_regular, size: 18),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(FluentIcons.delete_24_regular, size: 18),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
           ),
         ],
       ),
@@ -888,18 +1150,18 @@ class _CapabilityChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.border),
       ),
       child: Text(
         label,
         style: AppFonts.satoshiStyle(
-          fontSize: 11,
+          fontSize: 10.5,
           fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
+          color: AppColors.textPrimary,
         ),
       ),
     );
@@ -962,4 +1224,172 @@ class _SuccessMark extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Unified Popular Skills List ──
+const List<String> _popularSkills = [
+  'Flutter',
+  'Dart',
+  'Figma',
+  'UI/UX',
+  'Python',
+  'Firebase',
+  'React',
+  'Node.js',
+  'PostgreSQL',
+  'Golang',
+  'CSS',
+  'HTML',
+  'REST API',
+  'GetX',
+  'Git',
+  'DevOps',
+];
+
+// ── Experience Edit/Add Form Dialog ──
+void _showExperienceDialog(
+  BuildContext context,
+  PersonalizationController controller, {
+  int? index,
+  ProfileExperience? experience,
+}) {
+  final titleController = TextEditingController(text: experience?.title ?? '');
+  final orgController = TextEditingController(text: experience?.organization ?? '');
+  final durationController = TextEditingController(text: experience?.duration ?? '');
+  final descController = TextEditingController(text: experience?.description ?? '');
+  final techController = TextEditingController(
+    text: experience?.techStack.join(', ') ?? '',
+  );
+
+  showDialog<void>(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        backgroundColor: Colors.white,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    experience == null ? 'Tambah Pengalaman' : 'Ubah Pengalaman',
+                    style: AppFonts.headingStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(
+                      FluentIcons.dismiss_24_regular,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Peran / Posisi',
+                  hintText: 'Contoh: Frontend Lead, UI/UX Designer',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: orgController,
+                decoration: const InputDecoration(
+                  labelText: 'Organisasi / Perusahaan',
+                  hintText: 'Contoh: Hackathon Team, PT Angin Ribut',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: durationController,
+                decoration: const InputDecoration(
+                  labelText: 'Durasi / Periode',
+                  hintText: 'Contoh: Feb 2025 - Jun 2025, Des 2025',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: descController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Deskripsi',
+                  hintText: 'Ceritakan apa saja tanggung jawab atau pencapaianmu...',
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: techController,
+                decoration: const InputDecoration(
+                  labelText: 'Teknologi / Tech Stack',
+                  hintText: 'Pisahkan dengan koma (Contoh: Flutter, Figma, Dart)',
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Batal'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      final techStack = techController.text
+                          .split(',')
+                          .map((t) => t.trim())
+                          .where((t) => t.isNotEmpty)
+                          .toList();
+
+                      final newExp = ProfileExperience(
+                        title: titleController.text.trim().isEmpty
+                            ? 'Role baru'
+                            : titleController.text.trim(),
+                        organization: orgController.text.trim().isEmpty
+                            ? 'Organisasi / Proyek'
+                            : orgController.text.trim(),
+                        duration: durationController.text.trim().isEmpty
+                            ? 'Periode'
+                            : durationController.text.trim(),
+                        description: descController.text.trim().isEmpty
+                            ? 'Deskripsi singkat pengalaman.'
+                            : descController.text.trim(),
+                        techStack: techStack,
+                      );
+
+                      if (index != null) {
+                        controller.updateExperience(index, newExp);
+                      } else {
+                        controller.addCustomExperience(newExp);
+                      }
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.textPrimary,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Simpan'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

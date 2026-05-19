@@ -19,45 +19,43 @@ class RoomChatView extends GetView<RoomChatController> {
           children: [
             // ── Chat Messages ──
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Date Divider
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text(
-                        'Hari ini',
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
+              child: Obx(
+                () => ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: controller.messages.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'Hari ini',
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
+                      );
+                    }
+                    
+                    final msg = controller.messages[index - 1];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildMessageBubble(
+                        message: msg.text,
+                        time: msg.time,
+                        isMe: msg.isMe,
+                        avatarUrl: msg.avatarUrl,
+                        fileName: msg.fileName,
+                        fileSize: msg.fileSize,
+                        sharedPost: msg.sharedPost,
+                        isRead: true,
                       ),
-                    ),
-                  ),
-
-                  // Left Message
-                  _buildMessageBubble(
-                    message:
-                        'lorem ipsum lorem ipsum lorem ipsum lorem awdkowakdokawod awdwa',
-                    time: '18.35',
-                    isMe: false,
-                    avatarUrl: 'https://i.pravatar.cc/100?img=60',
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Right Message
-                  _buildMessageBubble(
-                    message:
-                        'lorem ipsum lorem ipsum lorem ipsum lorem awdkowakdokawod awdwa',
-                    time: '18.35',
-                    isMe: true,
-                    avatarUrl: 'https://i.pravatar.cc/100?img=33',
-                    isRead: true,
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
             ),
 
@@ -94,7 +92,7 @@ class RoomChatView extends GetView<RoomChatController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Dede Fernanda',
+                  'Raka Pratama',
                   style: AppFonts.satoshiStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -136,6 +134,9 @@ class RoomChatView extends GetView<RoomChatController> {
     required String time,
     required bool isMe,
     required String avatarUrl,
+    String? fileName,
+    String? fileSize,
+    Map<String, dynamic>? sharedPost,
     bool isRead = false,
   }) {
     return Row(
@@ -153,9 +154,7 @@ class RoomChatView extends GetView<RoomChatController> {
         // Message Content
         Flexible(
           child: Column(
-            crossAxisAlignment: isMe
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
+            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -173,13 +172,176 @@ class RoomChatView extends GetView<RoomChatController> {
                     bottomRight: Radius.circular(isMe ? 4 : 16),
                   ),
                 ),
-                child: Text(
-                  message,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 14,
-                    color: isMe ? Colors.white : AppColors.textPrimary,
-                    height: 1.4,
-                  ),
+                child: Column(
+                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  children: [
+                    // Render message text if not empty
+                    if (message.isNotEmpty)
+                      Text(
+                        message,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 14,
+                          color: isMe ? Colors.white : AppColors.textPrimary,
+                          height: 1.4,
+                        ),
+                      ),
+                    
+                    // Render shared post preview card if present
+                    if (sharedPost != null) ...[
+                      if (message.isNotEmpty) const SizedBox(height: 10),
+                      Container(
+                        width: 250,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFE5E7EB),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Shared post header (Avatar + Name)
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 12,
+                                  backgroundImage: NetworkImage(
+                                    sharedPost['avatarUrl'] ?? 'https://i.pravatar.cc/100?img=33',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        sharedPost['name'] ?? '',
+                                        style: AppFonts.satoshiStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      Text(
+                                        sharedPost['subtitle'] ?? '',
+                                        style: AppFonts.satoshiStyle(
+                                          fontSize: 9.5,
+                                          color: AppColors.textTertiary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // Text caption of post (truncated)
+                            Text(
+                              sharedPost['content'] ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 11.5,
+                                color: AppColors.textSecondary,
+                                height: 1.35,
+                              ),
+                            ),
+                            if (sharedPost['imageAsset'] != null) ...[
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  sharedPost['imageAsset'],
+                                  height: 110,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                            const SizedBox(height: 6),
+                            Center(
+                              child: Text(
+                                'Lihat Postingan',
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Render attachment file card if present
+                    if (fileName != null) ...[
+                      if (message.isNotEmpty) const SizedBox(height: 8),
+                      Container(
+                        width: 220,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isMe
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : AppColors.surfaceSecondary,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isMe
+                                ? Colors.white.withValues(alpha: 0.2)
+                                : AppColors.border,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              fileName.endsWith('.png') || fileName.endsWith('.jpg')
+                                  ? FluentIcons.image_24_regular
+                                  : FluentIcons.document_24_regular,
+                              color: isMe ? Colors.white : AppColors.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    fileName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppFonts.satoshiStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: isMe ? Colors.white : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    fileSize ?? '1.2 MB',
+                                    style: AppFonts.satoshiStyle(
+                                      fontSize: 10,
+                                      color: isMe
+                                          ? Colors.white.withValues(alpha: 0.7)
+                                          : AppColors.textTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              FluentIcons.arrow_download_24_regular,
+                              color: isMe ? Colors.white70 : AppColors.textSecondary,
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 4),
@@ -194,14 +356,20 @@ class RoomChatView extends GetView<RoomChatController> {
                         color: AppColors.textSecondary,
                       ),
                     ),
-                  ],
-                  Text(
-                    time,
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 10,
-                      color: AppColors.textSecondary,
+                    Icon(
+                      FluentIcons.checkmark_24_regular,
+                      color: AppColors.success,
+                      size: 12,
                     ),
-                  ),
+                  ] else ...[
+                    Text(
+                      time,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -221,74 +389,249 @@ class RoomChatView extends GetView<RoomChatController> {
 
   // 3. Input Bar Widget
   Widget _buildInputBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
-      ),
-      child: Row(
-        children: [
-          // Plus Button
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: const Icon(
-              FluentIcons.add_24_regular,
-              color: AppColors.textSecondary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Text Field
-          Expanded(
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(22),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Attachment Preview Chip Row
+        Obx(() {
+          if (controller.attachedFileName.value == null) {
+            return const SizedBox.shrink();
+          }
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              border: Border(
+                top: BorderSide(color: AppColors.border, width: 1),
               ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Ketik pesan',
-                  hintStyle: AppFonts.satoshiStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
                   ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Icon(
+                    controller.attachedFileName.value!.endsWith('.png') ||
+                            controller.attachedFileName.value!.endsWith('.jpg')
+                        ? FluentIcons.image_24_regular
+                        : FluentIcons.document_24_regular,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        controller.attachedFileName.value!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        controller.attachedFileSize.value ?? '1.2 MB',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => controller.removeAttachment(),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.border,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      FluentIcons.dismiss_12_filled,
+                      color: AppColors.textSecondary,
+                      size: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+
+        // Input Field and Buttons Row
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          ),
+          child: Row(
+            children: [
+              // Plus/Attachment Button
+              GestureDetector(
+                onTap: () {
+                  Get.bottomSheet(
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AppColors.border,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Lampirkan File & Dokumen',
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          ListTile(
+                            leading: const Icon(FluentIcons.image_24_regular, color: AppColors.primary),
+                            title: Text('Foto & Media', style: AppFonts.satoshiStyle(fontSize: 14)),
+                            onTap: () {
+                              controller.attachFile('Design_Mockup.png', '2.4 MB');
+                              Get.back();
+                              Get.snackbar(
+                                'File Dilampirkan',
+                                'Design_Mockup.png berhasil dipilih',
+                                snackPosition: SnackPosition.TOP,
+                                backgroundColor: AppColors.textPrimary,
+                                colorText: Colors.white,
+                              );
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(FluentIcons.document_24_regular, color: AppColors.primary),
+                            title: Text('Dokumen & File PDF', style: AppFonts.satoshiStyle(fontSize: 14)),
+                            onTap: () {
+                              controller.attachFile('Draft_Proposal_v2.pdf', '1.8 MB');
+                              Get.back();
+                              Get.snackbar(
+                                'File Dilampirkan',
+                                'Draft_Proposal_v2.pdf berhasil dipilih',
+                                snackPosition: SnackPosition.TOP,
+                                backgroundColor: AppColors.textPrimary,
+                                colorText: Colors.white,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    FluentIcons.add_24_regular,
+                    color: AppColors.textSecondary,
+                    size: 24,
+                  ),
                 ),
               ),
-            ),
-          ),
+              const SizedBox(width: 12),
 
-          // Send Button
-          const SizedBox(width: 12),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: AppColors.textPrimary,
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Icon(
-                FluentIcons.send_24_filled,
-                color: Colors.white,
-                size: 20,
+              // Text Field
+              Expanded(
+                child: TextField(
+                  controller: controller.messageController,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    hintText: 'Ketik pesan',
+                    hintStyle: AppFonts.satoshiStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13.5),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: AppColors.border.withValues(alpha: 0.8),
+                        width: 1.0,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: AppColors.textPrimary.withValues(alpha: 0.4),
+                        width: 1.2,
+                      ),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: AppColors.border.withValues(alpha: 0.8),
+                        width: 1.0,
+                      ),
+                    ),
+                  ),
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
               ),
-            ),
+
+              // Send Button
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () => controller.sendMessage(),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.textPrimary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      FluentIcons.send_24_filled,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

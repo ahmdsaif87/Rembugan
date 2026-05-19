@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -43,6 +44,8 @@ class ExploreView extends GetView<ExploreController> {
                           context,
                           controller.activeTab.value,
                         ),
+                        onChanged: controller.search,
+                        controller: controller.searchTextController,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -101,7 +104,7 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   Widget _buildProyekTab(BuildContext context) {
-    return ListView.separated(
+    return Obx(() => ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
       itemCount: controller.filteredProjects.length + 1,
       separatorBuilder: (_, index) =>
@@ -112,7 +115,7 @@ class ExploreView extends GetView<ExploreController> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: _SectionHeader(
               title: 'Proyek terbuka',
-              trailing: '${controller.filteredProjects.length * 5} hasil',
+              trailing: '${controller.filteredProjects.length} hasil',
             ),
           );
         }
@@ -126,25 +129,25 @@ class ExploreView extends GetView<ExploreController> {
           onDetail: () => _showProjectSheet(context, project),
         );
       },
-    );
+    ));
   }
 
   Widget _buildLombaTab(BuildContext context) {
-    return CustomScrollView(
+    return Obx(() => CustomScrollView(
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
           sliver: SliverToBoxAdapter(
             child: _SectionHeader(
               title: 'Kompetisi aktif',
-              trailing: '${controller.competitions.length * 4} hasil',
+              trailing: '${controller.filteredCompetitions.length} hasil',
             ),
           ),
         ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
           sliver: SliverGrid.builder(
-            itemCount: controller.competitions.length,
+            itemCount: controller.filteredCompetitions.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 20,
@@ -152,58 +155,42 @@ class ExploreView extends GetView<ExploreController> {
               childAspectRatio: 0.72,
             ),
             itemBuilder: (context, index) {
-              final competition = controller.competitions[index];
+              final competition = controller.filteredCompetitions[index];
               return _CompetitionCard(
                 competition: competition,
                 index: index,
-                onTap: () => _showCompetitionSheet(context, competition),
+                onTap: () => _showCompetitionSheet(context, competition, index),
               );
             },
           ),
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildOrangTab() {
-    return ListView.separated(
+    return Obx(() => ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-      itemCount: 3,
+      itemCount: controller.filteredPeople.length + 1,
       separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 14 : 18),
       itemBuilder: (context, index) {
         if (index == 0) {
-          return const _SectionHeader(
+          return _SectionHeader(
             title: 'Orang Disekitar',
-            trailing: '12 hasil',
+            trailing: '${controller.filteredPeople.length} hasil',
           );
         }
 
-        final people = [
-          (
-            'Dede Fernanda',
-            'Flutter Developer',
-            'https://i.pravatar.cc/100?img=60',
-            ['Flutter', 'Figma'],
-            'Skill yang sama',
-          ),
-          (
-            'Raka Pratama',
-            'UI/UX Designer',
-            'https://i.pravatar.cc/100?img=47',
-            ['Design', 'Research'],
-            'Paling cocok untuk kamu',
-          ),
-        ];
-        final person = people[index - 1];
+        final person = controller.filteredPeople[index - 1];
         return _PersonCard(
-          name: person.$1,
-          role: person.$2,
-          avatarUrl: person.$3,
-          tags: person.$4,
-          matchLabel: person.$5,
+          name: person.name,
+          role: person.role,
+          avatarUrl: person.avatarUrl,
+          tags: person.tags,
+          matchLabel: person.matchLabel,
         );
       },
-    );
+    ));
   }
 
   void _showFilterSheet(BuildContext context, ExploreTab tab) {
@@ -435,62 +422,178 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  void _showCompetitionSheet(BuildContext context, Competition competition) {
+  void _showCompetitionSheet(BuildContext context, Competition competition, int index) {
+    final posterAsset = switch (index % 4) {
+      0 => 'lib/assets/img/contoh poster1.jpeg',
+      1 => 'lib/assets/img/contoh poster2.jpeg',
+      2 => 'lib/assets/img/contoh poster3.jpeg',
+      _ => 'lib/assets/img/contoh poster4.jpeg',
+    };
+
+    final String richCaption = '''
+🚨 OPEN REGISTRATION! 🚨
+🎉 ${competition.title.toUpperCase()}
+📝 ${competition.category} Competition
+
+Saatnya generasi muda bersuara lewat karya!
+Tunjukkan ide terbaikmu tentang:
+✨ Peran generasi muda di era digital✨
+
+📌 Kategori:
+✍️ Essay / Ideation
+🎨 Poster / Design Product
+
+📌 Benefit Peserta:
+🏆 Juara 1, 2, 3 (Uang Pembinaan + Trophy + Sertifikat)
+🎖️ Harapan 1, 2, 3 (Uang Pembinaan + Trophy + Sertifikat)
+📄 E-sertifikat untuk 10 Finalis Karya Terbaik
+📜 E-sertifikat nasional untuk semua peserta aktif
+
+⚠️ KUOTA TERBATAS!
+Sistem pendaftaran akan ditutup seketika jika kuota terpenuhi.
+
+📅 Deadline: ${competition.deadline}
+
+🔥 Jangan tunggu “nanti”
+Karena nanti = sudah ditutup
+
+📲 Daftar sekarang di link ini!
+${competition.registrationLink}
+
+#rembugan #competition2026 #lombanasional #${competition.category.toLowerCase()} #eventmahasiswa''';
+
+    bool isExpanded = false;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) {
-        return _DetailSheetFrame(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Pill(
-                competition.category,
-                const Color(0xFFEAF2FF),
-                AppColors.info600,
-              ),
-              const SizedBox(height: 18),
-              Text(
-                competition.title,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  height: 1.18,
-                  color: _ink,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                competition.caption,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 13,
-                  height: 1.55,
-                  color: const Color(0xFF666D78),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setSheetState) {
+            final bool showSeeMore = richCaption.length > 150;
+            final String displayedCaption = (showSeeMore && !isExpanded)
+                ? '${richCaption.substring(0, 140)}...'
+                : richCaption;
+
+            return _DetailSheetFrame(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: _OutlineAction(
-                      label: 'Tutup',
-                      onTap: () => Navigator.of(context).pop(),
+                  // 1. poster image (perfect scale preservation, never cut off!)
+                  GestureDetector(
+                    onTap: () => _showImageViewer(context, assetPath: posterAsset),
+                    child: Container(
+                      height: 320,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F4F6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          posterAsset,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    flex: 2,
-                    child: _PrimaryAction(
-                      label: 'Daftar Lomba',
-                      onTap: () => _openRegistrationLink(competition),
+                  const SizedBox(height: 18),
+                  
+                  // 2. badge & organizer tag
+                  _Pill(
+                    competition.category,
+                    const Color(0xFFEAF2FF),
+                    AppColors.info600,
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // 3. title
+                  Text(
+                    competition.title,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      height: 1.18,
+                      color: _ink,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  Text(
+                    'Diselenggarakan oleh: ${competition.organizer}',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Divider
+                  const Divider(color: AppColors.border, height: 1),
+                  const SizedBox(height: 16),
+                  
+                  // 4. caption
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayedCaption,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                          color: const Color(0xFF374151),
+                        ),
+                      ),
+                      if (showSeeMore) ...[
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () {
+                            setSheetState(() {
+                              isExpanded = !isExpanded;
+                            });
+                          },
+                          child: Text(
+                            isExpanded ? 'Lihat lebih sedikit' : 'Lihat selengkapnya',
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  
+                  // 5. actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _OutlineAction(
+                          label: 'Tutup',
+                          onTap: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        flex: 2,
+                        child: _PrimaryAction(
+                          label: 'Daftar Lomba',
+                          onTap: () => _openRegistrationLink(competition),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -509,37 +612,57 @@ class ExploreView extends GetView<ExploreController> {
 }
 
 class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.hint, required this.onFilter});
+  const _SearchBar({
+    required this.hint,
+    required this.onFilter,
+    required this.onChanged,
+    required this.controller,
+  });
 
   final String hint;
   final VoidCallback onFilter;
+  final ValueChanged<String> onChanged;
+  final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: Container(
+          child: SizedBox(
             height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: ExploreView._line),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              children: [
-                const Icon(Icons.search, size: 18, color: ExploreView._muted),
-                const SizedBox(width: 8),
-                Text(
-                  hint,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 13,
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              style: AppFonts.satoshiStyle(
+                fontSize: 13.5,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: AppFonts.satoshiStyle(
+                  fontSize: 13.5,
+                  color: ExploreView._muted,
+                  fontWeight: FontWeight.w500,
+                ),
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14),
+                  child: Icon(
+                    Icons.search,
                     color: ExploreView._muted,
-                    fontWeight: FontWeight.w500,
+                    size: 20,
                   ),
                 ),
-              ],
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 48,
+                  minHeight: 0,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+              ),
             ),
           ),
         ),
@@ -1108,6 +1231,8 @@ class _ProjectCardState extends State<_ProjectCard> {
   }
 
   void _confirmJoinRequest() {
+    final messageCtrl = TextEditingController();
+
     showDialog<void>(
       context: context,
       builder: (context) => Dialog(
@@ -1153,12 +1278,51 @@ class _ProjectCardState extends State<_ProjectCard> {
                   color: AppColors.textSecondary,
                 ),
               ),
+              const SizedBox(height: 16),
+              Text(
+                'Pesan untuk pemilik (opsional)',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: messageCtrl,
+                maxLines: 3,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12.5,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Tulis keahlian singkat atau alasan ingin bergabung...',
+                  hintStyle: AppFonts.satoshiStyle(
+                    fontSize: 12,
+                    color: AppColors.textTertiary,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  contentPadding: const EdgeInsets.all(12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        messageCtrl.dispose();
+                        Navigator.of(context).pop();
+                      },
                       child: const Text('Batal'),
                     ),
                   ),
@@ -1166,6 +1330,7 @@ class _ProjectCardState extends State<_ProjectCard> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        messageCtrl.dispose();
                         Navigator.of(context).pop();
                         setState(() => _hasRequested = true);
                         Get.snackbar(
@@ -1302,47 +1467,45 @@ class _ProjectCardState extends State<_ProjectCard> {
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(width: 7),
+                    const SizedBox(width: 6),
                     Text(
-                      '- ${widget.project.openSlots} slot terbuka',
+                      '(${widget.project.filledSlots}/${widget.project.totalSlots} kuota)',
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: ExploreView._brand,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textTertiary,
                       ),
                     ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 10,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: AppColors.border),
+                        color: widget.project.openSlots <= 2
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: widget.project.openSlots <= 2
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFDCFCE7),
+                          width: 1.0,
+                        ),
                       ),
                       child: Text(
-                        '${widget.project.filledSlots}/${widget.project.totalSlots} terisi',
+                        '${widget.project.openSlots} slot tersisa',
                         style: AppFonts.satoshiStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: ExploreView._brand,
+                          fontWeight: FontWeight.bold,
+                          color: widget.project.openSlots <= 2
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF10B981),
                         ),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value:
-                        widget.project.filledSlots / widget.project.totalSlots,
-                    minHeight: 3,
-                    color: _progressColor.withValues(alpha: 0.54),
-                    backgroundColor: AppColors.surfaceSecondary,
-                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1534,12 +1697,12 @@ class _CompetitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (index % 5) {
-      0 => Icons.verified_outlined,
-      1 => Icons.card_giftcard,
-      2 => Icons.desktop_windows_outlined,
-      3 => Icons.image_outlined,
-      _ => Icons.menu_book_outlined,
+    // Select from our beautiful local competition posters
+    final posterAsset = switch (index % 4) {
+      0 => 'lib/assets/img/contoh poster1.jpeg',
+      1 => 'lib/assets/img/contoh poster2.jpeg',
+      2 => 'lib/assets/img/contoh poster3.jpeg',
+      _ => 'lib/assets/img/contoh poster4.jpeg',
     };
 
     return GestureDetector(
@@ -1562,48 +1725,39 @@ class _CompetitionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(competition.color.start),
-                      Color(competition.color.end),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
                 child: Stack(
+                  fit: StackFit.expand,
                   children: [
+                    Image.asset(
+                      posterAsset,
+                      fit: BoxFit.cover,
+                    ),
+                    // Elegant dark overlay to guarantee badge readability
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.2),
+                            Colors.black.withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
                     Positioned(
                       top: 10,
                       left: 10,
-                      child: _Badge(label: competition.badge),
+                      child: _Badge(label: index == 0 ? 'Paling cocok' : 'Sesuai jurusan'),
                     ),
-                    Center(child: Icon(icon, size: 34, color: Colors.white)),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 5,
-              runSpacing: 4,
-              children: [
-                _TinyTag(label: index == 0 ? 'Paling cocok' : 'Sesuai jurusan'),
-                Text(
-                  competition.category,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                _TinyTag(label: competition.campusTag),
-              ],
-            ),
+            _TinyTag(label: competition.category),
             const SizedBox(height: 4),
             Text(
               competition.title,
@@ -2182,4 +2336,56 @@ class _PersonCard extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl}) {
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.5),
+    builder: (context) => GestureDetector(
+      onTap: () => Navigator.pop(context),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 40,
+            right: 20,
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: const CircleBorder(),
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+          Center(
+            child: InteractiveViewer(
+              clipBehavior: Clip.none,
+              maxScale: 4.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.95,
+                    maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  ),
+                  child: assetPath != null
+                      ? Image.asset(assetPath, fit: BoxFit.contain)
+                      : Image.network(imageUrl!, fit: BoxFit.contain),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

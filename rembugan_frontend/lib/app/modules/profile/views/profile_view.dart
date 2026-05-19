@@ -76,11 +76,24 @@ class _ProfileTopBar extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        IconButton(
-          onPressed: onSettings,
-          icon: const Icon(
-            FluentIcons.settings_24_regular,
-            color: AppColors.textPrimary,
+        InkWell(
+          onTap: onSettings,
+          borderRadius: BorderRadius.circular(17),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(17),
+              border: Border.all(color: AppColors.borderStrong),
+            ),
+            child: const Center(
+              child: Icon(
+                FluentIcons.settings_24_regular,
+                color: AppColors.textPrimary,
+                size: 22,
+              ),
+            ),
           ),
         ),
       ],
@@ -204,7 +217,7 @@ class _SkillChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: const Color(0xFF9BB8F2)),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Text(
         label,
@@ -344,21 +357,25 @@ class _ProfileTabContent extends StatelessWidget {
       );
     }
 
-    return const Column(
+    return Column(
       children: [
         _PostCard(
-          title: 'Lagi eksplor workflow kolaborasi kampus',
-          meta: '2 jam lalu',
-          body:
+          avatarAsset: profile.avatarAsset,
+          name: profile.name,
+          subtitle: 'D4 Teknik Informatika - 2 jam lalu',
+          content:
               'Nyoba merapikan flow onboarding dan matching project supaya mahasiswa bisa lebih cepat menemukan tim yang cocok.',
-          stats: '120 suka   20 komentar',
+          likeCount: '120',
+          commentCount: '20',
         ),
         _PostCard(
-          title: 'Flutter mini sprint',
-          meta: 'Kemarin',
-          body:
+          avatarAsset: profile.avatarAsset,
+          name: profile.name,
+          subtitle: 'D4 Teknik Informatika - Kemarin',
+          content:
               'Selesai bikin prototype dashboard tim kecil. Fokusnya biar task, file, dan diskusi tetap gampang discan.',
-          stats: '76 suka   12 komentar',
+          likeCount: '76',
+          commentCount: '12',
         ),
       ],
     );
@@ -568,64 +585,161 @@ class _StatusPill extends StatelessWidget {
 
 class _PostCard extends StatelessWidget {
   const _PostCard({
-    required this.title,
-    required this.meta,
-    required this.body,
-    required this.stats,
+    required this.avatarAsset,
+    required this.name,
+    required this.subtitle,
+    required this.content,
+    this.hasImage = false,
+    this.imageUrl,
+    required this.likeCount,
+    required this.commentCount,
   });
 
-  final String title;
-  final String meta;
-  final String body;
-  final String stats;
+  final String avatarAsset;
+  final String name;
+  final String subtitle;
+  final String content;
+  final bool hasImage;
+  final String? imageUrl;
+  final String likeCount;
+  final String commentCount;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 13),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: InkWell(
+        onTap: () {},
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.primarySoft,
+                    backgroundImage: AssetImage(avatarAsset),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 11.5,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    FluentIcons.more_vertical_24_regular,
+                    color: AppColors.textTertiary,
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                content,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13.5,
+                  color: AppColors.textPrimary.withValues(alpha: 0.88),
+                  height: 1.5,
+                ),
+              ),
+              if (hasImage && imageUrl != null) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    imageUrl!,
+                    width: double.infinity,
+                    height: 160,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildInteractionItem(
+                    FluentIcons.heart_24_regular,
+                    likeCount,
+                    const Color(0xFFE5484D),
+                  ),
+                  const SizedBox(width: 22),
+                  _buildInteractionItem(
+                    FluentIcons.chat_24_regular,
+                    commentCount,
+                    AppColors.textSecondary,
+                  ),
+                  const Spacer(),
+                  _buildInteractionItem(
+                    FluentIcons.send_24_regular,
+                    '',
+                    AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 20),
+                  _buildInteractionItem(
+                    FluentIcons.bookmark_24_regular,
+                    '',
+                    const Color(0xFFD69E2E),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInteractionItem(
+    IconData icon,
+    String count,
+    Color activeColor,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+      child: Row(
         children: [
-          Text(
-            title,
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+          Icon(icon, color: activeColor.withValues(alpha: 0.88), size: 20),
+          if (count.isNotEmpty) ...[
+            const SizedBox(width: 6),
+            Text(
+              count,
+              style: AppFonts.satoshiStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            meta,
-            style: AppFonts.satoshiStyle(
-              fontSize: 10.5,
-              color: AppColors.textTertiary,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            body,
-            style: AppFonts.satoshiStyle(
-              fontSize: 11.5,
-              height: 1.5,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            stats,
-            style: AppFonts.satoshiStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textTertiary,
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -708,16 +822,30 @@ class _ProfileTab extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 13),
-        child: Text(
-          label,
-          style: AppFonts.satoshiStyle(
-            fontSize: 14,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w600,
-            color: active ? AppColors.textPrimary : AppColors.textTertiary,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+            child: Text(
+              label,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                fontWeight: active ? FontWeight.bold : FontWeight.w500,
+                color: active ? AppColors.textPrimary : AppColors.textTertiary,
+              ),
+            ),
           ),
-        ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 2.5,
+            width: 48,
+            decoration: BoxDecoration(
+              color: active ? AppColors.textPrimary : Colors.transparent,
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          ),
+        ],
       ),
     );
   }

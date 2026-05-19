@@ -110,6 +110,20 @@ class PersonalizationController extends GetxController {
     );
   }
 
+  void addCustomExperience(ProfileExperience experience) {
+    extractedProfile.value = extractedProfile.value.copyWith(
+      experiences: [...extractedProfile.value.experiences, experience],
+    );
+  }
+
+  void updateExperience(int index, ProfileExperience updated) {
+    final list = [...extractedProfile.value.experiences];
+    if (index >= 0 && index < list.length) {
+      list[index] = updated;
+      extractedProfile.value = extractedProfile.value.copyWith(experiences: list);
+    }
+  }
+
   void addExperience() {
     extractedProfile.value = extractedProfile.value.copyWith(
       experiences: [

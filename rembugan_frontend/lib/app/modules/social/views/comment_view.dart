@@ -307,14 +307,61 @@ class _ReplyComposer extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
-              decoration: const InputDecoration(hintText: 'Tulis komentar...'),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.surfaceSecondary,
+                hintText: 'Tulis komentar...',
+                hintStyle: AppFonts.satoshiStyle(
+                  fontSize: 13.5,
+                  color: AppColors.textTertiary.withValues(alpha: 0.6),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13.5),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.8),
+                    width: 1.0,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: AppColors.textPrimary.withValues(alpha: 0.4),
+                    width: 1.2,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.8),
+                    width: 1.0,
+                  ),
+                ),
+              ),
+              style: AppFonts.satoshiStyle(
+                fontSize: 13.5,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           const SizedBox(width: 10),
-          AppIconButton(
-            icon: FluentIcons.send_24_filled,
-            isPrimary: true,
+          GestureDetector(
             onTap: () {},
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.textPrimary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: Icon(
+                  FluentIcons.send_24_filled,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
