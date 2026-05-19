@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:rembugan_frontend/app/routes/app_pages.dart';
+import 'package:rembugan/app/routes/app_pages.dart';
 
 class LoginController extends GetxController {
   // Controllers untuk input field

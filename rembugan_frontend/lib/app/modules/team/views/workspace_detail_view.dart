@@ -760,7 +760,10 @@ class _DiscussionTab extends StatelessWidget {
                   }
                   return Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     margin: const EdgeInsets.only(bottom: 10),
                     decoration: const BoxDecoration(
                       color: Color(0xFFF9FAFB),
@@ -778,8 +781,12 @@ class _DiscussionTab extends StatelessWidget {
                             border: Border.all(color: AppColors.border),
                           ),
                           child: Icon(
-                            ctrl.attachedGroupFileName.value!.endsWith('.png') ||
-                                    ctrl.attachedGroupFileName.value!.endsWith('.jpg')
+                            ctrl.attachedGroupFileName.value!.endsWith(
+                                      '.png',
+                                    ) ||
+                                    ctrl.attachedGroupFileName.value!.endsWith(
+                                      '.jpg',
+                                    )
                                 ? FluentIcons.image_24_regular
                                 : FluentIcons.document_24_regular,
                             color: AppColors.primary,
@@ -872,10 +879,21 @@ class _DiscussionTab extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 20),
                                   ListTile(
-                                    leading: const Icon(FluentIcons.image_24_regular, color: AppColors.primary),
-                                    title: Text('Foto & Media', style: AppFonts.satoshiStyle(fontSize: 14)),
+                                    leading: const Icon(
+                                      FluentIcons.image_24_regular,
+                                      color: AppColors.primary,
+                                    ),
+                                    title: Text(
+                                      'Foto & Media',
+                                      style: AppFonts.satoshiStyle(
+                                        fontSize: 14,
+                                      ),
+                                    ),
                                     onTap: () {
-                                      ctrl.attachGroupFile('GEMASTIK_PitchDeck.png', '3.2 MB');
+                                      ctrl.attachGroupFile(
+                                        'GEMASTIK_PitchDeck.png',
+                                        '3.2 MB',
+                                      );
                                       Get.back();
                                       Get.snackbar(
                                         'File Dilampirkan',
@@ -887,10 +905,21 @@ class _DiscussionTab extends StatelessWidget {
                                     },
                                   ),
                                   ListTile(
-                                    leading: const Icon(FluentIcons.document_24_regular, color: AppColors.primary),
-                                    title: Text('Dokumen & File PDF', style: AppFonts.satoshiStyle(fontSize: 14)),
+                                    leading: const Icon(
+                                      FluentIcons.document_24_regular,
+                                      color: AppColors.primary,
+                                    ),
+                                    title: Text(
+                                      'Dokumen & File PDF',
+                                      style: AppFonts.satoshiStyle(
+                                        fontSize: 14,
+                                      ),
+                                    ),
                                     onTap: () {
-                                      ctrl.attachGroupFile('Revisi_Proposal_v3.pdf', '2.1 MB');
+                                      ctrl.attachGroupFile(
+                                        'Revisi_Proposal_v3.pdf',
+                                        '2.1 MB',
+                                      );
                                       Get.back();
                                       Get.snackbar(
                                         'File Dilampirkan',
@@ -934,9 +963,14 @@ class _DiscussionTab extends StatelessWidget {
                             hintText: 'Tulis pesan...',
                             hintStyle: AppFonts.satoshiStyle(
                               fontSize: 14,
-                              color: AppColors.textTertiary.withValues(alpha: 0.6),
+                              color: AppColors.textTertiary.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13.5),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 13.5,
+                            ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
@@ -947,7 +981,9 @@ class _DiscussionTab extends StatelessWidget {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                color: AppColors.textPrimary.withValues(alpha: 0.4),
+                                color: AppColors.textPrimary.withValues(
+                                  alpha: 0.4,
+                                ),
                                 width: 1.2,
                               ),
                             ),
@@ -971,8 +1007,10 @@ class _DiscussionTab extends StatelessWidget {
                       GestureDetector(
                         onTap: () {
                           final text = _msgCtrl.text.trim();
-                          if (text.isEmpty && ctrl.attachedGroupFileName.value == null) return;
-                          
+                          if (text.isEmpty &&
+                              ctrl.attachedGroupFileName.value == null)
+                            return;
+
                           ctrl.discussions.add(
                             DiscussionMessage(
                               sender: 'Dede',
@@ -1132,10 +1170,13 @@ class _Bubble extends StatelessWidget {
                           child: Row(
                             children: [
                               Icon(
-                                msg.attachment!.endsWith('.png') || msg.attachment!.endsWith('.jpg')
+                                msg.attachment!.endsWith('.png') ||
+                                        msg.attachment!.endsWith('.jpg')
                                     ? FluentIcons.image_24_regular
                                     : FluentIcons.document_24_regular,
-                                color: msg.isMe ? Colors.white : AppColors.primary,
+                                color: msg.isMe
+                                    ? Colors.white
+                                    : AppColors.primary,
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
@@ -1150,7 +1191,9 @@ class _Bubble extends StatelessWidget {
                                       style: AppFonts.satoshiStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: msg.isMe ? Colors.white : AppColors.textPrimary,
+                                        color: msg.isMe
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -1159,7 +1202,9 @@ class _Bubble extends StatelessWidget {
                                       style: AppFonts.satoshiStyle(
                                         fontSize: 9,
                                         color: msg.isMe
-                                            ? Colors.white.withValues(alpha: 0.7)
+                                            ? Colors.white.withValues(
+                                                alpha: 0.7,
+                                              )
                                             : AppColors.textTertiary,
                                       ),
                                     ),
@@ -1168,7 +1213,9 @@ class _Bubble extends StatelessWidget {
                               ),
                               Icon(
                                 FluentIcons.arrow_download_24_regular,
-                                color: msg.isMe ? Colors.white70 : AppColors.textSecondary,
+                                color: msg.isMe
+                                    ? Colors.white70
+                                    : AppColors.textSecondary,
                                 size: 16,
                               ),
                             ],
@@ -1442,14 +1489,20 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   fontSize: 13.5,
                   color: AppColors.textTertiary,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.4), width: 1.2),
+                  borderSide: BorderSide(
+                    color: AppColors.textPrimary.withValues(alpha: 0.4),
+                    width: 1.2,
+                  ),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1590,10 +1643,21 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                             );
                             if (picked != null) {
                               final months = [
-                                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-                                'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+                                'Jan',
+                                'Feb',
+                                'Mar',
+                                'Apr',
+                                'Mei',
+                                'Jun',
+                                'Jul',
+                                'Agu',
+                                'Sep',
+                                'Okt',
+                                'Nov',
+                                'Des',
                               ];
-                              final formattedDate = "${picked.day} ${months[picked.month - 1]} ${picked.year}";
+                              final formattedDate =
+                                  "${picked.day} ${months[picked.month - 1]} ${picked.year}";
                               deadlineCtrl.text = formattedDate;
                             }
                           },
@@ -1610,18 +1674,32 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               size: 16,
                               color: AppColors.textSecondary,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                              borderSide: BorderSide(
+                                color: AppColors.border,
+                                width: 1,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.4), width: 1.2),
+                              borderSide: BorderSide(
+                                color: AppColors.textPrimary.withValues(
+                                  alpha: 0.4,
+                                ),
+                                width: 1.2,
+                              ),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: AppColors.border, width: 1),
+                              borderSide: BorderSide(
+                                color: AppColors.border,
+                                width: 1,
+                              ),
                             ),
                           ),
                           style: AppFonts.satoshiStyle(
@@ -1723,14 +1801,20 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                     fontSize: 13,
                     color: AppColors.textTertiary,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: AppColors.border, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.4), width: 1.2),
+                    borderSide: BorderSide(
+                      color: AppColors.textPrimary.withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
