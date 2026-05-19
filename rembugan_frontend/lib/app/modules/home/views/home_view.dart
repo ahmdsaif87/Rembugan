@@ -223,12 +223,29 @@ class _PostCardWidget extends StatefulWidget {
 class _PostCardWidgetState extends State<_PostCardWidget> {
   bool _isLiked = false;
   bool _isBookmarked = false;
+  bool _isFollowing = false;
   late int _likeCount;
 
   @override
   void initState() {
     super.initState();
     _likeCount = widget.initialLikes;
+  }
+
+  void _toggleFollow() {
+    setState(() {
+      _isFollowing = !_isFollowing;
+    });
+    Get.snackbar(
+      _isFollowing ? 'Mengikuti' : 'Batal Mengikuti',
+      _isFollowing
+          ? 'Kamu sekarang mengikuti ${widget.name}.'
+          : 'Kamu berhenti mengikuti ${widget.name}.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: _isFollowing ? const Color(0xFFEDFDF5) : Colors.white,
+      colorText: _isFollowing ? const Color(0xFF15803D) : AppColors.textPrimary,
+      duration: const Duration(seconds: 2),
+    );
   }
 
   void _toggleLike() {
@@ -272,58 +289,65 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AppColors.primarySoft,
-                    backgroundImage: const AssetImage(
-                      'lib/assets/img/avatar.png',
+                  GestureDetector(
+                    onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.primarySoft,
+                      backgroundImage: const AssetImage(
+                        'lib/assets/img/avatar.png',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.name,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                    child: GestureDetector(
+                      onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.name,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 11.5,
-                            color: AppColors.textTertiary,
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 11.5,
+                              color: AppColors.textTertiary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   if (widget.showFollowButton) ...[
                     TextButton(
-                      onPressed: () {},
+                      onPressed: _toggleFollow,
                       style: TextButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: AppColors.textPrimary,
+                        backgroundColor: _isFollowing ? const Color(0xFFF3F4F6) : Colors.transparent,
+                        foregroundColor: _isFollowing ? AppColors.textSecondary : AppColors.textPrimary,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         minimumSize: const Size(0, 31),
-                        side: const BorderSide(color: Color(0xFFDADDE2)),
+                        side: BorderSide(
+                          color: _isFollowing ? Colors.transparent : const Color(0xFFDADDE2),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                       ),
                       child: Text(
-                        'Ikuti',
+                        _isFollowing ? 'Mengikuti' : 'Ikuti',
                         style: AppFonts.satoshiStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
