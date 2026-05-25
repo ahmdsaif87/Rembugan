@@ -1,13 +1,23 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
+import { ColumnDef } from "@tanstack/react-table"
+import {
+  MoreVerticalIcon,
+  ImageOff,
+  Trash2Icon,
+  EyeIcon,
+} from "lucide-react"
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { DataTableGeneric } from "@/components/ui/data-table-generic"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,12 +29,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Sparkles, Search, ChevronLeft, ChevronRight, ImageOff, Trash2 } from "lucide-react"
+import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchShowcases, deleteShowcase } from "@/lib/api"
 
 interface Showcase {
   id: string
-  author_id: string
   content: string
   tags: string[]
   media_urls: string[]
@@ -35,10 +44,10 @@ interface Showcase {
 }
 
 export default function ShowcasesPage() {
+  const [detailShowcase, setDetailShowcase] = useState<Showcase | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
   const [showcases, setShowcases] = useState<Showcase[]>([])
   const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState({ skip: 0, limit: 20, total: 0 })
-  const [search, setSearch] = useState("")
 
   useEffect(() => {
     loadShowcases()
@@ -49,7 +58,6 @@ export default function ShowcasesPage() {
       const response = await fetchShowcases(0, 200)
       if (response.status === 'success') {
         setShowcases(response.data)
-        setPagination(prev => ({ ...prev, total: response.pagination?.total ?? response.data.length }))
       }
     } catch (error) {
       console.error('Error loading showcases:', error)
@@ -65,216 +73,174 @@ export default function ShowcasesPage() {
     }
   }
 
-  const filteredShowcases = useMemo(() => {
-    if (!search) return showcases
-    const q = search.toLowerCase()
-    return showcases.filter(
-      (s) =>
-        s.content.toLowerCase().includes(q) ||
-        s.author?.full_name?.toLowerCase().includes(q) ||
-        s.tags.some((t) => t.toLowerCase().includes(q))
-    )
-  }, [showcases, search])
-
-  const paginatedShowcases = useMemo(() => {
-    return filteredShowcases.slice(pagination.skip, pagination.skip + pagination.limit)
-  }, [filteredShowcases, pagination.skip, pagination.limit])
-
-  const totalPages = Math.ceil(filteredShowcases.length / pagination.limit)
-  const currentPage = Math.floor(pagination.skip / pagination.limit) + 1
-
-  if (loading) {
-    return (
-      <>
-        <div className="space-y-6">
-          <div>
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="mt-2 h-4 w-64" />
+  const columns: ColumnDef<Showcase>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-muted-foreground">
+          {row.original.id.slice(-8)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "author",
+      header: "Author",
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {row.original.author?.full_name || "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "content",
+      header: "Content",
+      cell: ({ row }) => (
+        <span className="line-clamp-2 max-w-xs text-sm text-muted-foreground">
+          {row.original.content}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "tags",
+      header: "Tags",
+      cell: ({ row }) => {
+        const tags = row.original.tags
+        return (
+          <div className="flex flex-wrap gap-1">
+            {tags.slice(0, 2).map((tag, idx) => (
+              <Badge key={idx} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {tags.length > 2 && (
+              <Badge variant="secondary" className="text-xs">
+                +{tags.length - 2}
+              </Badge>
+            )}
           </div>
-          <Card className="border-border/50">
-            <CardHeader>
-              <Skeleton className="h-9 w-64" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </>
-    )
-  }
+        )
+      },
+    },
+    {
+      accessorKey: "media_urls",
+      header: "Media",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.media_urls?.length || 0}</span>
+      ),
+    },
+    {
+      accessorKey: "likes",
+      header: "Likes",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.likes?.length || 0}</span>
+      ),
+    },
+    {
+      accessorKey: "comments",
+      header: "Comments",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.comments?.length || 0}</span>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {new Date(row.original.created_at).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const showcase = row.original
+        return (
+          <AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+                  size="icon"
+                >
+                  <MoreVerticalIcon />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32">
+                <DropdownMenuItem onClick={() => { setDetailShowcase(row.original); setDetailOpen(true); }}>
+                  <EyeIcon />
+                  View Details
+                </DropdownMenuItem>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem className="text-destructive">
+                    <Trash2Icon />
+                    Delete
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete this showcase.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDelete(showcase.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )
+      },
+    },
+  ]
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-900">
-            <Sparkles className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Showcases</h1>
-            <p className="text-sm text-muted-foreground">
-              Portfolio showcases posted by users
-            </p>
-          </div>
-          <Badge variant="secondary" className="ml-auto text-sm">
-            {filteredShowcases.length} total
-          </Badge>
+    <div className="flex flex-col gap-4">
+      <div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Showcases</h1>
+          <p className="text-sm text-muted-foreground">
+            Portfolio showcases posted by users
+          </p>
         </div>
-
-        {/* Data Table */}
-        <Card className="border-border/50">
-          <CardHeader className="pb-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search showcases…"
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value)
-                    setPagination((p) => ({ ...p, skip: 0 }))
-                  }}
-                  className="pl-9 bg-background"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50 hover:bg-transparent">
-                  <TableHead className="text-muted-foreground">ID</TableHead>
-                  <TableHead className="text-muted-foreground">Author</TableHead>
-                  <TableHead className="text-muted-foreground">Content</TableHead>
-                  <TableHead className="text-muted-foreground">Tags</TableHead>
-                  <TableHead className="text-muted-foreground">Media</TableHead>
-                  <TableHead className="text-muted-foreground">Likes</TableHead>
-                  <TableHead className="text-muted-foreground">Comments</TableHead>
-                  <TableHead className="text-muted-foreground">Created</TableHead>
-                  <TableHead className="text-right text-muted-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedShowcases.length > 0 ? (
-                  paginatedShowcases.map((showcase) => (
-                    <TableRow key={showcase.id} className="border-border/50">
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {showcase.id.slice(-8)}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {showcase.author?.full_name || "—"}
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <p className="line-clamp-2 text-sm text-muted-foreground">
-                          {showcase.content}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {showcase.tags.slice(0, 2).map((tag, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                          {showcase.tags.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{showcase.tags.length - 2}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {showcase.media_urls?.length || 0}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {showcase.likes?.length || 0}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {showcase.comments?.length || 0}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(showcase.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the showcase
-                                and all its associated data.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(showcase.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={9} className="h-32 text-center">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <ImageOff className="h-8 w-8 opacity-30" />
-                        <p className="text-sm">No showcases found</p>
-                        <p className="text-xs">Try adjusting your search</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-
-            {/* Pagination */}
-            {filteredShowcases.length > pagination.limit && (
-              <div className="flex items-center justify-between border-t border-border/50 pt-4 mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Showing {pagination.skip + 1}–{Math.min(pagination.skip + pagination.limit, filteredShowcases.length)} of {filteredShowcases.length}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={pagination.skip === 0}
-                    onClick={() => setPagination((p) => ({ ...p, skip: p.skip - p.limit }))}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={pagination.skip + pagination.limit >= filteredShowcases.length}
-                    onClick={() => setPagination((p) => ({ ...p, skip: p.skip + p.limit }))}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
-    </>
+
+      <DataTableGeneric
+        columns={columns}
+        data={showcases}
+        searchKey="content"
+        searchPlaceholder="Search showcases..."
+        loading={loading}
+        totalLabel={`${showcases.length} total`}
+        emptyMessage="No showcases found"
+        emptyIcon={<ImageOff className="h-8 w-8 opacity-30" />}
+      />
+
+      <DetailSheet
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        title="Showcase Details"
+        fields={[
+          { label: "Author", value: detailShowcase?.author?.full_name },
+          { label: "Content", value: detailShowcase?.content },
+          { label: "Tags", value: detailShowcase?.tags?.join(", ") },
+          { label: "Media URLs", value: detailShowcase?.media_urls?.join(", ") },
+          { label: "Likes", value: String(detailShowcase?.likes?.length ?? 0) },
+          { label: "Comments", value: String(detailShowcase?.comments?.length ?? 0) },
+          { label: "Created", value: detailShowcase?.created_at ? new Date(detailShowcase.created_at).toLocaleDateString() : "—" },
+        ]}
+      />
+    </div>
   )
 }

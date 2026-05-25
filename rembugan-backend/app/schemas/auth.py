@@ -6,6 +6,7 @@ class RegisterInput(BaseModel):
     nim: str = Field(..., min_length=5, description="NIM mahasiswa")
     password: str = Field(..., min_length=6, description="Password minimal 6 karakter")
     full_name: str = Field(..., min_length=2, description="Nama lengkap")
+    major: str = Field(..., min_length=2, description="Program studi / jurusan")
 
 
 class LoginInput(BaseModel):

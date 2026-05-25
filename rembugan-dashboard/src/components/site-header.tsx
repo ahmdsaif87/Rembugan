@@ -1,8 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { SidebarIcon, Bell } from "lucide-react"
-
+import { PanelLeft } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,9 +10,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useSidebar } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 
 const routeLabels: Record<string, string> = {
   "/": "Overview",
@@ -22,28 +20,33 @@ const routeLabels: Record<string, string> = {
   "/showcases": "Showcases",
   "/tasks": "Tasks",
   "/applications": "Applications",
+  "/competitions": "Competitions",
 }
 
-export function SiteHeader() {
-  const { toggleSidebar } = useSidebar()
+interface SiteHeaderProps {
+  onToggleSidebar?: () => void
+}
+
+export function SiteHeader({ onToggleSidebar }: SiteHeaderProps) {
   const pathname = usePathname()
   const pageLabel = routeLabels[pathname] || "Dashboard"
 
   return (
-    <header className="flex sticky top-0 z-50 w-full items-center border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-[--header-height] w-full items-center gap-2 px-4">
-        <div className="flex items-center mt-2 mb-2">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background">
+      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <Button
-          className="h-8 w-8"
           variant="ghost"
           size="icon"
-          onClick={toggleSidebar}
+          className="h-7 w-7"
+          onClick={onToggleSidebar}
+          aria-label="Toggle Sidebar"
         >
-          <SidebarIcon />
+          <PanelLeft className="h-4 w-4" />
         </Button>
-        <Separator orientation="vertical" className="mr-2 h-4" />
-
-        {/* Breadcrumb */}
+        <Separator
+          orientation="vertical"
+          className="mx-2 data-[orientation=vertical]:h-4"
+        />
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -59,7 +62,6 @@ export function SiteHeader() {
             )}
           </BreadcrumbList>
         </Breadcrumb>
-        </div>
       </div>
     </header>
   )

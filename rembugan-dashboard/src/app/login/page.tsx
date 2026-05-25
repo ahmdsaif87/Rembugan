@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-sm shadow-xl border-border/50">
         <CardHeader className="space-y-2 flex flex-col items-center text-center pb-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-rose-900 text-white mb-2">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground mb-2">
             <MessageSquare className="h-7 w-7" />
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">Rembugan Dashboard</CardTitle>
@@ -82,7 +82,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full bg-rose-900 hover:bg-rose-800" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
