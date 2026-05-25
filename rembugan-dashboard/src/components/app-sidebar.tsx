@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { usePathname } from "next/navigation"
-import Link from "next/link"
 import {
   BarChart3,
   Users,
@@ -14,6 +13,7 @@ import {
   Trophy,
 } from "lucide-react"
 
+import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -23,8 +23,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarGroup,
-  SidebarGroupLabel,
 } from "@/components/ui/sidebar"
 
 const navItems = [
@@ -46,58 +44,34 @@ const adminUser = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
 
+  const mainItems = navItems.map((item) => ({
+    ...item,
+    isActive: item.url === "/" ? pathname === "/" : pathname.startsWith(item.url),
+  }))
+
   return (
-    <Sidebar
-      className="h-screen"
-      {...props}
-    >
-      {/* Brand */}
+    <Sidebar collapsible="none" className="h-full w-full border-r-2 border-border/50" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="mt-12">
-              <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-rose-900 text-white">
-                  <MessageSquare className="size-4" />
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
+            >
+              <a href="/">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <MessageSquare className="h-5 w-5" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-bold tracking-tight">Rembugan</span>
-                  <span className="truncate text-xs text-muted-foreground">Admin Dashboard</span>
-                </div>
-              </Link>
+                <span className="text-base font-semibold">Rembugan</span>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-
-      {/* Navigation */}
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarMenu>
-            {navItems.map((item) => {
-              const isActive =
-                item.url === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.url)
-
-              return (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )
-            })}
-          </SidebarMenu>
-        </SidebarGroup>
+        <NavMain items={mainItems} />
       </SidebarContent>
-
-      {/* Footer user */}
-      <SidebarFooter className="mb-2">
+      <SidebarFooter>
         <NavUser user={adminUser} />
       </SidebarFooter>
     </Sidebar>

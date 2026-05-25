@@ -30,6 +30,7 @@ async def register(
             "nim": data.nim,
             "password": hashed,
             "full_name": data.full_name,
+            "major": data.major,
         }
     )
 
