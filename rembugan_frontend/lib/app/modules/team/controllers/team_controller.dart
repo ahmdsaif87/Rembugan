@@ -178,6 +178,7 @@ class WorkspaceFile {
 
 class TeamController extends GetxController {
   var detailTabIndex = 0.obs;
+  var workspaceTabIndex = 0.obs;
   final selectedWorkspace = Rxn<WorkspaceModel>();
 
   // Group Chat File Attachment State

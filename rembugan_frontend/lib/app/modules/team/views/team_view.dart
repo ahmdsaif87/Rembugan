@@ -108,28 +108,86 @@ class TeamView extends GetView<TeamController> {
 
               const SizedBox(height: 16),
 
+              // ── Tab Buttons ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                child: Obx(() => Row(
+                  children: [
+                    _TabButton(
+                      label: 'Workspace Saya',
+                      count: owned.length,
+                      active: controller.workspaceTabIndex.value == 0,
+                      onTap: () => controller.workspaceTabIndex.value = 0,
+                    ),
+                    const SizedBox(width: 8),
+                    _TabButton(
+                      label: 'Diikuti',
+                      count: joined.length,
+                      active: controller.workspaceTabIndex.value == 1,
+                      onTap: () => controller.workspaceTabIndex.value = 1,
+                    ),
+                  ],
+                )),
+              ),
+
               // ── Content ──
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  children: [
-                    // WORKSPACE SAYA
-                    if (owned.isNotEmpty) ...[
-                      _sectionLabel('WORKSPACE SAYA'),
-                      ...owned.map(
-                        (ws) => _WorkspaceRow(ws: ws, onTap: () => _open(ws)),
+                child: Obx(() {
+                  final list = controller.workspaceTabIndex.value == 0
+                      ? owned
+                      : joined;
+
+                  if (list.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              controller.workspaceTabIndex.value == 0
+                                  ? FluentIcons.briefcase_24_regular
+                                  : FluentIcons.people_team_24_regular,
+                              size: 36,
+                              color: _faint,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              controller.workspaceTabIndex.value == 0
+                                  ? 'Belum ada workspace milikmu'
+                                  : 'Belum mengikuti workspace',
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: _sub,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              controller.workspaceTabIndex.value == 0
+                                  ? 'Buat workspace baru untuk memulai kolaborasi.'
+                                  : 'Gabung ke workspace tim untuk berkolaborasi.',
+                              textAlign: TextAlign.center,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 12,
+                                color: _faint,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                    // DIIKUTI
-                    if (joined.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      _sectionLabel('DIIKUTI'),
-                      ...joined.map(
-                        (ws) => _WorkspaceRow(ws: ws, onTap: () => _open(ws)),
-                      ),
-                    ],
-                  ],
-                ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    itemCount: list.length,
+                    itemBuilder: (context, index) {
+                      final ws = list[index];
+                      return _WorkspaceRow(ws: ws, onTap: () => _open(ws));
+                    },
+                  );
+                }),
               ),
             ],
           ),
@@ -168,6 +226,75 @@ class TeamView extends GetView<TeamController> {
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: _ink,
+        ),
+      ),
+    );
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  TAB BUTTON
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+class _TabButton extends StatelessWidget {
+  const _TabButton({
+    required this.label,
+    required this.count,
+    required this.active,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          height: 40,
+          decoration: BoxDecoration(
+            color: active ? Colors.black : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: active ? Colors.black : _divider,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: active ? Colors.white : const Color(0xFF6B7280),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: active
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '$count',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: active ? Colors.white : _faint,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

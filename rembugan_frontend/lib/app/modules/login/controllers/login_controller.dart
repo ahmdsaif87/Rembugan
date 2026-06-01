@@ -25,11 +25,6 @@ class LoginController extends GetxController {
     }
   }
 
-  void onBiometricLogin() {
-    // TODO: Implementasi login biometrik
-    Get.snackbar('Biometrik', 'Fitur biometrik sedang dalam pengembangan');
-  }
-
   void onGoogleLogin() {
     // TODO: Implementasi login Google
     Get.snackbar('Google', 'Fitur login Google sedang dalam pengembangan');

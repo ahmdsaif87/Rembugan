@@ -9,6 +9,9 @@ import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 import '../../social/views/comment_view.dart';
 import '../controllers/home_controller.dart';
+import '../../explore/domain/entities/project.dart';
+import '../../explore/domain/entities/competition.dart';
+import '../../explore/views/explore_view.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -26,66 +29,7 @@ class HomeView extends GetView<HomeController> {
               Expanded(
                 child: Obx(() => ListView(
                   padding: const EdgeInsets.fromLTRB(0, 4, 0, 24),
-                  children: [
-                    _PostCardWidget(
-                      avatarUrl: 'https://i.pravatar.cc/100?img=33',
-                      name: 'Cameron Williamson',
-                      subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
-                      content:
-                          'Ada yang tertarik gabung tim buat ikut Creative Fest 2026? Kuota tim tinggal 1 slot lagi buat backend developer. Kita rencana pake FastAPI + PostgreSQL. Yang minat silakan cek profil atau langsung chat ya! 🚀🚀',
-                      hasImage: true,
-                      imageAssets: const [
-                        'lib/assets/img/contoh poster1.jpeg',
-                        'lib/assets/img/contoh poster2.jpeg',
-                      ],
-                      initialLikes: 142,
-                      showFollowButton: controller.activeTab.value == 0,
-                      onShowComments: () => showCommentsSheet(context),
-                      onShowShare: () => _showShareSheet(context),
-                    ),
-                    const Divider(height: 1, color: Color(0xFFE1E4E8)),
-                    _PostCardWidget(
-                      avatarUrl: 'https://i.pravatar.cc/100?img=12',
-                      name: 'Marvin McKinney',
-                      subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
-                      content:
-                          'Tadi siang habis coba fitur scan resume terbaru di Rembugan, gila ternyata akurat banget ya! Skill Figma langsung ke-detect otomatis. UI-nya juga clean banget, jadi makin semangat nyari proyek kolaborasi di sini. Mantap tim developer! 👏✨',
-                      hasImage: false,
-                      initialLikes: 98,
-                      showFollowButton: controller.activeTab.value == 0,
-                      onShowComments: () => showCommentsSheet(context),
-                      onShowShare: () => _showShareSheet(context),
-                    ),
-                    const Divider(height: 1, color: Color(0xFFE1E4E8)),
-                    _PostCardWidget(
-                      avatarUrl: 'https://i.pravatar.cc/100?img=12',
-                      name: 'Marvin McKinney',
-                      subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
-                      content:
-                          'Sharing sedikit tips buat temen-temen D4 Teknik Informatika yang lagi ngerjain project akhir: Coba biasain bikin design system di Figma dulu sebelum masuk ke codingan Flutter. Ini bener-bener ngehemat waktu integrasi UI nanti dan bikin komponen jadi reusable!',
-                      hasImage: false,
-                      initialLikes: 205,
-                      showFollowButton: controller.activeTab.value == 0,
-                      onShowComments: () => showCommentsSheet(context),
-                      onShowShare: () => _showShareSheet(context),
-                    ),
-                    const Divider(height: 1, color: Color(0xFFE1E4E8)),
-                    _PostCardWidget(
-                      avatarUrl: 'https://i.pravatar.cc/100?img=33',
-                      name: 'Cameron Williamson',
-                      subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
-                      content:
-                          'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎨✍️',
-                      hasImage: true,
-                      imageAssets: const [
-                        'lib/assets/img/contoh poster1.jpeg',
-                      ],
-                      initialLikes: 87,
-                      showFollowButton: controller.activeTab.value == 0,
-                      onShowComments: () => showCommentsSheet(context),
-                      onShowShare: () => _showShareSheet(context),
-                    ),
-                  ],
+                  children: _buildMixedFeed(context),
                 )),
               ),
             ],
@@ -185,6 +129,784 @@ class HomeView extends GetView<HomeController> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const _ShareSheet(),
+    );
+  }
+
+  List<Widget> _buildMixedFeed(BuildContext context) {
+    if (controller.activeTab.value == 1) {
+      // "Mengikuti" tab gets the original pure posts (or customized)
+      return [
+        _PostCardWidget(
+          avatarUrl: 'https://i.pravatar.cc/100?img=33',
+          name: 'Cameron Williamson',
+          subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+          content:
+              'Ada yang tertarik gabung tim buat ikut Creative Fest 2026? Kuota tim tinggal 1 slot lagi buat backend developer. Kita rencana pake FastAPI + PostgreSQL. Yang minat silakan cek profil atau langsung chat ya! 🚀🚀',
+          hasImage: true,
+          imageAssets: const [
+            'lib/assets/img/contoh poster1.jpeg',
+            'lib/assets/img/contoh poster2.jpeg',
+          ],
+          initialLikes: 142,
+          showFollowButton: false,
+          onShowComments: () => showCommentsSheet(context),
+          onShowShare: () => _showShareSheet(context),
+        ),
+        const Divider(height: 1, color: Color(0xFFE1E4E8)),
+        _PostCardWidget(
+          avatarUrl: 'https://i.pravatar.cc/100?img=12',
+          name: 'Marvin McKinney',
+          subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+          content:
+              'Tadi siang habis coba fitur scan resume terbaru di Rembugan, gila ternyata akurat banget ya! Skill Figma langsung ke-detect otomatis. UI-nya juga clean banget, jadi makin semangat nyari proyek kolaborasi di sini. Mantap tim developer! 👏✨',
+          hasImage: false,
+          initialLikes: 98,
+          showFollowButton: false,
+          onShowComments: () => showCommentsSheet(context),
+          onShowShare: () => _showShareSheet(context),
+        ),
+        const Divider(height: 1, color: Color(0xFFE1E4E8)),
+        _PostCardWidget(
+          avatarUrl: 'https://i.pravatar.cc/100?img=12',
+          name: 'Marvin McKinney',
+          subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+          content:
+              'Sharing sedikit tips buat temen-temen D4 Teknik Informatika yang lagi ngerjain project akhir: Coba biasain bikin design system di Figma dulu sebelum masuk ke codingan Flutter. Ini bener-bener ngehemat waktu integrasi UI nanti dan bikin komponen jadi reusable!',
+          hasImage: false,
+          initialLikes: 205,
+          showFollowButton: false,
+          onShowComments: () => showCommentsSheet(context),
+          onShowShare: () => _showShareSheet(context),
+        ),
+        const Divider(height: 1, color: Color(0xFFE1E4E8)),
+        _PostCardWidget(
+          avatarUrl: 'https://i.pravatar.cc/100?img=33',
+          name: 'Cameron Williamson',
+          subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+          content:
+              'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎨✍️',
+          hasImage: true,
+          imageAssets: const [
+            'lib/assets/img/contoh poster1.jpeg',
+          ],
+          initialLikes: 87,
+          showFollowButton: false,
+          onShowComments: () => showCommentsSheet(context),
+          onShowShare: () => _showShareSheet(context),
+        ),
+      ];
+    }
+
+    // "Untukmu" tab gets the mixed feed
+    return [
+      _PostCardWidget(
+        avatarUrl: 'https://i.pravatar.cc/100?img=33',
+        name: 'Cameron Williamson',
+        subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+        content:
+            'Ada yang tertarik gabung tim buat ikut Creative Fest 2026? Kuota tim tinggal 1 slot lagi buat backend developer. Kita rencana pake FastAPI + PostgreSQL. Yang minat silakan cek profil atau langsung chat ya! 🚀🚀',
+        hasImage: true,
+        imageAssets: const [
+          'lib/assets/img/contoh poster1.jpeg',
+          'lib/assets/img/contoh poster2.jpeg',
+        ],
+        initialLikes: 142,
+        showFollowButton: true,
+        onShowComments: () => showCommentsSheet(context),
+        onShowShare: () => _showShareSheet(context),
+      ),
+      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+      
+      // Proyek Rekomendasi
+      _buildRecommendedProjectsSection(context),
+      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+      
+      _PostCardWidget(
+        avatarUrl: 'https://i.pravatar.cc/100?img=12',
+        name: 'Marvin McKinney',
+        subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+        content:
+            'Tadi siang habis coba fitur scan resume terbaru di Rembugan, gila ternyata akurat banget ya! Skill Figma langsung ke-detect otomatis. UI-nya juga clean banget, jadi makin semangat nyari proyek kolaborasi di sini. Mantap tim developer! 👏✨',
+        hasImage: false,
+        initialLikes: 98,
+        showFollowButton: true,
+        onShowComments: () => showCommentsSheet(context),
+        onShowShare: () => _showShareSheet(context),
+      ),
+      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+
+      _PostCardWidget(
+        avatarUrl: 'https://i.pravatar.cc/100?img=12',
+        name: 'Marvin McKinney',
+        subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+        content:
+            'Sharing sedikit tips buat temen-temen D4 Teknik Informatika yang lagi ngerjain project akhir: Coba biasain bikin design system di Figma dulu sebelum masuk ke codingan Flutter. Ini bener-bener ngehemat waktu integrasi UI nanti dan bikin komponen jadi reusable!',
+        hasImage: false,
+        initialLikes: 205,
+        showFollowButton: true,
+        onShowComments: () => showCommentsSheet(context),
+        onShowShare: () => _showShareSheet(context),
+      ),
+      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+      
+      // Lomba Rekomendasi
+      _buildRecommendedCompetitionsSection(context),
+      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+
+      _PostCardWidget(
+        avatarUrl: 'https://i.pravatar.cc/100?img=33',
+        name: 'Cameron Williamson',
+        subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
+        content:
+            'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎨✍️',
+        hasImage: true,
+        imageAssets: const [
+          'lib/assets/img/contoh poster1.jpeg',
+        ],
+        initialLikes: 87,
+        showFollowButton: true,
+        onShowComments: () => showCommentsSheet(context),
+        onShowShare: () => _showShareSheet(context),
+      ),
+      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+      
+      // Orang Rekomendasi
+      _buildRecommendedPeopleSection(context),
+      const SizedBox(height: 10),
+    ];
+  }
+
+  Widget _buildRecommendedProjectsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Rekomendasi Proyek',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 190,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: controller.recommendedProjects.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final project = controller.recommendedProjects[index];
+              return _RecommendedProjectCard(
+                project: project,
+                index: index,
+                onTap: () => ExploreView.showProjectSheet(context, project),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildRecommendedCompetitionsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Rekomendasi Lomba',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 180,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: controller.recommendedCompetitions.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final competition = controller.recommendedCompetitions[index];
+              return _RecommendedCompetitionCard(
+                competition: competition,
+                index: index,
+                onTap: () => ExploreView.showCompetitionSheet(context, competition, index),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildRecommendedPeopleSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Rekomendasi Orang',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 185,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: controller.recommendedPeople.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final person = controller.recommendedPeople[index];
+              return _RecommendedPersonCard(
+                person: person,
+                onFollow: () => controller.toggleFollowPerson(person),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  // Details sheets now directly invoke static ExploreView.showProjectSheet/showCompetitionSheet
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  RECOMMENDED CARDS WIDGETS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+class _RecommendedProjectCard extends StatefulWidget {
+  final Project project;
+  final int index;
+  final VoidCallback onTap;
+
+  const _RecommendedProjectCard({
+    required this.project,
+    required this.index,
+    required this.onTap,
+  });
+
+  @override
+  State<_RecommendedProjectCard> createState() => _RecommendedProjectCardState();
+}
+
+class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Determine index-based semantic color, badge, and reason
+    final Color semanticColor = switch (widget.index % 2) {
+      0 => const Color(0xFFFFA600), // Amber/Yellow (Cocok Untukmu)
+      _ => const Color(0xFF16A34A), // Green (Direkomendasikan)
+    };
+
+    final String badgeText = switch (widget.index % 2) {
+      0 => '✨ Cocok Untukmu',
+      _ => '⭐ Direkomendasikan',
+    };
+
+    final Color badgeBg = switch (widget.index % 2) {
+      0 => const Color(0xFFFFF9E6),
+      _ => const Color(0xFFF0FDF4),
+    };
+
+    final Color badgeBorder = switch (widget.index % 2) {
+      0 => const Color(0xFFFFF1C2),
+      _ => const Color(0xFFDCFCE7),
+    };
+
+    final Color badgeTextCol = switch (widget.index % 2) {
+      0 => const Color(0xFFD97706),
+      _ => const Color(0xFF16A34A),
+    };
+
+    final String reasonText = switch (widget.index % 2) {
+      0 => 'Sesuai dengan keahlian Flutter kamu',
+      _ => 'Banyak dicari di jurusan kamu',
+    };
+
+    final IconData reasonIcon = switch (widget.index % 2) {
+      0 => Icons.auto_awesome_outlined,
+      _ => Icons.trending_up_rounded,
+    };
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeInOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 280,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFAFBFC), // premium off-white/cool-gray surface!
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _isPressed ? const Color(0xFF94A3B8) : const Color(0xFFD2D6DC),
+              width: 1.2,
+            ),
+            boxShadow: _isPressed
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : AppShadows.medium,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                // Top subtle semantic color accent strip!
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: 3,
+                  child: Container(
+                    color: semanticColor,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 15, 14, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top Row (Category Tag & Premium Small Badge)
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              widget.project.category.toUpperCase(),
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: badgeBg,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: badgeBorder, width: 0.8),
+                            ),
+                            child: Text(
+                              badgeText,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w800,
+                                color: badgeTextCol,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Title
+                      Text(
+                        widget.project.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppFonts.satoshiStyle(
+                           fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      // Description
+                      Text(
+                        widget.project.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11.5,
+                          height: 1.35,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Subtle Alasan Rekomendasi (Helper text)
+                      Row(
+                        children: [
+                          Icon(reasonIcon, size: 12.5, color: semanticColor.withValues(alpha: 0.85)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              reasonText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      const SizedBox(height: 8),
+                      // Bottom Row (Owner Avatar & Slot Status)
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 9,
+                            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              widget.project.postedBy,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: badgeBg.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              '${widget.project.openSlots} slot',
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: badgeTextCol,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecommendedCompetitionCard extends StatelessWidget {
+  final Competition competition;
+  final int index;
+  final VoidCallback onTap;
+
+  const _RecommendedCompetitionCard({
+    required this.competition,
+    required this.index,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final posterAsset = switch (index % 4) {
+      0 => 'lib/assets/img/contoh poster1.jpeg',
+      1 => 'lib/assets/img/contoh poster2.jpeg',
+      2 => 'lib/assets/img/contoh poster3.jpeg',
+      _ => 'lib/assets/img/contoh poster4.jpeg',
+    };
+
+    return Container(
+      width: 250,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppShadows.soft,
+        image: DecorationImage(
+          image: AssetImage(posterAsset),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.08),
+                  Colors.black.withValues(alpha: 0.35),
+                  Colors.black.withValues(alpha: 0.88),
+                ],
+                stops: const [0.0, 0.45, 1.0],
+              ),
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Top Tag & Badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.18), width: 0.8),
+                      ),
+                      child: Text(
+                        competition.category.toUpperCase(),
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFA600),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        competition.badge,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                // Bottom content (Title, organizer, deadline)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      competition.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            competition.organizer,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 10.5,
+                              color: Colors.white.withValues(alpha: 0.72),
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 10,
+                          color: Colors.white.withValues(alpha: 0.72),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          competition.deadline,
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.72),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecommendedPersonCard extends StatelessWidget {
+  final RecommendedPerson person;
+  final VoidCallback onFollow;
+
+  const _RecommendedPersonCard({
+    required this.person,
+    required this.onFollow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 165,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEAEAEA), width: 1.2),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.primarySoft,
+              backgroundImage: NetworkImage(person.avatarUrl),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              person.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              person.role,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 4,
+              runSpacing: 2,
+              alignment: WrapAlignment.center,
+              children: person.tags.take(2).map((tag) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  tag,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              )).toList(),
+            ),
+            const Spacer(),
+            Obx(() => SizedBox(
+              width: double.infinity,
+              height: 28,
+              child: TextButton(
+                onPressed: onFollow,
+                style: TextButton.styleFrom(
+                  backgroundColor: person.isFollowing.value ? const Color(0xFFF3F4F6) : AppColors.primary,
+                  foregroundColor: person.isFollowing.value ? AppColors.textSecondary : Colors.white,
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  person.isFollowing.value ? 'Mengikuti' : 'Ikuti',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )),
+          ],
+        ),
+      ),
     );
   }
 }

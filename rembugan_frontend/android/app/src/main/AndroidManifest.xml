@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="rembugan_frontend"
+        android:label="Rembugan"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
