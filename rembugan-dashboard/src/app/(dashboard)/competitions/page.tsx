@@ -6,6 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -18,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Trophy, Activity, Filter, Trash2, List } from "lucide-react"
+import { Activity, Filter, Trash2, List, EyeIcon, MoreVerticalIcon } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -35,6 +41,7 @@ import {
   Legend
 } from "recharts"
 
+import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchCompetitions, fetchUsers, deleteCompetition } from "@/lib/api"
 
 interface Competition {
@@ -60,6 +67,8 @@ interface User {
 }
 
 export default function CompetitionsPage() {
+  const [detailComp, setDetailComp] = useState<Competition | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
   const [competitions, setCompetitions] = useState<Competition[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [selectedUserId, setSelectedUserId] = useState<string>("all")
@@ -149,16 +158,11 @@ export default function CompetitionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-900">
-            <Trophy className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Competitions Data</h1>
-            <p className="text-sm text-muted-foreground">
-              Visualizing scraped competitions and user matching
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Competitions Data</h1>
+          <p className="text-sm text-muted-foreground">
+            Visualizing scraped competitions and user matching
+          </p>
         </div>
       </div>
 
@@ -166,7 +170,6 @@ export default function CompetitionsPage() {
         <Card className="border-border/50">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-rose-600" />
               <div>
                 <CardTitle>Competitions by Source</CardTitle>
                 <CardDescription>Distribution of scraped competitions</CardDescription>
@@ -194,12 +197,12 @@ export default function CompetitionsPage() {
                     />
                     <Tooltip 
                       cursor={{fill: 'rgba(255, 255, 255, 0.05)'}}
-                      contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px' }}
+                      contentStyle={{ backgroundColor: '#ffffffff', borderColor: '#374151', borderRadius: '8px' }}
                     />
                     <Bar 
                       dataKey="total" 
-                      fill="#e11d48" 
-                      radius={[4, 4, 0, 0]} 
+  fill="hsl(var(--primary))" 
+  radius={[4, 4, 0, 0]} 
                       name="Competitions" 
                     />
                   </BarChart>
@@ -217,7 +220,7 @@ export default function CompetitionsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-rose-600" />
+                <Filter className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <CardTitle>User Skill Match</CardTitle>
                   <CardDescription>Competition availability by user skill</CardDescription>
@@ -264,8 +267,8 @@ export default function CompetitionsPage() {
                     <Radar 
                       name={`${selectedUser?.full_name}'s Matches`} 
                       dataKey="A" 
-                      stroke="#e11d48" 
-                      fill="#e11d48" 
+              stroke="hsl(var(--primary))" 
+              fill="hsl(var(--primary))" 
                       fillOpacity={0.4} 
                     />
                     <Legend wrapperStyle={{ paddingTop: '20px' }}/>
@@ -280,7 +283,7 @@ export default function CompetitionsPage() {
       <Card className="border-border/50">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <List className="h-4 w-4 text-rose-600" />
+            <List className="h-4 w-4 text-muted-foreground" />
             <div>
               <CardTitle>All Scraped Competitions</CardTitle>
               <CardDescription>Manage the raw data obtained from scraping</CardDescription>
@@ -321,11 +324,26 @@ export default function CompetitionsPage() {
                     <TableCell className="text-right">
                       {comp._id && (
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="flex size-8 text-muted-foreground data-[state=open]:bg-muted">
+                                <MoreVerticalIcon />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-32">
+                              <DropdownMenuItem onClick={() => { setDetailComp(comp); setDetailOpen(true); }}>
+                                <EyeIcon />
+                                View Details
+                              </DropdownMenuItem>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash2 />
+                                  Delete
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -356,6 +374,18 @@ export default function CompetitionsPage() {
           </Table>
         </CardContent>
       </Card>
+      <DetailSheet
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        title={detailComp?.judul || "Competition Details"}
+        fields={[
+          { label: "Title", value: detailComp?.judul },
+          { label: "Source", value: detailComp?.sumber },
+          { label: "Caption", value: detailComp?.caption },
+          { label: "Direct Link", value: detailComp?.link_direct ? <a href={detailComp.link_direct} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{detailComp.link_direct}</a> : "—" },
+          { label: "Registration Links", value: detailComp?.link_pendaftaran?.join(", ") },
+        ]}
+      />
     </div>
   )
 }

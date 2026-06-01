@@ -20,3 +20,6 @@ firebase-admin.json
 
 # Logs
 *.log
+
+# docs
+docs/
