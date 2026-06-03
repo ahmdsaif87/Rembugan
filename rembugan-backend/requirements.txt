@@ -35,3 +35,6 @@ groq
 # 7. MONGODB
 pymongo
 motor
+
+# 8. EMAIL SERVICE
+resend

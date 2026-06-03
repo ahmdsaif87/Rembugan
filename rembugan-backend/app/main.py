@@ -4,7 +4,7 @@ from app.core.config import setup_cloudinary
 from app.core.security import setup_firebase
 from app.core.database import db
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections
+from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload
 from app.api.admin import router as admin_router
 
 # Inisialisasi Layanan External
@@ -44,12 +44,13 @@ app.include_router(fyp.router)
 app.include_router(profile.router)
 app.include_router(notifications.router)
 app.include_router(connections.router)
+app.include_router(upload.router)
 app.include_router(admin_router)
 
 # Middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5500", "http://localhost:5500", "http://0.0.0.0:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

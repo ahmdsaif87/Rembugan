@@ -15,6 +15,8 @@ security = HTTPBearer()
 JWT_SECRET = os.getenv("JWT_SECRET_KEY", "fallback-secret-key")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 7
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@rembugan.com")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 
 # ==========================================
@@ -49,7 +51,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # ==========================================
 # JWT TOKEN
 # ==========================================
-def create_jwt_token(user_id: str, email: str = None) -> str:
+def create_jwt_token(user_id: str, email: str = None, role: str = None) -> str:
     """Generate JWT access token dengan expiry 7 hari."""
     payload = {
         "uid": user_id,
@@ -57,13 +59,18 @@ def create_jwt_token(user_id: str, email: str = None) -> str:
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS),
         "iat": datetime.now(timezone.utc),
     }
+    if role:
+        payload["role"] = role
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 def _verify_jwt(token: str) -> dict:
     """Decode dan verifikasi JWT token. Raise exception jika gagal."""
     payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-    return {"uid": payload["uid"], "email": payload.get("email")}
+    result = {"uid": payload["uid"], "email": payload.get("email")}
+    if payload.get("role"):
+        result["role"] = payload["role"]
+    return result
 
 
 # ==========================================
@@ -102,3 +109,38 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token tidak valid atau sudah kadaluarsa. Silakan login ulang.",
     )
+
+
+# ==========================================
+# ADMIN TOKEN VERIFIER
+# ==========================================
+def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """
+    Verifikasi token admin dari header Authorization.
+    Hanya menerima JWT dengan role: "admin".
+    """
+    token = credentials.credentials
+
+    try:
+        payload = _verify_jwt(token)
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token tidak valid atau sudah kadaluarsa.",
+        )
+
+    if payload.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akses ditolak. Hanya admin yang dapat mengakses resource ini.",
+        )
+
+    return payload
+
+
+# ==========================================
+# ADMIN CREDENTIAL VERIFIER
+# ==========================================
+def verify_admin_credentials(email: str, password: str) -> bool:
+    """Verifikasi kredensial admin terhadap env var."""
+    return email == ADMIN_EMAIL and password == ADMIN_PASSWORD

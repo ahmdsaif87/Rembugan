@@ -19,6 +19,7 @@ model User {
   password      String    // Wajib, di-hash saat registrasi
   googleId      String?   @unique // Opsional, diisi jika menautkan akun Google
   email         String?   @unique
+  email_verified Boolean  @default(false)
   
   // Data Profil Dasar
   full_name     String
@@ -50,9 +51,26 @@ model User {
   receivedConnections Connection[]   @relation("ReceivedConnections")
   notifications Notification[]
 
+  // Relasi ke OTP
+  otp_codes     OtpCode[]
+
   // Timestamps
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
+}
+
+// 1b. ENTITAS OTP (Verifikasi Email)
+model OtpCode {
+  id         Int      @id @default(autoincrement())
+  user_id    String
+  email      String
+  code_hash  String   // SHA256 hash dari OTP
+  expires_at DateTime
+  attempts   Int      @default(0)
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 // 2. ENTITAS SKILL & PENGALAMAN (PORTFOLIO)
