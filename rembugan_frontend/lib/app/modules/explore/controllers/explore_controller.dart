@@ -36,10 +36,15 @@ class ExploreController extends GetxController {
   final ExploreRepository _repository;
 
   final activeTab = ExploreTab.project.obs;
-  final selectedSort = ''.obs;
-  final selectedCategories = <String>[].obs;
-  final selectedSkills = <String>[].obs;
-  final activeFilters = <String>[].obs;
+  
+  // Dynamic filter observables
+  final selectedSort = 'Paling relevan'.obs;
+  final selectedFaculty = 'Semua jurusan'.obs;
+  final selectedCategory = 'Semua kategori'.obs;
+  final selectedSkill = 'Semua skill'.obs;
+  final selectedDeadline = 'Semua deadline'.obs;
+  final selectedSlot = 'Semua slot'.obs;
+  final selectedAvailability = 'Terbuka kolaborasi'.obs;
   
   final projects = <Project>[].obs;
   final filteredProjects = <Project>[].obs;
@@ -111,113 +116,157 @@ class ExploreController extends GetxController {
 
   int get activeFilterCount {
     var count = 0;
-    if (selectedSort.value.isNotEmpty) count++;
-    count += selectedCategories.length;
-    count += selectedSkills.length;
+    if (selectedSort.value != 'Paling relevan' && selectedSort.value.isNotEmpty) count++;
+    if (selectedFaculty.value != 'Semua jurusan') count++;
+    if (selectedCategory.value != 'Semua kategori' && selectedCategory.value != 'Semua kategori lomba' && selectedCategory.value != 'Semua kategori proyek') count++;
+    if (selectedSkill.value != 'Semua skill') count++;
+    if (selectedDeadline.value != 'Semua deadline') count++;
+    if (selectedSlot.value != 'Semua slot') count++;
+    if (selectedAvailability.value != 'Terbuka kolaborasi') count++;
     return count;
   }
 
   void search(String query) {
     searchQuery.value = query;
-    final lowerQuery = query.toLowerCase();
-
-    // 1. Filter projects
-    filteredProjects.assignAll(
-      projects.where((project) {
-        final matchesQuery = lowerQuery.isEmpty ||
-            project.title.toLowerCase().contains(lowerQuery) ||
-            project.category.toLowerCase().contains(lowerQuery) ||
-            project.skills.any((s) => s.toLowerCase().contains(lowerQuery));
-
-        final matchesCategory = selectedCategories.isEmpty ||
-            selectedCategories.contains(project.category);
-        final matchesSkill = selectedSkills.isEmpty ||
-            project.skills.any(selectedSkills.contains);
-
-        return matchesQuery && matchesCategory && matchesSkill;
-      }),
-    );
-
-    // 2. Filter competitions
-    filteredCompetitions.assignAll(
-      competitions.where((comp) {
-        return lowerQuery.isEmpty ||
-            comp.title.toLowerCase().contains(lowerQuery) ||
-            comp.category.toLowerCase().contains(lowerQuery) ||
-            comp.caption.toLowerCase().contains(lowerQuery);
-      }),
-    );
-
-    // 3. Filter people
-    filteredPeople.assignAll(
-      people.where((person) {
-        return lowerQuery.isEmpty ||
-            person.name.toLowerCase().contains(lowerQuery) ||
-            person.role.toLowerCase().contains(lowerQuery) ||
-            person.tags.any((t) => t.toLowerCase().contains(lowerQuery));
-      }),
-    );
+    applyFilters();
   }
 
   void applyFilters() {
-    activeFilters
-      ..clear()
-      ..addAll([
-        if (selectedSort.value.isNotEmpty) selectedSort.value,
-        ...selectedCategories,
-        ...selectedSkills,
-      ]);
+    final query = searchQuery.value.toLowerCase();
 
-    final lowerQuery = searchQuery.value.toLowerCase();
-    filteredProjects.assignAll(
-      projects.where((project) {
-        final matchesQuery = lowerQuery.isEmpty ||
-            project.title.toLowerCase().contains(lowerQuery) ||
-            project.category.toLowerCase().contains(lowerQuery) ||
-            project.skills.any((s) => s.toLowerCase().contains(lowerQuery));
+    // 1. Projects
+    var tempProjects = projects.where((project) {
+      final matchesQuery = query.isEmpty ||
+          project.title.toLowerCase().contains(query) ||
+          project.category.toLowerCase().contains(query) ||
+          project.skills.any((s) => s.toLowerCase().contains(query));
 
-        final matchesCategory =
-            selectedCategories.isEmpty ||
-            selectedCategories.contains(project.category);
-        final matchesSkill =
-            selectedSkills.isEmpty ||
-            project.skills.any(selectedSkills.contains);
+      final matchesFaculty = selectedFaculty.value == 'Semua jurusan' ||
+          project.faculty.toLowerCase().contains(selectedFaculty.value.toLowerCase());
 
-        return matchesQuery && matchesCategory && matchesSkill;
-      }),
-    );
-  }
+      var categoryFilter = selectedCategory.value;
+      if (categoryFilter == 'Semua kategori proyek') categoryFilter = 'Semua kategori';
+      final matchesCategory = categoryFilter == 'Semua kategori' ||
+          project.category.toLowerCase().contains(categoryFilter.replaceAll(' App', '').replaceAll(' Dev', '').replaceAll(' Design', '').toLowerCase());
 
-  void removeFilter(String filter) {
-    if (sortOptions.contains(filter)) {
-      selectedSort.value = '';
-    } else if (categoryOptions.contains(filter)) {
-      selectedCategories.remove(filter);
-    } else if (skillOptions.contains(filter)) {
-      selectedSkills.remove(filter);
+      final matchesSlot = selectedSlot.value == 'Semua slot' ||
+          (selectedSlot.value == '1 slot' && project.openSlots == 1) ||
+          (selectedSlot.value == '2 slot' && project.openSlots == 2) ||
+          (selectedSlot.value == '3+ slot' && project.openSlots >= 3);
+
+      return matchesQuery && matchesFaculty && matchesCategory && matchesSlot;
+    }).toList();
+
+    if (selectedSort.value == 'Terbaru') {
+      tempProjects = tempProjects.reversed.toList();
     }
+    filteredProjects.assignAll(tempProjects);
 
-    activeFilters.remove(filter);
-    applyFilters();
+    // 2. Competitions
+    var tempCompetitions = competitions.where((comp) {
+      final matchesQuery = query.isEmpty ||
+          comp.title.toLowerCase().contains(query) ||
+          comp.category.toLowerCase().contains(query) ||
+          comp.caption.toLowerCase().contains(query) ||
+          comp.organizer.toLowerCase().contains(query);
+
+      bool matchesFaculty = true;
+      if (selectedFaculty.value != 'Semua jurusan') {
+        final org = comp.organizer.toLowerCase();
+        final cat = comp.category.toLowerCase();
+        final title = comp.title.toLowerCase();
+        if (selectedFaculty.value == 'Teknik Informatika') {
+          matchesFaculty = org.contains('ftik') || cat.contains('coding') || cat.contains('hackathon');
+        } else if (selectedFaculty.value == 'Sistem Informasi') {
+          matchesFaculty = org.contains('ftik') || cat.contains('data') || title.contains('edutech');
+        } else if (selectedFaculty.value == 'DKV') {
+          matchesFaculty = cat.contains('design') || cat.contains('ui/ux');
+        } else if (selectedFaculty.value == 'Manajemen') {
+          matchesFaculty = org.contains('ekonomi') || org.contains('feb') || cat.contains('business');
+        }
+      }
+
+      var categoryFilter = selectedCategory.value;
+      if (categoryFilter == 'Semua kategori lomba') categoryFilter = 'Semua kategori';
+      bool matchesCategory = true;
+      if (categoryFilter != 'Semua kategori') {
+        final compCat = comp.category.toUpperCase();
+        if (categoryFilter == 'Hackathon') {
+          matchesCategory = compCat.contains('HACKATHON');
+        } else if (categoryFilter == 'UI/UX') {
+          matchesCategory = compCat.contains('DESIGN');
+        } else if (categoryFilter == 'Bisnis') {
+          matchesCategory = compCat.contains('BUSINESS');
+        } else if (categoryFilter == 'Data') {
+          matchesCategory = compCat.contains('CODING');
+        } else {
+          matchesCategory = comp.category.toLowerCase().contains(categoryFilter.toLowerCase());
+        }
+      }
+
+      bool matchesDeadline = true;
+      if (selectedDeadline.value != 'Semua deadline') {
+        final days = comp.daysLeft;
+        if (days == null) {
+          matchesDeadline = false;
+        } else {
+          if (selectedDeadline.value == '< 1 minggu') {
+            matchesDeadline = days < 7;
+          } else if (selectedDeadline.value == '1 minggu') {
+            matchesDeadline = days >= 7 && days <= 14;
+          } else if (selectedDeadline.value == '2 minggu') {
+            matchesDeadline = days > 14 && days <= 21;
+          } else if (selectedDeadline.value == 'Bulan ini') {
+            matchesDeadline = days <= 30;
+          }
+        }
+      }
+
+      return matchesQuery && matchesFaculty && matchesCategory && matchesDeadline;
+    }).toList();
+
+    if (selectedSort.value == 'Terbaru') {
+      tempCompetitions = tempCompetitions.reversed.toList();
+    }
+    filteredCompetitions.assignAll(tempCompetitions);
+
+    // 3. People
+    var tempPeople = people.where((person) {
+      final matchesQuery = query.isEmpty ||
+          person.name.toLowerCase().contains(query) ||
+          person.role.toLowerCase().contains(query) ||
+          person.tags.any((t) => t.toLowerCase().contains(query));
+
+      bool matchesFaculty = true;
+      if (selectedFaculty.value != 'Semua jurusan') {
+        final role = person.role.toLowerCase();
+        if (selectedFaculty.value == 'Teknik Informatika' || selectedFaculty.value == 'Sistem Informasi') {
+          matchesFaculty = role.contains('dev') || role.contains('developer');
+        } else if (selectedFaculty.value == 'DKV') {
+          matchesFaculty = role.contains('design') || role.contains('designer');
+        }
+      }
+
+      final matchesSkill = selectedSkill.value == 'Semua skill' ||
+          person.tags.any((t) => t.toLowerCase() == selectedSkill.value.toLowerCase());
+
+      return matchesQuery && matchesFaculty && matchesSkill;
+    }).toList();
+
+    if (selectedSort.value == 'Terpopuler') {
+      tempPeople = tempPeople.reversed.toList();
+    }
+    filteredPeople.assignAll(tempPeople);
   }
 
   void clearAllFilters() {
-    selectedSort.value = '';
-    selectedCategories.clear();
-    selectedSkills.clear();
-    activeFilters.clear();
+    selectedSort.value = 'Paling relevan';
+    selectedFaculty.value = 'Semua jurusan';
+    selectedCategory.value = 'Semua kategori';
+    selectedSkill.value = 'Semua skill';
+    selectedDeadline.value = 'Semua deadline';
+    selectedSlot.value = 'Semua slot';
+    selectedAvailability.value = 'Terbuka kolaborasi';
     applyFilters();
-  }
-
-  void toggleCategory(String category) {
-    selectedCategories.contains(category)
-        ? selectedCategories.remove(category)
-        : selectedCategories.add(category);
-  }
-
-  void toggleSkill(String skill) {
-    selectedSkills.contains(skill)
-        ? selectedSkills.remove(skill)
-        : selectedSkills.add(skill);
   }
 }

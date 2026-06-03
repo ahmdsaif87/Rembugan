@@ -277,7 +277,10 @@ class ExploreView extends GetView<ExploreController> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          controller.clearAllFilters();
+                          Navigator.of(context).pop();
+                        },
                         child: const Text('Reset'),
                       ),
                     ),
@@ -285,7 +288,10 @@ class ExploreView extends GetView<ExploreController> {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          controller.applyFilters();
+                          Navigator.of(context).pop();
+                        },
                         child: const Text('Terapkan'),
                       ),
                     ),
@@ -547,6 +553,14 @@ ${competition.registrationLink}
                   ),
                   const SizedBox(height: 16),
                   
+                  if (competition.daysLeft != null) ...[
+                    _CompetitionTimelineBox(
+                      daysLeft: competition.daysLeft!,
+                      deadline: competition.deadline,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
                   // Divider
                   const Divider(color: AppColors.border, height: 1),
                   const SizedBox(height: 16),
@@ -735,102 +749,137 @@ class _FilterSheetContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<ExploreController>();
     final isLomba = tab.isCompetition;
     final isPeople = tab.isPeople;
 
-    return Column(
-      children: [
-        _SortSelector(isPeople: isPeople),
-        const SizedBox(height: 12),
-        _FilterSelectField(
-          label: 'Jurusan',
-          value: 'Semua jurusan',
-          icon: Icons.school_outlined,
-          options: const [
-            'Semua jurusan',
-            'Teknik Informatika',
-            'Sistem Informasi',
-            'DKV',
-            'Manajemen',
-          ],
-        ),
-        const SizedBox(height: 12),
-        _FilterSelectField(
-          label: isPeople ? 'Skill' : 'Kategori',
-          value: isPeople
-              ? 'Semua skill'
-              : isLomba
-              ? 'Semua kategori lomba'
-              : 'Semua kategori proyek',
-          icon: isPeople ? Icons.code : FluentIcons.tag_24_regular,
-          options: isPeople
-              ? const ['Semua skill', 'Flutter', 'UI/UX', 'Firebase', 'React']
-              : isLomba
-              ? const ['Semua kategori', 'Hackathon', 'UI/UX', 'Bisnis', 'Data']
-              : const [
-                  'Semua kategori',
-                  'Mobile App',
-                  'Web App',
-                  'UI/UX',
-                  'Riset',
-                ],
-        ),
-        const SizedBox(height: 12),
-        _FilterSelectField(
-          label: isPeople
-              ? 'Ketersediaan'
-              : isLomba
-              ? 'Deadline pendaftaran'
-              : 'Slot tersisa',
-          value: isPeople
-              ? 'Terbuka kolaborasi'
-              : isLomba
-              ? '1 minggu'
-              : 'Semua slot',
-          icon: isPeople
-              ? FluentIcons.people_24_regular
-              : isLomba
-              ? Icons.calendar_today_outlined
-              : FluentIcons.people_24_regular,
-          options: isPeople
-              ? const [
-                  'Terbuka kolaborasi',
-                  'Aktif minggu ini',
-                  'Ada portfolio',
-                ]
-              : isLomba
-              ? const ['< 1 minggu', '1 minggu', '2 minggu', 'Bulan ini']
-              : const ['Semua slot', '1 slot', '2 slot', '3+ slot'],
-        ),
-      ],
-    );
+    return Obx(() {
+      return Column(
+        children: [
+          _SortSelector(
+            isPeople: isPeople,
+            selectedSort: controller.selectedSort.value,
+            onSortChanged: (sort) => controller.selectedSort.value = sort,
+          ),
+          const SizedBox(height: 12),
+          _FilterSelectField(
+            label: 'Jurusan',
+            value: controller.selectedFaculty.value,
+            icon: Icons.school_outlined,
+            options: const [
+              'Semua jurusan',
+              'Teknik Informatika',
+              'Sistem Informasi',
+              'DKV',
+              'Manajemen',
+            ],
+            onChanged: (val) => controller.selectedFaculty.value = val,
+          ),
+          const SizedBox(height: 12),
+          _FilterSelectField(
+            label: isPeople ? 'Skill' : 'Kategori',
+            value: isPeople
+                ? controller.selectedSkill.value
+                : controller.selectedCategory.value,
+            icon: isPeople ? Icons.code : FluentIcons.tag_24_regular,
+            options: isPeople
+                ? const ['Semua skill', 'Flutter', 'UI/UX', 'Firebase', 'React']
+                : isLomba
+                ? const ['Semua kategori', 'Hackathon', 'UI/UX', 'Bisnis', 'Data']
+                : const [
+                    'Semua kategori',
+                    'Mobile App',
+                    'Web App',
+                    'UI/UX',
+                    'Riset',
+                  ],
+            onChanged: (val) {
+              if (isPeople) {
+                controller.selectedSkill.value = val;
+              } else {
+                controller.selectedCategory.value = val;
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          _FilterSelectField(
+            label: isPeople
+                ? 'Ketersediaan'
+                : isLomba
+                ? 'Deadline pendaftaran'
+                : 'Slot tersisa',
+            value: isPeople
+                ? controller.selectedAvailability.value
+                : isLomba
+                ? controller.selectedDeadline.value
+                : controller.selectedSlot.value,
+            icon: isPeople
+                ? FluentIcons.people_24_regular
+                : isLomba
+                ? Icons.calendar_today_outlined
+                : FluentIcons.people_24_regular,
+            options: isPeople
+                ? const [
+                    'Terbuka kolaborasi',
+                    'Aktif minggu ini',
+                    'Ada portfolio',
+                  ]
+                : isLomba
+                ? const ['Semua deadline', '< 1 minggu', '1 minggu', '2 minggu', 'Bulan ini']
+                : const ['Semua slot', '1 slot', '2 slot', '3+ slot'],
+            onChanged: (val) {
+              if (isPeople) {
+                controller.selectedAvailability.value = val;
+              } else if (isLomba) {
+                controller.selectedDeadline.value = val;
+              } else {
+                controller.selectedSlot.value = val;
+              }
+            },
+          ),
+        ],
+      );
+    });
   }
 }
 
 class _SortSelector extends StatelessWidget {
-  const _SortSelector({required this.isPeople});
+  const _SortSelector({
+    required this.isPeople,
+    required this.selectedSort,
+    required this.onSortChanged,
+  });
 
   final bool isPeople;
+  final String selectedSort;
+  final ValueChanged<String> onSortChanged;
 
   @override
   Widget build(BuildContext context) {
+    final option2 = isPeople ? 'Terpopuler' : 'Terbaru';
     return _FilterPanel(
       label: 'Urutan',
       child: Row(
         children: [
-          const Expanded(
-            child: _SortOption(
-              label: 'Paling relevan',
-              icon: FluentIcons.sparkle_24_filled,
-              selected: true,
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onSortChanged('Paling relevan'),
+              child: _SortOption(
+                label: 'Paling relevan',
+                icon: FluentIcons.sparkle_24_filled,
+                selected: selectedSort == 'Paling relevan' || selectedSort.isEmpty,
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: _SortOption(
-              label: isPeople ? 'Terpopuler' : 'Terbaru',
-              icon: isPeople ? Icons.trending_up : FluentIcons.clock_24_regular,
-              selected: false,
+            child: GestureDetector(
+              onTap: () => onSortChanged(option2),
+              child: _SortOption(
+                label: option2,
+                icon: isPeople ? Icons.trending_up : FluentIcons.clock_24_regular,
+                selected: selectedSort == option2,
+              ),
             ),
           ),
         ],
@@ -895,12 +944,14 @@ class _FilterSelectField extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.options,
+    this.onChanged,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final List<String> options;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -950,8 +1001,12 @@ class _FilterSelectField extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _SearchableFilterSheet(title: label, value: value, options: options),
+      builder: (_) => _SearchableFilterSheet(
+        title: label,
+        value: value,
+        options: options,
+        onChanged: onChanged,
+      ),
     );
   }
 }
@@ -961,11 +1016,13 @@ class _SearchableFilterSheet extends StatefulWidget {
     required this.title,
     required this.value,
     required this.options,
+    this.onChanged,
   });
 
   final String title;
   final String value;
   final List<String> options;
+  final ValueChanged<String>? onChanged;
 
   @override
   State<_SearchableFilterSheet> createState() => _SearchableFilterSheetState();
@@ -1061,7 +1118,12 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
                             color: AppColors.textPrimary,
                           )
                         : null,
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      if (widget.onChanged != null) {
+                        widget.onChanged!(option);
+                      }
+                      Navigator.of(context).pop();
+                    },
                   );
                 },
               ),
@@ -1593,6 +1655,12 @@ class _CompetitionCard extends StatelessWidget {
                       left: 10,
                       child: _Badge(label: index == 0 ? 'Paling cocok' : 'Sesuai jurusan'),
                     ),
+                    if (competition.daysLeft != null)
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: _DeadlineBadge(daysLeft: competition.daysLeft!),
+                      ),
                   ],
                 ),
               ),
@@ -1627,16 +1695,33 @@ class _CompetitionCard extends StatelessWidget {
                 Icon(
                   Icons.calendar_today_outlined,
                   size: 11,
-                  color: index == 3 ? AppColors.danger : ExploreView._muted,
+                  color: (competition.daysLeft != null && competition.daysLeft! <= 5) ? AppColors.danger : ExploreView._muted,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   competition.deadline,
                   style: AppFonts.satoshiStyle(
                     fontSize: 9,
-                    color: index == 3 ? AppColors.danger : ExploreView._muted,
+                    color: (competition.daysLeft != null && competition.daysLeft! <= 5) ? AppColors.danger : ExploreView._muted,
                   ),
                 ),
+                if (competition.daysLeft != null && competition.daysLeft! > 0) ...[
+                  const Spacer(),
+                  Icon(
+                    Icons.local_fire_department,
+                    size: 11.5,
+                    color: (competition.daysLeft! <= 5) ? const Color(0xFFEF4444) : (competition.daysLeft! <= 10 ? const Color(0xFFF59E0B) : const Color(0xFF10B981)),
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${competition.daysLeft} hari lagi',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: (competition.daysLeft! <= 5) ? const Color(0xFFEF4444) : (competition.daysLeft! <= 10 ? const Color(0xFFF59E0B) : const Color(0xFF10B981)),
+                    ),
+                  ),
+                ]
               ],
             ),
           ],
@@ -2229,4 +2314,214 @@ void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl
       ),
     ),
   );
+}
+
+class _DeadlineBadge extends StatelessWidget {
+  const _DeadlineBadge({required this.daysLeft});
+
+  final int daysLeft;
+
+  @override
+  Widget build(BuildContext context) {
+    if (daysLeft < 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          'Ditutup',
+          style: AppFonts.satoshiStyle(
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+    
+    final isUrgent = daysLeft <= 5;
+    final isWarning = daysLeft <= 10;
+    
+    final Color bg = isUrgent
+        ? const Color(0xFFEF4444)
+        : isWarning
+            ? const Color(0xFFF59E0B)
+            : const Color(0xFF10B981);
+            
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+      decoration: BoxDecoration(
+        color: bg.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: bg.withValues(alpha: 0.25),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isUrgent ? Icons.local_fire_department : Icons.schedule,
+            size: 9.5,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 2.5),
+          Text(
+            isUrgent ? '$daysLeft hari lagi!' : '$daysLeft hari lagi',
+            style: AppFonts.satoshiStyle(
+              fontSize: 8.5,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompetitionTimelineBox extends StatelessWidget {
+  const _CompetitionTimelineBox({required this.daysLeft, required this.deadline});
+
+  final int daysLeft;
+  final String deadline;
+
+  @override
+  Widget build(BuildContext context) {
+    final isUrgent = daysLeft <= 5;
+    final isWarning = daysLeft <= 10;
+    
+    final Color primaryColor = isUrgent
+        ? const Color(0xFFEF4444)
+        : isWarning
+            ? const Color(0xFFF59E0B)
+            : AppColors.primary;
+            
+    final Color bgColor = isUrgent
+        ? const Color(0xFFFEF2F2)
+        : isWarning
+            ? const Color(0xFFFFFBEB)
+            : const Color(0xFFF0F9FF);
+
+    final Color borderColor = isUrgent
+        ? const Color(0xFFFEE2E2)
+        : isWarning
+            ? const Color(0xFFFEF3C7)
+            : const Color(0xFFE0F2FE);
+
+    final double progress = daysLeft <= 0 ? 1.0 : (30 - daysLeft).clamp(0, 30) / 30.0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isUrgent ? Icons.local_fire_department : Icons.alarm_outlined,
+                  color: primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isUrgent 
+                          ? 'Tenggat Waktu Sangat Dekat!' 
+                          : 'Sisa Waktu Pendaftaran',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isUrgent ? const Color(0xFF991B1B) : const Color(0xFF0369A1),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Batas akhir: $deadline',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 10.5,
+                        color: isUrgent ? const Color(0xFFB91C1C) : const Color(0xFF0284C7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  daysLeft <= 0 ? 'Ditutup' : '$daysLeft Hari Lagi',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: primaryColor.withValues(alpha: 0.08),
+              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+              minHeight: 5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Pendaftaran Dibuka',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 9.5,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+              Text(
+                daysLeft <= 0 
+                    ? 'Sudah Ditutup'
+                    : isUrgent
+                        ? 'Segera ditutup!'
+                        : 'Sisa $daysLeft hari',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                  color: isUrgent ? const Color(0xFFEF4444) : AppColors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
