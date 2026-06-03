@@ -60,6 +60,8 @@ async def get_showcase_feed(
             include={
                 "author": True,
                 "project": True,
+                "likes": True,
+                "comments": True,
             }
         )
 
@@ -74,12 +76,57 @@ async def get_showcase_feed(
                 "linked_project_title": s.project.title if s.project else None,
                 "author_name": s.author.full_name if s.author else None,
                 "author_photo": s.author.photo_url if s.author else None,
+                "likes_count": len(s.likes) if s.likes else 0,
+                "comments_count": len(s.comments) if s.comments else 0,
                 "created_at": s.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
             })
 
         return {"status": "success", "page": page, "data": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Terjadi kesalahan saat mengambil feed showcase: {str(e)}")
+
+@router.get("/{showcase_id}/likes", summary="Lihat Yang Like Postingan")
+async def get_showcase_likes(
+    showcase_id: str,
+    db: Prisma = Depends(get_db),
+):
+    likes = await db.showcaselike.find_many(
+        where={"showcase_id": showcase_id},
+        include={"user": True},
+        order={"created_at": "desc"},
+    )
+    return {
+        "status": "success",
+        "data": [{"user_id": l.user_id, "full_name": l.user.full_name, "photo_url": l.user.photo_url} for l in likes]
+    }
+
+@router.get("/{showcase_id}/comments", summary="Lihat Komentar Postingan")
+async def get_showcase_comments(
+    showcase_id: str,
+    db: Prisma = Depends(get_db),
+):
+    comments = await db.showcasecomment.find_many(
+        where={"showcase_id": showcase_id},
+        include={"user": True, "replies": {"include": {"user": True}}},
+        order={"created_at": "asc"},
+    )
+    result = []
+    for c in comments:
+        result.append({
+            "id": c.id,
+            "content": c.content,
+            "parent_id": c.parent_id,
+            "user_id": c.user_id,
+            "full_name": c.user.full_name,
+            "photo_url": c.user.photo_url,
+            "created_at": c.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "replies": [{
+                "id": r.id, "content": r.content, "user_id": r.user_id,
+                "full_name": r.user.full_name, "photo_url": r.user.photo_url,
+                "created_at": r.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            } for r in (c.replies or [])],
+        })
+    return {"status": "success", "data": result}
 
 from pydantic import BaseModel
 from datetime import datetime, timezone, timedelta

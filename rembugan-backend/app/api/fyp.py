@@ -78,8 +78,8 @@ async def get_fyp(
     # 3. Ambil Lomba (Limit 5 paling relevan)
     competition_data = []
     try:
-        cursor = competition_collection.find({})
-        lomba_data = await cursor.to_list(length=None)
+        cursor = competition_collection.find({}).limit(50)
+        lomba_data = await cursor.to_list(length=50)
         for item in lomba_data:
             item["_id"] = str(item["_id"])
             score = 0

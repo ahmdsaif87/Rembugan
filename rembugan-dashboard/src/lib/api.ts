@@ -1,14 +1,18 @@
 // API utilities for backend integration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
 
-// Admin endpoints don't require authentication for demo
-const headers = {
-  'Content-Type': 'application/json',
+function getAuthHeaders() {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
 }
 
 export async function fetchDashboardStats() {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/stats`, { headers })
+    const response = await fetch(`${API_BASE_URL}/admin/stats`, { headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to fetch stats')
     return response.json()
   } catch (error) {
@@ -19,7 +23,7 @@ export async function fetchDashboardStats() {
 
 export async function fetchUsers(skip = 0, limit = 50) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/users?skip=${skip}&limit=${limit}`, { headers })
+    const response = await fetch(`${API_BASE_URL}/admin/users?skip=${skip}&limit=${limit}`, { headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to fetch users')
     return response.json()
   } catch (error) {
@@ -30,7 +34,7 @@ export async function fetchUsers(skip = 0, limit = 50) {
 
 export async function fetchProjects(skip = 0, limit = 50) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/projects?skip=${skip}&limit=${limit}`, { headers })
+    const response = await fetch(`${API_BASE_URL}/admin/projects?skip=${skip}&limit=${limit}`, { headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to fetch projects')
     return response.json()
   } catch (error) {
@@ -41,7 +45,7 @@ export async function fetchProjects(skip = 0, limit = 50) {
 
 export async function fetchShowcases(skip = 0, limit = 50) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/showcases?skip=${skip}&limit=${limit}`, { headers })
+    const response = await fetch(`${API_BASE_URL}/admin/showcases?skip=${skip}&limit=${limit}`, { headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to fetch showcases')
     return response.json()
   } catch (error) {
@@ -52,7 +56,7 @@ export async function fetchShowcases(skip = 0, limit = 50) {
 
 export async function fetchTasks(skip = 0, limit = 50) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/tasks?skip=${skip}&limit=${limit}`, { headers })
+    const response = await fetch(`${API_BASE_URL}/admin/tasks?skip=${skip}&limit=${limit}`, { headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to fetch tasks')
     return response.json()
   } catch (error) {
@@ -63,7 +67,7 @@ export async function fetchTasks(skip = 0, limit = 50) {
 
 export async function fetchApplications(skip = 0, limit = 50) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/applications?skip=${skip}&limit=${limit}`, { headers })
+    const response = await fetch(`${API_BASE_URL}/admin/applications?skip=${skip}&limit=${limit}`, { headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to fetch applications')
     return response.json()
   } catch (error) {
@@ -74,7 +78,7 @@ export async function fetchApplications(skip = 0, limit = 50) {
 
 export async function fetchCompetitions() {
   try {
-    const response = await fetch(`${API_BASE_URL}/competitions/all`, { headers })
+    const response = await fetch(`${API_BASE_URL}/competitions/all`, { headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to fetch competitions')
     return response.json()
   } catch (error) {
@@ -83,10 +87,24 @@ export async function fetchCompetitions() {
   }
 }
 
+export async function createUser(data: { nim: string; full_name: string; major: string; password: string }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    })
+    return response.json()
+  } catch (error) {
+    console.error('Error creating user:', error)
+    return { status: 'error', detail: 'Network error' }
+  }
+}
+
 // DELETE endpoints
 export async function deleteUser(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, { method: 'DELETE', headers })
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to delete user')
     return response.json()
   } catch (error) {
@@ -97,7 +115,7 @@ export async function deleteUser(id: string) {
 
 export async function deleteProject(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/projects/${id}`, { method: 'DELETE', headers })
+    const response = await fetch(`${API_BASE_URL}/admin/projects/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to delete project')
     return response.json()
   } catch (error) {
@@ -108,7 +126,7 @@ export async function deleteProject(id: string) {
 
 export async function deleteShowcase(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/showcases/${id}`, { method: 'DELETE', headers })
+    const response = await fetch(`${API_BASE_URL}/admin/showcases/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to delete showcase')
     return response.json()
   } catch (error) {
@@ -119,7 +137,7 @@ export async function deleteShowcase(id: string) {
 
 export async function deleteTask(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/tasks/${id}`, { method: 'DELETE', headers })
+    const response = await fetch(`${API_BASE_URL}/admin/tasks/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to delete task')
     return response.json()
   } catch (error) {
@@ -130,7 +148,7 @@ export async function deleteTask(id: string) {
 
 export async function deleteApplication(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/applications/${id}`, { method: 'DELETE', headers })
+    const response = await fetch(`${API_BASE_URL}/admin/applications/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to delete application')
     return response.json()
   } catch (error) {
@@ -139,9 +157,20 @@ export async function deleteApplication(id: string) {
   }
 }
 
+export async function fetchCompetitionsStats() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/competitions/stats`, { headers: getAuthHeaders() })
+    if (!response.ok) throw new Error('Failed to fetch competition stats')
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching competition stats:', error)
+    return { status: 'error', data: { by_source: [], by_deadline: [], by_kategori: [] } }
+  }
+}
+
 export async function deleteCompetition(id: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/competitions/${id}`, { method: 'DELETE', headers })
+    const response = await fetch(`${API_BASE_URL}/admin/competitions/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     if (!response.ok) throw new Error('Failed to delete competition')
     return response.json()
   } catch (error) {
