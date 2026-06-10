@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
   MoreVerticalIcon,
@@ -57,35 +58,29 @@ const statusColors: Record<string, string> = {
 }
 
 export default function TasksPage() {
+  const queryClient = useQueryClient()
   const [detailTask, setDetailTask] = useState<Task | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
-  useEffect(() => {
-    loadTasks()
-  }, [])
+  const { data: tasks = [], isLoading: loading } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      const res = await fetchTasks(0, 200)
+      return (res.status === 'success' ? res.data : []) as Task[]
+    },
+  })
 
-  async function loadTasks() {
-    try {
-      const response = await fetchTasks(0, 200)
+  const deleteMutation = useMutation({
+    mutationFn: deleteTask,
+    onSuccess: (response, id) => {
       if (response.status === 'success') {
-        setTasks(response.data)
+        queryClient.setQueryData<Task[]>(['tasks'], (old) =>
+          old?.filter(t => String(t.id) !== id) ?? []
+        )
       }
-    } catch (error) {
-      console.error('Error loading tasks:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleDelete(id: string) {
-    const response = await deleteTask(id)
-    if (response.status === 'success') {
-      setTasks(tasks.filter(t => String(t.id) !== id))
-    }
-  }
+    },
+  })
 
   const filteredTasks = useMemo(() => {
     if (statusFilter === "all") return tasks
@@ -204,7 +199,7 @@ export default function TasksPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(String(task.id))}
+                    onClick={() => deleteMutation.mutate(String(task.id))}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Delete

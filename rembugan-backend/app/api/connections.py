@@ -5,6 +5,108 @@ from app.core.security import verify_token
 
 router = APIRouter(prefix="/connections", tags=["Koneksi (Teman)"])
 
+@router.get("/", summary="Lihat Koneksi Saya (yang sudah accepted)")
+async def get_my_connections(
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    uid = user_token.get("uid")
+    conns = await db.connection.find_many(
+        where={
+            "OR": [
+                {"sender_id": uid, "status": "accepted"},
+                {"receiver_id": uid, "status": "accepted"},
+            ]
+        },
+        include={"sender": True, "receiver": True},
+    )
+    result = []
+    for c in conns:
+        other = c.receiver if c.sender_id == uid else c.sender
+        result.append({
+            "connection_id": c.id,
+            "user_id": other.id,
+            "full_name": other.full_name,
+            "photo_url": other.photo_url,
+            "bio": other.bio,
+            "connected_at": c.created_at.isoformat(),
+        })
+    return {"status": "success", "data": result}
+
+@router.get("/requests", summary="Lihat Permintaan Koneksi Masuk")
+async def get_pending_requests(
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    uid = user_token.get("uid")
+    reqs = await db.connection.find_many(
+        where={"receiver_id": uid, "status": "pending"},
+        include={"sender": True},
+        order={"created_at": "desc"},
+    )
+    result = []
+    for r in reqs:
+        result.append({
+            "connection_id": r.id,
+            "user_id": r.sender.id,
+            "full_name": r.sender.full_name,
+            "photo_url": r.sender.photo_url,
+            "bio": r.sender.bio,
+            "requested_at": r.created_at.isoformat(),
+        })
+    return {"status": "success", "data": result}
+
+@router.get("/user/{user_id}", summary="Lihat Koneksi User Lain (yang sudah accepted)")
+async def get_user_connections(
+    user_id: str,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    conns = await db.connection.find_many(
+        where={
+            "OR": [
+                {"sender_id": user_id, "status": "accepted"},
+                {"receiver_id": user_id, "status": "accepted"},
+            ]
+        },
+        include={"sender": True, "receiver": True},
+    )
+    result = []
+    for c in conns:
+        other = c.receiver if c.sender_id == user_id else c.sender
+        result.append({
+            "connection_id": c.id,
+            "user_id": other.id,
+            "full_name": other.full_name,
+            "photo_url": other.photo_url,
+            "bio": other.bio,
+            "connected_at": c.created_at.isoformat(),
+        })
+    return {"status": "success", "data": result}
+
+@router.get("/sent", summary="Lihat Permintaan Koneksi yang Saya Kirim (Pending)")
+async def get_sent_requests(
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    uid = user_token.get("uid")
+    reqs = await db.connection.find_many(
+        where={"sender_id": uid, "status": "pending"},
+        include={"receiver": True},
+        order={"created_at": "desc"},
+    )
+    result = []
+    for r in reqs:
+        result.append({
+            "connection_id": r.id,
+            "user_id": r.receiver.id,
+            "full_name": r.receiver.full_name,
+            "photo_url": r.receiver.photo_url,
+            "bio": r.receiver.bio,
+            "requested_at": r.created_at.isoformat(),
+        })
+    return {"status": "success", "data": result}
+
 @router.post("/request/{receiver_id}", summary="Kirim Permintaan Koneksi")
 async def send_connection_request(
     receiver_id: str,

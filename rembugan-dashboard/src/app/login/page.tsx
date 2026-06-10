@@ -8,30 +8,43 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { MessageSquare, Loader2 } from "lucide-react"
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+
 export default function LoginPage() {
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
 
-    // Simulate network delay for better UX
-    setTimeout(() => {
-      if (username === process.env.NEXT_PUBLIC_ADMIN_USERNAME && password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-        // Here you would typically set a token in cookies or localStorage
-        localStorage.setItem("isAuthenticated", "true")
-        document.cookie = "isAuthenticated=true; path=/; max-age=86400"
-        router.push("/")
-      } else {
-        setError("Invalid username or password")
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/admin-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.detail || "Invalid email or password")
         setIsLoading(false)
+        return
       }
-    }, 800)
+
+      const token = data.data.access_token
+      localStorage.setItem("admin_token", token)
+      document.cookie = `admin_token=${token}; path=/; max-age=86400; SameSite=Lax`
+      router.push("/")
+    } catch {
+      setError("Network error. Please check your connection.")
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -54,15 +67,16 @@ export default function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input 
-                id="username" 
-                placeholder="username" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email" 
+                type="email"
+                placeholder="admin@rembugan.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="bg-background"
-                autoComplete="username"
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">

@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ColumnDef,
 } from "@tanstack/react-table"
@@ -9,7 +10,10 @@ import {
   UserX,
   Trash2Icon,
   EyeIcon,
+  PlusIcon,
+  Loader2,
 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +32,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { DataTableGeneric } from "@/components/ui/data-table-generic"
 import { DetailSheet } from "@/components/ui/detail-sheet"
 import {
@@ -41,7 +56,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { fetchUsers, deleteUser } from "@/lib/api"
+import { fetchUsers, deleteUser, createUser } from "@/lib/api"
 
 interface User {
   id: string
@@ -59,34 +74,52 @@ interface User {
 }
 
 export default function UsersPage() {
+  const queryClient = useQueryClient()
   const [detailUser, setDetailUser] = useState<User | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
   const [onboardFilter, setOnboardFilter] = useState<string>("all")
+  const [addOpen, setAddOpen] = useState(false)
+  const [form, setForm] = useState({ nim: "", full_name: "", major: "", password: "" })
 
-  useEffect(() => {
-    loadUsers()
-  }, [])
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetchUsers(0, 200)
+      return (res.status === 'success' ? res.data : []) as User[]
+    },
+  })
 
-  async function loadUsers() {
-    try {
-      const response = await fetchUsers(0, 200)
+  const createMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: (response) => {
       if (response.status === 'success') {
-        setUsers(response.data)
+        toast.success(`User ${form.full_name} berhasil dibuat`)
+        setAddOpen(false)
+        setForm({ nim: "", full_name: "", major: "", password: "" })
+        queryClient.invalidateQueries({ queryKey: ['users'] })
+      } else {
+        toast.error(response.detail || "Gagal membuat user")
       }
-    } catch (error) {
-      console.error('Error loading users:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+  })
 
-  async function handleDelete(id: string) {
-    const response = await deleteUser(id)
-    if (response.status === 'success') {
-      setUsers(users.filter(u => u.id !== id))
-    }
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: (response, id) => {
+      if (response.status === 'success') {
+        queryClient.setQueryData<User[]>(['users'], (old) =>
+          old?.filter(u => u.id !== id) ?? []
+        )
+        toast.success("User berhasil dihapus")
+      } else {
+        toast.error("Gagal menghapus user")
+      }
+    },
+  })
+
+  async function handleAddUser(e: React.FormEvent) {
+    e.preventDefault()
+    createMutation.mutate(form)
   }
 
   const filteredUsers = useMemo(() => {
@@ -238,7 +271,7 @@ export default function UsersPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(user.id)}
+                    onClick={() => deleteMutation.mutate(user.id)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Delete
@@ -253,13 +286,90 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Users</h1>
           <p className="text-sm text-muted-foreground">
             Manage and monitor all registered users
           </p>
         </div>
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Add User
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <form onSubmit={handleAddUser}>
+              <DialogHeader>
+                <DialogTitle>Add New User</DialogTitle>
+                <DialogDescription>
+                  Create a new user account. They will use NIM + password to log in.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="nim">NIM</Label>
+                  <Input
+                    id="nim"
+                    placeholder="12345678"
+                    value={form.nim}
+                    onChange={(e) => setForm({ ...form, nim: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="full_name">Full Name</Label>
+                  <Input
+                    id="full_name"
+                    placeholder="John Doe"
+                    value={form.full_name}
+                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="major">Major</Label>
+                  <Input
+                    id="major"
+                    placeholder="Informatika"
+                    value={form.major}
+                    onChange={(e) => setForm({ ...form, major: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Min. 6 characters"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create User"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <DataTableGeneric

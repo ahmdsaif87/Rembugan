@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
   MoreVerticalIcon,
@@ -44,34 +45,28 @@ interface Showcase {
 }
 
 export default function ShowcasesPage() {
+  const queryClient = useQueryClient()
   const [detailShowcase, setDetailShowcase] = useState<Showcase | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [showcases, setShowcases] = useState<Showcase[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadShowcases()
-  }, [])
+  const { data: showcases = [], isLoading: loading } = useQuery({
+    queryKey: ['showcases'],
+    queryFn: async () => {
+      const res = await fetchShowcases(0, 200)
+      return (res.status === 'success' ? res.data : []) as Showcase[]
+    },
+  })
 
-  async function loadShowcases() {
-    try {
-      const response = await fetchShowcases(0, 200)
+  const deleteMutation = useMutation({
+    mutationFn: deleteShowcase,
+    onSuccess: (response, id) => {
       if (response.status === 'success') {
-        setShowcases(response.data)
+        queryClient.setQueryData<Showcase[]>(['showcases'], (old) =>
+          old?.filter(s => s.id !== id) ?? []
+        )
       }
-    } catch (error) {
-      console.error('Error loading showcases:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleDelete(id: string) {
-    const response = await deleteShowcase(id)
-    if (response.status === 'success') {
-      setShowcases(showcases.filter(s => s.id !== id))
-    }
-  }
+    },
+  })
 
   const columns: ColumnDef<Showcase>[] = [
     {
@@ -192,7 +187,7 @@ export default function ShowcasesPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(showcase.id)}
+                    onClick={() => deleteMutation.mutate(showcase.id)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Delete

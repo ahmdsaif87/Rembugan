@@ -1,13 +1,52 @@
 from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
 from app.core.database import get_db
-from app.core.security import verify_token
+from app.core.security import verify_admin_token, hash_password
+from app.schemas.auth import AdminCreateUserInput
 from typing import List, Dict, Any
 
 router = APIRouter(prefix="/admin", tags=["Admin Dashboard"])
 
+
+@router.post("/users", summary="[Admin] Register User Baru")
+async def admin_create_user(
+    data: AdminCreateUserInput,
+    admin_token: dict = Depends(verify_admin_token),
+    db: Prisma = Depends(get_db),
+):
+    """
+    Admin membuat user baru.
+    User akan memiliki NIM + Password untuk login pertama.
+    """
+    existing = await db.user.find_unique(where={"nim": data.nim})
+    if existing:
+        raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
+
+    hashed = hash_password(data.password)
+    user = await db.user.create(
+        data={
+            "nim": data.nim,
+            "password": hashed,
+            "full_name": data.full_name,
+            "major": data.major,
+        }
+    )
+
+    return {
+        "status": "success",
+        "message": f"User {user.full_name} berhasil dibuat.",
+        "data": {
+            "id": user.id,
+            "nim": user.nim,
+            "full_name": user.full_name,
+            "major": user.major,
+            "is_onboarded": user.is_onboarded,
+        },
+    }
+
 @router.get("/stats", summary="Get Dashboard Statistics")
 async def get_dashboard_stats(
+    admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
     """
@@ -53,6 +92,7 @@ async def get_dashboard_stats(
 
 @router.get("/users", summary="Get All Users for Admin")
 async def get_all_users(
+    admin_token: dict = Depends(verify_admin_token),
     skip: int = 0,
     limit: int = 50,
     db: Prisma = Depends(get_db),
@@ -87,6 +127,7 @@ async def get_all_users(
 
 @router.get("/projects", summary="Get All Projects for Admin")
 async def get_all_projects(
+    admin_token: dict = Depends(verify_admin_token),
     skip: int = 0,
     limit: int = 50,
     db: Prisma = Depends(get_db),
@@ -120,6 +161,7 @@ async def get_all_projects(
 
 @router.get("/showcases", summary="Get All Showcases for Admin")
 async def get_all_showcases(
+    admin_token: dict = Depends(verify_admin_token),
     skip: int = 0,
     limit: int = 50,
     db: Prisma = Depends(get_db),
@@ -158,6 +200,7 @@ async def get_all_showcases(
 
 @router.get("/tasks", summary="Get All Tasks for Admin")
 async def get_all_tasks(
+    admin_token: dict = Depends(verify_admin_token),
     skip: int = 0,
     limit: int = 50,
     db: Prisma = Depends(get_db),
@@ -189,6 +232,7 @@ async def get_all_tasks(
 
 @router.get("/applications", summary="Get All Applications for Admin")
 async def get_all_applications(
+    admin_token: dict = Depends(verify_admin_token),
     skip: int = 0,
     limit: int = 50,
     db: Prisma = Depends(get_db),
@@ -220,6 +264,7 @@ async def get_all_applications(
 
 @router.get("/competitions", summary="Get Recent Competitions for Admin")
 async def get_recent_competitions(
+    admin_token: dict = Depends(verify_admin_token),
     limit: int = 20,
 ):
     """
@@ -247,6 +292,7 @@ async def get_recent_competitions(
 @router.delete("/users/{user_id}", summary="Delete User for Admin")
 async def delete_user(
     user_id: str,
+    admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
     """
@@ -261,6 +307,7 @@ async def delete_user(
 @router.delete("/projects/{project_id}", summary="Delete Project for Admin")
 async def delete_project(
     project_id: str,
+    admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
     """
@@ -275,6 +322,7 @@ async def delete_project(
 @router.delete("/showcases/{showcase_id}", summary="Delete Showcase for Admin")
 async def delete_showcase(
     showcase_id: str,
+    admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
     """
@@ -289,6 +337,7 @@ async def delete_showcase(
 @router.delete("/tasks/{task_id}", summary="Delete Task for Admin")
 async def delete_task(
     task_id: str,
+    admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
     """
@@ -303,6 +352,7 @@ async def delete_task(
 @router.delete("/applications/{application_id}", summary="Delete Application for Admin")
 async def delete_application(
     application_id: str,
+    admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
     """
@@ -317,6 +367,7 @@ async def delete_application(
 @router.delete("/competitions/{competition_id}", summary="Delete Competition for Admin")
 async def delete_competition(
     competition_id: str,
+    admin_token: dict = Depends(verify_admin_token),
 ):
     """
     Delete a competition from MongoDB

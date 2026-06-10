@@ -16,8 +16,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   React.useEffect(() => {
-    const auth = localStorage.getItem("isAuthenticated");
-    if (!auth) {
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
       router.push("/login");
     } else {
       setIsAuthenticated(true);
