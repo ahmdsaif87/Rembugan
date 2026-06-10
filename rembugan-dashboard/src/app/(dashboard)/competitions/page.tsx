@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -52,33 +53,28 @@ interface Competition {
 }
 
 export default function CompetitionsPage() {
+  const queryClient = useQueryClient()
   const [detailComp, setDetailComp] = useState<Competition | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [competitions, setCompetitions] = useState<Competition[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const compRes = await fetchCompetitions()
-        if (compRes.status === 'success') {
-          setCompetitions(compRes.data)
-        }
-      } catch (error) {
-        console.error("Error loading data:", error)
-      } finally {
-        setLoading(false)
+  const { data: competitions = [], isLoading: loading } = useQuery({
+    queryKey: ['competitions'],
+    queryFn: async () => {
+      const res = await fetchCompetitions()
+      return (res.status === 'success' ? res.data : []) as Competition[]
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteCompetition,
+    onSuccess: (response, id) => {
+      if (response.status === 'success') {
+        queryClient.setQueryData<Competition[]>(['competitions'], (old) =>
+          old?.filter(c => c._id !== id) ?? []
+        )
       }
-    }
-    loadData()
-  }, [])
-
-  async function handleDelete(id: string) {
-    const response = await deleteCompetition(id)
-    if (response.status === 'success') {
-      setCompetitions(competitions.filter(c => c._id !== id))
-    }
-  }
+    },
+  })
 
   const sourceData = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -363,7 +359,7 @@ export default function CompetitionsPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(comp._id!)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              <AlertDialogAction onClick={() => deleteMutation.mutate(comp._id!)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>

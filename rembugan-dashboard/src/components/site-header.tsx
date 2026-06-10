@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { PanelLeft } from "lucide-react"
 import {
@@ -50,7 +51,9 @@ export function SiteHeader({ onToggleSidebar }: SiteHeaderProps) {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">Rembugan</BreadcrumbLink>
+              <BreadcrumbLink asChild>
+                <Link href="/">Rembugan</Link>
+              </BreadcrumbLink>
             </BreadcrumbItem>
             {pathname !== "/" && (
               <>

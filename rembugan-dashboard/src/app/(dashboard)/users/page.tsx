@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ColumnDef,
 } from "@tanstack/react-table"
@@ -73,55 +74,52 @@ interface User {
 }
 
 export default function UsersPage() {
+  const queryClient = useQueryClient()
   const [detailUser, setDetailUser] = useState<User | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
   const [onboardFilter, setOnboardFilter] = useState<string>("all")
   const [addOpen, setAddOpen] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({ nim: "", full_name: "", major: "", password: "" })
 
-  useEffect(() => {
-    loadUsers()
-  }, [])
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetchUsers(0, 200)
+      return (res.status === 'success' ? res.data : []) as User[]
+    },
+  })
 
-  async function loadUsers() {
-    try {
-      const response = await fetchUsers(0, 200)
+  const createMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: (response) => {
       if (response.status === 'success') {
-        setUsers(response.data)
+        toast.success(`User ${form.full_name} berhasil dibuat`)
+        setAddOpen(false)
+        setForm({ nim: "", full_name: "", major: "", password: "" })
+        queryClient.invalidateQueries({ queryKey: ['users'] })
+      } else {
+        toast.error(response.detail || "Gagal membuat user")
       }
-    } catch (error) {
-      console.error('Error loading users:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: (response, id) => {
+      if (response.status === 'success') {
+        queryClient.setQueryData<User[]>(['users'], (old) =>
+          old?.filter(u => u.id !== id) ?? []
+        )
+        toast.success("User berhasil dihapus")
+      } else {
+        toast.error("Gagal menghapus user")
+      }
+    },
+  })
 
   async function handleAddUser(e: React.FormEvent) {
     e.preventDefault()
-    setSubmitting(true)
-    const response = await createUser(form)
-    setSubmitting(false)
-    if (response.status === 'success') {
-      toast.success(`User ${form.full_name} berhasil dibuat`)
-      setAddOpen(false)
-      setForm({ nim: "", full_name: "", major: "", password: "" })
-      loadUsers()
-    } else {
-      toast.error(response.detail || "Gagal membuat user")
-    }
-  }
-
-  async function handleDelete(id: string) {
-    const response = await deleteUser(id)
-    if (response.status === 'success') {
-      setUsers(users.filter(u => u.id !== id))
-      toast.success("User berhasil dihapus")
-    } else {
-      toast.error("Gagal menghapus user")
-    }
+    createMutation.mutate(form)
   }
 
   const filteredUsers = useMemo(() => {
@@ -273,7 +271,7 @@ export default function UsersPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(user.id)}
+                    onClick={() => deleteMutation.mutate(user.id)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Delete
@@ -358,8 +356,8 @@ export default function UsersPage() {
                 <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? (
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...

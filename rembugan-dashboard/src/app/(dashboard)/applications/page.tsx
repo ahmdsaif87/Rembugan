@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
   MoreVerticalIcon,
@@ -56,35 +57,29 @@ const statusColors: Record<string, string> = {
 }
 
 export default function ApplicationsPage() {
+  const queryClient = useQueryClient()
   const [detailApp, setDetailApp] = useState<Application | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [applications, setApplications] = useState<Application[]>([])
-  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
-  useEffect(() => {
-    loadApplications()
-  }, [])
+  const { data: applications = [], isLoading: loading } = useQuery({
+    queryKey: ['applications'],
+    queryFn: async () => {
+      const res = await fetchApplications(0, 200)
+      return (res.status === 'success' ? res.data : []) as Application[]
+    },
+  })
 
-  async function loadApplications() {
-    try {
-      const response = await fetchApplications(0, 200)
+  const deleteMutation = useMutation({
+    mutationFn: deleteApplication,
+    onSuccess: (response, id) => {
       if (response.status === 'success') {
-        setApplications(response.data)
+        queryClient.setQueryData<Application[]>(['applications'], (old) =>
+          old?.filter(a => String(a.id) !== id) ?? []
+        )
       }
-    } catch (error) {
-      console.error('Error loading applications:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleDelete(id: string) {
-    const response = await deleteApplication(id)
-    if (response.status === 'success') {
-      setApplications(applications.filter(a => String(a.id) !== id))
-    }
-  }
+    },
+  })
 
   const filteredApplications = useMemo(() => {
     if (statusFilter === "all") return applications
@@ -180,7 +175,7 @@ export default function ApplicationsPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(String(app.id))}
+                    onClick={() => deleteMutation.mutate(String(app.id))}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Delete

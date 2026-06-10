@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
   MoreVerticalIcon,
@@ -58,35 +59,29 @@ const statusColors: Record<string, string> = {
 }
 
 export default function ProjectsPage() {
+  const queryClient = useQueryClient()
   const [detailProject, setDetailProject] = useState<Project | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
-  useEffect(() => {
-    loadProjects()
-  }, [])
+  const { data: projects = [], isLoading: loading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const res = await fetchProjects(0, 200)
+      return (res.status === 'success' ? res.data : []) as Project[]
+    },
+  })
 
-  async function loadProjects() {
-    try {
-      const response = await fetchProjects(0, 200)
+  const deleteMutation = useMutation({
+    mutationFn: deleteProject,
+    onSuccess: (response, id) => {
       if (response.status === 'success') {
-        setProjects(response.data)
+        queryClient.setQueryData<Project[]>(['projects'], (old) =>
+          old?.filter(p => String(p.id) !== id) ?? []
+        )
       }
-    } catch (error) {
-      console.error('Error loading projects:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleDelete(id: string) {
-    const response = await deleteProject(id)
-    if (response.status === 'success') {
-      setProjects(projects.filter(p => String(p.id) !== id))
-    }
-  }
+    },
+  })
 
   const filteredProjects = useMemo(() => {
     if (statusFilter === "all") return projects
@@ -218,7 +213,7 @@ export default function ProjectsPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(String(project.id))}
+                    onClick={() => deleteMutation.mutate(String(project.id))}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Delete
