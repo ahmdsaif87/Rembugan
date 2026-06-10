@@ -1,6 +1,6 @@
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import '../../../core/theme/theme.dart';
 import '../controllers/login_controller.dart';
@@ -11,250 +11,144 @@ class LoginView extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // 1. BACKGROUND PALING BAWAH (Warna Paling Gelap)
-          Container(
-            height: Get.height * 0.45, // Ambil sekitar 45% layar atas
-            color: Color(0xFF000000),
-          ),
-
-          // 2. LENGKUNGAN KANAN ATAS (Warna Tengah)
-          Positioned(
-            top: -50,
-            left: -130,
-            child: Container(
-              width: 450,
-              height: 450,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF242424),
-              ),
-            ),
-          ),
-
-          // 3. LENGKUNGAN KIRI BAWAH (Warna Paling Terang)
-          Positioned(
-            top: -50,
-            left: -250,
-            child: Container(
-              width: 450,
-              height: 450,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF353535),
-              ),
-            ),
-          ),
-
-          // 4. KONTEN TEKS HEADER (Tombol Back, Judul, Subjudul)
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 24.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Tombol Kembali
-                  _buildBackButton(),
-
-                  const SizedBox(height: 60),
-
-                  // Judul
-                  Text(
-                    'Selamat Datang di',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      height: 1.3,
-                    ),
-                  ),
-                  Text(
-                    'Rembugan.',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Subjudul
-                  Text(
-                    'Masuk ke akunmu untuk menemukan rekan dan proyek hebat hari ini.',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white.withValues(alpha: 0.8),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 5. FORM PUTIH (Melengkung ke atas)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: Get.height * 0.65, // Mengambil 65% layar bawah
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
-              ),
-              child: _buildFormContent(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Tombol kembali (circular container dengan border putih)
-  Widget _buildBackButton() {
-    return GestureDetector(
-      onTap: () => Get.back(),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.5),
-            width: 1.2,
-          ),
-        ),
-        child: const Center(
-          child: Icon(
-            FluentIcons.arrow_left_24_regular,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // FORM CONTENT (isi di dalam container putih)
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildFormContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Form(
-        key: controller.formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: AppSurfaceColors.surfaceWhite,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(14, 24, 14, AppSpacing.xl),
           children: [
-            const SizedBox(height: 32),
-
-            // ── Input: Email atau NIM ──
-            _buildInputLabel('Email atau NIM'),
-            const SizedBox(height: 8),
-            _buildEmailOrNimField(),
-            const SizedBox(height: 20),
-
-            // ── Input: Kata Sandi ──
-            _buildInputLabel('Kata Sandi'),
-            const SizedBox(height: 8),
-            _buildPasswordField(),
-            const SizedBox(height: 10),
-
-            // ── Link Lupa Sandi ──
-            _buildForgotPasswordLink(),
-            const SizedBox(height: 24),
-
-            // ── Row Tombol Masuk + Biometrik ──
-            _buildActionButtons(),
-            const SizedBox(height: 24),
-
-            // ── Divider "Atau" ──
-            _buildOrDivider(),
-            const SizedBox(height: 24),
-
-            // ── Tombol Login Google ──
-            _buildGoogleButton(),
-            const SizedBox(height: 32),
+            _buildBackButton(),
+            const SizedBox(height: 38),
+            _buildHeader(),
+            const SizedBox(height: 50),
+            _buildFormContent(),
           ],
         ),
       ),
     );
   }
 
-  // Label untuk input field
-  Widget _buildInputLabel(String label) {
-    return Text(
-      label,
-      style: AppFonts.satoshiStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
+  Widget _buildBackButton() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: GestureDetector(
+        onTap: () => Get.back(),
+        child: const SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(
+            FluentIcons.chevron_left_24_regular,
+            color: AppColors.primary500,
+            size: 23,
+          ),
+        ),
       ),
     );
   }
 
-  // Input field Email atau NIM
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text.rich(
+          TextSpan(
+            text: 'Selamat Datang di\n',
+            children: [
+              TextSpan(
+                text: 'Rembugan.',
+                style: AppFonts.headingStyle(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary800,
+                  height: 1.18,
+                ),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+          style: AppFonts.headingStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.w800,
+            color: AppColors.grey900,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Masuk dan jelajahi berbagai peluang kolaborasi.',
+          textAlign: TextAlign.center,
+          style: AppFonts.satoshiStyle(
+            fontSize: 15,
+            color: AppColors.grey600,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormContent() {
+    return Form(
+      key: controller.formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInputLabel('Email atau NIM'),
+          const SizedBox(height: AppSpacing.xs),
+          _buildEmailOrNimField(),
+          const SizedBox(height: 28),
+          _buildInputLabel('Kata Sandi'),
+          const SizedBox(height: AppSpacing.xs),
+          _buildPasswordField(),
+          const SizedBox(height: 18),
+          _buildForgotPasswordLink(),
+          const SizedBox(height: 22),
+          _buildActionButtons(),
+          const SizedBox(height: 24),
+          _buildOrDivider(),
+          const SizedBox(height: 24),
+          _buildGoogleButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputLabel(String label) {
+    return Text(
+      label,
+      style: AppTextStyles.button(color: AppTextColors.textPrimaryBlack),
+    );
+  }
+
   Widget _buildEmailOrNimField() {
     return TextFormField(
       controller: controller.emailOrNimController,
       keyboardType: TextInputType.emailAddress,
-      style: AppFonts.satoshiStyle(fontSize: 14, color: AppColors.textPrimary),
+      style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
       decoration: const InputDecoration(
-        hintText: 'nanda@gmail.com or 23090122',
-        prefixIcon: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14),
-          child: Icon(
-            FluentIcons.contact_card_24_regular,
-            color: AppColors.neutralDarker,
-            size: 22,
-          ),
-        ),
-        prefixIconConstraints: BoxConstraints(minWidth: 50, minHeight: 0),
+        hintText: 'nanda@gmail.com atau 23090122',
+        prefixIcon: null,
+        prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
       ),
     );
   }
 
-  // Input field Kata Sandi (dengan toggle visibility)
   Widget _buildPasswordField() {
     return Obx(
       () => TextFormField(
         controller: controller.passwordController,
         obscureText: controller.isPasswordHidden.value,
-        style: AppFonts.satoshiStyle(
-          fontSize: 14,
-          color: AppColors.textPrimary,
-        ),
+        style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
         decoration: InputDecoration(
           hintText: 'Masukan kata sandi',
-          prefixIcon: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14),
-            child: Icon(
-              FluentIcons.lock_closed_24_regular,
-              color: AppColors.neutralDarker,
-              size: 22,
-            ),
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 50,
-            minHeight: 0,
-          ),
           suffixIcon: GestureDetector(
             onTap: controller.togglePasswordVisibility,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Icon(
                 controller.isPasswordHidden.value
                     ? FluentIcons.eye_off_24_regular
                     : FluentIcons.eye_24_regular,
-                color: AppColors.neutralDarker,
+                color: AppIconColors.iconGrey,
                 size: 20,
               ),
             ),
@@ -268,7 +162,6 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
-  // Link "Lupa kata sandi"
   Widget _buildForgotPasswordLink() {
     return Align(
       alignment: Alignment.centerRight,
@@ -276,92 +169,77 @@ class LoginView extends GetView<LoginController> {
         onTap: controller.onForgotPassword,
         child: Text(
           'Lupa kata sandi',
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: AppColors.primaryNormal,
+          style: AppTextStyles.button(
+            fontSize: 14,
+            color: AppTextColors.textLinks,
           ),
         ),
       ),
     );
   }
 
-  // Row: Tombol Masuk (Expanded) + Tombol Biometrik (Square)
   Widget _buildActionButtons() {
-    return Row(
-      children: [
-        // Tombol Masuk
-        Expanded(
-          child: SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: controller.onLogin,
-              child: Text(
-                'Masuk',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
+    return GestureDetector(
+      onTap: controller.onLogin,
+      child: Container(
+        width: double.infinity,
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.primary500,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Text(
+          'Masuk',
+          style: AppTextStyles.button(
+            fontSize: 16,
+            color: AppTextColors.textPrimaryWhite,
           ),
         ),
-      ],
+      ),
     );
   }
 
-  // Divider dengan teks "Atau"
   Widget _buildOrDivider() {
     return Row(
       children: [
-        const Expanded(
-          child: Divider(color: AppColors.neutralDark, thickness: 0.8),
-        ),
+        const Expanded(child: Divider(color: AppColors.grey200, thickness: 1)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Text(
             'Atau',
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: AppColors.neutralDarker,
+            style: AppTextStyles.bodySmall(
+              color: AppTextColors.textSecondaryDarkGrey,
             ),
           ),
         ),
-        const Expanded(
-          child: Divider(color: AppColors.neutralDark, thickness: 0.8),
-        ),
+        const Expanded(child: Divider(color: AppColors.grey200, thickness: 1)),
       ],
     );
   }
 
-  // Tombol Login with Google
   Widget _buildGoogleButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: controller.onGoogleLogin,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.neutralDark, width: 1.2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+    return GestureDetector(
+      onTap: controller.onGoogleLogin,
+      child: Container(
+        width: double.infinity,
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: AppColors.grey300),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset('lib/assets/icons/google.png', width: 22, height: 22),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.sm),
             Text(
-              'Login with Google',
-              style: AppFonts.satoshiStyle(
+              'Masuk dengan Google',
+              style: AppTextStyles.button(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                color: AppTextColors.textPrimaryBlack,
               ),
             ),
           ],

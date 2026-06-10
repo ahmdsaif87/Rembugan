@@ -36,7 +36,7 @@ class ExploreController extends GetxController {
   final ExploreRepository _repository;
 
   final activeTab = ExploreTab.project.obs;
-  
+
   // Dynamic filter observables
   final selectedSort = 'Paling relevan'.obs;
   final selectedFaculty = 'Semua jurusan'.obs;
@@ -45,10 +45,10 @@ class ExploreController extends GetxController {
   final selectedDeadline = 'Semua deadline'.obs;
   final selectedSlot = 'Semua slot'.obs;
   final selectedAvailability = 'Terbuka kolaborasi'.obs;
-  
+
   final projects = <Project>[].obs;
   final filteredProjects = <Project>[].obs;
-  
+
   final competitions = <Competition>[].obs;
   final filteredCompetitions = <Competition>[].obs;
 
@@ -100,7 +100,7 @@ class ExploreController extends GetxController {
     final loadedProjects = _repository.getProjects();
     projects.assignAll(loadedProjects);
     filteredProjects.assignAll(loadedProjects);
-    
+
     final loadedCompetitions = _repository.getCompetitions();
     competitions.assignAll(loadedCompetitions);
     filteredCompetitions.assignAll(loadedCompetitions);
@@ -116,9 +116,13 @@ class ExploreController extends GetxController {
 
   int get activeFilterCount {
     var count = 0;
-    if (selectedSort.value != 'Paling relevan' && selectedSort.value.isNotEmpty) count++;
+    if (selectedSort.value != 'Paling relevan' && selectedSort.value.isNotEmpty)
+      count++;
     if (selectedFaculty.value != 'Semua jurusan') count++;
-    if (selectedCategory.value != 'Semua kategori' && selectedCategory.value != 'Semua kategori lomba' && selectedCategory.value != 'Semua kategori proyek') count++;
+    if (selectedCategory.value != 'Semua kategori' &&
+        selectedCategory.value != 'Semua kategori lomba' &&
+        selectedCategory.value != 'Semua kategori proyek')
+      count++;
     if (selectedSkill.value != 'Semua skill') count++;
     if (selectedDeadline.value != 'Semua deadline') count++;
     if (selectedSlot.value != 'Semua slot') count++;
@@ -136,20 +140,33 @@ class ExploreController extends GetxController {
 
     // 1. Projects
     var tempProjects = projects.where((project) {
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           project.title.toLowerCase().contains(query) ||
           project.category.toLowerCase().contains(query) ||
           project.skills.any((s) => s.toLowerCase().contains(query));
 
-      final matchesFaculty = selectedFaculty.value == 'Semua jurusan' ||
-          project.faculty.toLowerCase().contains(selectedFaculty.value.toLowerCase());
+      final matchesFaculty =
+          selectedFaculty.value == 'Semua jurusan' ||
+          project.faculty.toLowerCase().contains(
+            selectedFaculty.value.toLowerCase(),
+          );
 
       var categoryFilter = selectedCategory.value;
-      if (categoryFilter == 'Semua kategori proyek') categoryFilter = 'Semua kategori';
-      final matchesCategory = categoryFilter == 'Semua kategori' ||
-          project.category.toLowerCase().contains(categoryFilter.replaceAll(' App', '').replaceAll(' Dev', '').replaceAll(' Design', '').toLowerCase());
+      if (categoryFilter == 'Semua kategori proyek')
+        categoryFilter = 'Semua kategori';
+      final matchesCategory =
+          categoryFilter == 'Semua kategori' ||
+          project.category.toLowerCase().contains(
+            categoryFilter
+                .replaceAll(' App', '')
+                .replaceAll(' Dev', '')
+                .replaceAll(' Design', '')
+                .toLowerCase(),
+          );
 
-      final matchesSlot = selectedSlot.value == 'Semua slot' ||
+      final matchesSlot =
+          selectedSlot.value == 'Semua slot' ||
           (selectedSlot.value == '1 slot' && project.openSlots == 1) ||
           (selectedSlot.value == '2 slot' && project.openSlots == 2) ||
           (selectedSlot.value == '3+ slot' && project.openSlots >= 3);
@@ -164,7 +181,8 @@ class ExploreController extends GetxController {
 
     // 2. Competitions
     var tempCompetitions = competitions.where((comp) {
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           comp.title.toLowerCase().contains(query) ||
           comp.category.toLowerCase().contains(query) ||
           comp.caption.toLowerCase().contains(query) ||
@@ -176,18 +194,28 @@ class ExploreController extends GetxController {
         final cat = comp.category.toLowerCase();
         final title = comp.title.toLowerCase();
         if (selectedFaculty.value == 'Teknik Informatika') {
-          matchesFaculty = org.contains('ftik') || cat.contains('coding') || cat.contains('hackathon');
+          matchesFaculty =
+              org.contains('ftik') ||
+              cat.contains('coding') ||
+              cat.contains('hackathon');
         } else if (selectedFaculty.value == 'Sistem Informasi') {
-          matchesFaculty = org.contains('ftik') || cat.contains('data') || title.contains('edutech');
+          matchesFaculty =
+              org.contains('ftik') ||
+              cat.contains('data') ||
+              title.contains('edutech');
         } else if (selectedFaculty.value == 'DKV') {
           matchesFaculty = cat.contains('design') || cat.contains('ui/ux');
         } else if (selectedFaculty.value == 'Manajemen') {
-          matchesFaculty = org.contains('ekonomi') || org.contains('feb') || cat.contains('business');
+          matchesFaculty =
+              org.contains('ekonomi') ||
+              org.contains('feb') ||
+              cat.contains('business');
         }
       }
 
       var categoryFilter = selectedCategory.value;
-      if (categoryFilter == 'Semua kategori lomba') categoryFilter = 'Semua kategori';
+      if (categoryFilter == 'Semua kategori lomba')
+        categoryFilter = 'Semua kategori';
       bool matchesCategory = true;
       if (categoryFilter != 'Semua kategori') {
         final compCat = comp.category.toUpperCase();
@@ -200,7 +228,9 @@ class ExploreController extends GetxController {
         } else if (categoryFilter == 'Data') {
           matchesCategory = compCat.contains('CODING');
         } else {
-          matchesCategory = comp.category.toLowerCase().contains(categoryFilter.toLowerCase());
+          matchesCategory = comp.category.toLowerCase().contains(
+            categoryFilter.toLowerCase(),
+          );
         }
       }
 
@@ -222,7 +252,10 @@ class ExploreController extends GetxController {
         }
       }
 
-      return matchesQuery && matchesFaculty && matchesCategory && matchesDeadline;
+      return matchesQuery &&
+          matchesFaculty &&
+          matchesCategory &&
+          matchesDeadline;
     }).toList();
 
     if (selectedSort.value == 'Terbaru') {
@@ -232,7 +265,8 @@ class ExploreController extends GetxController {
 
     // 3. People
     var tempPeople = people.where((person) {
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           person.name.toLowerCase().contains(query) ||
           person.role.toLowerCase().contains(query) ||
           person.tags.any((t) => t.toLowerCase().contains(query));
@@ -240,15 +274,19 @@ class ExploreController extends GetxController {
       bool matchesFaculty = true;
       if (selectedFaculty.value != 'Semua jurusan') {
         final role = person.role.toLowerCase();
-        if (selectedFaculty.value == 'Teknik Informatika' || selectedFaculty.value == 'Sistem Informasi') {
+        if (selectedFaculty.value == 'Teknik Informatika' ||
+            selectedFaculty.value == 'Sistem Informasi') {
           matchesFaculty = role.contains('dev') || role.contains('developer');
         } else if (selectedFaculty.value == 'DKV') {
           matchesFaculty = role.contains('design') || role.contains('designer');
         }
       }
 
-      final matchesSkill = selectedSkill.value == 'Semua skill' ||
-          person.tags.any((t) => t.toLowerCase() == selectedSkill.value.toLowerCase());
+      final matchesSkill =
+          selectedSkill.value == 'Semua skill' ||
+          person.tags.any(
+            (t) => t.toLowerCase() == selectedSkill.value.toLowerCase(),
+          );
 
       return matchesQuery && matchesFaculty && matchesSkill;
     }).toList();

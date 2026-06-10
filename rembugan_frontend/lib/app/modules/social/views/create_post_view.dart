@@ -57,9 +57,9 @@ class _CreatePostViewState extends State<CreatePostView> {
         TextButton(
           onPressed: Get.back,
           style: TextButton.styleFrom(
-            backgroundColor: AppColors.textPrimary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            backgroundColor: AppColors.primary500,
+            foregroundColor: AppColors.white,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
@@ -69,17 +69,17 @@ class _CreatePostViewState extends State<CreatePostView> {
             style: AppFonts.satoshiStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: AppColors.white,
             ),
           ),
         ),
       ],
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           AppSurface(
             shadow: const [],
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -221,10 +221,10 @@ class _CreatePostViewState extends State<CreatePostView> {
                   icon: FluentIcons.people_24_regular,
                 )
               else
-              const AppTextPill(
-                label: 'Tandai proyek',
-                icon: FluentIcons.briefcase_24_regular,
-              ),
+                const AppTextPill(
+                  label: 'Tandai proyek',
+                  icon: FluentIcons.briefcase_24_regular,
+                ),
             ],
           ),
         ],
@@ -236,7 +236,7 @@ class _CreatePostViewState extends State<CreatePostView> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _MajorPickerSheet(
         majors: _majors,
         selectedMajor: _selectedMajor,
@@ -252,7 +252,7 @@ class _CreatePostViewState extends State<CreatePostView> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _SearchablePickerSheet(
         title: 'Tambah skill',
         searchHint: 'Cari skill',
@@ -338,7 +338,7 @@ class _LabeledPicker extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           child: Container(
             height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -415,8 +415,10 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
           MediaQuery.of(context).padding.bottom + 20,
         ),
         decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -460,29 +462,36 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
                 shrinkWrap: true,
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: AppColors.border),
+                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
                 itemBuilder: (context, index) {
                   final major = filtered[index];
                   final selected = major == widget.selectedMajor;
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      major,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                  return InkWell(
+                    onTap: () => widget.onSelected(major),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              major,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (selected)
+                            const Icon(
+                              FluentIcons.checkmark_24_filled,
+                              size: 18,
+                              color: AppColors.primary500,
+                            ),
+                        ],
                       ),
                     ),
-                    trailing: selected
-                        ? const Icon(
-                            FluentIcons.checkmark_24_filled,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          )
-                        : null,
-                    onTap: () => widget.onSelected(major),
                   );
                 },
               ),
@@ -521,8 +530,8 @@ class _AppInput extends StatelessWidget {
         fillColor: AppColors.background,
         prefixIcon: Padding(
           padding: EdgeInsets.only(
-            left: 14,
-            right: 10,
+            left: AppSpacing.md,
+            right: AppSpacing.sm,
             top: maxLines > 1 ? 14 : 0,
           ),
           child: Icon(icon, size: 18, color: AppColors.textTertiary),
@@ -570,9 +579,12 @@ class _SkillInput extends StatelessWidget {
             onTap: onAdd,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xxs,
+              ),
               decoration: BoxDecoration(
-                color: const Color(0xFFF4F5F7),
+                color: AppColors.grey100,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(color: AppColors.border),
               ),
@@ -612,9 +624,12 @@ class _SkillDraftChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: AppColors.borderStrong),
       ),
@@ -687,8 +702,10 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
           MediaQuery.of(context).padding.bottom + 20,
         ),
         decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -732,29 +749,36 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
                 shrinkWrap: true,
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: AppColors.border),
+                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
                 itemBuilder: (context, index) {
                   final option = filtered[index];
                   final selected = widget.selectedOptions.contains(option);
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      option,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                  return InkWell(
+                    onTap: () => widget.onSelected(option),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              option,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (selected)
+                            const Icon(
+                              FluentIcons.checkmark_24_filled,
+                              size: 18,
+                              color: AppColors.primary500,
+                            ),
+                        ],
                       ),
                     ),
-                    trailing: selected
-                        ? const Icon(
-                            FluentIcons.checkmark_24_filled,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          )
-                        : null,
-                    onTap: () => widget.onSelected(option),
                   );
                 },
               ),
@@ -788,12 +812,12 @@ class _CreateTypeOption extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFFF4F5F7) : AppColors.background,
+          color: active ? AppColors.grey100 : AppColors.background,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: active ? AppColors.textPrimary : AppColors.border,
+            color: active ? AppColors.primary500 : AppColors.border,
           ),
         ),
         child: Column(
@@ -802,7 +826,7 @@ class _CreateTypeOption extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: active ? AppColors.textPrimary : AppColors.textSecondary,
+              color: active ? AppColors.primary500 : AppColors.textSecondary,
             ),
             const SizedBox(height: 10),
             Text(

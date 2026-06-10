@@ -20,11 +20,13 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     // Premium theme-aware local styling for instant visual feedback
-    final backgroundColor = isDark ? const Color(0xFF0F0F0F) : AppColors.background;
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final textColor = isDark ? Colors.white : AppColors.textPrimary;
-    final subtitleColor = isDark ? Colors.white60 : AppColors.textSecondary;
-    final borderColor = isDark ? const Color(0xFF2E2E2E) : AppColors.border;
+    final backgroundColor = isDark
+        ? AppColors.primary500
+        : AppColors.background;
+    final cardColor = isDark ? AppColors.grey800 : AppColors.white;
+    final textColor = isDark ? AppColors.white : AppColors.textPrimary;
+    final subtitleColor = isDark ? AppColors.white60 : AppColors.textSecondary;
+    final borderColor = isDark ? AppColors.grey700 : AppColors.border;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -40,7 +42,7 @@ class _SettingsViewState extends State<SettingsView> {
                     IconButton(
                       onPressed: Get.back,
                       icon: Icon(
-                        FluentIcons.arrow_left_24_regular,
+                        FluentIcons.chevron_left_24_regular,
                         color: textColor,
                       ),
                     ),
@@ -73,25 +75,27 @@ class _SettingsViewState extends State<SettingsView> {
                   ],
                 ),
               ),
-              Container(
-                height: 0.5,
-                color: borderColor,
-              ),
-              
+              Container(height: 0.5, color: borderColor),
+
               // Settings Body List
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   children: [
                     // --- SECTION 1: AKUN & KEAMANAN ---
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xxs,
+                        bottom: AppSpacing.xs,
+                      ),
                       child: Text(
                         'AKUN & KEAMANAN',
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white38 : AppColors.textTertiary,
+                          color: isDark
+                              ? AppColors.white38
+                              : AppColors.textTertiary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -109,15 +113,20 @@ class _SettingsViewState extends State<SettingsView> {
                       subtitleColor: subtitleColor,
                       borderColor: borderColor,
                       trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xs,
+                          vertical: AppSpacing.xxs,
+                        ),
                         decoration: BoxDecoration(
                           color: googleEmail == 'Belum ditautkan'
                               ? AppColors.danger50
                               : AppColors.success50,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(AppRadius.xxs),
                         ),
                         child: Text(
-                          googleEmail == 'Belum ditautkan' ? 'Belum Taut' : 'Aktif',
+                          googleEmail == 'Belum ditautkan'
+                              ? 'Belum Taut'
+                              : 'Aktif',
                           style: AppFonts.satoshiStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
@@ -146,13 +155,18 @@ class _SettingsViewState extends State<SettingsView> {
 
                     // --- SECTION 2: PREFERENSI ---
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xxs,
+                        bottom: AppSpacing.xs,
+                      ),
                       child: Text(
                         'PREFERENSI',
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white38 : AppColors.textTertiary,
+                          color: isDark
+                              ? AppColors.white38
+                              : AppColors.textTertiary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -160,11 +174,11 @@ class _SettingsViewState extends State<SettingsView> {
 
                     // Theme selector (Inside a satisfying custom widget tile)
                     Container(
-                      padding: const EdgeInsets.all(14),
-                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                       decoration: BoxDecoration(
                         color: cardColor,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(color: borderColor),
                       ),
                       child: Column(
@@ -173,7 +187,9 @@ class _SettingsViewState extends State<SettingsView> {
                           Row(
                             children: [
                               Icon(
-                                isDark ? FluentIcons.weather_moon_24_regular : FluentIcons.weather_sunny_24_regular,
+                                isDark
+                                    ? FluentIcons.weather_moon_24_regular
+                                    : FluentIcons.weather_sunny_24_regular,
                                 color: textColor,
                                 size: 20,
                               ),
@@ -208,8 +224,10 @@ class _SettingsViewState extends State<SettingsView> {
                             height: 38,
                             padding: const EdgeInsets.all(3),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF262626) : const Color(0xFFF3F4F6),
-                              borderRadius: BorderRadius.circular(10),
+                              color: isDark
+                                  ? AppColors.grey800
+                                  : AppColors.grey100,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Row(
                               children: [
@@ -223,12 +241,19 @@ class _SettingsViewState extends State<SettingsView> {
                                     child: Container(
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: !isDark ? (isDark ? const Color(0xFF1E1E1E) : Colors.white) : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: !isDark
+                                            ? (isDark
+                                                  ? AppColors.grey800
+                                                  : AppColors.white)
+                                            : AppColors.transparent,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.xs,
+                                        ),
                                         boxShadow: !isDark
                                             ? [
                                                 BoxShadow(
-                                                  color: Colors.black.withValues(alpha: 0.04),
+                                                  color: AppColors.black
+                                                      .withValues(alpha: 0.04),
                                                   blurRadius: 4,
                                                   offset: const Offset(0, 1.5),
                                                 ),
@@ -236,12 +261,16 @@ class _SettingsViewState extends State<SettingsView> {
                                             : null,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            FluentIcons.weather_sunny_24_regular,
+                                            FluentIcons
+                                                .weather_sunny_24_regular,
                                             size: 15,
-                                            color: !isDark ? AppColors.textPrimary : AppColors.textTertiary,
+                                            color: !isDark
+                                                ? AppColors.textPrimary
+                                                : AppColors.textTertiary,
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
@@ -249,7 +278,9 @@ class _SettingsViewState extends State<SettingsView> {
                                             style: AppFonts.satoshiStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
-                                              color: !isDark ? AppColors.textPrimary : AppColors.textTertiary,
+                                              color: !isDark
+                                                  ? AppColors.textPrimary
+                                                  : AppColors.textTertiary,
                                             ),
                                           ),
                                         ],
@@ -267,12 +298,19 @@ class _SettingsViewState extends State<SettingsView> {
                                     child: Container(
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: isDark ? (isDark ? const Color(0xFF1E1E1E) : Colors.white) : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: isDark
+                                            ? (isDark
+                                                  ? AppColors.grey800
+                                                  : AppColors.white)
+                                            : AppColors.transparent,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.xs,
+                                        ),
                                         boxShadow: isDark
                                             ? [
                                                 BoxShadow(
-                                                  color: Colors.black.withValues(alpha: 0.12),
+                                                  color: AppColors.black
+                                                      .withValues(alpha: 0.12),
                                                   blurRadius: 4,
                                                   offset: const Offset(0, 1.5),
                                                 ),
@@ -280,12 +318,15 @@ class _SettingsViewState extends State<SettingsView> {
                                             : null,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
                                             FluentIcons.weather_moon_24_regular,
                                             size: 15,
-                                            color: isDark ? Colors.white : AppColors.textTertiary,
+                                            color: isDark
+                                                ? AppColors.white
+                                                : AppColors.textTertiary,
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
@@ -293,7 +334,9 @@ class _SettingsViewState extends State<SettingsView> {
                                             style: AppFonts.satoshiStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
-                                              color: isDark ? Colors.white : AppColors.textTertiary,
+                                              color: isDark
+                                                  ? AppColors.white
+                                                  : AppColors.textTertiary,
                                             ),
                                           ),
                                         ],
@@ -312,18 +355,23 @@ class _SettingsViewState extends State<SettingsView> {
 
                     // --- SECTION 3: TENTANG ---
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xxs,
+                        bottom: AppSpacing.xs,
+                      ),
                       child: Text(
                         'TENTANG',
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white38 : AppColors.textTertiary,
+                          color: isDark
+                              ? AppColors.white38
+                              : AppColors.textTertiary,
                           letterSpacing: 0.5,
                         ),
                       ),
                     ),
-                    
+
                     _buildSettingsTile(
                       icon: FluentIcons.info_24_regular,
                       title: 'Versi Aplikasi',
@@ -338,13 +386,18 @@ class _SettingsViewState extends State<SettingsView> {
 
                     // --- SECTION 4: KELUAR ---
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.xxs,
+                        bottom: AppSpacing.xs,
+                      ),
                       child: Text(
                         'SESI',
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white38 : AppColors.textTertiary,
+                          color: isDark
+                              ? AppColors.white38
+                              : AppColors.textTertiary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -355,12 +408,12 @@ class _SettingsViewState extends State<SettingsView> {
                       title: 'Keluar dari Akun',
                       subtitle: 'Selesaikan sesi Anda di perangkat ini',
                       cardColor: cardColor,
-                      textColor: const Color(0xFFEF4444),
+                      textColor: AppColors.error500,
                       subtitleColor: subtitleColor,
                       borderColor: borderColor,
                       trailing: const Icon(
                         Icons.chevron_right,
-                        color: Color(0xFFEF4444),
+                        color: AppColors.error500,
                         size: 18,
                       ),
                       onTap: () => _showLogoutConfirmSheet(context, isDark),
@@ -387,36 +440,60 @@ class _SettingsViewState extends State<SettingsView> {
     VoidCallback? onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: borderColor),
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        minVerticalPadding: 14,
-        leading: Icon(icon, color: textColor, size: 20),
-        title: Text(
-          title,
-          style: AppFonts.satoshiStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textColor,
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.md,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: textColor, size: 20),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11.5,
+                          color: subtitleColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                trailing ??
+                    Icon(
+                      FluentIcons.chevron_right_24_regular,
+                      color: isDark ? AppColors.white38 : AppColors.textTertiary,
+                      size: 18,
+                    ),
+              ],
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: AppFonts.satoshiStyle(
-            fontSize: 11.5,
-            color: subtitleColor,
-          ),
-        ),
-        trailing: trailing ?? Icon(
-          Icons.chevron_right,
-          color: isDark ? Colors.white38 : AppColors.textTertiary,
-          size: 18,
         ),
       ),
     );
@@ -430,37 +507,48 @@ class _SettingsViewState extends State<SettingsView> {
     final textStyle = AppFonts.satoshiStyle(
       fontSize: 13.5,
       fontWeight: FontWeight.w600,
-      color: isDark ? Colors.white : AppColors.textPrimary,
+      color: isDark ? AppColors.white : AppColors.textPrimary,
     );
 
     final inputDecoration = (String hint) => InputDecoration(
       filled: true,
-      fillColor: isDark ? const Color(0xFF262626) : const Color(0xFFF9FAFB),
+      fillColor: isDark ? AppColors.grey800 : AppColors.grey50,
       hintText: hint,
       hintStyle: AppFonts.satoshiStyle(
         fontSize: 13,
-        color: isDark ? Colors.white38 : AppColors.textTertiary.withValues(alpha: 0.6),
+        color: isDark
+            ? AppColors.white38
+            : AppColors.textTertiary.withValues(alpha: 0.6),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       isDense: true,
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         borderSide: BorderSide(
-          color: isDark ? const Color(0xFF2E2E2E) : AppColors.border.withValues(alpha: 0.8),
+          color: isDark
+              ? AppColors.grey700
+              : AppColors.border.withValues(alpha: 0.8),
           width: 1.0,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         borderSide: BorderSide(
-          color: isDark ? Colors.white54 : AppColors.textPrimary.withValues(alpha: 0.4),
+          color: isDark
+              ? AppColors.white54
+              : AppColors.textPrimary.withValues(alpha: 0.4),
           width: 1.2,
         ),
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         borderSide: BorderSide(
-          color: isDark ? const Color(0xFF2E2E2E) : AppColors.border.withValues(alpha: 0.8),
+          color: isDark
+              ? AppColors.grey700
+              : AppColors.border.withValues(alpha: 0.8),
           width: 1.0,
         ),
       ),
@@ -469,7 +557,7 @@ class _SettingsViewState extends State<SettingsView> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -477,8 +565,10 @@ class _SettingsViewState extends State<SettingsView> {
         child: Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            color: isDark ? AppColors.grey800 : AppColors.white,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -489,8 +579,8 @@ class _SettingsViewState extends State<SettingsView> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF444444) : const Color(0xFFD4D9E2),
-                    borderRadius: BorderRadius.circular(999),
+                    color: isDark ? AppColors.grey700 : AppColors.grey300,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
               ),
@@ -500,17 +590,17 @@ class _SettingsViewState extends State<SettingsView> {
                 style: AppFonts.headingStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
+                  color: isDark ? AppColors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 18),
-              
+
               Text(
                 'PASSWORD SEKARANG',
                 style: AppFonts.satoshiStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white38 : AppColors.textTertiary,
+                  color: isDark ? AppColors.white38 : AppColors.textTertiary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -528,7 +618,7 @@ class _SettingsViewState extends State<SettingsView> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white38 : AppColors.textTertiary,
+                  color: isDark ? AppColors.white38 : AppColors.textTertiary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -546,7 +636,7 @@ class _SettingsViewState extends State<SettingsView> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white38 : AppColors.textTertiary,
+                  color: isDark ? AppColors.white38 : AppColors.textTertiary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -570,9 +660,11 @@ class _SettingsViewState extends State<SettingsView> {
                         'Sukses',
                         'Password berhasil diperbarui!',
                         snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: isDark ? const Color(0xFF2E2E2E) : Colors.black,
-                        colorText: Colors.white,
-                        margin: const EdgeInsets.all(16),
+                        backgroundColor: isDark
+                            ? AppColors.grey700
+                            : AppColors.primary500,
+                        colorText: AppColors.white,
+                        margin: const EdgeInsets.all(AppSpacing.md),
                         borderRadius: 12,
                       );
                     }
@@ -580,15 +672,15 @@ class _SettingsViewState extends State<SettingsView> {
                   child: Container(
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(12),
+                      color: isDark ? AppColors.white : AppColors.grey900,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
                       'Perbarui Password',
                       style: AppFonts.satoshiStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.black : Colors.white,
+                        color: isDark ? AppColors.primary500 : AppColors.white,
                       ),
                     ),
                   ),
@@ -604,13 +696,15 @@ class _SettingsViewState extends State<SettingsView> {
   void _showGoogleAccountSheet(BuildContext context, bool isDark) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            color: isDark ? AppColors.grey800 : AppColors.white,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -621,8 +715,8 @@ class _SettingsViewState extends State<SettingsView> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF444444) : const Color(0xFFD4D9E2),
-                    borderRadius: BorderRadius.circular(999),
+                    color: isDark ? AppColors.grey700 : AppColors.grey300,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
               ),
@@ -633,14 +727,14 @@ class _SettingsViewState extends State<SettingsView> {
                     width: 40,
                     height: 40,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF3F4F6),
+                      color: AppColors.grey100,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: const Icon(
                       FluentIcons.person_accounts_24_regular,
                       size: 20,
-                      color: Color(0xFF4285F4),
+                      color: AppColors.info500,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -653,14 +747,18 @@ class _SettingsViewState extends State<SettingsView> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : AppColors.textPrimary,
+                            color: isDark
+                                ? AppColors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                         Text(
                           googleEmail,
                           style: AppFonts.satoshiStyle(
                             fontSize: 12,
-                            color: isDark ? Colors.white54 : AppColors.textSecondary,
+                            color: isDark
+                                ? AppColors.white54
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -673,7 +771,7 @@ class _SettingsViewState extends State<SettingsView> {
                 'Tautan ini digunakan untuk mempermudah sinkronisasi data proyek, obrolan, dan keamanan akun Anda.',
                 style: AppFonts.satoshiStyle(
                   fontSize: 12.5,
-                  color: isDark ? Colors.white70 : AppColors.textSecondary,
+                  color: isDark ? AppColors.white70 : AppColors.textSecondary,
                   height: 1.45,
                 ),
               ),
@@ -686,7 +784,9 @@ class _SettingsViewState extends State<SettingsView> {
                         Get.back();
                         Get.showOverlay(
                           asyncFunction: () async {
-                            await Future<void>.delayed(const Duration(milliseconds: 600));
+                            await Future<void>.delayed(
+                              const Duration(milliseconds: 600),
+                            );
                             setState(() {
                               googleEmail = 'nanda.dev@gmail.com';
                             });
@@ -694,14 +794,18 @@ class _SettingsViewState extends State<SettingsView> {
                               'Sukses',
                               'Akun Google berhasil diubah ke nanda.dev@gmail.com',
                               snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: isDark ? const Color(0xFF2E2E2E) : Colors.black,
-                              colorText: Colors.white,
-                              margin: const EdgeInsets.all(16),
+                              backgroundColor: isDark
+                                  ? AppColors.grey700
+                                  : AppColors.primary500,
+                              colorText: AppColors.white,
+                              margin: const EdgeInsets.all(AppSpacing.md),
                               borderRadius: 12,
                             );
                           },
                           loadingWidget: const Center(
-                            child: CircularProgressIndicator(color: Colors.white),
+                            child: CircularProgressIndicator(
+                              color: AppColors.white,
+                            ),
                           ),
                         );
                       },
@@ -709,15 +813,17 @@ class _SettingsViewState extends State<SettingsView> {
                         height: 42,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                          borderRadius: BorderRadius.circular(10),
+                          color: isDark ? AppColors.white : AppColors.grey900,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Text(
                           'Ganti Akun',
                           style: AppFonts.satoshiStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.black : Colors.white,
+                            color: isDark
+                                ? AppColors.primary500
+                                : AppColors.white,
                           ),
                         ),
                       ),
@@ -735,9 +841,11 @@ class _SettingsViewState extends State<SettingsView> {
                           'Sukses',
                           'Tautan Akun Google berhasil diputuskan.',
                           snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: isDark ? const Color(0xFF2E2E2E) : Colors.black,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(16),
+                          backgroundColor: isDark
+                              ? AppColors.grey700
+                              : AppColors.primary500,
+                          colorText: AppColors.white,
+                          margin: const EdgeInsets.all(AppSpacing.md),
                           borderRadius: 12,
                         );
                       },
@@ -745,10 +853,12 @@ class _SettingsViewState extends State<SettingsView> {
                         height: 42,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.transparent,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF3E3E3E) : AppColors.border,
+                            color: isDark
+                                ? AppColors.grey700
+                                : AppColors.border,
                           ),
                         ),
                         child: Text(
@@ -756,7 +866,9 @@ class _SettingsViewState extends State<SettingsView> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : AppColors.textSecondary,
+                            color: isDark
+                                ? AppColors.white
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -774,12 +886,14 @@ class _SettingsViewState extends State<SettingsView> {
   void _showLogoutConfirmSheet(BuildContext context, bool isDark) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => Container(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          color: isDark ? AppColors.grey800 : AppColors.white,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -790,8 +904,8 @@ class _SettingsViewState extends State<SettingsView> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF444444) : const Color(0xFFD4D9E2),
-                  borderRadius: BorderRadius.circular(999),
+                  color: isDark ? AppColors.grey700 : AppColors.grey300,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
             ),
@@ -802,14 +916,14 @@ class _SettingsViewState extends State<SettingsView> {
                   width: 40,
                   height: 40,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFFEE2E2),
+                    color: AppColors.danger100,
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: const Icon(
                     Icons.logout,
                     size: 20,
-                    color: Color(0xFFEF4444),
+                    color: AppColors.error500,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -822,14 +936,18 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
+                          color: isDark
+                              ? AppColors.white
+                              : AppColors.textPrimary,
                         ),
                       ),
                       Text(
                         'Selesaikan sesi aktif Anda',
                         style: AppFonts.satoshiStyle(
                           fontSize: 12,
-                          color: isDark ? Colors.white54 : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.white54
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -842,7 +960,7 @@ class _SettingsViewState extends State<SettingsView> {
               'Apakah Anda yakin ingin keluar dari Rembugan? Anda harus masuk kembali menggunakan email dan password untuk mengakses proyek dan obrolan Anda.',
               style: AppFonts.satoshiStyle(
                 fontSize: 12.5,
-                color: isDark ? Colors.white70 : AppColors.textSecondary,
+                color: isDark ? AppColors.white70 : AppColors.textSecondary,
                 height: 1.45,
               ),
             ),
@@ -855,20 +973,24 @@ class _SettingsViewState extends State<SettingsView> {
                       Get.back();
                       Get.showOverlay(
                         asyncFunction: () async {
-                          await Future<void>.delayed(const Duration(milliseconds: 600));
+                          await Future<void>.delayed(
+                            const Duration(milliseconds: 600),
+                          );
                           Get.offAllNamed(Routes.LOGIN);
                           Get.snackbar(
                             'Berhasil Keluar',
                             'Sampai jumpa kembali di Rembugan!',
                             snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.black,
-                            colorText: Colors.white,
-                            margin: const EdgeInsets.all(16),
+                            backgroundColor: AppColors.primary500,
+                            colorText: AppColors.white,
+                            margin: const EdgeInsets.all(AppSpacing.md),
                             borderRadius: 12,
                           );
                         },
                         loadingWidget: const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                          ),
                         ),
                       );
                     },
@@ -876,15 +998,15 @@ class _SettingsViewState extends State<SettingsView> {
                       height: 42,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.error500,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
                         'Ya, Keluar',
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: AppColors.white,
                         ),
                       ),
                     ),
@@ -898,10 +1020,10 @@ class _SettingsViewState extends State<SettingsView> {
                       height: 42,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.transparent,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF3E3E3E) : AppColors.border,
+                          color: isDark ? AppColors.grey700 : AppColors.border,
                         ),
                       ),
                       child: Text(
@@ -909,7 +1031,9 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.white
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ),

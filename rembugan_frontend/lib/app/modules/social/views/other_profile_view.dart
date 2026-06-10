@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
-import '../../../core/widgets/app_chrome.dart';
 
 class OtherProfileView extends StatefulWidget {
   const OtherProfileView({super.key});
@@ -19,127 +18,148 @@ class _OtherProfileViewState extends State<OtherProfileView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: AppLayeredBackground(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-            children: [
-              _ProfileTopBar(
-                onBack: () => Get.back(),
-              ),
-              const SizedBox(height: 24),
-              const _ProfileStatsHeader(),
-              const SizedBox(height: 20),
-              const _ProfileIdentity(),
-              const SizedBox(height: 14),
-              const _SkillWrap(),
-              const SizedBox(height: 22),
-              _ProfileActions(
-                isFollowing: isFollowing,
-                onFollowToggle: () {
-                  setState(() {
-                    isFollowing = !isFollowing;
-                  });
-                },
-                onChat: () {
-                  Get.toNamed('/room-chat');
-                },
-              ),
-              const SizedBox(height: 26),
-              _ProfileTabs(
-                activeIndex: selectedTabIndex,
-                onChanged: (index) {
-                  setState(() {
-                    selectedTabIndex = index;
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
-              _ProfileTabContent(activeIndex: selectedTabIndex),
-            ],
+      backgroundColor: AppColors.white,
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          _ProfileCover(
+            avatarAsset: 'lib/assets/img/avatar.png',
+            onBack: () => Get.back(),
+            onMore: () {},
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _ProfileIdentity(),
+                const SizedBox(height: 12),
+                Text(
+                  '1.2K pengikut  9 Kolaborasi',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.grey900,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _ProfileActions(
+                  isFollowing: isFollowing,
+                  onFollowToggle: () {
+                    setState(() {
+                      isFollowing = !isFollowing;
+                    });
+                  },
+                  onChat: () {
+                    Get.toNamed('/room-chat');
+                  },
+                ),
+                const SizedBox(height: 16),
+                _ProfileTabs(
+                  activeIndex: selectedTabIndex,
+                  onChanged: (index) {
+                    setState(() {
+                      selectedTabIndex = index;
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                _ProfileTabContent(activeIndex: selectedTabIndex),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ProfileTopBar extends StatelessWidget {
-  const _ProfileTopBar({required this.onBack});
+class _ProfileCover extends StatelessWidget {
+  const _ProfileCover({
+    required this.avatarAsset,
+    required this.onBack,
+    required this.onMore,
+  });
 
+  final String avatarAsset;
   final VoidCallback onBack;
+  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: onBack,
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.borderStrong,
-                width: 1.2,
-              ),
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return SizedBox(
+      height: topPadding + 158,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'lib/assets/img/contoh poster4.jpeg',
+              fit: BoxFit.cover,
             ),
-            child: const Center(
-              child: Icon(
-                FluentIcons.arrow_left_24_regular,
-                color: AppColors.textPrimary,
-                size: 20,
+          ),
+          Positioned.fill(
+            child: Container(color: AppColors.white.withValues(alpha: 0.18)),
+          ),
+          Positioned(
+            top: topPadding + 16,
+            left: 16,
+            child: _ProfileCircleButton(
+              icon: FluentIcons.chevron_left_24_regular,
+              onTap: onBack,
+            ),
+          ),
+          Positioned(
+            top: topPadding + 16,
+            right: 16,
+            child: _ProfileCircleButton(
+              icon: FluentIcons.more_horizontal_24_regular,
+              onTap: onMore,
+            ),
+          ),
+          Positioned(
+            left: 16,
+            bottom: -46,
+            child: Container(
+              width: 94,
+              height: 94,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.white, width: 3),
+              ),
+              child: CircleAvatar(
+                backgroundImage: AssetImage(avatarAsset),
+                backgroundColor: AppColors.grey100,
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 14),
-        // Text(
-        //   'Profil',
-        //   style: AppFonts.headingStyle(
-        //     fontSize: 20,
-        //     fontWeight: FontWeight.w700,
-        //     color: AppColors.textPrimary,
-        //   ),
-        // ),
-        const Spacer(),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            FluentIcons.more_horizontal_24_regular,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _ProfileStatsHeader extends StatelessWidget {
-  const _ProfileStatsHeader();
+class _ProfileCircleButton extends StatelessWidget {
+  const _ProfileCircleButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        CircleAvatar(
-          radius: 40,
-          backgroundImage: AssetImage('lib/assets/img/avatar.png'),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        SizedBox(width: 24),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _ProfileMetric(value: '48', label: 'Postingan'),
-              _ProfileMetric(value: '1.2K', label: 'Pengikut'),
-              _ProfileMetric(value: '9', label: 'Kolaborasi'),
-            ],
-          ),
-        ),
-      ],
+        child: Icon(icon, size: 23, color: AppColors.grey900),
+      ),
     );
   }
 }
@@ -152,40 +172,24 @@ class _ProfileIdentity extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Flexible(
-              child: Text(
-                'Raka Pratama',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                  height: 1.15,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'D4 Teknik Informatika',
-              style: AppFonts.satoshiStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textTertiary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
         Text(
-          '@raka.design',
+          'Raka Pratama',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppFonts.satoshiStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppColors.grey900,
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'D4 Teknik Informatika',
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
+            color: AppColors.grey500,
           ),
         ),
         const SizedBox(height: 10),
@@ -193,8 +197,17 @@ class _ProfileIdentity extends StatelessWidget {
           'UI/UX Designer dan product thinker. Mendesain produk kolaborasi kampus dengan fokus pada clarity, flow, dan UX research.',
           style: AppFonts.satoshiStyle(
             fontSize: 13,
-            height: 1.62,
-            color: AppColors.textPrimary.withValues(alpha: 0.88),
+            height: 1.32,
+            color: AppColors.grey900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'github.com/raka-design',
+          style: AppFonts.satoshiStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.info500,
           ),
         ),
       ],
@@ -224,11 +237,14 @@ class _SkillChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.grey200),
       ),
       child: Text(
         label,
@@ -258,42 +274,36 @@ class _ProfileActions extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: SizedBox(
-            height: 44,
-            child: ElevatedButton(
-              onPressed: onFollowToggle,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isFollowing ? const Color(0xFFF3F4F6) : Colors.black,
-                foregroundColor: isFollowing ? Colors.black : Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(11),
-                  side: isFollowing
-                      ? const BorderSide(color: AppColors.border)
-                      : BorderSide.none,
-                ),
+          child: GestureDetector(
+            onTap: onFollowToggle,
+            child: Container(
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isFollowing ? AppColors.grey100 : AppColors.primary500,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: isFollowing ? Border.all(color: AppColors.border) : null,
               ),
               child: Text(
                 isFollowing ? 'Mengikuti' : 'Ikuti',
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isFollowing ? Colors.black87 : Colors.white,
+                  fontWeight: FontWeight.w800,
+                  color: isFollowing ? AppColors.textSecondary : AppColors.white,
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 18),
-        InkWell(
+        const SizedBox(width: 16),
+        GestureDetector(
           onTap: onChat,
-          borderRadius: BorderRadius.circular(17),
           child: Container(
-            width: 44,
-            height: 44,
+            width: 42,
+            height: 40,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(17),
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: AppColors.borderStrong),
             ),
             child: const Icon(
@@ -316,7 +326,7 @@ class _ProfileTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tabs = ['Postingan', 'Pengalaman', 'Kolaborasi'];
+    const tabs = ['Postingan', 'Pengalaman', 'Keahlian', 'Kolaborasi'];
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -350,20 +360,22 @@ class _ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xxs,
+              vertical: AppSpacing.sm,
+            ),
             child: Text(
               label,
               style: AppFonts.satoshiStyle(
                 fontSize: 14,
                 fontWeight: active ? FontWeight.bold : FontWeight.w500,
-                color: active ? AppColors.textPrimary : AppColors.textTertiary,
+                color: active ? AppColors.primary500 : AppColors.textTertiary,
               ),
             ),
           ),
@@ -372,7 +384,7 @@ class _ProfileTab extends StatelessWidget {
             height: 2.5,
             width: 48,
             decoration: BoxDecoration(
-              color: active ? AppColors.textPrimary : Colors.transparent,
+              color: active ? AppColors.primary500 : AppColors.transparent,
               borderRadius: BorderRadius.circular(1.5),
             ),
           ),
@@ -391,7 +403,7 @@ class _ProfileTabContent extends StatelessWidget {
   Widget build(BuildContext context) {
     if (activeIndex == 1) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         alignment: Alignment.center,
         child: Text(
           'Belum ada riwayat pengalaman',
@@ -404,8 +416,15 @@ class _ProfileTabContent extends StatelessWidget {
     }
 
     if (activeIndex == 2) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: _SkillWrap(),
+      );
+    }
+
+    if (activeIndex == 3) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         alignment: Alignment.center,
         child: Text(
           'Belum ada riwayat kolaborasi',
@@ -433,41 +452,7 @@ class _ProfileTabContent extends StatelessWidget {
   }
 }
 
-class _ProfileMetric extends StatelessWidget {
-  const _ProfileMetric({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          style: AppFonts.satoshiStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-            height: 1.05,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          label,
-          style: AppFonts.satoshiStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PostCard extends StatelessWidget {
+class _PostCard extends StatefulWidget {
   const _PostCard({
     required this.avatarAsset,
     required this.name,
@@ -489,17 +474,49 @@ class _PostCard extends StatelessWidget {
   final String commentCount;
 
   @override
+  State<_PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<_PostCard> {
+  bool _isLiked = false;
+  bool _isBookmarked = false;
+  late int _likeCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _likeCount = int.tryParse(widget.likeCount) ?? 0;
+  }
+
+  void _toggleLike() {
+    setState(() {
+      _isLiked = !_isLiked;
+      if (_isLiked) {
+        _likeCount++;
+      } else {
+        _likeCount--;
+      }
+    });
+  }
+
+  void _toggleBookmark() {
+    setState(() {
+      _isBookmarked = !_isBookmarked;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.soft,
       ),
       child: InkWell(
         onTap: () {},
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           child: Column(
@@ -511,7 +528,7 @@ class _PostCard extends StatelessWidget {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.primarySoft,
-                    backgroundImage: AssetImage(avatarAsset),
+                    backgroundImage: AssetImage(widget.avatarAsset),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -519,21 +536,22 @@ class _PostCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          name,
+                          widget.name,
                           style: AppFonts.satoshiStyle(
                             fontSize: 14.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.grey900,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          subtitle,
+                          widget.subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppFonts.satoshiStyle(
                             fontSize: 11.5,
-                            color: AppColors.textTertiary,
+                            color: AppColors.grey400,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -542,57 +560,61 @@ class _PostCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   const Icon(
                     FluentIcons.more_vertical_24_regular,
-                    color: AppColors.textTertiary,
+                    color: AppColors.grey400,
                     size: 20,
                   ),
                 ],
               ),
               const SizedBox(height: 10),
               Text(
-                content,
+                widget.content,
                 style: AppFonts.satoshiStyle(
-                  fontSize: 13.5,
-                  color: AppColors.textPrimary.withValues(alpha: 0.88),
-                  height: 1.5,
+                  fontSize: 14.5,
+                  color: AppColors.grey900,
+                  height: 1.45,
                 ),
               ),
-              if (hasImage && imageUrl != null) ...[
+              if (widget.hasImage && widget.imageUrl != null) ...[
                 const SizedBox(height: 10),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Image.network(
-                    imageUrl!,
+                    widget.imageUrl!,
                     width: double.infinity,
                     height: 160,
                     fit: BoxFit.cover,
                   ),
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   _buildInteractionItem(
-                    FluentIcons.heart_24_regular,
-                    likeCount,
-                    const Color(0xFFE5484D),
+                    _isLiked ? FluentIcons.heart_24_filled : FluentIcons.heart_24_regular,
+                    '$_likeCount',
+                    _isLiked ? AppColors.error500 : AppColors.grey500,
+                    onTap: _toggleLike,
                   ),
                   const SizedBox(width: 22),
                   _buildInteractionItem(
                     FluentIcons.chat_24_regular,
-                    commentCount,
-                    AppColors.textSecondary,
+                    widget.commentCount,
+                    AppColors.grey500,
+                    onTap: () {},
                   ),
                   const Spacer(),
                   _buildInteractionItem(
                     FluentIcons.send_24_regular,
                     '',
-                    AppColors.textSecondary,
+                    AppColors.grey500,
+                    onTap: () {},
                   ),
                   const SizedBox(width: 20),
                   _buildInteractionItem(
-                    FluentIcons.bookmark_24_regular,
+                    _isBookmarked ? FluentIcons.bookmark_24_filled : FluentIcons.bookmark_24_regular,
                     '',
-                    const Color(0xFFD69E2E),
+                    _isBookmarked ? AppColors.warning500 : AppColors.grey500,
+                    onTap: _toggleBookmark,
                   ),
                 ],
               ),
@@ -606,25 +628,32 @@ class _PostCard extends StatelessWidget {
   Widget _buildInteractionItem(
     IconData icon,
     String count,
-    Color activeColor,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: activeColor.withValues(alpha: 0.88), size: 20),
-          if (count.isNotEmpty) ...[
-            const SizedBox(width: 6),
-            Text(
-              count,
-              style: AppFonts.satoshiStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
+    Color activeColor, {
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 2,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: activeColor, size: 20),
+            if (count.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text(
+                count,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

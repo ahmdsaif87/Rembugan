@@ -21,6 +21,7 @@ abstract class Routes {
   static const EMPTY_STATE = _Paths.EMPTY_STATE;
   static const LOADING_STATE = _Paths.LOADING_STATE;
   static const PERSONALIZATION = _Paths.PERSONALIZATION;
+  static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
 }
 
 abstract class _Paths {
@@ -43,4 +44,5 @@ abstract class _Paths {
   static const EMPTY_STATE = '/empty-state';
   static const LOADING_STATE = '/loading-state';
   static const PERSONALIZATION = '/personalization';
+  static const FORGOT_PASSWORD = '/forgot-password';
 }

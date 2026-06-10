@@ -8,19 +8,16 @@ import '../controllers/team_controller.dart';
 import 'workspace_detail_view.dart';
 
 // ── Semantic palette (desaturated, subtle) ──
-const _ink = Color(0xFF111827);
-const _sub = Color(0xFF6B7280);
-const _faint = Color(0xFF9CA3AF);
-const _divider = Color(0xFFE7EAF0);
+const _ink = AppColors.grey900;
+const _sub = AppColors.grey500;
+const _faint = AppColors.grey400;
 
 const _green = AppColors.success600; // online/success
-const _greenBg = AppColors.success50;
 const _amber = AppColors.warning700; // pending/deadline
 const _amberBg = AppColors.warning50;
 const _blue = AppColors.info500; // mention/activity
 const _blueBg = AppColors.info50;
 const _red = AppColors.danger500; // urgent
-const _redBg = AppColors.danger50;
 
 class TeamView extends GetView<TeamController> {
   const TeamView({super.key});
@@ -30,14 +27,9 @@ class TeamView extends GetView<TeamController> {
     final owned = controller.ownedWorkspaces;
     final joined = controller.joinedWorkspaces;
     final total = controller.workspaces.length;
-    final onlineAll = controller.workspaces
-        .expand((w) => w.members)
-        .where((m) => m.isOnline)
-        .toSet()
-        .length;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.white,
       body: AppLayeredBackground(
         child: SafeArea(
           child: Column(
@@ -85,22 +77,9 @@ class TeamView extends GetView<TeamController> {
                       ),
                     ),
                     // Search
-                    GestureDetector(
+                    AppIconButton(
+                      icon: FluentIcons.search_24_regular,
                       onTap: () {},
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE7EAF0)),
-                        ),
-                        child: const Icon(
-                          FluentIcons.search_24_regular,
-                          size: 18,
-                          color: _sub,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -111,23 +90,19 @@ class TeamView extends GetView<TeamController> {
               // ── Tab Buttons ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-                child: Obx(() => Row(
-                  children: [
-                    _TabButton(
-                      label: 'Workspace Saya',
-                      count: owned.length,
-                      active: controller.workspaceTabIndex.value == 0,
-                      onTap: () => controller.workspaceTabIndex.value = 0,
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    border: Border(bottom: BorderSide(color: AppColors.grey200)),
+                  ),
+                  child: Obx(
+                    () => Row(
+                      children: [
+                        _buildTabButton('Workspace Saya', controller.workspaceTabIndex.value == 0, 0),
+                        _buildTabButton('Diikuti', controller.workspaceTabIndex.value == 1, 1),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    _TabButton(
-                      label: 'Diikuti',
-                      count: joined.length,
-                      active: controller.workspaceTabIndex.value == 1,
-                      onTap: () => controller.workspaceTabIndex.value = 1,
-                    ),
-                  ],
-                )),
+                  ),
+                ),
               ),
 
               // ── Content ──
@@ -180,7 +155,7 @@ class TeamView extends GetView<TeamController> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 24),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                     itemCount: list.length,
                     itemBuilder: (context, index) {
                       final ws = list[index];
@@ -202,66 +177,21 @@ class TeamView extends GetView<TeamController> {
     Get.to<void>(() => const WorkspaceDetailView());
   }
 
-  static Widget _sectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-      child: Text(
-        text,
-        style: AppFonts.satoshiStyle(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w600,
-          color: _faint,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
-  static Widget _sectionTitle(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        text,
-        style: AppFonts.headingStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: _ink,
-        ),
-      ),
-    );
-  }
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  TAB BUTTON
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-class _TabButton extends StatelessWidget {
-  const _TabButton({
-    required this.label,
-    required this.count,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String label;
-  final int count;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTabButton(String label, bool active, int index) {
     return Expanded(
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () => controller.workspaceTabIndex.value = index,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: const Duration(milliseconds: 180),
           height: 40,
+          alignment: Alignment.bottomCenter,
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: active ? Colors.black : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: active ? Colors.black : _divider,
+            border: Border(
+              bottom: BorderSide(
+                color: active ? AppColors.primary500 : AppColors.transparent,
+                width: 2.5,
+              ),
             ),
           ),
           child: Row(
@@ -270,26 +200,31 @@ class _TabButton extends StatelessWidget {
               Text(
                 label,
                 style: AppFonts.satoshiStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : const Color(0xFF6B7280),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: active ? AppColors.grey900 : AppColors.grey400,
                 ),
               ),
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: active
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(6),
+                      ? AppColors.primary50
+                      : AppColors.grey100,
+                  borderRadius: BorderRadius.circular(AppRadius.xxs),
                 ),
                 child: Text(
-                  '$count',
+                  index == 0
+                      ? '${controller.ownedWorkspaces.length}'
+                      : '${controller.joinedWorkspaces.length}',
                   style: AppFonts.satoshiStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: active ? Colors.white : _faint,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                    color: active ? AppColors.primary500 : AppColors.grey500,
                   ),
                 ),
               ),
@@ -327,17 +262,17 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
   // Generates a beautiful gradient based on workspace name
   LinearGradient _generateWorkspaceGradient(String name) {
     final hash = name.hashCode;
-    
+
     // Premium desaturated slate, navy, teal, violet gradient pairings
     final List<List<Color>> palettes = [
-      [const Color(0xFF1E293B), const Color(0xFF475569)], // Slate Charcoal
-      [const Color(0xFF0F172A), const Color(0xFF334155)], // Dark Indigo Slate
-      [const Color(0xFF2E1065), const Color(0xFF5B21B6)], // Deep Royal Violet
-      [const Color(0xFF064E3B), const Color(0xFF0F766E)], // Rich Emerald Teal
-      [const Color(0xFF1C1917), const Color(0xFF44403C)], // Warm Stone
-      [const Color(0xFF172554), const Color(0xFF1E3A8A)], // Deep Navy
+      [AppColors.grey800, AppColors.grey600], // Slate Charcoal
+      [AppColors.grey900, AppColors.grey700], // Dark Indigo Slate
+      [AppColors.primary900, AppColors.primary700], // Deep Royal Violet
+      [AppColors.success900, AppColors.success700], // Rich Emerald Teal
+      [AppColors.grey900, AppColors.grey700], // Warm Stone
+      [AppColors.primary900, AppColors.primary700], // Deep Navy
     ];
-    
+
     final palette = palettes[hash.abs() % palettes.length];
     return LinearGradient(
       colors: palette,
@@ -349,10 +284,10 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
   // Overlapping circular member avatar stack
   Widget _buildMemberPresenceStack(List<WorkspaceMember> members) {
     if (members.isEmpty) return const SizedBox.shrink();
-    
+
     final limit = members.take(3).toList();
     final double stackWidth = (14.0 * (limit.length - 1)) + 20.0;
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -365,17 +300,19 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
               final member = entry.value;
               final initials = member.initials.isNotEmpty
                   ? member.initials
-                  : (member.name.isNotEmpty ? member.name.substring(0, 1).toUpperCase() : '?');
-              
+                  : (member.name.isNotEmpty
+                        ? member.name.substring(0, 1).toUpperCase()
+                        : '?');
+
               final hash = member.name.hashCode;
               final List<Color> colors = [
-                const Color(0xFF475569), // Slate
-                const Color(0xFF64748B), // Light Slate
-                const Color(0xFF3B82F6), // Blue
-                const Color(0xFF10B981), // Emerald
-                const Color(0xFF8B5CF6), // Violet
-                const Color(0xFFEC4899), // Pink
-                const Color(0xFFF59E0B), // Amber
+                AppColors.grey600, // Slate
+                AppColors.grey500, // Light Slate
+                AppColors.info500, // Blue
+                AppColors.success500, // Emerald
+                AppColors.primary400, // Violet
+                AppColors.primary400, // Pink
+                AppColors.warning500, // Amber
               ];
               final circleColor = colors[hash.abs() % colors.length];
 
@@ -387,10 +324,10 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                   decoration: BoxDecoration(
                     color: circleColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.5),
+                    border: Border.all(color: AppColors.white, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: AppColors.black.withValues(alpha: 0.05),
                         blurRadius: 3,
                         offset: const Offset(0, 1),
                       ),
@@ -402,7 +339,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                     style: const TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
                   ),
                 ),
@@ -430,7 +367,9 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
     final ws = widget.ws;
     final pending = ws.totalTasks - ws.doneTasks;
     final hasUnread = ws.unreadCount > 0;
-    final double progress = ws.totalTasks > 0 ? ws.doneTasks / ws.totalTasks : 0.0;
+    final double progress = ws.totalTasks > 0
+        ? ws.doneTasks / ws.totalTasks
+        : 0.0;
 
     return AnimatedScale(
       duration: const Duration(milliseconds: 120),
@@ -441,29 +380,23 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
         curve: Curves.easeOutCubic,
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
         decoration: BoxDecoration(
-          color: _hovered ? const Color(0xFFFAFAFA) : AppColors.background,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: _pressed
-                ? _ink
-                : (_hovered ? AppColors.borderStrong : AppColors.border),
-            width: _pressed ? 1.5 : 1.0,
-          ),
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: _pressed
               ? const []
               : (_hovered
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : AppShadows.soft),
+                    ? [
+                        BoxShadow(
+                          color: AppColors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]
+                    : AppShadows.soft),
         ),
         child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           child: InkWell(
             onHighlightChanged: (value) => setState(() => _pressed = value),
             onHover: (value) => setState(() => _hovered = value),
@@ -472,7 +405,10 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
             borderRadius: BorderRadius.circular(AppRadius.lg),
             onTap: widget.onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.lg,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -487,10 +423,12 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                             height: 46,
                             decoration: BoxDecoration(
                               gradient: _generateWorkspaceGradient(ws.name),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
+                                  color: AppColors.black.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -502,7 +440,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                               style: AppFonts.headingStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColors.white,
                               ),
                             ),
                           ),
@@ -548,12 +486,14 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
+                                    horizontal: AppSpacing.xxs,
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF3F4F6),
-                                    borderRadius: BorderRadius.circular(5),
+                                    color: AppColors.grey100,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.xxs,
+                                    ),
                                   ),
                                   child: Text(
                                     ws.category,
@@ -606,13 +546,15 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                             child: LinearProgressIndicator(
                               value: progress,
                               minHeight: 3.5,
-                              backgroundColor: const Color(0xFFE5E7EB),
+                              backgroundColor: AppColors.grey200,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 progress < 0.35
-                                    ? const Color(0xFFEF4444) // Merah
+                                    ? AppColors
+                                          .error500 // Merah
                                     : (progress < 0.75
-                                        ? const Color(0xFFF59E0B) // Kuning
-                                        : const Color(0xFF10B981)), // Hijau
+                                          ? AppColors
+                                                .warning500 // Kuning
+                                          : AppColors.success500), // Hijau
                               ),
                             ),
                           ),
@@ -624,10 +566,11 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
                             color: progress < 0.35
-                                ? const Color(0xFFEF4444)
+                                ? AppColors.error500
                                 : (progress < 0.75
-                                    ? const Color(0xFFD97706) // Darker yellow for text readability
-                                    : const Color(0xFF10B981)),
+                                      ? AppColors
+                                            .warning700 // Darker yellow for text readability
+                                      : AppColors.success500),
                           ),
                         ),
                       ],
@@ -646,8 +589,12 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                         overflow: TextOverflow.ellipsis,
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
-                          color: hasUnread ? AppColors.textPrimary : AppColors.textSecondary,
-                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                          color: hasUnread
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                          fontWeight: hasUnread
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                           height: 1.45,
                         ),
                       ),
@@ -719,10 +666,13 @@ class _WorkspaceMetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(color: color.withValues(alpha: 0.12)),
       ),
       child: Row(
@@ -743,5 +693,3 @@ class _WorkspaceMetaPill extends StatelessWidget {
     );
   }
 }
-
-

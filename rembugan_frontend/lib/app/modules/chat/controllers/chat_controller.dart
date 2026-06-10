@@ -33,7 +33,8 @@ class ChatController extends GetxController {
     ),
     ChatModel(
       name: 'Aisyah Rahma',
-      message: 'Halo! Progres wireframe buat menu project udah selesai nih, bisa tolong dicek?',
+      message:
+          'Halo! Progres wireframe buat menu project udah selesai nih, bisa tolong dicek?',
       time: '17.45',
       avatarUrl: 'https://i.pravatar.cc/100?img=49',
       isUnread: true,
@@ -41,14 +42,16 @@ class ChatController extends GetxController {
     ),
     ChatModel(
       name: 'Nadia Saputri',
-      message: 'FastAPI backend-nya udah aku deploy ke Railway ya, nanti tinggal kita integrasi sama Flutter.',
+      message:
+          'FastAPI backend-nya udah aku deploy ke Railway ya, nanti tinggal kita integrasi sama Flutter.',
       time: 'Kemarin',
       avatarUrl: 'https://i.pravatar.cc/100?img=47',
       isUnread: false,
     ),
     ChatModel(
       name: 'Dede Fernanda',
-      message: 'Siap Dede, nanti malam kita kumpul di Discord buat bahas mockups & database ya!',
+      message:
+          'Siap Dede, nanti malam kita kumpul di Discord buat bahas mockups & database ya!',
       time: '2 hari lalu',
       avatarUrl: 'https://i.pravatar.cc/100?img=12',
       isUnread: true,

@@ -25,8 +25,8 @@ class AppSurface extends StatelessWidget {
   const AppSurface({
     required this.child,
     this.padding = const EdgeInsets.all(AppSpacing.lg),
-    this.radius = AppRadius.lg,
-    this.color = AppColors.surface,
+    this.radius = AppRadius.md,
+    this.color = AppSurfaceColors.surfaceWhite,
     this.borderColor = AppColors.border,
     this.shadow,
     this.onTap,
@@ -59,7 +59,7 @@ class AppSurface extends StatelessWidget {
     if (onTap == null) return content;
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(radius),
@@ -85,11 +85,15 @@ class AppIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = isPrimary ? AppColors.textPrimary : AppColors.surface;
-    final foreground = isPrimary ? Colors.white : AppColors.textPrimary;
+    final background = isPrimary
+        ? AppColors.primary500
+        : AppSurfaceColors.surfaceAccent;
+    final foreground = isPrimary
+        ? AppTextColors.textPrimaryWhite
+        : AppIconColors.iconAccent;
 
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -100,7 +104,7 @@ class AppIconButton extends StatelessWidget {
             color: background,
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
-              color: isPrimary ? AppColors.textPrimary : AppColors.border,
+              color: isPrimary ? AppColors.primary500 : AppColors.border,
             ),
             boxShadow: isPrimary ? AppShadows.soft : const [],
           ),
@@ -110,15 +114,15 @@ class AppIconButton extends StatelessWidget {
               Icon(icon, color: foreground, size: 22),
               if (badge)
                 Positioned(
-                  top: 10,
-                  right: 10,
+                  top: AppSpacing.sm,
+                  right: AppSpacing.sm,
                   child: Container(
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
                       color: AppColors.danger,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+                      border: Border.all(color: AppColors.white, width: 1.5),
                     ),
                   ),
                 ),
@@ -158,7 +162,7 @@ class AppSectionHeader extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppTextColors.textPrimaryBlack,
                 ),
               ),
               if (subtitle != null) ...[
@@ -167,7 +171,7 @@ class AppSectionHeader extends StatelessWidget {
                   subtitle!,
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: AppTextColors.textSecondaryDarkGrey,
                   ),
                 ),
               ],
@@ -178,8 +182,11 @@ class AppSectionHeader extends StatelessWidget {
           TextButton(
             onPressed: onAction,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              foregroundColor: AppTextColors.textLinks,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xxs,
+              ),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
@@ -188,7 +195,7 @@ class AppSectionHeader extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+                color: AppTextColors.textLinks,
               ),
             ),
           ),
@@ -226,8 +233,8 @@ class AppEmptyState extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.info100.withValues(alpha: 0.72),
-                      AppColors.warning100.withValues(alpha: 0.42),
+                      AppSurfaceColors.surfaceAccent,
+                      AppColors.primary100.withValues(alpha: 0.55),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -235,7 +242,7 @@ class AppEmptyState extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.border),
                 ),
-                child: Icon(icon, color: AppColors.info700, size: 26),
+                child: Icon(icon, color: AppIconColors.iconAccent, size: 26),
               ),
               const SizedBox(height: 14),
               Text(
@@ -244,7 +251,7 @@ class AppEmptyState extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppTextColors.textPrimaryBlack,
                 ),
               ),
               const SizedBox(height: 6),
@@ -253,7 +260,7 @@ class AppEmptyState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: AppTextColors.textSecondaryDarkGrey,
                   height: 1.4,
                 ),
               ),
@@ -275,11 +282,16 @@ class AppBottomNav extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(14, 8, 14, bottomPadding + 8),
+      padding: EdgeInsets.fromLTRB(16, 7, 16, bottomPadding + 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: AppColors.border)),
-        boxShadow: AppShadows.soft,
+        color: AppSurfaceColors.surfaceWhite,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -324,11 +336,7 @@ class AppBottomNav extends StatelessWidget {
 
   void _go(String route) {
     if (Get.currentRoute == route) return;
-    if (route == Routes.HOME) {
-      Get.offAllNamed(route);
-    } else {
-      Get.toNamed(route);
-    }
+    Get.offAllNamed(route);
   }
 }
 
@@ -347,43 +355,30 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.primary : AppColors.textTertiary;
+    final color = active ? AppColors.primary500 : AppColors.grey400;
 
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            height: 54,
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              // border: Border.all(
-              //   color: active ? AppColors.border : Colors.transparent,
-              // ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: 22),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 10.5,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.w600,
-                    color: color,
-                  ),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          height: 55,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 23),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: color,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -395,28 +390,302 @@ class _CreateButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Get.toNamed(Routes.CREATE_POST);
-          },
-          borderRadius: BorderRadius.circular(18),
-          child: Ink(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.textPrimary,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: AppShadows.soft,
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: GestureDetector(
+        onTap: () {
+          Get.toNamed(Routes.CREATE_POST);
+        },
+        child: Container(
+          width: 62,
+          height: 46,
+          decoration: BoxDecoration(
+            color: AppColors.primary200.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: const Icon(
+            FluentIcons.add_24_regular,
+            color: AppColors.primary500,
+            size: 33,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AppButton extends StatelessWidget {
+  const AppButton({
+    required this.label,
+    required this.onTap,
+    this.isPrimary = true,
+    this.isOutline = false,
+    this.icon,
+    this.width = double.infinity,
+    this.height = 48,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool isPrimary;
+  final bool isOutline;
+  final IconData? icon;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    Color bg;
+    Color fg;
+    Border? border;
+
+    if (onTap == null) {
+      bg = AppColors.grey300;
+      fg = AppColors.grey500;
+    } else if (isOutline) {
+      bg = AppColors.white;
+      fg = AppColors.primary500;
+      border = Border.all(color: AppColors.grey200);
+    } else if (isPrimary) {
+      bg = AppColors.primary500;
+      fg = AppColors.white;
+    } else {
+      bg = AppSurfaceColors.surfaceAccent;
+      fg = AppColors.primary500;
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: width,
+        height: height,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: border,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: fg, size: 18),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+            Text(
+              label,
+              style: AppTextStyles.button(
+                fontSize: 14,
+                color: fg,
+              ),
             ),
-            child: const Icon(
-              FluentIcons.add_24_filled,
-              color: Colors.white,
-              size: 25,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AppTextField extends StatelessWidget {
+  const AppTextField({
+    required this.controller,
+    this.hintText,
+    this.labelText,
+    this.obscureText = false,
+    this.keyboardType = TextInputType.text,
+    this.suffixIcon,
+    this.validator,
+    this.maxLines = 1,
+    super.key,
+  });
+
+  final TextEditingController controller;
+  final String? hintText;
+  final String? labelText;
+  final bool obscureText;
+  final TextInputType keyboardType;
+  final Widget? suffixIcon;
+  final String? Function(String?)? validator;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (labelText != null) ...[
+          Text(
+            labelText!,
+            style: AppTextStyles.button(color: AppTextColors.textPrimaryBlack),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+        ],
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          validator: validator,
+          style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
+          decoration: InputDecoration(
+            hintText: hintText,
+            suffixIcon: suffixIcon,
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 48,
+              minHeight: 0,
+            ),
+            filled: true,
+            fillColor: AppColors.grey50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 14,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.grey200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.primary500, width: 1.2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.error500, width: 1.2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.error500, width: 1.2),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class AppCard extends StatelessWidget {
+  const AppCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(AppSpacing.md),
+    this.onTap,
+    super.key,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSurface(
+      padding: padding,
+      radius: AppRadius.md,
+      color: AppSurfaceColors.surfaceWhite,
+      borderColor: AppColors.border,
+      shadow: AppShadows.soft,
+      onTap: onTap,
+      child: child,
+    );
+  }
+}
+
+class AppListItem extends StatelessWidget {
+  const AppListItem({
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    super.key,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSurface(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      radius: AppRadius.md,
+      color: AppSurfaceColors.surfaceWhite,
+      borderColor: AppColors.border,
+      onTap: onTap,
+      child: Row(
+        children: [
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: AppSpacing.md),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppTextColors.textPrimaryBlack,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    subtitle!,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      color: AppTextColors.textSecondaryDarkGrey,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: AppSpacing.md),
+            trailing!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class AppBadge extends StatelessWidget {
+  const AppBadge({
+    required this.label,
+    this.backgroundColor,
+    this.textColor,
+    super.key,
+  });
+
+  final String label;
+  final Color? backgroundColor;
+  final Color? textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor ?? AppSurfaceColors.surfaceAccent,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: AppFonts.satoshiStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: textColor ?? AppTextColors.textAccent,
         ),
       ),
     );

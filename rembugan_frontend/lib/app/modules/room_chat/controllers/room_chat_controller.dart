@@ -37,14 +37,16 @@ class RoomChatController extends GetxController {
       avatarUrl: 'lib/assets/img/avatar.png',
     ),
     ChatMessage(
-      text: 'Eh Raka, poster lomba Creative Fest 2026 ini menarik banget deh buat kita ikutin bareng. Coba cek postingan ini:',
+      text:
+          'Eh Raka, poster lomba Creative Fest 2026 ini menarik banget deh buat kita ikutin bareng. Coba cek postingan ini:',
       time: '18.38',
       isMe: true,
       avatarUrl: 'lib/assets/img/avatar.png',
       sharedPost: {
         'name': 'Cameron Williamson',
         'subtitle': 'D4 Teknik Informatika',
-        'content': 'Ada yang tertarik gabung tim buat ikut Creative Fest 2026? Kuota tim tinggal 1 slot lagi buat backend developer. Kita rencana pake FastAPI + PostgreSQL. Yang minat silakan cek profil atau langsung chat ya! 🚀🚀',
+        'content':
+            'Ada yang tertarik gabung tim buat ikut Creative Fest 2026? Kuota tim tinggal 1 slot lagi buat backend developer. Kita rencana pake FastAPI + PostgreSQL. Yang minat silakan cek profil atau langsung chat ya! 🚀🚀',
         'imageAsset': 'lib/assets/img/contoh poster1.jpeg',
       },
     ),

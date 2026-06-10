@@ -19,21 +19,22 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: AppLayeredBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildTabs(),
-              Expanded(
-                child: Obx(() => ListView(
-                  padding: const EdgeInsets.fromLTRB(0, 4, 0, 24),
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildHeader(),
+            _buildTabs(),
+            Expanded(
+              child: Obx(
+                () => ListView(
+                  padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
                   children: _buildMixedFeed(context),
-                )),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: const AppBottomNav(current: AppNavDestination.home),
@@ -42,35 +43,31 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Beranda',
-                  style: AppFonts.headingStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                    height: 1.1,
-                  ),
-                ),
-              ],
+            child: Text(
+              'Rembugan.',
+              style: AppFonts.headingStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.w800,
+                color: AppColors.grey900,
+                height: 1.1,
+              ),
             ),
           ),
-          AppIconButton(
-            icon: FluentIcons.alert_24_regular,
-            badge: true,
-            onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
-          ),
-          const SizedBox(width: 10),
-          AppIconButton(
+          _HeaderIcon(
             icon: FluentIcons.chat_empty_24_regular,
             onTap: () => Get.toNamed(Routes.CHAT),
           ),
+          const SizedBox(width: 18),
+          _HeaderIcon(
+            icon: FluentIcons.alert_24_regular,
+            onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
+          ),
+          const SizedBox(width: 18),
+          _HeaderIcon(icon: FluentIcons.search_24_regular, onTap: () {}),
         ],
       ),
     );
@@ -78,34 +75,36 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildTabs() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: DecoratedBox(
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFE1E4E8))),
+          border: Border(bottom: BorderSide(color: AppColors.grey200)),
         ),
-        child: Obx(() => Row(
-          children: [
-            _buildTabButton('Untukmu', controller.activeTab.value == 0, 0),
-            _buildTabButton('Mengikuti', controller.activeTab.value == 1, 1),
-          ],
-        )),
+        child: Obx(
+          () => Row(
+            children: [
+              _buildTabButton('Untukmu', controller.activeTab.value == 0, 0),
+              _buildTabButton('Mengikuti', controller.activeTab.value == 1, 1),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildTabButton(String label, bool active, int index) {
     return Expanded(
-      child: InkWell(
+      child: GestureDetector(
         onTap: () => controller.setTab(index),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           height: 40,
           alignment: Alignment.bottomCenter,
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: active ? AppColors.textPrimary : Colors.transparent,
+                color: active ? AppColors.primary500 : AppColors.transparent,
                 width: 2.5,
               ),
             ),
@@ -114,8 +113,8 @@ class HomeView extends GetView<HomeController> {
             label,
             style: AppFonts.satoshiStyle(
               fontSize: 13.5,
-              fontWeight: active ? FontWeight.bold : FontWeight.w500,
-              color: active ? AppColors.textPrimary : AppColors.textSecondary,
+              fontWeight: FontWeight.w800,
+              color: active ? AppColors.grey900 : AppColors.grey400,
             ),
           ),
         ),
@@ -127,7 +126,7 @@ class HomeView extends GetView<HomeController> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => const _ShareSheet(),
     );
   }
@@ -152,7 +151,7 @@ class HomeView extends GetView<HomeController> {
           onShowComments: () => showCommentsSheet(context),
           onShowShare: () => _showShareSheet(context),
         ),
-        const Divider(height: 1, color: Color(0xFFE1E4E8)),
+        const Divider(height: 1, color: AppColors.grey200),
         _PostCardWidget(
           avatarUrl: 'https://i.pravatar.cc/100?img=12',
           name: 'Marvin McKinney',
@@ -165,7 +164,7 @@ class HomeView extends GetView<HomeController> {
           onShowComments: () => showCommentsSheet(context),
           onShowShare: () => _showShareSheet(context),
         ),
-        const Divider(height: 1, color: Color(0xFFE1E4E8)),
+        const Divider(height: 1, color: AppColors.grey200),
         _PostCardWidget(
           avatarUrl: 'https://i.pravatar.cc/100?img=12',
           name: 'Marvin McKinney',
@@ -178,7 +177,7 @@ class HomeView extends GetView<HomeController> {
           onShowComments: () => showCommentsSheet(context),
           onShowShare: () => _showShareSheet(context),
         ),
-        const Divider(height: 1, color: Color(0xFFE1E4E8)),
+        const Divider(height: 1, color: AppColors.grey200),
         _PostCardWidget(
           avatarUrl: 'https://i.pravatar.cc/100?img=33',
           name: 'Cameron Williamson',
@@ -186,9 +185,7 @@ class HomeView extends GetView<HomeController> {
           content:
               'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎨✍️',
           hasImage: true,
-          imageAssets: const [
-            'lib/assets/img/contoh poster1.jpeg',
-          ],
+          imageAssets: const ['lib/assets/img/contoh poster1.jpeg'],
           initialLikes: 87,
           showFollowButton: false,
           onShowComments: () => showCommentsSheet(context),
@@ -215,12 +212,12 @@ class HomeView extends GetView<HomeController> {
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: Color(0xFFE1E4E8)),
-      
+      const Divider(height: 1, color: AppColors.grey200),
+
       // Proyek Rekomendasi
       _buildRecommendedProjectsSection(context),
-      const Divider(height: 1, color: Color(0xFFE1E4E8)),
-      
+      const Divider(height: 1, color: AppColors.grey200),
+
       _PostCardWidget(
         avatarUrl: 'https://i.pravatar.cc/100?img=12',
         name: 'Marvin McKinney',
@@ -233,7 +230,7 @@ class HomeView extends GetView<HomeController> {
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+      const Divider(height: 1, color: AppColors.grey200),
 
       _PostCardWidget(
         avatarUrl: 'https://i.pravatar.cc/100?img=12',
@@ -247,11 +244,11 @@ class HomeView extends GetView<HomeController> {
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: Color(0xFFE1E4E8)),
-      
+      const Divider(height: 1, color: AppColors.grey200),
+
       // Lomba Rekomendasi
       _buildRecommendedCompetitionsSection(context),
-      const Divider(height: 1, color: Color(0xFFE1E4E8)),
+      const Divider(height: 1, color: AppColors.grey200),
 
       _PostCardWidget(
         avatarUrl: 'https://i.pravatar.cc/100?img=33',
@@ -260,16 +257,14 @@ class HomeView extends GetView<HomeController> {
         content:
             'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎨✍️',
         hasImage: true,
-        imageAssets: const [
-          'lib/assets/img/contoh poster1.jpeg',
-        ],
+        imageAssets: const ['lib/assets/img/contoh poster1.jpeg'],
         initialLikes: 87,
         showFollowButton: true,
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: Color(0xFFE1E4E8)),
-      
+      const Divider(height: 1, color: AppColors.grey200),
+
       // Orang Rekomendasi
       _buildRecommendedPeopleSection(context),
       const SizedBox(height: 10),
@@ -305,7 +300,7 @@ class HomeView extends GetView<HomeController> {
           height: 190,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             itemCount: controller.recommendedProjects.length,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
@@ -352,7 +347,7 @@ class HomeView extends GetView<HomeController> {
           height: 180,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             itemCount: controller.recommendedCompetitions.length,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
@@ -360,7 +355,11 @@ class HomeView extends GetView<HomeController> {
               return _RecommendedCompetitionCard(
                 competition: competition,
                 index: index,
-                onTap: () => ExploreView.showCompetitionSheet(context, competition, index),
+                onTap: () => ExploreView.showCompetitionSheet(
+                  context,
+                  competition,
+                  index,
+                ),
               );
             },
           ),
@@ -399,7 +398,7 @@ class HomeView extends GetView<HomeController> {
           height: 185,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             itemCount: controller.recommendedPeople.length,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
@@ -419,6 +418,26 @@ class HomeView extends GetView<HomeController> {
   // Details sheets now directly invoke static ExploreView.showProjectSheet/showCompetitionSheet
 }
 
+class _HeaderIcon extends StatelessWidget {
+  const _HeaderIcon({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 24,
+        height: 32,
+        child: Icon(icon, size: 24, color: AppColors.grey900),
+      ),
+    );
+  }
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  RECOMMENDED CARDS WIDGETS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -435,7 +454,8 @@ class _RecommendedProjectCard extends StatefulWidget {
   });
 
   @override
-  State<_RecommendedProjectCard> createState() => _RecommendedProjectCardState();
+  State<_RecommendedProjectCard> createState() =>
+      _RecommendedProjectCardState();
 }
 
 class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
@@ -445,8 +465,8 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
   Widget build(BuildContext context) {
     // 1. Determine index-based semantic color, badge, and reason
     final Color semanticColor = switch (widget.index % 2) {
-      0 => const Color(0xFFFFA600), // Amber/Yellow (Cocok Untukmu)
-      _ => const Color(0xFF16A34A), // Green (Direkomendasikan)
+      0 => AppColors.warning500, // Amber/Yellow (Cocok Untukmu)
+      _ => AppColors.success500, // Green (Direkomendasikan)
     };
 
     final String badgeText = switch (widget.index % 2) {
@@ -455,18 +475,18 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
     };
 
     final Color badgeBg = switch (widget.index % 2) {
-      0 => const Color(0xFFFFF9E6),
-      _ => const Color(0xFFF0FDF4),
+      0 => AppColors.warning50,
+      _ => AppColors.success50,
     };
 
     final Color badgeBorder = switch (widget.index % 2) {
-      0 => const Color(0xFFFFF1C2),
-      _ => const Color(0xFFDCFCE7),
+      0 => AppColors.warning100,
+      _ => AppColors.success100,
     };
 
     final Color badgeTextCol = switch (widget.index % 2) {
-      0 => const Color(0xFFD97706),
-      _ => const Color(0xFF16A34A),
+      0 => AppColors.warning700,
+      _ => AppColors.success500,
     };
 
     final String reasonText = switch (widget.index % 2) {
@@ -492,24 +512,24 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
           duration: const Duration(milliseconds: 150),
           width: 280,
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFBFC), // premium off-white/cool-gray surface!
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.grey50, // premium off-white/cool-gray surface!
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
-              color: _isPressed ? const Color(0xFF94A3B8) : const Color(0xFFD2D6DC),
+              color: _isPressed ? AppColors.grey400 : AppColors.grey300,
               width: 1.2,
             ),
             boxShadow: _isPressed
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
+                      color: AppColors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
-                    )
+                    ),
                   ]
                 : AppShadows.medium,
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: Stack(
               children: [
                 // Top subtle semantic color accent strip!
@@ -518,9 +538,7 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
                   right: 0,
                   top: 0,
                   height: 3,
-                  child: Container(
-                    color: semanticColor,
-                  ),
+                  child: Container(color: semanticColor),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 15, 14, 12),
@@ -531,27 +549,40 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3.5,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(999),
+                              color: AppColors.grey100,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                             child: Text(
                               widget.project.category.toUpperCase(),
                               style: AppFonts.satoshiStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: const Color(0xFF475569),
+                                color: AppColors.grey600,
                               ),
                             ),
                           ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3.5,
+                            ),
                             decoration: BoxDecoration(
                               color: badgeBg,
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: badgeBorder, width: 0.8),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: badgeBorder,
+                                width: 0.8,
+                              ),
                             ),
                             child: Text(
                               badgeText,
@@ -571,7 +602,7 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppFonts.satoshiStyle(
-                           fontSize: 14.5,
+                          fontSize: 14.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -592,7 +623,11 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
                       // Subtle Alasan Rekomendasi (Helper text)
                       Row(
                         children: [
-                          Icon(reasonIcon, size: 12.5, color: semanticColor.withValues(alpha: 0.85)),
+                          Icon(
+                            reasonIcon,
+                            size: 12.5,
+                            color: semanticColor.withValues(alpha: 0.85),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -609,14 +644,16 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      const Divider(height: 1, color: AppColors.grey200),
                       const SizedBox(height: 8),
                       // Bottom Row (Owner Avatar & Slot Status)
                       Row(
                         children: [
                           CircleAvatar(
                             radius: 9,
-                            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+                            backgroundImage: const AssetImage(
+                              'lib/assets/img/avatar.png',
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Expanded(
@@ -633,10 +670,15 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: badgeBg.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(5),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.xxs,
+                              ),
                             ),
                             child: Text(
                               '${widget.project.openSlots} slot',
@@ -684,7 +726,7 @@ class _RecommendedCompetitionCard extends StatelessWidget {
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: AppShadows.soft,
         image: DecorationImage(
           image: AssetImage(posterAsset),
@@ -692,26 +734,26 @@ class _RecommendedCompetitionCard extends StatelessWidget {
         ),
       ),
       child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.08),
-                  Colors.black.withValues(alpha: 0.35),
-                  Colors.black.withValues(alpha: 0.88),
+                  AppColors.black.withValues(alpha: 0.08),
+                  AppColors.black.withValues(alpha: 0.35),
+                  AppColors.black.withValues(alpha: 0.88),
                 ],
                 stops: const [0.0, 0.45, 1.0],
               ),
             ),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -721,39 +763,48 @@ class _RecommendedCompetitionCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                        vertical: AppSpacing.xxs,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.18), width: 0.8),
+                        color: AppColors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(AppRadius.xxs),
+                        border: Border.all(
+                          color: AppColors.white.withValues(alpha: 0.18),
+                          width: 0.8,
+                        ),
                       ),
                       child: Text(
                         competition.category.toUpperCase(),
                         style: AppFonts.satoshiStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColors.white,
                         ),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxs,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFA600),
-                        borderRadius: BorderRadius.circular(4),
+                        color: AppColors.warning500,
+                        borderRadius: BorderRadius.circular(AppRadius.xxs),
                       ),
                       child: Text(
                         competition.badge,
                         style: AppFonts.satoshiStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                          color: AppColors.white,
                         ),
                       ),
                     ),
                   ],
                 ),
-                
+
                 // Bottom content (Title, organizer, deadline)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -765,7 +816,7 @@ class _RecommendedCompetitionCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.white,
                         height: 1.25,
                       ),
                     ),
@@ -779,14 +830,14 @@ class _RecommendedCompetitionCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: AppFonts.satoshiStyle(
                               fontSize: 10.5,
-                              color: Colors.white.withValues(alpha: 0.72),
+                              color: AppColors.white.withValues(alpha: 0.72),
                             ),
                           ),
                         ),
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 10,
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: AppColors.white.withValues(alpha: 0.72),
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -794,7 +845,7 @@ class _RecommendedCompetitionCard extends StatelessWidget {
                           style: AppFonts.satoshiStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.72),
+                            color: AppColors.white.withValues(alpha: 0.72),
                           ),
                         ),
                       ],
@@ -814,10 +865,7 @@ class _RecommendedPersonCard extends StatelessWidget {
   final RecommendedPerson person;
   final VoidCallback onFollow;
 
-  const _RecommendedPersonCard({
-    required this.person,
-    required this.onFollow,
-  });
+  const _RecommendedPersonCard({required this.person, required this.onFollow});
 
   @override
   Widget build(BuildContext context) {
@@ -825,12 +873,12 @@ class _RecommendedPersonCard extends StatelessWidget {
       width: 165,
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAEAEA), width: 1.2),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 1.2),
         boxShadow: AppShadows.soft,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.sm),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -865,45 +913,62 @@ class _RecommendedPersonCard extends StatelessWidget {
               spacing: 4,
               runSpacing: 2,
               alignment: WrapAlignment.center,
-              children: person.tags.take(2).map((tag) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  tag,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              )).toList(),
+              children: person.tags
+                  .take(2)
+                  .map(
+                    (tag) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxs,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(AppRadius.xxs),
+                      ),
+                      child: Text(
+                        tag,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
             const Spacer(),
-            Obx(() => SizedBox(
-              width: double.infinity,
-              height: 28,
-              child: TextButton(
-                onPressed: onFollow,
-                style: TextButton.styleFrom(
-                  backgroundColor: person.isFollowing.value ? const Color(0xFFF3F4F6) : AppColors.primary,
-                  foregroundColor: person.isFollowing.value ? AppColors.textSecondary : Colors.white,
-                  padding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                height: 28,
+                child: TextButton(
+                  onPressed: onFollow,
+                  style: TextButton.styleFrom(
+                    backgroundColor: person.isFollowing.value
+                        ? AppColors.grey100
+                        : AppColors.primary,
+                    foregroundColor: person.isFollowing.value
+                        ? AppColors.textSecondary
+                        : AppColors.white,
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                    ),
                   ),
-                ),
-                child: Text(
-                  person.isFollowing.value ? 'Mengikuti' : 'Ikuti',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                  child: Text(
+                    person.isFollowing.value ? 'Mengikuti' : 'Ikuti',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: person.isFollowing.value
+                          ? AppColors.textSecondary
+                          : AppColors.white,
+                    ),
                   ),
                 ),
               ),
-            )),
+            ),
           ],
         ),
       ),
@@ -964,8 +1029,8 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
           ? 'Kamu sekarang mengikuti ${widget.name}.'
           : 'Kamu berhenti mengikuti ${widget.name}.',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: _isFollowing ? const Color(0xFFEDFDF5) : Colors.white,
-      colorText: _isFollowing ? const Color(0xFF15803D) : AppColors.textPrimary,
+      backgroundColor: _isFollowing ? AppColors.success50 : AppColors.white,
+      colorText: _isFollowing ? AppColors.success700 : AppColors.textPrimary,
       duration: const Duration(seconds: 2),
     );
   }
@@ -991,117 +1056,128 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
           ? 'Postingan berhasil disimpan ke penanda kamu.'
           : 'Postingan dihapus dari penanda kamu.',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: _isBookmarked ? const Color(0xFFEDFDF5) : Colors.white,
-      colorText: _isBookmarked ? const Color(0xFF15803D) : AppColors.textPrimary,
+      backgroundColor: _isBookmarked ? AppColors.success50 : AppColors.white,
+      colorText: _isBookmarked ? AppColors.success700 : AppColors.textPrimary,
       duration: const Duration(seconds: 2),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.background,
-      child: InkWell(
-        onTap: widget.onShowComments,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: AppColors.primarySoft,
-                      backgroundImage: const AssetImage(
-                        'lib/assets/img/avatar.png',
-                      ),
-                    ),
+    return GestureDetector(
+      onTap: widget.onShowComments,
+      child: Container(
+        color: AppColors.white,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
+                  child: const CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.primarySoft,
+                    backgroundImage: AssetImage('lib/assets/img/avatar.png'),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.name,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Dede Fernanda',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.grey900,
+                                ),
+                              ),
                             ),
+                            const SizedBox(width: 5),
+                            Text(
+                              '• 5 Menit',
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 11,
+                                color: AppColors.grey400,
+                                fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 1),
                           Text(
-                            widget.subtitle,
+                            'Teknik Informatika',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppFonts.satoshiStyle(
-                              fontSize: 11.5,
-                              color: AppColors.textTertiary,
+                              fontSize: 12,
+                              color: AppColors.grey500,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  if (widget.showFollowButton) ...[
-                    TextButton(
-                      onPressed: _toggleFollow,
-                      style: TextButton.styleFrom(
-                        backgroundColor: _isFollowing ? const Color(0xFFF3F4F6) : Colors.transparent,
-                        foregroundColor: _isFollowing ? AppColors.textSecondary : AppColors.textPrimary,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        minimumSize: const Size(0, 31),
-                        side: BorderSide(
-                          color: _isFollowing ? Colors.transparent : const Color(0xFFDADDE2),
-                        ),
-                        shape: RoundedRectangleBorder(
+                  if (widget.showFollowButton)
+                    GestureDetector(
+                      onTap: _toggleFollow,
+                      child: Container(
+                        height: 28,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(color: AppColors.primary500),
                         ),
-                      ),
-                      child: Text(
-                        _isFollowing ? 'Mengikuti' : 'Ikuti',
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          _isFollowing ? 'Mengikuti' : 'Ikuti',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary500,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                  ],
-                  const Icon(
-                    FluentIcons.more_vertical_24_regular,
-                    color: AppColors.textTertiary,
-                    size: 20,
-                  ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               Text(
                 widget.content,
                 style: AppFonts.satoshiStyle(
-                  fontSize: 14,
-                  color: AppColors.textPrimary.withValues(alpha: 0.88),
-                  height: 1.56,
+                  fontSize: 15,
+                  color: AppColors.grey900,
+                  height: 1.36,
                 ),
               ),
-              if (widget.imageAssets != null && widget.imageAssets!.isNotEmpty) ...[
-                const SizedBox(height: 10),
+              if (widget.imageAssets != null &&
+                  widget.imageAssets!.isNotEmpty) ...[
+                const SizedBox(height: 16),
                 if (widget.imageAssets!.length == 1)
                   GestureDetector(
-                    onTap: () => _showImageViewer(context, assetPath: widget.imageAssets!.first),
+                    onTap: () => _showImageViewer(
+                      context,
+                      assetPath: widget.imageAssets!.first,
+                    ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: Image.asset(
                         widget.imageAssets!.first,
                         width: double.infinity,
-                        height: 200,
+                        height: 373,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -1111,26 +1187,32 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => _showImageViewer(context, assetPath: widget.imageAssets![0]),
+                          onTap: () => _showImageViewer(
+                            context,
+                            assetPath: widget.imageAssets![0],
+                          ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             child: Image.asset(
                               widget.imageAssets![0],
-                              height: 160,
+                              height: 236,
                               fit: BoxFit.cover,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => _showImageViewer(context, assetPath: widget.imageAssets![1]),
+                          onTap: () => _showImageViewer(
+                            context,
+                            assetPath: widget.imageAssets![1],
+                          ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             child: Image.asset(
                               widget.imageAssets![1],
-                              height: 160,
+                              height: 236,
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -1139,36 +1221,37 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                     ],
                   ),
               ] else if (widget.hasImage && widget.imageUrl != null) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => _showImageViewer(context, imageUrl: widget.imageUrl),
+                  onTap: () =>
+                      _showImageViewer(context, imageUrl: widget.imageUrl),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: Image.network(
                       widget.imageUrl!,
                       width: double.infinity,
-                      height: 200,
+                      height: 373,
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   _buildInteractionItem(
                     _isLiked ? FluentIcons.heart_24_filled : FluentIcons.heart_24_regular,
                     '$_likeCount',
                     'menyukai postingan',
-                    _isLiked ? const Color(0xFFE5484D) : AppColors.textSecondary,
+                    _isLiked ? AppColors.error500 : AppColors.grey500,
                     onTap: _toggleLike,
                   ),
-                  const SizedBox(width: 22),
+                  const SizedBox(width: 18),
                   _buildInteractionItem(
                     FluentIcons.chat_24_regular,
                     '20',
                     'berkomentar',
-                    AppColors.textSecondary,
+                    AppColors.grey500,
                     onTap: widget.onShowComments,
                   ),
                   const Spacer(),
@@ -1176,15 +1259,15 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                     FluentIcons.send_24_regular,
                     '',
                     'membagikan postingan',
-                    AppColors.textSecondary,
+                    AppColors.grey500,
                     onTap: widget.onShowShare,
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 22),
                   _buildInteractionItem(
                     _isBookmarked ? FluentIcons.bookmark_24_filled : FluentIcons.bookmark_24_regular,
                     '',
                     'menyimpan postingan',
-                    _isBookmarked ? const Color(0xFFD69E2E) : AppColors.textSecondary,
+                    _isBookmarked ? AppColors.warning500 : AppColors.grey500,
                     onTap: _toggleBookmark,
                   ),
                 ],
@@ -1192,40 +1275,41 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildInteractionItem(
-    IconData icon,
-    String count,
-    String feature,
-    Color activeColor, {
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, color: activeColor.withValues(alpha: 0.88), size: 22),
-            if (count.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Text(
-                count,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
+    Widget _buildInteractionItem(
+      IconData icon,
+      String count,
+      String feature,
+      Color activeColor, {
+      required VoidCallback onTap,
+    }) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 2,
+            vertical: AppSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: activeColor, size: 22),
+              if (count.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Text(
+                  count,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -1248,8 +1332,8 @@ class _ShareSheetState extends State<_ShareSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
       child: Column(
@@ -1261,8 +1345,8 @@ class _ShareSheetState extends State<_ShareSheet> {
               width: 38,
               height: 4.5,
               decoration: BoxDecoration(
-                color: const Color(0xFFE5E7EB),
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.grey200,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
           ),
@@ -1277,21 +1361,36 @@ class _ShareSheetState extends State<_ShareSheet> {
           ),
           const SizedBox(height: 14),
           TextField(
-            style: AppFonts.satoshiStyle(fontSize: 13, color: AppColors.textPrimary),
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'Cari teman...',
-              hintStyle: AppFonts.satoshiStyle(fontSize: 12, color: AppColors.textTertiary),
-              prefixIcon: const Icon(FluentIcons.search_24_regular, size: 18, color: AppColors.textTertiary),
+              hintStyle: AppFonts.satoshiStyle(
+                fontSize: 12,
+                color: AppColors.textTertiary,
+              ),
+              prefixIcon: const Icon(
+                FluentIcons.search_24_regular,
+                size: 18,
+                color: AppColors.textTertiary,
+              ),
               filled: true,
-              fillColor: const Color(0xFFF9FAFB),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              fillColor: AppColors.grey50,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: AppSpacing.sm,
+              ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: const BorderSide(color: AppColors.grey200),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 1.5,
+                ),
               ),
             ),
           ),
@@ -1303,7 +1402,7 @@ class _ShareSheetState extends State<_ShareSheet> {
               itemBuilder: (context, index) {
                 final friend = _friends[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   child: Row(
                     children: [
                       CircleAvatar(
@@ -1332,23 +1431,25 @@ class _ShareSheetState extends State<_ShareSheet> {
                                   'Terkirim',
                                   'Postingan dibagikan ke ${friend['name']}',
                                   snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: const Color(0xFFEDFDF5),
-                                  colorText: const Color(0xFF15803D),
+                                  backgroundColor: AppColors.success50,
+                                  colorText: AppColors.success700,
                                   duration: const Duration(seconds: 1),
                                 );
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: friend['sent']
-                              ? const Color(0xFFF3F4F6)
+                              ? AppColors.grey100
                               : AppColors.primary,
                           foregroundColor: friend['sent']
                               ? AppColors.textTertiary
-                              : Colors.white,
+                              : AppColors.white,
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           minimumSize: const Size(0, 32),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
                         ),
                         child: Text(
@@ -1365,7 +1466,7 @@ class _ShareSheetState extends State<_ShareSheet> {
               },
             ),
           ),
-          const Divider(color: Color(0xFFE5E7EB)),
+          const Divider(color: AppColors.grey200),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1374,14 +1475,16 @@ class _ShareSheetState extends State<_ShareSheet> {
                 icon: FluentIcons.copy_24_regular,
                 label: 'Salin Link',
                 onTap: () {
-                  Clipboard.setData(const ClipboardData(text: 'https://rembugan.app/post/1'));
+                  Clipboard.setData(
+                    const ClipboardData(text: 'https://rembugan.app/post/1'),
+                  );
                   Navigator.pop(context);
                   Get.snackbar(
                     'Tautan disalin',
                     'Link postingan berhasil disalin ke clipboard.',
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: const Color(0xFFEDFDF5),
-                    colorText: const Color(0xFF15803D),
+                    backgroundColor: AppColors.success50,
+                    colorText: AppColors.success700,
                     duration: const Duration(seconds: 2),
                   );
                 },
@@ -1391,7 +1494,11 @@ class _ShareSheetState extends State<_ShareSheet> {
                 label: 'WhatsApp',
                 onTap: () {
                   Navigator.pop(context);
-                  Get.snackbar('WhatsApp', 'Membuka WhatsApp...', snackPosition: SnackPosition.BOTTOM);
+                  Get.snackbar(
+                    'WhatsApp',
+                    'Membuka WhatsApp...',
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
                 },
               ),
               _buildShareAction(
@@ -1399,7 +1506,11 @@ class _ShareSheetState extends State<_ShareSheet> {
                 label: 'Telegram',
                 onTap: () {
                   Navigator.pop(context);
-                  Get.snackbar('Telegram', 'Membuka Telegram...', snackPosition: SnackPosition.BOTTOM);
+                  Get.snackbar(
+                    'Telegram',
+                    'Membuka Telegram...',
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
                 },
               ),
             ],
@@ -1416,16 +1527,16 @@ class _ShareSheetState extends State<_ShareSheet> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(AppSpacing.xs),
         child: Column(
           children: [
             Container(
               width: 44,
               height: 44,
               decoration: const BoxDecoration(
-                color: Color(0xFFF3F4F6),
+                color: AppColors.grey100,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: AppColors.textPrimary, size: 20),
@@ -1446,10 +1557,14 @@ class _ShareSheetState extends State<_ShareSheet> {
   }
 }
 
-void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl}) {
+void _showImageViewer(
+  BuildContext context, {
+  String? assetPath,
+  String? imageUrl,
+}) {
   showDialog<void>(
     context: context,
-    barrierColor: Colors.black.withValues(alpha: 0.5),
+    barrierColor: AppColors.black.withValues(alpha: 0.5),
     builder: (context) => GestureDetector(
       onTap: () => Navigator.pop(context),
       child: Stack(
@@ -1457,19 +1572,17 @@ void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.4),
-              ),
+              child: Container(color: AppColors.black.withValues(alpha: 0.4)),
             ),
           ),
           Positioned(
             top: 40,
-            right: 20,
+            right: AppSpacing.lg,
             child: Material(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppColors.white.withValues(alpha: 0.15),
               shape: const CircleBorder(),
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(Icons.close, color: AppColors.white),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -1479,7 +1592,7 @@ void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl
               clipBehavior: Clip.none,
               maxScale: 4.0,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: Container(
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.95,

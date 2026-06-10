@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../explore/domain/entities/project.dart';
 import '../../explore/domain/entities/competition.dart';
 import '../../explore/data/repositories/fake_explore_repository.dart';
+import '../../../core/theme/theme.dart';
 
 class RecommendedPerson {
   final String name;
@@ -41,7 +41,7 @@ class HomeController extends GetxController {
 
   void _loadRecommendations() {
     final repo = FakeExploreRepository();
-    
+
     // Load projects for recommendations
     recommendedProjects.assignAll(repo.getProjects());
 
@@ -82,8 +82,12 @@ class HomeController extends GetxController {
           ? 'Kamu sekarang mengikuti ${person.name}.'
           : 'Kamu berhenti mengikuti ${person.name}.',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: person.isFollowing.value ? const Color(0xFFEDFDF5) : Colors.white,
-      colorText: person.isFollowing.value ? const Color(0xFF15803D) : const Color(0xFF202124),
+      backgroundColor: person.isFollowing.value
+          ? AppColors.success50
+          : AppColors.white,
+      colorText: person.isFollowing.value
+          ? AppColors.success700
+          : AppColors.textPrimary,
       duration: const Duration(seconds: 2),
     );
   }

@@ -36,7 +36,7 @@ class SocialScaffold extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: Get.back,
-                      icon: const Icon(FluentIcons.arrow_left_24_regular),
+                      icon: const Icon(FluentIcons.chevron_left_24_regular),
                     ),
                     Expanded(
                       child: Column(
@@ -69,7 +69,7 @@ class SocialScaffold extends StatelessWidget {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
               Expanded(child: child),
             ],
           ),
@@ -99,7 +99,7 @@ class SocialPostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppSurface(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       radius: AppRadius.lg,
       shadow: const [],
       child: Row(
@@ -210,7 +210,10 @@ class AppTextPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(AppRadius.pill),

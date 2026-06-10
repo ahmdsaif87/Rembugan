@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/theme/theme.dart';
 import '../../../routes/app_pages.dart';
 import 'social_components.dart';
 
@@ -13,7 +14,7 @@ class SavedView extends StatelessWidget {
       title: 'Tersimpan',
       subtitle: 'Postingan dan proyek yang Anda tandai',
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           SocialPostCard(
             name: 'Cameron Williamson',

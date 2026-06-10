@@ -15,7 +15,10 @@ class OnboardingView extends GetView<OnboardingController> {
           children: [
             // Logo di atas
             Padding(
-              padding: const EdgeInsets.only(top: 24, bottom: 16),
+              padding: const EdgeInsets.only(
+                top: AppSpacing.xl,
+                bottom: AppSpacing.md,
+              ),
               child: Text(
                 'Rembugan.',
                 style: AppFonts.satoshiStyle(
@@ -51,36 +54,40 @@ class OnboardingView extends GetView<OnboardingController> {
               ),
             ),
 
-            const SizedBox(height: 32), // Jarak dari dot ke tombol
+            const SizedBox(height: 24), // Jarak dari dot ke tombol
             // Button
             Obx(() {
               final data =
                   controller.onboardingData[controller.currentPage.value];
               return Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
+                  horizontal: AppSpacing.xl,
                 ), // Disesuaikan agar selebar teks
                 child: SizedBox(
                   width: double.infinity,
-                  height: 60,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: controller.nextPage,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryNormal,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       elevation: 0,
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           12,
                         ), // Mengikuti standar modern
                       ),
                     ),
-                    child: Text(
-                      data['buttonText']!,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
+                    child: Center(
+                      child: Text(
+                        data['buttonText']!,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                          color: AppColors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -88,7 +95,7 @@ class OnboardingView extends GetView<OnboardingController> {
               );
             }),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 16),
 
             // Lewati button (hidden on last page)
             Obx(() {
@@ -101,7 +108,9 @@ class OnboardingView extends GetView<OnboardingController> {
                 child: GestureDetector(
                   onTap: isLastPage ? null : controller.skipOnboarding,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
                     child: Text(
                       'Lewati',
                       style: AppFonts.satoshiStyle(
@@ -116,7 +125,7 @@ class OnboardingView extends GetView<OnboardingController> {
               );
             }),
 
-            const SizedBox(height: 40), // Jarak aman layar bawah
+            const SizedBox(height: 24), // Jarak aman layar bawah
           ],
         ),
       ),
@@ -141,17 +150,14 @@ class _OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
       child: Column(
         children: [
           // 1. Berikan sedikit jarak aman dari header/logo
           const SizedBox(height: 20),
 
           // 2. Gambar ilustrasi diberi flex agar proporsinya pas
-          Expanded(
-            flex: 6,
-            child: Image.asset(imagePath, fit: BoxFit.contain),
-          ),
+          Expanded(flex: 6, child: Image.asset(imagePath, fit: BoxFit.contain)),
 
           // Jarak fix dari gambar ke judul
           const SizedBox(height: 32),
@@ -209,14 +215,14 @@ class _DotIndicator extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
           width: isActive ? 24 : 8, // Sedikit dihaluskan dimensinya
           height: 8,
           decoration: BoxDecoration(
             color: isActive
                 ? AppColors.primaryNormal
                 : AppColors.primaryNormal.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xxs),
           ),
         );
       }),

@@ -13,7 +13,7 @@ class LoadingStateView extends StatelessWidget {
       title: 'Loading',
       subtitle: 'Skeleton state',
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         itemCount: 5,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, __) {

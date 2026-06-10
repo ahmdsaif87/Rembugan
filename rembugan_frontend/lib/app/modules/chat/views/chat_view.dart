@@ -38,10 +38,10 @@ class ChatView extends GetView<ChatController> {
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(0, 8, 0, 18),
                     itemCount: chats.length,
-                    separatorBuilder: (_, __) => const Divider(
+                    separatorBuilder: (_, __) => Divider(
                       height: 1,
                       indent: 84,
-                      color: AppColors.border,
+                      color: AppColors.border.withValues(alpha: 0.4),
                     ),
                     itemBuilder: (context, index) {
                       final chat = chats[index];
@@ -147,7 +147,7 @@ class ChatView extends GetView<ChatController> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
       child: AppSurface(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(AppSpacing.xxs),
         radius: AppRadius.lg,
         color: AppColors.surfaceWarm,
         shadow: const [],
@@ -173,18 +173,19 @@ class ChatView extends GetView<ChatController> {
           height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.transparent,
+            color: isActive ? AppColors.white : AppColors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.md),
+            boxShadow: isActive ? AppShadows.soft : const [],
             border: Border.all(
-              color: isActive ? AppColors.borderStrong : Colors.transparent,
+              color: isActive ? AppColors.border : AppColors.transparent,
             ),
           ),
           child: Text(
             label,
             style: AppFonts.satoshiStyle(
               fontSize: 13,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w600,
-              color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+              color: isActive ? AppColors.primary500 : AppColors.textSecondary,
             ),
           ),
         ),
@@ -205,7 +206,10 @@ class ChatView extends GetView<ChatController> {
       child: InkWell(
         onTap: () => Get.toNamed(Routes.ROOM_CHAT),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           child: Row(
             children: [
               Stack(
@@ -226,7 +230,7 @@ class ChatView extends GetView<ChatController> {
                       decoration: BoxDecoration(
                         color: AppColors.success,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: AppColors.white, width: 2),
                       ),
                     ),
                   ),
@@ -303,7 +307,7 @@ class ChatView extends GetView<ChatController> {
                               unreadCount.toString(),
                               textAlign: TextAlign.center,
                               style: AppFonts.satoshiStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),

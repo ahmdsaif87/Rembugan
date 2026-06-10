@@ -31,8 +31,7 @@ class LoginController extends GetxController {
   }
 
   void onForgotPassword() {
-    // TODO: Navigasi ke halaman lupa sandi
-    Get.snackbar('Lupa Sandi', 'Fitur lupa sandi sedang dalam pengembangan');
+    Get.toNamed(Routes.FORGOT_PASSWORD);
   }
 
   @override

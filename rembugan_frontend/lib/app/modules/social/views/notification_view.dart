@@ -151,7 +151,7 @@ class _NotificationViewState extends State<NotificationView> {
             return Column(
               children: [
                 _NotificationTile(item: item),
-                if (!isLast) const Divider(height: 1, color: AppColors.border),
+                if (!isLast) Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
               ],
             );
           }),
@@ -222,10 +222,10 @@ class _TabPill extends StatelessWidget {
           height: 38,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: active ? AppColors.textPrimary : Colors.white,
+            color: active ? AppColors.primary500 : AppColors.white,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
-              color: active ? AppColors.textPrimary : AppColors.border,
+              color: active ? AppColors.primary500 : AppColors.border,
             ),
           ),
           child: Row(
@@ -239,7 +239,7 @@ class _TabPill extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: active ? Colors.white : AppColors.textSecondary,
+                    color: active ? AppColors.white : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -247,11 +247,11 @@ class _TabPill extends StatelessWidget {
                 const SizedBox(width: 5),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
+                    horizontal: AppSpacing.xxs,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: active ? Colors.white : AppColors.warning50,
+                    color: active ? AppColors.white : AppColors.warning50,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
@@ -282,7 +282,7 @@ class _PriorityBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.warning50,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -294,8 +294,8 @@ class _PriorityBanner extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: const Icon(
               FluentIcons.alert_24_regular,
@@ -330,7 +330,7 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -341,7 +341,9 @@ class _NotificationTile extends StatelessWidget {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.primarySoft,
-                  backgroundImage: AssetImage(item.avatarAsset ?? 'lib/assets/img/avatar.png'),
+                  backgroundImage: AssetImage(
+                    item.avatarAsset ?? 'lib/assets/img/avatar.png',
+                  ),
                 ),
                 Positioned(
                   bottom: -2,
@@ -349,11 +351,11 @@ class _NotificationTile extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(3),
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black12,
+                          color: AppColors.primary100,
                           blurRadius: 2,
                           offset: Offset(0, 1),
                         ),
@@ -363,7 +365,7 @@ class _NotificationTile extends StatelessWidget {
                       item.icon,
                       size: 10,
                       color: item.icon == FluentIcons.heart_24_regular
-                          ? const Color(0xFFE5484D)
+                          ? AppColors.error500
                           : AppColors.info600,
                     ),
                   ),
@@ -376,7 +378,7 @@ class _NotificationTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: AppColors.warning50,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Icon(item.icon, size: 18, color: AppColors.warning700),
             ),
@@ -443,7 +445,7 @@ class _NotificationTile extends StatelessWidget {
                       showModalBottomSheet<void>(
                         context: context,
                         isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
+                        backgroundColor: AppColors.transparent,
                         builder: (_) => ApplicantSheet(ctrl: teamCtrl, ws: ws),
                       );
                     }
@@ -452,15 +454,15 @@ class _NotificationTile extends StatelessWidget {
                   Get.toNamed(Routes.TEAM);
                 }
               },
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.xxs,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(color: AppColors.borderStrong, width: 1),
                 ),
                 child: Text(

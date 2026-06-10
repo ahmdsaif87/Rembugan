@@ -15,100 +15,74 @@ import '../domain/entities/project.dart';
 class ExploreView extends GetView<ExploreController> {
   const ExploreView({super.key});
 
-  static const _ink = Color(0xFF111827);
-  static const _muted = Color(0xFF8A9099);
-  static const _chip = Color(0xFFF5F7FA);
-  static const _line = Color(0xFFE7EAF0);
-  static const _brand = Color(0xFF111111);
+  static const _ink = AppColors.grey900;
+  static const _muted = AppColors.grey500;
+  static const _chip = AppColors.grey50;
+  static const _line = AppColors.grey200;
+  static const _brand = AppColors.primary500;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: AppLayeredBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+      backgroundColor: AppColors.grey50,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              color: AppColors.white,
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Column(
+                children: [
+                  Obx(
+                    () => _SearchBar(
+                      hint: 'Cari proyek, lomba, atau orang',
+                      onFilter: () =>
+                          _showFilterSheet(context, controller.activeTab.value),
+                      onChanged: controller.search,
+                      controller: controller.searchTextController,
                     ),
-                  ],
-                ),
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                child: Column(
-                  children: [
-                    Obx(
-                      () => _SearchBar(
-                        hint: controller.activeTab.value.isCompetition
-                            ? 'Cari lomba'
-                            : controller.activeTab.value.isPeople
-                            ? 'Cari orang'
-                            : 'Cari proyek',
-                        onFilter: () => _showFilterSheet(
-                          context,
-                          controller.activeTab.value,
+                  ),
+                  const SizedBox(height: 10),
+                  Obx(
+                    () => Row(
+                      children: [
+                        _SegmentButton(
+                          label: 'Proyek',
+                          active: controller.activeTab.value.isProject,
+                          onTap: () => controller.changeTab(ExploreTab.project),
                         ),
-                        onChanged: controller.search,
-                        controller: controller.searchTextController,
-                      ),
+                        _SegmentButton(
+                          label: 'Lomba',
+                          active: controller.activeTab.value.isCompetition,
+                          onTap: () =>
+                              controller.changeTab(ExploreTab.competition),
+                        ),
+                        _SegmentButton(
+                          label: 'Orang',
+                          active: controller.activeTab.value.isPeople,
+                          onTap: () => controller.changeTab(ExploreTab.people),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 14),
-                    Obx(
-                      () => Row(
-                        children: [
-                          _SegmentButton(
-                            icon: FluentIcons.briefcase_24_regular,
-                            label: 'Proyek',
-                            active: controller.activeTab.value.isProject,
-                            onTap: () =>
-                                controller.changeTab(ExploreTab.project),
-                          ),
-                          const SizedBox(width: 8),
-                          _SegmentButton(
-                            icon: FluentIcons.trophy_24_regular,
-                            label: 'Lomba',
-                            active: controller.activeTab.value.isCompetition,
-                            onTap: () =>
-                                controller.changeTab(ExploreTab.competition),
-                          ),
-                          const SizedBox(width: 8),
-                          _SegmentButton(
-                            icon: Icons.people_outline,
-                            label: 'Orang',
-                            active: controller.activeTab.value.isPeople,
-                            onTap: () =>
-                                controller.changeTab(ExploreTab.people),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: Container(
-                  color: const Color(0xFFF6F8FA),
-                  child: Obx(() {
-                    switch (controller.activeTab.value) {
-                      case ExploreTab.competition:
-                        return _buildLombaTab(context);
-                      case ExploreTab.people:
-                        return _buildOrangTab();
-                      case ExploreTab.project:
-                        return _buildProyekTab(context);
-                    }
-                  }),
-                ),
-              ),
-            ],
-          ),
+            ),
+            Expanded(
+              child: Obx(() {
+                switch (controller.activeTab.value) {
+                  case ExploreTab.competition:
+                    return _buildLombaTab(context);
+                  case ExploreTab.people:
+                    return _buildOrangTab();
+                  case ExploreTab.project:
+                    return _buildProyekTab(context);
+                }
+              }),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: const AppBottomNav(
@@ -118,93 +92,87 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   Widget _buildProyekTab(BuildContext context) {
-    return Obx(() => ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-      itemCount: controller.filteredProjects.length + 1,
-      separatorBuilder: (_, index) =>
-          index == 0 ? const SizedBox(height: 14) : const SizedBox(height: 18),
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: _SectionHeader(
-              title: 'Proyek terbuka',
-              trailing: '${controller.filteredProjects.length} hasil',
-            ),
-          );
-        }
+    return Obx(
+      () => ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+        itemCount: controller.filteredProjects.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return const _CompleteProfileBanner();
+          }
 
-        final project = controller.filteredProjects[index - 1];
-        return _ProjectCard(
-          project: project,
-          matchLabel: index == 1
-              ? 'Paling cocok untuk kamu'
-              : 'Skill yang sama',
-          onDetail: () => ExploreView.showProjectSheet(context, project),
-        );
-      },
-    ));
+          final project = controller.filteredProjects[index - 1];
+          return _ProjectCard(
+            project: project,
+            matchLabel: index == 1
+                ? 'Paling cocok untuk kamu'
+                : 'Skill yang sama',
+            onDetail: () => ExploreView.showProjectSheet(context, project),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildLombaTab(BuildContext context) {
-    return Obx(() => CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
-          sliver: SliverToBoxAdapter(
-            child: _SectionHeader(
-              title: 'Kompetisi aktif',
-              trailing: '${controller.filteredCompetitions.length} hasil',
+    return Obx(
+      () => CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
+            sliver: SliverGrid.builder(
+              itemCount: controller.filteredCompetitions.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 18,
+                crossAxisSpacing: 16,
+                childAspectRatio: 0.57,
+              ),
+              itemBuilder: (context, index) {
+                final competition = controller.filteredCompetitions[index];
+                return _CompetitionCard(
+                  competition: competition,
+                  index: index,
+                  onTap: () => ExploreView.showCompetitionSheet(
+                    context,
+                    competition,
+                    index,
+                  ),
+                );
+              },
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-          sliver: SliverGrid.builder(
-            itemCount: controller.filteredCompetitions.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 20,
-              crossAxisSpacing: 16,
-              childAspectRatio: 0.72,
-            ),
-            itemBuilder: (context, index) {
-              final competition = controller.filteredCompetitions[index];
-              return _CompetitionCard(
-                competition: competition,
-                index: index,
-                onTap: () => ExploreView.showCompetitionSheet(context, competition, index),
-              );
-            },
-          ),
-        ),
-      ],
-    ));
+        ],
+      ),
+    );
   }
 
   Widget _buildOrangTab() {
-    return Obx(() => ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-      itemCount: controller.filteredPeople.length + 1,
-      separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 14 : 18),
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return _SectionHeader(
-            title: 'Orang Disekitar',
-            trailing: '${controller.filteredPeople.length} hasil',
-          );
-        }
+    return Obx(
+      () => ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+        itemCount: controller.filteredPeople.length + 1,
+        separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 14 : 18),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _SectionHeader(
+              title: 'Orang Disekitar',
+              trailing: '${controller.filteredPeople.length} hasil',
+            );
+          }
 
-        final person = controller.filteredPeople[index - 1];
-        return _PersonCard(
-          name: person.name,
-          role: person.role,
-          avatarUrl: person.avatarUrl,
-          tags: person.tags,
-          matchLabel: person.matchLabel,
-        );
-      },
-    ));
+          final person = controller.filteredPeople[index - 1];
+          return _PersonCard(
+            name: person.name,
+            role: person.role,
+            avatarUrl: person.avatarUrl,
+            tags: person.tags,
+            matchLabel: person.matchLabel,
+          );
+        },
+      ),
+    );
   }
 
   void _showFilterSheet(BuildContext context, ExploreTab tab) {
@@ -217,7 +185,7 @@ class ExploreView extends GetView<ExploreController> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => DraggableScrollableSheet(
         initialChildSize: 0.68,
         minChildSize: 0.42,
@@ -227,7 +195,9 @@ class ExploreView extends GetView<ExploreController> {
           return Container(
             decoration: const BoxDecoration(
               color: AppColors.background,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadius.xl),
+              ),
               border: Border(top: BorderSide(color: AppColors.border)),
             ),
             child: ListView(
@@ -309,7 +279,7 @@ class ExploreView extends GetView<ExploreController> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) {
         return _DetailSheetFrame(
           child: Column(
@@ -322,15 +292,11 @@ class ExploreView extends GetView<ExploreController> {
                 children: [
                   _Pill(
                     project.category,
-                    const Color(0xFFFFF1E7),
-                    const Color(0xFFFF6B2C),
+                    AppColors.warning50,
+                    AppColors.warning500,
                   ),
-                  _Pill(
-                    project.faculty,
-                    const Color(0xFFEAF2FF),
-                    AppColors.info600,
-                  ),
-                  _Pill('FTIK', const Color(0xFFF3F4F6), _muted),
+                  _Pill(project.faculty, AppColors.info50, AppColors.info600),
+                  _Pill('FTIK', AppColors.grey100, _muted),
                 ],
               ),
               const SizedBox(height: 18),
@@ -364,7 +330,7 @@ class ExploreView extends GetView<ExploreController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   height: 1.55,
-                  color: const Color(0xFF666D78),
+                  color: AppColors.grey500,
                 ),
               ),
               const SizedBox(height: 22),
@@ -380,9 +346,7 @@ class ExploreView extends GetView<ExploreController> {
               Wrap(
                 spacing: 8,
                 children: project.skills
-                    .map(
-                      (skill) => _Pill(skill, _chip, const Color(0xFF64748B)),
-                    )
+                    .map((skill) => _Pill(skill, _chip, AppColors.grey500))
                     .toList(),
               ),
               const SizedBox(height: 24),
@@ -399,7 +363,7 @@ class ExploreView extends GetView<ExploreController> {
                 children: [
                   for (var i = 0; i < project.memberAvatars.length; i++)
                     Padding(
-                      padding: const EdgeInsets.only(right: 16),
+                      padding: const EdgeInsets.only(right: AppSpacing.md),
                       child: _TeamMember(
                         name: project.memberNames[i],
                         avatarUrl: project.memberAvatars[i],
@@ -407,7 +371,7 @@ class ExploreView extends GetView<ExploreController> {
                     ),
                   for (var i = 0; i < project.openSlots; i++)
                     const Padding(
-                      padding: EdgeInsets.only(right: 16),
+                      padding: EdgeInsets.only(right: AppSpacing.md),
                       child: _EmptyMember(),
                     ),
                 ],
@@ -442,7 +406,11 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  static void showCompetitionSheet(BuildContext context, Competition competition, int index) {
+  static void showCompetitionSheet(
+    BuildContext context,
+    Competition competition,
+    int index,
+  ) {
     final posterAsset = switch (index % 4) {
       0 => 'lib/assets/img/contoh poster1.jpeg',
       1 => 'lib/assets/img/contoh poster2.jpeg',
@@ -450,7 +418,8 @@ class ExploreView extends GetView<ExploreController> {
       _ => 'lib/assets/img/contoh poster4.jpeg',
     };
 
-    final String richCaption = '''
+    final String richCaption =
+        '''
 🚨 OPEN REGISTRATION! 🚨
 🎉 ${competition.title.toUpperCase()}
 📝 ${competition.category} Competition
@@ -487,7 +456,7 @@ ${competition.registrationLink}
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
@@ -503,34 +472,32 @@ ${competition.registrationLink}
                 children: [
                   // 1. poster image (perfect scale preservation, never cut off!)
                   GestureDetector(
-                    onTap: () => _showImageViewer(context, assetPath: posterAsset),
+                    onTap: () =>
+                        _showImageViewer(context, assetPath: posterAsset),
                     child: Container(
                       height: 320,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                        color: AppColors.grey100,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: AppColors.grey200, width: 1),
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          posterAsset,
-                          fit: BoxFit.contain,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: Image.asset(posterAsset, fit: BoxFit.contain),
                       ),
                     ),
                   ),
                   const SizedBox(height: 18),
-                  
+
                   // 2. badge & organizer tag
                   _Pill(
                     competition.category,
-                    const Color(0xFFEAF2FF),
+                    AppColors.info50,
                     AppColors.info600,
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // 3. title
                   Text(
                     competition.title,
@@ -542,7 +509,7 @@ ${competition.registrationLink}
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   Text(
                     'Diselenggarakan oleh: ${competition.organizer}',
                     style: AppFonts.satoshiStyle(
@@ -552,7 +519,7 @@ ${competition.registrationLink}
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   if (competition.daysLeft != null) ...[
                     _CompetitionTimelineBox(
                       daysLeft: competition.daysLeft!,
@@ -560,11 +527,11 @@ ${competition.registrationLink}
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Divider
                   const Divider(color: AppColors.border, height: 1),
                   const SizedBox(height: 16),
-                  
+
                   // 4. caption
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,7 +541,7 @@ ${competition.registrationLink}
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
                           height: 1.6,
-                          color: const Color(0xFF374151),
+                          color: AppColors.grey700,
                         ),
                       ),
                       if (showSeeMore) ...[
@@ -586,7 +553,9 @@ ${competition.registrationLink}
                             });
                           },
                           child: Text(
-                            isExpanded ? 'Lihat lebih sedikit' : 'Lihat selengkapnya',
+                            isExpanded
+                                ? 'Lihat lebih sedikit'
+                                : 'Lihat selengkapnya',
                             style: AppFonts.satoshiStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -598,7 +567,7 @@ ${competition.registrationLink}
                     ],
                   ),
                   const SizedBox(height: 28),
-                  
+
                   // 5. actions
                   Row(
                     children: [
@@ -658,17 +627,10 @@ class _SearchBar extends StatelessWidget {
       children: [
         Expanded(
           child: Container(
-            height: 44,
+            height: 40,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.035),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              color: AppColors.grey100,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: TextField(
               controller: controller,
@@ -686,55 +648,50 @@ class _SearchBar extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.grey100,
                 prefixIcon: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14),
-                  child: Icon(
-                    Icons.search,
-                    color: ExploreView._muted,
-                    size: 20,
-                  ),
+                  padding: EdgeInsets.only(left: 11, right: 8),
+                  child: Icon(Icons.search, color: AppColors.grey900, size: 19),
                 ),
                 prefixIconConstraints: const BoxConstraints(
-                  minWidth: 48,
+                  minWidth: 39,
                   minHeight: 0,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
+                  horizontal: AppSpacing.sm,
+                  vertical: 9,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary200,
+                    width: 1,
+                  ),
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
-        InkWell(
+        const SizedBox(width: 16),
+        GestureDetector(
           onTap: onFilter,
-          borderRadius: BorderRadius.circular(999),
           child: Container(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.035),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: AppColors.grey200, width: 1.0),
             ),
-            child: const Icon(Icons.tune, size: 19, color: ExploreView._muted),
+            child: const Icon(
+              FluentIcons.filter_24_regular,
+              size: 20,
+              color: AppColors.grey900,
+            ),
           ),
         ),
       ],
@@ -785,7 +742,13 @@ class _FilterSheetContent extends StatelessWidget {
             options: isPeople
                 ? const ['Semua skill', 'Flutter', 'UI/UX', 'Firebase', 'React']
                 : isLomba
-                ? const ['Semua kategori', 'Hackathon', 'UI/UX', 'Bisnis', 'Data']
+                ? const [
+                    'Semua kategori',
+                    'Hackathon',
+                    'UI/UX',
+                    'Bisnis',
+                    'Data',
+                  ]
                 : const [
                     'Semua kategori',
                     'Mobile App',
@@ -825,7 +788,13 @@ class _FilterSheetContent extends StatelessWidget {
                     'Ada portfolio',
                   ]
                 : isLomba
-                ? const ['Semua deadline', '< 1 minggu', '1 minggu', '2 minggu', 'Bulan ini']
+                ? const [
+                    'Semua deadline',
+                    '< 1 minggu',
+                    '1 minggu',
+                    '2 minggu',
+                    'Bulan ini',
+                  ]
                 : const ['Semua slot', '1 slot', '2 slot', '3+ slot'],
             onChanged: (val) {
               if (isPeople) {
@@ -867,7 +836,8 @@ class _SortSelector extends StatelessWidget {
               child: _SortOption(
                 label: 'Paling relevan',
                 icon: FluentIcons.sparkle_24_filled,
-                selected: selectedSort == 'Paling relevan' || selectedSort.isEmpty,
+                selected:
+                    selectedSort == 'Paling relevan' || selectedSort.isEmpty,
               ),
             ),
           ),
@@ -877,7 +847,9 @@ class _SortSelector extends StatelessWidget {
               onTap: () => onSortChanged(option2),
               child: _SortOption(
                 label: option2,
-                icon: isPeople ? Icons.trending_up : FluentIcons.clock_24_regular,
+                icon: isPeople
+                    ? Icons.trending_up
+                    : FluentIcons.clock_24_regular,
                 selected: selectedSort == option2,
               ),
             ),
@@ -903,12 +875,12 @@ class _SortOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 45,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: selected ? AppColors.textPrimary : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: selected ? AppColors.primary500 : AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: selected ? AppColors.textPrimary : AppColors.border,
+          color: selected ? AppColors.primary500 : AppColors.border,
         ),
       ),
       child: Row(
@@ -917,7 +889,7 @@ class _SortOption extends StatelessWidget {
           Icon(
             icon,
             size: 15,
-            color: selected ? Colors.white : AppColors.textSecondary,
+            color: selected ? AppColors.white : AppColors.textSecondary,
           ),
           const SizedBox(width: 7),
           Flexible(
@@ -928,7 +900,7 @@ class _SortOption extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : AppColors.textSecondary,
+                color: selected ? AppColors.white : AppColors.textSecondary,
               ),
             ),
           ),
@@ -959,13 +931,13 @@ class _FilterSelectField extends StatelessWidget {
       label: label,
       child: InkWell(
         onTap: () => _showOptions(context),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
           height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: AppColors.border),
           ),
           child: Row(
@@ -1000,7 +972,7 @@ class _FilterSelectField extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _SearchableFilterSheet(
         title: label,
         value: value,
@@ -1052,8 +1024,10 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
           MediaQuery.of(context).padding.bottom + 20,
         ),
         decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1097,33 +1071,40 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
                 shrinkWrap: true,
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: AppColors.border),
+                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
                 itemBuilder: (context, index) {
                   final option = filtered[index];
                   final selected = option == widget.value;
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      option,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    trailing: selected
-                        ? const Icon(
-                            FluentIcons.checkmark_24_filled,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          )
-                        : null,
+                  return InkWell(
                     onTap: () {
                       if (widget.onChanged != null) {
                         widget.onChanged!(option);
                       }
                       Navigator.of(context).pop();
                     },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              option,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (selected)
+                            const Icon(
+                              FluentIcons.checkmark_24_filled,
+                              size: 18,
+                              color: AppColors.primary500,
+                            ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
@@ -1144,10 +1125,10 @@ class _FilterPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(18),
+        color: AppColors.grey50,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -1175,10 +1156,10 @@ class _ProfileFilterPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -1219,13 +1200,11 @@ class _ProfileFilterPreview extends StatelessWidget {
 
 class _SegmentButton extends StatelessWidget {
   const _SegmentButton({
-    required this.icon,
     required this.label,
     required this.active,
     required this.onTap,
   });
 
-  final IconData icon;
   final String label;
   final bool active;
   final VoidCallback onTap;
@@ -1238,33 +1217,100 @@ class _SegmentButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           height: 40,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: active ? Colors.black : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: active ? Colors.black : ExploreView._line,
+            border: Border(
+              bottom: BorderSide(
+                color: active ? AppColors.primary500 : AppColors.transparent,
+                width: 2,
+              ),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: active ? Colors.white : ExploreView._muted,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : const Color(0xFF6B7280),
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: AppFonts.satoshiStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: active ? ExploreView._ink : AppColors.grey400,
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CompleteProfileBanner extends StatelessWidget {
+  const _CompleteProfileBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 15, 16, 17),
+      decoration: BoxDecoration(
+        color: AppColors.primary500,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              FluentIcons.people_edit_24_regular,
+              color: AppColors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Lengkapi profilmu',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Tambahkan skill dan minatmu untuk mendapatkan rekomendasi yang lebih relevan.',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.white.withValues(alpha: 0.84),
+                    height: 1.28,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Lengkapi sekarang',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    const Icon(
+                      FluentIcons.arrow_right_24_regular,
+                      color: AppColors.white,
+                      size: 19,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1321,271 +1367,170 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: const Color(0xFFDDE2EA), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: onDetail,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 13, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final visibleSkills = project.skills.take(2).toList();
+
+    return GestureDetector(
+      onTap: onDetail,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: AppColors.grey200, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.black.withValues(alpha: 0.07),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: [
-                          _ProjectTag(
-                            label: project.category,
-                            background: const Color(0xFFFFF1E7),
-                            foreground: const Color(0xFFFF6B2C),
-                          ),
-                          _ProjectTag(
-                            label: project.faculty.replaceAll(
-                              'Teknik Informatika',
-                              'TI',
-                            ),
-                            background: const Color(0xFFEAF2FF),
-                            foreground: AppColors.info600,
-                          ),
-                        ],
-                      ),
+                Expanded(
+                  child: Text(
+                    project.faculty.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      height: 1.2,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.info700,
                     ),
-                    const Icon(
-                      Icons.bookmark_border,
-                      size: 20,
-                      color: Color(0xFFB8BFC9),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  project.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 18,
-                    height: 1.18,
-                    fontWeight: FontWeight.w600,
-                    color: ExploreView._ink,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const _MatchBadge(label: 'Sesuai skill'),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Text(
+              project.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 17,
+                height: 1.15,
+                fontWeight: FontWeight.w800,
+                color: ExploreView._ink,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              project.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 13,
+                height: 1.24,
+                fontWeight: FontWeight.w400,
+                color: AppColors.grey600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: visibleSkills
+                  .map(
+                    (skill) =>
+                        _MiniChip(label: skill, color: AppColors.grey100),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                _ProjectAvatarStack(count: project.memberAvatars.length),
+                const SizedBox(width: 10),
                 Text(
-                  'Aplikasi mobile untuk mempertemukan mahasiswa yang ingin berkolaborasi dalam proyek teknologi, riset, maupun startup.',
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+                  project.postedAgo,
                   style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    height: 1.45,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.grey500,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _MatchBadge(label: matchLabel),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: project.skills
-                      .map(
-                        (skill) => _MiniChip(
-                          label: skill,
-                          color: AppColors.background,
-                        ),
-                      )
-                      .toList(),
+                const Spacer(),
+                const Icon(
+                  FluentIcons.people_team_24_filled,
+                  size: 23,
+                  color: AppColors.grey700,
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.people,
-                      size: 15,
-                      color: Color(0xFF4B5563),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${project.filledSlots} bergabung',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '(${project.filledSlots}/${project.totalSlots} kuota)',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: project.openSlots <= 2
-                            ? const Color(0xFFFEF2F2)
-                            : const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: project.openSlots <= 2
-                              ? const Color(0xFFFEE2E2)
-                              : const Color(0xFFDCFCE7),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: Text(
-                        '${project.openSlots} slot tersisa',
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: project.openSlots <= 2
-                              ? const Color(0xFFEF4444)
-                              : const Color(0xFF10B981),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 68,
-                      height: 28,
-                      child: Stack(
-                        children: [
-                          for (
-                            var i = 0;
-                            i < project.memberAvatars.length;
-                            i++
-                          )
-                            Positioned(
-                              left: i * 19,
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: CircleAvatar(
-                                  radius: 13,
-                                  backgroundImage: const AssetImage(
-                                    'lib/assets/img/avatar.png',
-                                  ),
-                                ),
-                              ),
-                            ),
-                          Positioned(
-                            left: project.memberAvatars.length * 22,
-                            child: const CircleAvatar(
-                              radius: 14,
-                              backgroundColor: AppColors.surfaceSecondary,
-                              child: Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      project.postedAgo,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const Spacer(),
-                    const Icon(
-                      Icons.schedule,
-                      size: 18,
-                      color: AppColors.textTertiary,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      project.deadline,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                Text(
+                  '${project.filledSlots}/${project.totalSlots}',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.success500,
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ProjectTag extends StatelessWidget {
-  const _ProjectTag({
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
+class _ProjectAvatarStack extends StatelessWidget {
+  const _ProjectAvatarStack({required this.count});
 
-  final String label;
-  final Color background;
-  final Color foreground;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: AppFonts.satoshiStyle(
-          fontSize: 9.5,
-          fontWeight: FontWeight.w600,
-          color: foreground,
-        ),
+    final visibleCount = count.clamp(1, 2);
+
+    return SizedBox(
+      width: 57,
+      height: 22,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var i = 0; i < visibleCount; i++)
+            Positioned(
+              left: i * 15,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.white, width: 1.4),
+                ),
+                child: const CircleAvatar(
+                  radius: 10,
+                  backgroundImage: AssetImage('lib/assets/img/avatar.png'),
+                ),
+              ),
+            ),
+          Positioned(
+            left: visibleCount * 15,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: const BoxDecoration(
+                color: AppColors.grey100,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                FluentIcons.add_16_filled,
+                size: 15,
+                color: AppColors.grey500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
-
 
 class _CompetitionCard extends StatelessWidget {
   const _CompetitionCard({
@@ -1611,118 +1556,101 @@ class _CompetitionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: const Color(0xFFDDE2EA), width: 1),
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: AppColors.grey200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 7),
+              color: AppColors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Stack(
-                  fit: StackFit.expand,
+              flex: 5,
+              child: SizedBox(
+                width: double.infinity,
+                child: Image.asset(posterAsset, fit: BoxFit.cover),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Image.asset(
-                      posterAsset,
-                      fit: BoxFit.cover,
+                    _TinyTag(label: competition.category),
+                    const SizedBox(height: 5),
+                    Text(
+                      competition.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                        color: ExploreView._ink,
+                      ),
                     ),
-                    // Elegant dark overlay to guarantee badge readability
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.black.withValues(alpha: 0.2),
-                            Colors.black.withValues(alpha: 0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                    const SizedBox(height: 4),
+                    Text(
+                      competition.organizer,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.grey400,
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        const Icon(
+                          FluentIcons.calendar_ltr_16_regular,
+                          size: 12,
+                          color: AppColors.error500,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            competition.deadline,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.error500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          FluentIcons.circle_12_filled,
+                          size: 7,
+                          color: AppColors.warning500,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Paling Sesuai',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.warning600,
+                          ),
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: _Badge(label: index == 0 ? 'Paling cocok' : 'Sesuai jurusan'),
-                    ),
-                    if (competition.daysLeft != null)
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: _DeadlineBadge(daysLeft: competition.daysLeft!),
-                      ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            _TinyTag(label: competition.category),
-            const SizedBox(height: 4),
-            Text(
-              competition.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppFonts.satoshiStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-                color: ExploreView._ink,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              competition.organizer,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppFonts.satoshiStyle(
-                fontSize: 9,
-                color: ExploreView._muted,
-              ),
-            ),
-            const SizedBox(height: 7),
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 11,
-                  color: (competition.daysLeft != null && competition.daysLeft! <= 5) ? AppColors.danger : ExploreView._muted,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  competition.deadline,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 9,
-                    color: (competition.daysLeft != null && competition.daysLeft! <= 5) ? AppColors.danger : ExploreView._muted,
-                  ),
-                ),
-                if (competition.daysLeft != null && competition.daysLeft! > 0) ...[
-                  const Spacer(),
-                  Icon(
-                    Icons.local_fire_department,
-                    size: 11.5,
-                    color: (competition.daysLeft! <= 5) ? const Color(0xFFEF4444) : (competition.daysLeft! <= 10 ? const Color(0xFFF59E0B) : const Color(0xFF10B981)),
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '${competition.daysLeft} hari lagi',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: (competition.daysLeft! <= 5) ? const Color(0xFFEF4444) : (competition.daysLeft! <= 10 ? const Color(0xFFF59E0B) : const Color(0xFF10B981)),
-                    ),
-                  ),
-                ]
-              ],
             ),
           ],
         ),
@@ -1740,10 +1668,9 @@ class _MatchBadge extends StatelessWidget {
     final value = label.toLowerCase();
     if (value.contains('cocok')) {
       return const _StatusTone(
-        background: AppColors.success50,
-        border: AppColors.success100,
-        foreground: AppColors.success700,
-        icon: Icons.check_circle_outline,
+        background: AppColors.info50,
+        border: AppColors.info50,
+        foreground: AppColors.info700,
       );
     }
     if (value.contains('ditutup') || value.contains('deadline')) {
@@ -1751,7 +1678,6 @@ class _MatchBadge extends StatelessWidget {
         background: AppColors.warning50,
         border: AppColors.warning100,
         foreground: AppColors.warning700,
-        icon: Icons.schedule,
       );
     }
     if (value.contains('penuh')) {
@@ -1759,7 +1685,6 @@ class _MatchBadge extends StatelessWidget {
         background: AppColors.danger50,
         border: AppColors.danger100,
         foreground: AppColors.danger600,
-        icon: Icons.block,
       );
     }
     if (value.contains('trending')) {
@@ -1767,22 +1692,19 @@ class _MatchBadge extends StatelessWidget {
         background: AppColors.info50,
         border: AppColors.info100,
         foreground: AppColors.info600,
-        icon: Icons.trending_up,
       );
     }
     if (value.contains('baru')) {
       return const _StatusTone(
-        background: Color(0xFFF5F3FF),
-        border: Color(0xFFF5F3FF),
-        foreground: Color(0xFF8B5CF6),
-        icon: Icons.auto_awesome,
+        background: AppColors.primary50,
+        border: AppColors.primary50,
+        foreground: AppColors.primary400,
       );
     }
     return const _StatusTone(
-      background: AppColors.background,
-      border: AppColors.border,
-      foreground: AppColors.textSecondary,
-      icon: Icons.info_outline,
+      background: AppColors.info50,
+      border: AppColors.info50,
+      foreground: AppColors.info700,
     );
   }
 
@@ -1790,26 +1712,19 @@ class _MatchBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = tone;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
       decoration: BoxDecoration(
         color: style.background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(color: style.background),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(style.icon, size: 12, color: style.foreground),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: AppFonts.satoshiStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: style.foreground,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: AppFonts.satoshiStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: style.foreground,
+        ),
       ),
     );
   }
@@ -1820,46 +1735,11 @@ class _StatusTone {
     required this.background,
     required this.border,
     required this.foreground,
-    required this.icon,
   });
 
   final Color background;
   final Color border;
   final Color foreground;
-  final IconData icon;
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.star, size: 9, color: AppColors.warning),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: AppFonts.satoshiStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _TinyTag extends StatelessWidget {
@@ -1872,11 +1752,11 @@ class _TinyTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.grey100,
+        borderRadius: BorderRadius.circular(AppRadius.xxs),
       ),
       child: Text(
-        label,
+        label.toUpperCase(),
         style: AppFonts.satoshiStyle(
           fontSize: 8,
           fontWeight: FontWeight.w600,
@@ -1904,8 +1784,8 @@ class _DetailSheetFrame extends StatelessWidget {
         MediaQuery.of(context).padding.bottom + 22,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(34)),
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1916,7 +1796,7 @@ class _DetailSheetFrame extends StatelessWidget {
               height: 5,
               decoration: BoxDecoration(
                 color: AppColors.borderStrong,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
             const SizedBox(height: 28),
@@ -1938,10 +1818,13 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 7,
+      ),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         label,
@@ -1964,18 +1847,17 @@ class _MiniChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         label,
         style: AppFonts.satoshiStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textSecondary,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.grey700,
         ),
       ),
     );
@@ -2049,10 +1931,10 @@ class _OwnerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: ExploreView._line),
       ),
       child: Row(
@@ -2092,10 +1974,13 @@ class _OwnerTile extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.xs,
+            ),
             decoration: BoxDecoration(
               color: AppColors.background,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               border: Border.all(color: AppColors.border),
             ),
             child: Text(
@@ -2127,15 +2012,15 @@ class _PrimaryAction extends StatelessWidget {
         height: 42,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.primary500,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Text(
           label,
           style: AppFonts.satoshiStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.white,
           ),
         ),
       ),
@@ -2157,8 +2042,8 @@ class _OutlineAction extends StatelessWidget {
         height: 42,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(color: AppColors.border),
         ),
         child: Text(
@@ -2192,19 +2077,19 @@ class _PersonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Ink(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFDDE2EA), width: 1),
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.grey200, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.black.withValues(alpha: 0.04),
                 blurRadius: 16,
                 offset: const Offset(0, 7),
               ),
@@ -2264,10 +2149,14 @@ class _PersonCard extends StatelessWidget {
   }
 }
 
-void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl}) {
+void _showImageViewer(
+  BuildContext context, {
+  String? assetPath,
+  String? imageUrl,
+}) {
   showDialog<void>(
     context: context,
-    barrierColor: Colors.black.withValues(alpha: 0.5),
+    barrierColor: AppColors.black.withValues(alpha: 0.5),
     builder: (context) => GestureDetector(
       onTap: () => Navigator.pop(context),
       child: Stack(
@@ -2275,19 +2164,17 @@ void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.4),
-              ),
+              child: Container(color: AppColors.black.withValues(alpha: 0.4)),
             ),
           ),
           Positioned(
             top: 40,
-            right: 20,
+            right: AppSpacing.lg,
             child: Material(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: AppColors.white.withValues(alpha: 0.15),
               shape: const CircleBorder(),
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(Icons.close, color: AppColors.white),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -2297,7 +2184,7 @@ void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl
               clipBehavior: Clip.none,
               maxScale: 4.0,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: Container(
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.95,
@@ -2316,78 +2203,11 @@ void _showImageViewer(BuildContext context, {String? assetPath, String? imageUrl
   );
 }
 
-class _DeadlineBadge extends StatelessWidget {
-  const _DeadlineBadge({required this.daysLeft});
-
-  final int daysLeft;
-
-  @override
-  Widget build(BuildContext context) {
-    if (daysLeft < 0) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEF4444).withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          'Ditutup',
-          style: AppFonts.satoshiStyle(
-            fontSize: 8,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-    
-    final isUrgent = daysLeft <= 5;
-    final isWarning = daysLeft <= 10;
-    
-    final Color bg = isUrgent
-        ? const Color(0xFFEF4444)
-        : isWarning
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFF10B981);
-            
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-      decoration: BoxDecoration(
-        color: bg.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: bg.withValues(alpha: 0.25),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isUrgent ? Icons.local_fire_department : Icons.schedule,
-            size: 9.5,
-            color: Colors.white,
-          ),
-          const SizedBox(width: 2.5),
-          Text(
-            isUrgent ? '$daysLeft hari lagi!' : '$daysLeft hari lagi',
-            style: AppFonts.satoshiStyle(
-              fontSize: 8.5,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CompetitionTimelineBox extends StatelessWidget {
-  const _CompetitionTimelineBox({required this.daysLeft, required this.deadline});
+  const _CompetitionTimelineBox({
+    required this.daysLeft,
+    required this.deadline,
+  });
 
   final int daysLeft;
   final String deadline;
@@ -2396,33 +2216,35 @@ class _CompetitionTimelineBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUrgent = daysLeft <= 5;
     final isWarning = daysLeft <= 10;
-    
+
     final Color primaryColor = isUrgent
-        ? const Color(0xFFEF4444)
+        ? AppColors.error500
         : isWarning
-            ? const Color(0xFFF59E0B)
-            : AppColors.primary;
-            
+        ? AppColors.warning500
+        : AppColors.primary;
+
     final Color bgColor = isUrgent
-        ? const Color(0xFFFEF2F2)
+        ? AppColors.danger50
         : isWarning
-            ? const Color(0xFFFFFBEB)
-            : const Color(0xFFF0F9FF);
+        ? AppColors.warning50
+        : AppColors.info50;
 
     final Color borderColor = isUrgent
-        ? const Color(0xFFFEE2E2)
+        ? AppColors.danger100
         : isWarning
-            ? const Color(0xFFFEF3C7)
-            : const Color(0xFFE0F2FE);
+        ? AppColors.warning100
+        : AppColors.info100;
 
-    final double progress = daysLeft <= 0 ? 1.0 : (30 - daysLeft).clamp(0, 30) / 30.0;
+    final double progress = daysLeft <= 0
+        ? 1.0
+        : (30 - daysLeft).clamp(0, 30) / 30.0;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: borderColor, width: 1.2),
       ),
       child: Column(
@@ -2431,7 +2253,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -2448,13 +2270,15 @@ class _CompetitionTimelineBox extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isUrgent 
-                          ? 'Tenggat Waktu Sangat Dekat!' 
+                      isUrgent
+                          ? 'Tenggat Waktu Sangat Dekat!'
                           : 'Sisa Waktu Pendaftaran',
                       style: AppFonts.satoshiStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isUrgent ? const Color(0xFF991B1B) : const Color(0xFF0369A1),
+                        color: isUrgent
+                            ? AppColors.danger800
+                            : AppColors.info700,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -2462,24 +2286,29 @@ class _CompetitionTimelineBox extends StatelessWidget {
                       'Batas akhir: $deadline',
                       style: AppFonts.satoshiStyle(
                         fontSize: 10.5,
-                        color: isUrgent ? const Color(0xFFB91C1C) : const Color(0xFF0284C7),
+                        color: isUrgent
+                            ? AppColors.danger700
+                            : AppColors.info600,
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: primaryColor,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Text(
                   daysLeft <= 0 ? 'Ditutup' : '$daysLeft Hari Lagi',
                   style: AppFonts.satoshiStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.white,
                   ),
                 ),
               ),
@@ -2487,7 +2316,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: primaryColor.withValues(alpha: 0.08),
@@ -2507,15 +2336,15 @@ class _CompetitionTimelineBox extends StatelessWidget {
                 ),
               ),
               Text(
-                daysLeft <= 0 
+                daysLeft <= 0
                     ? 'Sudah Ditutup'
                     : isUrgent
-                        ? 'Segera ditutup!'
-                        : 'Sisa $daysLeft hari',
+                    ? 'Segera ditutup!'
+                    : 'Sisa $daysLeft hari',
                 style: AppFonts.satoshiStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w600,
-                  color: isUrgent ? const Color(0xFFEF4444) : AppColors.textTertiary,
+                  color: isUrgent ? AppColors.error500 : AppColors.textTertiary,
                 ),
               ),
             ],

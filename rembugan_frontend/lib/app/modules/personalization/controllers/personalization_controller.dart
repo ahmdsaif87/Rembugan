@@ -120,7 +120,9 @@ class PersonalizationController extends GetxController {
     final list = [...extractedProfile.value.experiences];
     if (index >= 0 && index < list.length) {
       list[index] = updated;
-      extractedProfile.value = extractedProfile.value.copyWith(experiences: list);
+      extractedProfile.value = extractedProfile.value.copyWith(
+        experiences: list,
+      );
     }
   }
 

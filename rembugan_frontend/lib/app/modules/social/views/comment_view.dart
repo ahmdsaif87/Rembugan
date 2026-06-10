@@ -2,18 +2,17 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
-import '../../../core/widgets/app_chrome.dart';
 import 'social_components.dart';
 
 void showCommentsSheet(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparent,
     builder: (_) => const FractionallySizedBox(
       heightFactor: 0.94,
       child: ClipRRect(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         child: CommentView(),
       ),
     ),
@@ -66,12 +65,12 @@ class CommentView extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.only(bottom: 12),
-                children: const [
-                  Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                children: [
+                  const Padding(
                     padding: EdgeInsets.fromLTRB(16, 16, 16, 14),
                     child: SocialPostCard(
                       name: 'Cameron Williamson',
@@ -81,8 +80,8 @@ class CommentView extends StatelessWidget {
                           'Kami sedang mencari Flutter dev untuk bantu polishing flow onboarding dan chat. Ada yang tertarik kolaborasi minggu ini?',
                     ),
                   ),
-                  Divider(height: 1, color: AppColors.border),
-                  _CommentTile(
+                  Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+                  const _CommentTile(
                     name: 'Dede Fernanda',
                     avatarUrl: 'https://i.pravatar.cc/100?img=60',
                     body:
@@ -94,8 +93,8 @@ class CommentView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Divider(height: 1, indent: 64, color: AppColors.border),
-                  _CommentTile(
+                  Divider(height: 1, indent: 64, color: AppColors.border.withValues(alpha: 0.4)),
+                  const _CommentTile(
                     name: 'Raka Pratama',
                     avatarUrl: 'https://i.pravatar.cc/100?img=47',
                     body:
@@ -208,7 +207,7 @@ class _ReplyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 14, top: 2),
+      padding: const EdgeInsets.only(left: AppSpacing.md, top: 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -261,7 +260,10 @@ class _CommentAction extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 2,
+          vertical: AppSpacing.xxs,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -295,8 +297,7 @@ class _ReplyComposer extends StatelessWidget {
         MediaQuery.of(context).padding.bottom + 10,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        color: AppColors.white,
       ),
       child: Row(
         children: [
@@ -315,23 +316,26 @@ class _ReplyComposer extends StatelessWidget {
                   fontSize: 13.5,
                   color: AppColors.textTertiary.withValues(alpha: 0.6),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13.5),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: 13.5,
+                ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
                     color: AppColors.border.withValues(alpha: 0.8),
                     width: 1.0,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
                     color: AppColors.textPrimary.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
                     color: AppColors.border.withValues(alpha: 0.8),
                     width: 1.0,
@@ -351,14 +355,14 @@ class _ReplyComposer extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.textPrimary,
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.primary500,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Center(
                 child: Icon(
                   FluentIcons.send_24_filled,
                   size: 16,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
             ),

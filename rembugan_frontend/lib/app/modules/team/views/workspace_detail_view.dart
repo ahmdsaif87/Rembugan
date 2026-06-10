@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_chrome.dart';
 import '../controllers/team_controller.dart';
 
 class WorkspaceDetailView extends GetView<TeamController> {
@@ -39,9 +40,9 @@ class WorkspaceDetailView extends GetView<TeamController> {
     final online = ws.members.where((m) => m.isOnline).length;
 
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       elevation: 0,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.transparent,
       leading: IconButton(
         icon: const Icon(FluentIcons.arrow_left_24_regular, size: 20),
         onPressed: Get.back,
@@ -75,10 +76,6 @@ class WorkspaceDetailView extends GetView<TeamController> {
           onPressed: () => _showWorkspaceActions(Get.context!, ws),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(0.5),
-        child: Container(color: AppColors.border, height: 0.5),
-      ),
     );
   }
 
@@ -86,14 +83,14 @@ class WorkspaceDetailView extends GetView<TeamController> {
     const labels = ['Group Chat', 'Kanban'];
 
     return Container(
-      color: Colors.white,
+      color: AppColors.white,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
       child: Container(
         height: 44,
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(AppSpacing.xxs),
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.grey100,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Obx(
           () => Row(
@@ -107,12 +104,12 @@ class WorkspaceDetailView extends GetView<TeamController> {
                     curve: Curves.easeOutCubic,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: active ? Colors.white : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
+                      color: active ? AppColors.white : AppColors.transparent,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
                       boxShadow: active
                           ? [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: AppColors.black.withValues(alpha: 0.05),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -165,7 +162,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _WorkspaceActionSheet(
         ws: ws,
         pendingApplicants: pendingApplicants,
@@ -185,7 +182,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => ApplicantSheet(ctrl: controller, ws: ws),
     );
   }
@@ -193,7 +190,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
   void _showEndCollaborationSheet(BuildContext context, WorkspaceModel ws) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _EndCollaborationSheet(
         ws: ws,
         onConfirm: () {
@@ -204,7 +201,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
             'Kolaborasi selesai',
             '${ws.name} dipindahkan ke History.',
             snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(AppSpacing.md),
           );
         },
       ),
@@ -298,10 +295,10 @@ class ApplicantSheet extends StatelessWidget {
             if (applicants.isEmpty)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceSecondary,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Text(
@@ -315,7 +312,7 @@ class ApplicantSheet extends StatelessWidget {
             else
               ...applicants.map(
                 (applicant) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: _ApplicantCard(
                     applicant: applicant,
                     onAccept: () {
@@ -324,7 +321,7 @@ class ApplicantSheet extends StatelessWidget {
                         'Pelamar diterima',
                         '${applicant.name} masuk ke workspace.',
                         snackPosition: SnackPosition.BOTTOM,
-                        margin: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.all(AppSpacing.md),
                       );
                     },
                     onReject: () {
@@ -333,7 +330,7 @@ class ApplicantSheet extends StatelessWidget {
                         'Lamaran ditolak',
                         '${applicant.name} tidak masuk ke workspace.',
                         snackPosition: SnackPosition.BOTTOM,
-                        margin: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.all(AppSpacing.md),
                       );
                     },
                   ),
@@ -360,10 +357,10 @@ class _ApplicantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -426,12 +423,12 @@ class _ApplicantCard extends StatelessWidget {
                 .map(
                   (skill) => Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: AppSpacing.xs,
+                      vertical: AppSpacing.xxs,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceSecondary,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Text(
@@ -492,10 +489,10 @@ class _EndCollaborationSheet extends StatelessWidget {
           const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               color: AppColors.warning50,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: AppColors.warning200),
             ),
             child: Text(
@@ -546,8 +543,10 @@ class _SheetShell extends StatelessWidget {
         margin: const EdgeInsets.only(top: 80),
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
         decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: child,
       ),
@@ -565,8 +564,8 @@ class _SheetHandle extends StatelessWidget {
         width: 38,
         height: 4,
         decoration: BoxDecoration(
-          color: const Color(0xFFD4D9E2),
-          borderRadius: BorderRadius.circular(999),
+          color: AppColors.grey300,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
       ),
     );
@@ -628,12 +627,12 @@ class _ActionTile extends StatelessWidget {
     final color = danger ? AppColors.danger600 : AppColors.textPrimary;
     return Material(
       color: AppColors.surfaceSecondary,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               Icon(icon, size: 18, color: color),
@@ -702,7 +701,7 @@ class _SheetButton extends StatelessWidget {
         height: 42,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: outlined ? Colors.white : color,
+          color: outlined ? AppColors.white : color,
           borderRadius: BorderRadius.circular(13),
           border: outlined ? Border.all(color: AppColors.border) : null,
         ),
@@ -711,7 +710,7 @@ class _SheetButton extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: outlined ? color : Colors.white,
+            color: outlined ? color : AppColors.white,
           ),
         ),
       ),
@@ -741,9 +740,9 @@ class _DiscussionTab extends StatelessWidget {
 
         // Input
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             border: Border(
               top: BorderSide(color: AppColors.border, width: 0.5),
             ),
@@ -761,12 +760,12 @@ class _DiscussionTab extends StatelessWidget {
                   return Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
                     ),
-                    margin: const EdgeInsets.only(bottom: 10),
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF9FAFB),
+                      color: AppColors.grey50,
                       border: Border(
                         bottom: BorderSide(color: AppColors.border, width: 1),
                       ),
@@ -774,10 +773,10 @@ class _DiscussionTab extends StatelessWidget {
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(AppSpacing.xs),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
                             border: Border.all(color: AppColors.border),
                           ),
                           child: Icon(
@@ -822,7 +821,7 @@ class _DiscussionTab extends StatelessWidget {
                         GestureDetector(
                           onTap: () => ctrl.removeGroupAttachment(),
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(AppSpacing.xxs),
                             decoration: const BoxDecoration(
                               color: AppColors.border,
                               shape: BoxShape.circle,
@@ -841,7 +840,9 @@ class _DiscussionTab extends StatelessWidget {
 
                 // Input Row
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   child: Row(
                     children: [
                       // Plus/Attachment Button
@@ -849,12 +850,12 @@ class _DiscussionTab extends StatelessWidget {
                         onTap: () {
                           Get.bottomSheet(
                             Container(
-                              padding: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(AppSpacing.lg),
                               decoration: const BoxDecoration(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(20),
-                                  topRight: Radius.circular(20),
+                                  topLeft: Radius.circular(AppRadius.lg),
+                                  topRight: Radius.circular(AppRadius.lg),
                                 ),
                               ),
                               child: Column(
@@ -878,17 +879,12 @@ class _DiscussionTab extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-                                  ListTile(
+                                  AppListItem(
                                     leading: const Icon(
                                       FluentIcons.image_24_regular,
                                       color: AppColors.primary,
                                     ),
-                                    title: Text(
-                                      'Foto & Media',
-                                      style: AppFonts.satoshiStyle(
-                                        fontSize: 14,
-                                      ),
-                                    ),
+                                    title: 'Foto & Media',
                                     onTap: () {
                                       ctrl.attachGroupFile(
                                         'GEMASTIK_PitchDeck.png',
@@ -899,22 +895,18 @@ class _DiscussionTab extends StatelessWidget {
                                         'File Dilampirkan',
                                         'GEMASTIK_PitchDeck.png berhasil dipilih',
                                         snackPosition: SnackPosition.TOP,
-                                        backgroundColor: AppColors.textPrimary,
-                                        colorText: Colors.white,
+                                        backgroundColor: AppColors.primary500,
+                                        colorText: AppColors.white,
                                       );
                                     },
                                   ),
-                                  ListTile(
+                                  const SizedBox(height: AppSpacing.sm),
+                                  AppListItem(
                                     leading: const Icon(
                                       FluentIcons.document_24_regular,
                                       color: AppColors.primary,
                                     ),
-                                    title: Text(
-                                      'Dokumen & File PDF',
-                                      style: AppFonts.satoshiStyle(
-                                        fontSize: 14,
-                                      ),
-                                    ),
+                                    title: 'Dokumen & File PDF',
                                     onTap: () {
                                       ctrl.attachGroupFile(
                                         'Revisi_Proposal_v3.pdf',
@@ -925,8 +917,8 @@ class _DiscussionTab extends StatelessWidget {
                                         'File Dilampirkan',
                                         'Revisi_Proposal_v3.pdf berhasil dipilih',
                                         snackPosition: SnackPosition.TOP,
-                                        backgroundColor: AppColors.textPrimary,
-                                        colorText: Colors.white,
+                                        backgroundColor: AppColors.primary500,
+                                        colorText: AppColors.white,
                                       );
                                     },
                                   ),
@@ -942,7 +934,7 @@ class _DiscussionTab extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             border: Border.all(color: AppColors.border),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: const Icon(
                             FluentIcons.add_24_regular,
@@ -968,18 +960,18 @@ class _DiscussionTab extends StatelessWidget {
                               ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
+                              horizontal: AppSpacing.md,
                               vertical: 13.5,
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
                                 color: AppColors.border.withValues(alpha: 0.8),
                                 width: 1.0,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
                                 color: AppColors.textPrimary.withValues(
                                   alpha: 0.4,
@@ -988,7 +980,7 @@ class _DiscussionTab extends StatelessWidget {
                               ),
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
                                 color: AppColors.border.withValues(alpha: 0.8),
                                 width: 1.0,
@@ -1028,14 +1020,14 @@ class _DiscussionTab extends StatelessWidget {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.textPrimary,
-                            borderRadius: BorderRadius.circular(10),
+                            color: AppColors.primary500,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: const Center(
                             child: Icon(
                               FluentIcons.send_24_filled,
                               size: 16,
-                              color: Colors.white,
+                              color: AppColors.white,
                             ),
                           ),
                         ),
@@ -1060,7 +1052,7 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     if (msg.isSystem) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Center(
           child: Text(
             msg.body,
@@ -1129,8 +1121,8 @@ class _Bubble extends StatelessWidget {
                         ? AppColors.textPrimary.withValues(alpha: 0.88)
                         : AppColors.surfaceSecondary,
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(14),
-                      topRight: const Radius.circular(14),
+                      topLeft: const Radius.circular(AppRadius.md),
+                      topRight: const Radius.circular(AppRadius.md),
                       bottomLeft: Radius.circular(msg.isMe ? 14 : 4),
                       bottomRight: Radius.circular(msg.isMe ? 4 : 14),
                     ),
@@ -1147,7 +1139,7 @@ class _Bubble extends StatelessWidget {
                           fontSize: 13,
                           height: 1.4,
                           color: msg.isMe
-                              ? Colors.white
+                              ? AppColors.white
                               : AppColors.textPrimary,
                         ),
                       ),
@@ -1155,15 +1147,15 @@ class _Bubble extends StatelessWidget {
                         const SizedBox(height: 8),
                         Container(
                           width: 200,
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(AppSpacing.xs),
                           decoration: BoxDecoration(
                             color: msg.isMe
-                                ? Colors.white.withValues(alpha: 0.12)
+                                ? AppColors.white.withValues(alpha: 0.12)
                                 : AppColors.surfaceWarm,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
                             border: Border.all(
                               color: msg.isMe
-                                  ? Colors.white.withValues(alpha: 0.2)
+                                  ? AppColors.white.withValues(alpha: 0.2)
                                   : AppColors.border,
                             ),
                           ),
@@ -1175,7 +1167,7 @@ class _Bubble extends StatelessWidget {
                                     ? FluentIcons.image_24_regular
                                     : FluentIcons.document_24_regular,
                                 color: msg.isMe
-                                    ? Colors.white
+                                    ? AppColors.white
                                     : AppColors.primary,
                                 size: 18,
                               ),
@@ -1192,7 +1184,7 @@ class _Bubble extends StatelessWidget {
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                         color: msg.isMe
-                                            ? Colors.white
+                                            ? AppColors.white
                                             : AppColors.textPrimary,
                                       ),
                                     ),
@@ -1202,7 +1194,7 @@ class _Bubble extends StatelessWidget {
                                       style: AppFonts.satoshiStyle(
                                         fontSize: 9,
                                         color: msg.isMe
-                                            ? Colors.white.withValues(
+                                            ? AppColors.white.withValues(
                                                 alpha: 0.7,
                                               )
                                             : AppColors.textTertiary,
@@ -1214,7 +1206,7 @@ class _Bubble extends StatelessWidget {
                               Icon(
                                 FluentIcons.arrow_download_24_regular,
                                 color: msg.isMe
-                                    ? Colors.white70
+                                    ? AppColors.white70
                                     : AppColors.textSecondary,
                                 size: 16,
                               ),
@@ -1286,19 +1278,19 @@ class _TaskTab extends StatelessWidget {
           ),
         ),
         Positioned(
-          right: 16,
-          bottom: 16,
+          right: AppSpacing.md,
+          bottom: AppSpacing.md,
           child: GestureDetector(
             onTap: () => _showAddTaskSheet(context),
             child: Container(
               height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(18),
+                color: AppColors.primary500,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
+                    color: AppColors.black.withValues(alpha: 0.12),
                     blurRadius: 6,
                     offset: const Offset(0, 3),
                   ),
@@ -1310,7 +1302,7 @@ class _TaskTab extends StatelessWidget {
                   const Icon(
                     FluentIcons.add_24_regular,
                     size: 14,
-                    color: Colors.white,
+                    color: AppColors.white,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -1318,7 +1310,7 @@ class _TaskTab extends StatelessWidget {
                     style: AppFonts.satoshiStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
                   ),
                 ],
@@ -1334,7 +1326,7 @@ class _TaskTab extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (_) => _AddTaskSheet(ctrl: ctrl),
     );
   }
@@ -1383,8 +1375,10 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1395,8 +1389,8 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD4D9E2),
-                  borderRadius: BorderRadius.circular(999),
+                  color: AppColors.grey300,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
             ),
@@ -1428,7 +1422,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                     child: Row(
                       children: suggestions.map((sug) {
                         return Padding(
-                          padding: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.only(right: AppSpacing.xxs),
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
@@ -1437,12 +1431,14 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                                horizontal: AppSpacing.sm,
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.surfaceSecondary,
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
                                 border: Border.all(
                                   color: AppColors.border.withValues(
                                     alpha: 0.8,
@@ -1483,29 +1479,29 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
               autofocus: true,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: const Color(0xFFF9FAFB),
+                fillColor: AppColors.grey50,
                 hintText: 'Apa yang perlu dikerjakan?',
                 hintStyle: AppFonts.satoshiStyle(
                   fontSize: 13.5,
                   color: AppColors.textTertiary,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
                     color: AppColors.textPrimary.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
@@ -1525,7 +1521,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   });
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
                   child: Row(
                     children: [
                       Icon(
@@ -1564,10 +1560,12 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF9FAFB),
-                            borderRadius: BorderRadius.circular(10),
+                            color: AppColors.grey50,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             border: Border.all(color: AppColors.border),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -1627,13 +1625,13 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                                 return Theme(
                                   data: Theme.of(context).copyWith(
                                     colorScheme: const ColorScheme.light(
-                                      primary: AppColors.textPrimary,
-                                      onPrimary: Colors.white,
+                                      primary: AppColors.primary500,
+                                      onPrimary: AppColors.white,
                                       onSurface: AppColors.textPrimary,
                                     ),
                                     textButtonTheme: TextButtonThemeData(
                                       style: TextButton.styleFrom(
-                                        foregroundColor: AppColors.textPrimary,
+                                        foregroundColor: AppColors.primary500,
                                       ),
                                     ),
                                   ),
@@ -1663,7 +1661,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           },
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: const Color(0xFFF9FAFB),
+                            fillColor: AppColors.grey50,
                             hintText: 'Pilih tanggal...',
                             hintStyle: AppFonts.satoshiStyle(
                               fontSize: 13,
@@ -1675,18 +1673,18 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               color: AppColors.textSecondary,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.sm,
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
                                 color: AppColors.border,
                                 width: 1,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
                                 color: AppColors.textPrimary.withValues(
                                   alpha: 0.4,
@@ -1695,7 +1693,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               ),
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
                                 color: AppColors.border,
                                 width: 1,
@@ -1742,7 +1740,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   }
 
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: AppSpacing.xs),
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
@@ -1752,12 +1750,12 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: active ? activeBg : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          color: active ? activeBg : AppColors.white,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: active ? activeColor : AppColors.border,
                             width: active ? 1.5 : 1,
@@ -1795,29 +1793,29 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: const Color(0xFFF9FAFB),
+                  fillColor: AppColors.grey50,
                   hintText: 'Deskripsi singkat (opsional)...',
                   hintStyle: AppFonts.satoshiStyle(
                     fontSize: 13,
                     color: AppColors.textTertiary,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.sm,
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     borderSide: BorderSide(color: AppColors.border, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     borderSide: BorderSide(
                       color: AppColors.textPrimary.withValues(alpha: 0.4),
                       width: 1.2,
                     ),
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     borderSide: BorderSide(color: AppColors.border, width: 1),
                   ),
                 ),
@@ -1851,15 +1849,15 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.primary500,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
                     'Tambah Tugas',
                     style: AppFonts.satoshiStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
                   ),
                 ),
@@ -1887,11 +1885,11 @@ class _KanbanColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 180,
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(right: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.grey50,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
@@ -1917,7 +1915,7 @@ class _KanbanColumn extends StatelessWidget {
               const SizedBox(width: 5),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
+                  horizontal: AppSpacing.xxs,
                   vertical: 1.5,
                 ),
                 decoration: BoxDecoration(
@@ -1939,7 +1937,7 @@ class _KanbanColumn extends StatelessWidget {
           if (tasks.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               alignment: Alignment.center,
               child: Text(
                 'Belum ada tugas',
@@ -1956,7 +1954,7 @@ class _KanbanColumn extends StatelessWidget {
               itemCount: tasks.length,
               itemBuilder: (context, index) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
                   child: _KanbanTaskCard(task: tasks[index]),
                 );
               },
@@ -2000,19 +1998,12 @@ class _KanbanTaskCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.015),
-            blurRadius: 3,
-            offset: const Offset(0, 1.5),
-          ),
-        ],
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.soft,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2087,7 +2078,7 @@ class _KanbanTaskCard extends StatelessWidget {
                             width: 16,
                             height: 16,
                             decoration: const BoxDecoration(
-                              color: Color(0xFFF3F4F6),
+                              color: AppColors.grey100,
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
@@ -2161,7 +2152,7 @@ class _FileTab extends StatelessWidget {
   Color _fileColor(String type) {
     return switch (type) {
       'pdf' => AppColors.danger500,
-      'fig' => const Color(0xFF8B5CF6),
+      'fig' => AppColors.primary400,
       'png' || 'jpg' => AppColors.info500,
       _ => AppColors.textTertiary,
     };
@@ -2170,7 +2161,7 @@ class _FileTab extends StatelessWidget {
   Color _fileBg(String type) {
     return switch (type) {
       'pdf' => AppColors.danger50,
-      'fig' => const Color(0xFFF5F3FF),
+      'fig' => AppColors.primary50,
       'png' || 'jpg' => AppColors.info50,
       _ => AppColors.surfaceSecondary,
     };
@@ -2188,8 +2179,8 @@ class _FileTab extends StatelessWidget {
               final f = ctrl.files[i];
               return Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.xs,
                 ),
                 child: Row(
                   children: [
@@ -2198,7 +2189,7 @@ class _FileTab extends StatelessWidget {
                       height: 36,
                       decoration: BoxDecoration(
                         color: _fileBg(f.type),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Icon(
                         _fileIcon(f.type),
@@ -2244,19 +2235,19 @@ class _FileTab extends StatelessWidget {
           ),
         ),
         Positioned(
-          right: 20,
-          bottom: 20,
+          right: AppSpacing.lg,
+          bottom: AppSpacing.lg,
           child: GestureDetector(
             onTap: () {},
             child: Container(
               height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(14),
+                color: AppColors.primary500,
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
+                    color: AppColors.black.withValues(alpha: 0.18),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -2268,7 +2259,7 @@ class _FileTab extends StatelessWidget {
                   const Icon(
                     FluentIcons.arrow_upload_24_regular,
                     size: 16,
-                    color: Colors.white,
+                    color: AppColors.white,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -2276,7 +2267,7 @@ class _FileTab extends StatelessWidget {
                     style: AppFonts.satoshiStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.white,
                     ),
                   ),
                 ],

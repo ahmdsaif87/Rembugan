@@ -216,7 +216,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           Get.back();
         },
       ),
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       isScrollControlled: true,
     );
   }
@@ -237,7 +237,7 @@ class _EditProfileViewState extends State<EditProfileView> {
         },
         child: child,
       ),
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       isScrollControlled: true,
     );
   }
@@ -261,7 +261,7 @@ class _EditProfileViewState extends State<EditProfileView> {
         ),
       ],
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           _AiPersonalizeCard(onTap: () => Get.toNamed(Routes.PERSONALIZATION)),
           const SizedBox(height: 14),
@@ -431,19 +431,19 @@ class _AiPersonalizeCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               Container(
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  color: AppColors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   FluentIcons.sparkle_24_filled,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 20,
                 ),
               ),
@@ -457,7 +457,7 @@ class _AiPersonalizeCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.white,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -466,7 +466,7 @@ class _AiPersonalizeCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 12,
                         height: 1.35,
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: AppColors.white.withValues(alpha: 0.72),
                       ),
                     ),
                   ],
@@ -474,7 +474,7 @@ class _AiPersonalizeCard extends StatelessWidget {
               ),
               const Icon(
                 FluentIcons.chevron_right_24_regular,
-                color: Colors.white,
+                color: AppColors.white,
                 size: 20,
               ),
             ],
@@ -507,9 +507,9 @@ class _EditPreviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
       ),
@@ -576,8 +576,8 @@ class _ExperiencePreviewItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -646,8 +646,8 @@ class _CollaborationVisibilityItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -719,8 +719,8 @@ class _EditBottomSheet extends StatelessWidget {
         20 + MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: SafeArea(
         top: false,
@@ -801,8 +801,8 @@ class _ConfirmSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: SafeArea(
         top: false,
@@ -868,7 +868,7 @@ class _SheetField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -909,7 +909,7 @@ class _LinkIcon extends StatelessWidget {
       height: 42,
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border),
       ),
       child: const Icon(
@@ -939,7 +939,7 @@ class _MiniEditButton extends StatelessWidget {
           height: 28,
           child: Icon(
             FluentIcons.edit_24_regular,
-            color: Colors.white,
+            color: AppColors.white,
             size: 14,
           ),
         ),

@@ -137,14 +137,14 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: AppColors.border),
@@ -158,7 +158,7 @@ class _ActionCard extends StatelessWidget {
                 height: 46,
                 decoration: BoxDecoration(
                   color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Icon(icon, color: AppColors.textPrimary, size: 22),
@@ -224,7 +224,7 @@ class _ScanningState extends StatelessWidget {
 
       return Padding(
         key: const ValueKey('scanning'),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -269,7 +269,10 @@ class _ScanningState extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(AppRadius.md),
@@ -425,8 +428,8 @@ class _ExtractionResult extends StatelessWidget {
                           child: Container(
                             height: 38,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.grey50,
+                              borderRadius: BorderRadius.circular(AppRadius.xs),
                               border: Border.all(color: AppColors.border),
                             ),
                             child: TextField(
@@ -453,7 +456,7 @@ class _ExtractionResult extends StatelessWidget {
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
+                                  horizontal: AppSpacing.sm,
                                   vertical: 9,
                                 ),
                               ),
@@ -472,20 +475,21 @@ class _ExtractionResult extends StatelessWidget {
                             width: 38,
                             height: 38,
                             decoration: BoxDecoration(
-                              color: AppColors.textPrimary,
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.primary500,
+                              borderRadius: BorderRadius.circular(AppRadius.xs),
                             ),
                             alignment: Alignment.center,
                             child: const Icon(
                               FluentIcons.add_16_regular,
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 16,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    if (skillInput.text.isNotEmpty && suggestions.isNotEmpty) ...[
+                    if (skillInput.text.isNotEmpty &&
+                        suggestions.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
                         'Rekomendasi skill:',
@@ -507,12 +511,14 @@ class _ExtractionResult extends StatelessWidget {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                                horizontal: AppSpacing.sm,
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(6),
+                                color: AppColors.grey100,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xxs,
+                                ),
                                 border: Border.all(color: AppColors.border),
                               ),
                               child: Text(
@@ -623,7 +629,7 @@ class _ManualInputState extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: controller.reset,
-                icon: const Icon(FluentIcons.arrow_left_24_regular),
+                icon: const Icon(FluentIcons.chevron_left_24_regular),
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -691,7 +697,7 @@ class _ManualInputState extends StatelessWidget {
                   height: 42,
                   decoration: BoxDecoration(
                     color: AppColors.primarySoft,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(color: AppColors.border),
                   ),
                   child: const Icon(
@@ -742,8 +748,8 @@ class _ManualInputState extends StatelessWidget {
                           child: Container(
                             height: 38,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.grey50,
+                              borderRadius: BorderRadius.circular(AppRadius.xs),
                               border: Border.all(color: AppColors.border),
                             ),
                             child: TextField(
@@ -770,7 +776,7 @@ class _ManualInputState extends StatelessWidget {
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
+                                  horizontal: AppSpacing.sm,
                                   vertical: 9,
                                 ),
                               ),
@@ -789,20 +795,21 @@ class _ManualInputState extends StatelessWidget {
                             width: 38,
                             height: 38,
                             decoration: BoxDecoration(
-                              color: AppColors.textPrimary,
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.primary500,
+                              borderRadius: BorderRadius.circular(AppRadius.xs),
                             ),
                             alignment: Alignment.center,
                             child: const Icon(
                               FluentIcons.add_16_regular,
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 16,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    if (skillInput.text.isNotEmpty && suggestions.isNotEmpty) ...[
+                    if (skillInput.text.isNotEmpty &&
+                        suggestions.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
                         'Rekomendasi skill:',
@@ -824,12 +831,14 @@ class _ManualInputState extends StatelessWidget {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                                horizontal: AppSpacing.sm,
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(6),
+                                color: AppColors.grey100,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xxs,
+                                ),
                                 border: Border.all(color: AppColors.border),
                               ),
                               child: Text(
@@ -950,9 +959,9 @@ class _ExtractionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
         boxShadow: AppShadows.soft,
@@ -997,8 +1006,8 @@ class _ExperiencePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1010,7 +1019,7 @@ class _ExperiencePreview extends StatelessWidget {
           Container(
             width: 9,
             height: 9,
-            margin: const EdgeInsets.only(top: 6),
+            margin: const EdgeInsets.only(top: AppSpacing.xxs),
             decoration: const BoxDecoration(
               color: AppColors.textPrimary,
               shape: BoxShape.circle,
@@ -1097,7 +1106,7 @@ class _FlowStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1106,7 +1115,7 @@ class _FlowStep extends StatelessWidget {
             height: 34,
             decoration: BoxDecoration(
               color: AppColors.primarySoft,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: AppColors.border),
             ),
             child: Icon(icon, size: 18, color: AppColors.textPrimary),
@@ -1150,10 +1159,13 @@ class _CapabilityChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.xxs),
         border: Border.all(color: AppColors.border),
       ),
       child: Text(
@@ -1176,7 +1188,10 @@ class _AiBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
       decoration: BoxDecoration(
         color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1219,7 +1234,7 @@ class _SuccessMark extends StatelessWidget {
       ),
       child: const Icon(
         FluentIcons.checkmark_24_filled,
-        color: Colors.white,
+        color: AppColors.white,
         size: 22,
       ),
     );
@@ -1254,9 +1269,15 @@ void _showExperienceDialog(
   ProfileExperience? experience,
 }) {
   final titleController = TextEditingController(text: experience?.title ?? '');
-  final orgController = TextEditingController(text: experience?.organization ?? '');
-  final durationController = TextEditingController(text: experience?.duration ?? '');
-  final descController = TextEditingController(text: experience?.description ?? '');
+  final orgController = TextEditingController(
+    text: experience?.organization ?? '',
+  );
+  final durationController = TextEditingController(
+    text: experience?.duration ?? '',
+  );
+  final descController = TextEditingController(
+    text: experience?.description ?? '',
+  );
   final techController = TextEditingController(
     text: experience?.techStack.join(', ') ?? '',
   );
@@ -1266,11 +1287,11 @@ void _showExperienceDialog(
     builder: (context) {
       return Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1279,7 +1300,9 @@ void _showExperienceDialog(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    experience == null ? 'Tambah Pengalaman' : 'Ubah Pengalaman',
+                    experience == null
+                        ? 'Tambah Pengalaman'
+                        : 'Ubah Pengalaman',
                     style: AppFonts.headingStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -1326,7 +1349,8 @@ void _showExperienceDialog(
                 maxLines: 3,
                 decoration: const InputDecoration(
                   labelText: 'Deskripsi',
-                  hintText: 'Ceritakan apa saja tanggung jawab atau pencapaianmu...',
+                  hintText:
+                      'Ceritakan apa saja tanggung jawab atau pencapaianmu...',
                   alignLabelWithHint: true,
                 ),
               ),
@@ -1335,7 +1359,8 @@ void _showExperienceDialog(
                 controller: techController,
                 decoration: const InputDecoration(
                   labelText: 'Teknologi / Tech Stack',
-                  hintText: 'Pisahkan dengan koma (Contoh: Flutter, Figma, Dart)',
+                  hintText:
+                      'Pisahkan dengan koma (Contoh: Flutter, Figma, Dart)',
                 ),
               ),
               const SizedBox(height: 20),
@@ -1379,8 +1404,8 @@ void _showExperienceDialog(
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.textPrimary,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primary500,
+                      foregroundColor: AppColors.white,
                     ),
                     child: const Text('Simpan'),
                   ),
