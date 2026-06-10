@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -54,57 +55,24 @@ const statCards = [
 export default function Overview() {
   const [detailComp, setDetailComp] = useState<Competition | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [stats, setStats] = useState<Stats>({
-    total_users: 0,
-    active_projects: 0,
-    scraped_competitions: 0,
+
+  const { data: stats = { total_users: 0, active_projects: 0, scraped_competitions: 0 }, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const res = await fetchDashboardStats()
+      return (res.status === 'success' ? res.data : { total_users: 0, active_projects: 0, scraped_competitions: 0 }) as Stats
+    },
   })
-  const [competitions, setCompetitions] = useState<Competition[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [statsResponse, competitionsResponse] = await Promise.all([
-          fetchDashboardStats(),
-          fetchCompetitions(),
-        ])
+  const { data: competitions = [], isLoading: compLoading } = useQuery({
+    queryKey: ['competitions'],
+    queryFn: async () => {
+      const res = await fetchCompetitions()
+      return (res.status === 'success' ? res.data : []) as Competition[]
+    },
+  })
 
-        if (statsResponse.status === 'success') {
-          setStats(statsResponse.data)
-        }
-
-        if (competitionsResponse.status === 'success') {
-          setCompetitions(competitionsResponse.data)
-        }
-      } catch (error) {
-        console.error('Error loading dashboard data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadData()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="mt-2 h-8 w-20" />
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-        <Skeleton className="h-64 w-full" />
-      </div>
-    )
-  }
+  const loading = statsLoading || compLoading
 
   return (
     <div className="flex flex-col gap-4">
