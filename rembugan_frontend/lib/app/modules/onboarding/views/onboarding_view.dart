@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../core/theme/theme.dart';
 import '../controllers/onboarding_controller.dart';
 
@@ -9,27 +10,11 @@ class OnboardingView extends GetView<OnboardingController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.neutralLight,
+      backgroundColor: AppColors.white,
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
-            // Logo di atas
-            Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.xl,
-                bottom: AppSpacing.md,
-              ),
-              child: Text(
-                'Rembugan.',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-
-            // PageView content
             Expanded(
               child: PageView.builder(
                 controller: controller.pageController,
@@ -45,24 +30,18 @@ class OnboardingView extends GetView<OnboardingController> {
                 },
               ),
             ),
-
-            // Dot indicator
             Obx(
               () => _DotIndicator(
                 currentPage: controller.currentPage.value,
                 totalPages: controller.onboardingData.length,
               ),
             ),
-
-            const SizedBox(height: 24), // Jarak dari dot ke tombol
-            // Button
+            const SizedBox(height: 80),
             Obx(() {
               final data =
                   controller.onboardingData[controller.currentPage.value];
               return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xl,
-                ), // Disesuaikan agar selebar teks
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -74,58 +53,22 @@ class OnboardingView extends GetView<OnboardingController> {
                       elevation: 0,
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          12,
-                        ), // Mengikuti standar modern
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        data['buttonText']!,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-
-            const SizedBox(height: 16),
-
-            // Lewati button (hidden on last page)
-            Obx(() {
-              final isLastPage =
-                  controller.currentPage.value ==
-                  controller.onboardingData.length - 1;
-              return AnimatedOpacity(
-                opacity: isLastPage ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 250),
-                child: GestureDetector(
-                  onTap: isLastPage ? null : controller.skipOnboarding,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
                     ),
                     child: Text(
-                      'Lewati',
+                      data['buttonText']!,
                       style: AppFonts.satoshiStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors
-                            .primaryNormal, // Diberi warna utama agar jelas bisa di-klik
+                        color: AppColors.white,
                       ),
                     ),
                   ),
                 ),
               );
             }),
-
-            const SizedBox(height: 24), // Jarak aman layar bawah
+            const SizedBox(height: 42),
           ],
         ),
       ),
@@ -133,9 +76,6 @@ class OnboardingView extends GetView<OnboardingController> {
   }
 }
 
-// ────────────────────────────────────────────────────────────────
-// Widget: Halaman Onboarding (Gambar + Teks)
-// ────────────────────────────────────────────────────────────────
 class _OnboardingPage extends StatelessWidget {
   final String imagePath;
   final String title;
@@ -149,57 +89,77 @@ class _OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      child: Column(
-        children: [
-          // 1. Berikan sedikit jarak aman dari header/logo
-          const SizedBox(height: 20),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableImageHeight = (constraints.maxHeight - 110).clamp(
+          0.0,
+          double.infinity,
+        );
+        final imageHeight = (constraints.maxWidth * 504 / 392).clamp(
+          0.0,
+          availableImageHeight,
+        );
 
-          // 2. Gambar ilustrasi diberi flex agar proporsinya pas
-          Expanded(flex: 6, child: Image.asset(imagePath, fit: BoxFit.contain)),
-
-          // Jarak fix dari gambar ke judul
-          const SizedBox(height: 32),
-
-          // Judul
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppFonts.satoshiStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-              height: 1.2,
+        return Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: imageHeight,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(imagePath, fit: BoxFit.cover),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      height: 96,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [AppColors.transparent, AppColors.white],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-
-          // Jarak fix dari judul ke deskripsi
-          const SizedBox(height: 12),
-
-          // Deskripsi
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: AppFonts.satoshiStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.neutralDarker,
-              height: 1.5,
+            const SizedBox(height: AppSpacing.xl),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  height: 1.2,
+                ),
+              ),
             ),
-          ),
-
-          // 3. INI KUNCINYA: Spacer di bawah teks akan mendorong teks ke atas
-          const Spacer(flex: 2),
-        ],
-      ),
+            const SizedBox(height: AppSpacing.xs),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Text(
+                description,
+                textAlign: TextAlign.center,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-// ────────────────────────────────────────────────────────────────
-// Widget: Dot Indicator (Page Indicator)
-// ────────────────────────────────────────────────────────────────
 class _DotIndicator extends StatelessWidget {
   final int currentPage;
   final int totalPages;
@@ -215,13 +175,13 @@ class _DotIndicator extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
-          width: isActive ? 24 : 8, // Sedikit dihaluskan dimensinya
-          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          width: isActive ? 23 : 6,
+          height: 6,
           decoration: BoxDecoration(
             color: isActive
                 ? AppColors.primaryNormal
-                : AppColors.primaryNormal.withValues(alpha: 0.2),
+                : AppColors.primaryNormal.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(AppRadius.xxs),
           ),
         );

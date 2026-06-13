@@ -72,7 +72,7 @@ class ProfileData {
     required this.name,
     required this.handle,
     required this.bio,
-    required this.location,
+    required this.major,
     required this.socialLink,
     required this.skills,
     required this.experiences,
@@ -84,7 +84,7 @@ class ProfileData {
   final String name;
   final String handle;
   final String bio;
-  final String location;
+  final String major;
   final String socialLink;
   final List<String> skills;
   final List<ProfileExperience> experiences;
@@ -96,7 +96,7 @@ class ProfileData {
     String? name,
     String? handle,
     String? bio,
-    String? location,
+    String? major,
     String? socialLink,
     List<String>? skills,
     List<ProfileExperience>? experiences,
@@ -108,7 +108,7 @@ class ProfileData {
       name: name ?? this.name,
       handle: handle ?? this.handle,
       bio: bio ?? this.bio,
-      location: location ?? this.location,
+      major: major ?? this.major,
       socialLink: socialLink ?? this.socialLink,
       skills: skills ?? this.skills,
       experiences: experiences ?? this.experiences,
@@ -125,7 +125,7 @@ class ProfileService extends GetxService {
     handle: '@dede.flutter',
     bio:
         'Mahasiswa Informatika yang fokus pada pengembangan mobile app dan UI/UX design dengan pengalaman membangun aplikasi berbasis Flutter, Firebase, dan proyek kolaboratif kampus.',
-    location: 'Malang, Indonesia',
+    major: 'Teknik Informatika',
     socialLink: 'github.com/dedef',
     skills: ['Flutter', 'Dart', 'Firebase', 'Figma', 'UI/UX', 'Python'],
     experiences: [

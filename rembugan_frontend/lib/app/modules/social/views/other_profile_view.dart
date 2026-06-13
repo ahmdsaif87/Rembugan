@@ -306,7 +306,7 @@ class _ProfileActions extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: AppColors.borderStrong),
             ),
-            child: const Icon(
+            child: Icon(
               FluentIcons.chat_24_regular,
               color: AppColors.textPrimary,
               size: 22,
@@ -329,7 +329,7 @@ class _ProfileTabs extends StatelessWidget {
     const tabs = ['Postingan', 'Pengalaman', 'Keahlian', 'Kolaborasi'];
 
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(

@@ -1,5 +1,6 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../routes/app_pages.dart';
@@ -127,6 +128,37 @@ class AppIconButton extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AppNetworkAvatar extends StatelessWidget {
+  const AppNetworkAvatar({required this.imageUrl, this.radius = 24, super.key});
+
+  final String imageUrl;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = radius * 2;
+
+    return ClipOval(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => ColoredBox(
+            color: AppColors.primarySoft,
+            child: Icon(
+              FluentIcons.person_24_regular,
+              color: AppColors.primary500,
+              size: radius,
+            ),
           ),
         ),
       ),
@@ -473,13 +505,7 @@ class AppButton extends StatelessWidget {
               Icon(icon, color: fg, size: 18),
               const SizedBox(width: AppSpacing.xs),
             ],
-            Text(
-              label,
-              style: AppTextStyles.button(
-                fontSize: 14,
-                color: fg,
-              ),
-            ),
+            Text(label, style: AppTextStyles.button(fontSize: 14, color: fg)),
           ],
         ),
       ),
@@ -489,25 +515,48 @@ class AppButton extends StatelessWidget {
 
 class AppTextField extends StatelessWidget {
   const AppTextField({
-    required this.controller,
+    this.controller,
+    this.initialValue,
     this.hintText,
     this.labelText,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
+    this.textInputAction,
+    this.textAlign = TextAlign.start,
+    this.focusNode,
+    this.prefixIcon,
     this.suffixIcon,
     this.validator,
     this.maxLines = 1,
+    this.maxLength,
+    this.inputFormatters,
+    this.onChanged,
+    this.onFieldSubmitted,
+    this.enabled = true,
     super.key,
-  });
+  }) : assert(
+         controller == null || initialValue == null,
+         'controller and initialValue cannot be used together',
+       );
 
-  final TextEditingController controller;
+  final TextEditingController? controller;
+  final String? initialValue;
   final String? hintText;
   final String? labelText;
   final bool obscureText;
   final TextInputType keyboardType;
+  final TextInputAction? textInputAction;
+  final TextAlign textAlign;
+  final FocusNode? focusNode;
+  final Widget? prefixIcon;
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
   final int maxLines;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onFieldSubmitted;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -524,13 +573,26 @@ class AppTextField extends StatelessWidget {
         ],
         TextFormField(
           controller: controller,
+          initialValue: initialValue,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          textAlign: textAlign,
+          focusNode: focusNode,
           maxLines: maxLines,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
+          onChanged: onChanged,
+          onFieldSubmitted: onFieldSubmitted,
+          enabled: enabled,
           validator: validator,
-          style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
+          style: AppTextStyles.bodyMedium(
+            color: AppTextColors.textPrimaryBlack,
+          ),
           decoration: InputDecoration(
             hintText: hintText,
+            counterText: maxLength == null ? null : '',
+            prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             suffixIconConstraints: const BoxConstraints(
               minWidth: 48,
@@ -548,15 +610,24 @@ class AppTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.primary500, width: 1.2),
+              borderSide: const BorderSide(
+                color: AppColors.primary500,
+                width: 1.2,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.error500, width: 1.2),
+              borderSide: const BorderSide(
+                color: AppColors.error500,
+                width: 1.2,
+              ),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.error500, width: 1.2),
+              borderSide: const BorderSide(
+                color: AppColors.error500,
+                width: 1.2,
+              ),
             ),
           ),
         ),

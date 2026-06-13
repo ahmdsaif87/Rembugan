@@ -86,8 +86,8 @@ class PersonalizationController extends GetxController {
     extractedProfile.value = extractedProfile.value.copyWith(bio: value);
   }
 
-  void updateLocation(String value) {
-    extractedProfile.value = extractedProfile.value.copyWith(location: value);
+  void updateMajor(String value) {
+    extractedProfile.value = extractedProfile.value.copyWith(major: value);
   }
 
   void updateSocialLink(String value) {
@@ -147,7 +147,7 @@ class PersonalizationController extends GetxController {
     extractedProfile.value = ProfileService.seedProfile.copyWith(
       name: '',
       bio: '',
-      location: '',
+      major: '',
       socialLink: '',
       skills: const [],
       experiences: const [],

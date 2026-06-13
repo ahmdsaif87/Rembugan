@@ -182,7 +182,7 @@ class _ProfileIdentity extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          'Teknik Informatika',
+          profile.major,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -303,7 +303,7 @@ class _ProfileActions extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: AppColors.borderStrong),
             ),
-            child: const Icon(
+            child: Icon(
               FluentIcons.bookmark_24_regular,
               color: AppColors.textPrimary,
               size: 22,
@@ -326,7 +326,7 @@ class _ProfileTabs extends StatelessWidget {
     const tabs = ['Postingan', 'Pengalaman', 'Keahlian', 'Kolaborasi'];
 
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
@@ -510,7 +510,7 @@ class _CollaborationCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: const Icon(
+                child: Icon(
                   FluentIcons.people_team_24_regular,
                   size: 17,
                   color: AppColors.textPrimary,
@@ -749,7 +749,9 @@ class _PostCardState extends State<_PostCard> {
               Row(
                 children: [
                   _buildInteractionItem(
-                    _isLiked ? FluentIcons.heart_24_filled : FluentIcons.heart_24_regular,
+                    _isLiked
+                        ? FluentIcons.heart_24_filled
+                        : FluentIcons.heart_24_regular,
                     '$_likeCount',
                     _isLiked ? AppColors.error500 : AppColors.grey500,
                     onTap: _toggleLike,
@@ -770,7 +772,9 @@ class _PostCardState extends State<_PostCard> {
                   ),
                   const SizedBox(width: 20),
                   _buildInteractionItem(
-                    _isBookmarked ? FluentIcons.bookmark_24_filled : FluentIcons.bookmark_24_regular,
+                    _isBookmarked
+                        ? FluentIcons.bookmark_24_filled
+                        : FluentIcons.bookmark_24_regular,
                     '',
                     _isBookmarked ? AppColors.warning500 : AppColors.grey500,
                     onTap: _toggleBookmark,

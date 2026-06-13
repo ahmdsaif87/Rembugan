@@ -32,7 +32,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   void showProfileSheet() {
     final nameController = TextEditingController(text: draft.name);
     final bioController = TextEditingController(text: draft.bio);
-    final locationController = TextEditingController(text: draft.location);
+    final majorController = TextEditingController(text: draft.major);
 
     _showEditSheet(
       title: 'Edit profil',
@@ -47,7 +47,7 @@ class _EditProfileViewState extends State<EditProfileView> {
             controller: bioController,
             maxLines: 5,
           ),
-          _SheetField(label: 'Lokasi', controller: locationController),
+          _SheetField(label: 'Jurusan', controller: majorController),
         ],
       ),
       onSave: () {
@@ -55,7 +55,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           draft.copyWith(
             name: nameController.text.trim(),
             bio: bioController.text.trim(),
-            location: locationController.text.trim(),
+            major: majorController.text.trim(),
           ),
         );
       },
@@ -121,7 +121,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                       });
                     },
                     backgroundColor: AppColors.primarySoft,
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppColors.border),
                   );
                 }).toList(),
               ),
@@ -912,7 +912,7 @@ class _LinkIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Icon(
+      child: Icon(
         FluentIcons.code_24_regular,
         color: AppColors.textPrimary,
         size: 19,

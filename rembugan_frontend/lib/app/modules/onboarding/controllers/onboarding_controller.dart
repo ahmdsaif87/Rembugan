@@ -8,24 +8,17 @@ class OnboardingController extends GetxController {
 
   final List<Map<String, String>> onboardingData = [
     {
-      'image': 'lib/assets/img/onboarding 1.png',
-      'title': 'Eksplorasi Proyek\nKeren',
+      'image': 'lib/assets/img/onboarding1.png',
+      'title': 'Cari Tim yang Sefrekuensi',
       'description':
-          'Jelajahi berbagai kolaborasi yang pas dengan skill-mu. Temukan kesempatan bagus untuk portofolio atau tugas akhir.',
+          'Temukan kolaborator lintas prodi di kampus yang\npunya skill valid dan siap diajak kerja bareng.',
       'buttonText': 'Lanjut',
     },
     {
-      'image': 'lib/assets/img/onboarding 2.png',
-      'title': 'Cari Rekan yang Tepat',
+      'image': 'lib/assets/img/onboarding2.png',
+      'title': 'Workspace Anti Ribet',
       'description':
-          'Temukan talenta dengan berbagai keahlian untuk bantu wujudkan ide proyekmu menjadi nyata.',
-      'buttonText': 'Lanjut',
-    },
-    {
-      'image': 'lib/assets/img/onboarding3.png',
-      'title': 'Satu Workspace\nTerintegrasi',
-      'description':
-          'Kelola pembagian tugas, diskusi dengan tim, dan pantau perkembangan proyek dari satu aplikasi.',
+          'Kelola to-do list kelompok dan pantau progres\nperkembangan proyekmu langsung dari satu aplikasi.',
       'buttonText': 'Mulai Sekarang',
     },
   ];
@@ -37,13 +30,8 @@ class OnboardingController extends GetxController {
         curve: Curves.easeInOut,
       );
     } else {
-      // Navigasi ke halaman utama
       Get.offAllNamed(Routes.LOGIN);
     }
-  }
-
-  void skipOnboarding() {
-    Get.offAllNamed(Routes.LOGIN);
   }
 
   void onPageChanged(int index) {

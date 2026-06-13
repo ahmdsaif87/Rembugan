@@ -741,7 +741,7 @@ class _DiscussionTab extends StatelessWidget {
         // Input
         Container(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.white,
             border: Border(
               top: BorderSide(color: AppColors.border, width: 0.5),
@@ -764,7 +764,7 @@ class _DiscussionTab extends StatelessWidget {
                       vertical: AppSpacing.sm,
                     ),
                     margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.grey50,
                       border: Border(
                         bottom: BorderSide(color: AppColors.border, width: 1),
@@ -822,11 +822,11 @@ class _DiscussionTab extends StatelessWidget {
                           onTap: () => ctrl.removeGroupAttachment(),
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.xxs),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.border,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               FluentIcons.dismiss_12_filled,
                               color: AppColors.textSecondary,
                               size: 12,
@@ -936,7 +936,7 @@ class _DiscussionTab extends StatelessWidget {
                             border: Border.all(color: AppColors.border),
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             FluentIcons.add_24_regular,
                             color: AppColors.textSecondary,
                             size: 24,
@@ -1624,7 +1624,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               builder: (context, child) {
                                 return Theme(
                                   data: Theme.of(context).copyWith(
-                                    colorScheme: const ColorScheme.light(
+                                    colorScheme: ColorScheme.light(
                                       primary: AppColors.primary500,
                                       onPrimary: AppColors.white,
                                       onSurface: AppColors.textPrimary,
@@ -1667,7 +1667,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               fontSize: 13,
                               color: AppColors.textTertiary,
                             ),
-                            suffixIcon: const Icon(
+                            suffixIcon: Icon(
                               FluentIcons.calendar_24_regular,
                               size: 16,
                               color: AppColors.textSecondary,

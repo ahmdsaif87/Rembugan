@@ -232,7 +232,7 @@ class _ScanningState extends StatelessWidget {
               width: 260,
               height: 260,
               child: Lottie.asset(
-                'lib/assets/animations/OCR- Black & White.json',
+                'lib/assets/animations/scan.json',
                 fit: BoxFit.contain,
               ),
             ),
@@ -367,12 +367,10 @@ class _ExtractionResult extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextFormField(
+                          AppTextField(
                             initialValue: profile.name,
                             onChanged: controller.updateName,
-                            decoration: const InputDecoration(
-                              labelText: 'Nama',
-                            ),
+                            labelText: 'Nama',
                           ),
                           const SizedBox(height: 8),
                           _AiBadge(
@@ -386,16 +384,13 @@ class _ExtractionResult extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                AppTextField(
                   initialValue: profile.bio,
                   onChanged: controller.updateBio,
                   maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: 'Bio',
-                    hintText:
-                        'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
-                    alignLabelWithHint: true,
-                  ),
+                  labelText: 'Bio',
+                  hintText:
+                      'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
                 ),
               ],
             ),
@@ -406,12 +401,6 @@ class _ExtractionResult extends StatelessWidget {
             title: 'Skill',
             child: StatefulBuilder(
               builder: (context, setStateBuilder) {
-                if (!skillInput.hasListeners) {
-                  skillInput.addListener(() {
-                    setStateBuilder(() {});
-                  });
-                }
-
                 final query = skillInput.text.trim().toLowerCase();
                 final List<String> suggestions = _popularSkills.where((s) {
                   final matchesQuery = s.toLowerCase().contains(query);
@@ -425,42 +414,21 @@ class _ExtractionResult extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Container(
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.grey50,
-                              borderRadius: BorderRadius.circular(AppRadius.xs),
-                              border: Border.all(color: AppColors.border),
+                          child: AppTextField(
+                            controller: skillInput,
+                            hintText: 'Cari atau ketik skill baru...',
+                            prefixIcon: const Icon(
+                              FluentIcons.search_16_regular,
+                              size: 16,
+                              color: AppColors.textSecondary,
                             ),
-                            child: TextField(
-                              controller: skillInput,
-                              style: AppFonts.satoshiStyle(fontSize: 13),
-                              onSubmitted: (value) {
-                                if (value.trim().isNotEmpty) {
-                                  controller.addSkill(value);
-                                  skillInput.clear();
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Cari atau ketik skill baru...',
-                                hintStyle: AppFonts.satoshiStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textTertiary,
-                                ),
-                                prefixIcon: const Icon(
-                                  FluentIcons.search_16_regular,
-                                  size: 16,
-                                  color: AppColors.textSecondary,
-                                ),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.sm,
-                                  vertical: 9,
-                                ),
-                              ),
-                            ),
+                            onChanged: (_) => setStateBuilder(() {}),
+                            onFieldSubmitted: (value) {
+                              if (value.trim().isNotEmpty) {
+                                controller.addSkill(value);
+                                skillInput.clear();
+                              }
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -661,28 +629,26 @@ class _ManualInputState extends StatelessWidget {
             title: 'Profil',
             child: Column(
               children: [
-                TextFormField(
+                AppTextField(
                   initialValue: profile.name,
                   onChanged: controller.updateName,
-                  decoration: const InputDecoration(labelText: 'Nama'),
+                  labelText: 'Nama',
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
+                AppTextField(
                   initialValue: profile.bio,
                   onChanged: controller.updateBio,
                   maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: 'Bio',
-                    hintText:
-                        'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
-                    alignLabelWithHint: true,
-                  ),
+                  labelText: 'Bio',
+                  hintText:
+                      'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: profile.location,
-                  onChanged: controller.updateLocation,
-                  decoration: const InputDecoration(labelText: 'Lokasi'),
+                AppTextField(
+                  initialValue: profile.major,
+                  onChanged: controller.updateMajor,
+                  labelText: 'Jurusan',
+                  hintText: 'Contoh: Teknik Informatika',
                 ),
               ],
             ),
@@ -708,13 +674,11 @@ class _ManualInputState extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: TextFormField(
+                  child: AppTextField(
                     initialValue: profile.socialLink,
                     onChanged: controller.updateSocialLink,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'GitHub, portfolio, LinkedIn, atau website pribadi',
-                    ),
+                    hintText:
+                        'GitHub, portfolio, LinkedIn, atau website pribadi',
                   ),
                 ),
               ],
@@ -726,12 +690,6 @@ class _ManualInputState extends StatelessWidget {
             title: 'Skill',
             child: StatefulBuilder(
               builder: (context, setStateBuilder) {
-                if (!skillInput.hasListeners) {
-                  skillInput.addListener(() {
-                    setStateBuilder(() {});
-                  });
-                }
-
                 final query = skillInput.text.trim().toLowerCase();
                 final List<String> suggestions = _popularSkills.where((s) {
                   final matchesQuery = s.toLowerCase().contains(query);
@@ -745,42 +703,21 @@ class _ManualInputState extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Container(
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.grey50,
-                              borderRadius: BorderRadius.circular(AppRadius.xs),
-                              border: Border.all(color: AppColors.border),
+                          child: AppTextField(
+                            controller: skillInput,
+                            hintText: 'Cari atau ketik skill baru...',
+                            prefixIcon: const Icon(
+                              FluentIcons.search_16_regular,
+                              size: 16,
+                              color: AppColors.textSecondary,
                             ),
-                            child: TextField(
-                              controller: skillInput,
-                              style: AppFonts.satoshiStyle(fontSize: 13),
-                              onSubmitted: (value) {
-                                if (value.trim().isNotEmpty) {
-                                  controller.addSkill(value);
-                                  skillInput.clear();
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Cari atau ketik skill baru...',
-                                hintStyle: AppFonts.satoshiStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textTertiary,
-                                ),
-                                prefixIcon: const Icon(
-                                  FluentIcons.search_16_regular,
-                                  size: 16,
-                                  color: AppColors.textSecondary,
-                                ),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.sm,
-                                  vertical: 9,
-                                ),
-                              ),
-                            ),
+                            onChanged: (_) => setStateBuilder(() {}),
+                            onFieldSubmitted: (value) {
+                              if (value.trim().isNotEmpty) {
+                                controller.addSkill(value);
+                                skillInput.clear();
+                              }
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -1320,48 +1257,36 @@ void _showExperienceDialog(
                 ],
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              AppTextField(
                 controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Peran / Posisi',
-                  hintText: 'Contoh: Frontend Lead, UI/UX Designer',
-                ),
+                labelText: 'Peran / Posisi',
+                hintText: 'Contoh: Frontend Lead, UI/UX Designer',
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: orgController,
-                decoration: const InputDecoration(
-                  labelText: 'Organisasi / Perusahaan',
-                  hintText: 'Contoh: Hackathon Team, PT Angin Ribut',
-                ),
+                labelText: 'Organisasi / Perusahaan',
+                hintText: 'Contoh: Hackathon Team, PT Angin Ribut',
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: durationController,
-                decoration: const InputDecoration(
-                  labelText: 'Durasi / Periode',
-                  hintText: 'Contoh: Feb 2025 - Jun 2025, Des 2025',
-                ),
+                labelText: 'Durasi / Periode',
+                hintText: 'Contoh: Feb 2025 - Jun 2025, Des 2025',
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: descController,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Deskripsi',
-                  hintText:
-                      'Ceritakan apa saja tanggung jawab atau pencapaianmu...',
-                  alignLabelWithHint: true,
-                ),
+                labelText: 'Deskripsi',
+                hintText:
+                    'Ceritakan apa saja tanggung jawab atau pencapaianmu...',
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: techController,
-                decoration: const InputDecoration(
-                  labelText: 'Teknologi / Tech Stack',
-                  hintText:
-                      'Pisahkan dengan koma (Contoh: Flutter, Figma, Dart)',
-                ),
+                labelText: 'Teknologi / Tech Stack',
+                hintText: 'Pisahkan dengan koma (Contoh: Flutter, Figma, Dart)',
               ),
               const SizedBox(height: 20),
               Row(
@@ -1372,8 +1297,9 @@ void _showExperienceDialog(
                     child: const Text('Batal'),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
+                  AppButton(
+                    width: 110,
+                    onTap: () {
                       final techStack = techController.text
                           .split(',')
                           .map((t) => t.trim())
@@ -1403,11 +1329,7 @@ void _showExperienceDialog(
                       }
                       Navigator.pop(context);
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary500,
-                      foregroundColor: AppColors.white,
-                    ),
-                    child: const Text('Simpan'),
+                    label: 'Simpan',
                   ),
                 ],
               ),

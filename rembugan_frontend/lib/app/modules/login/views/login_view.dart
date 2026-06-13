@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_chrome.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -92,70 +93,41 @@ class LoginView extends GetView<LoginController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInputLabel('Email atau NIM'),
-          const SizedBox(height: AppSpacing.xs),
-          _buildEmailOrNimField(),
+          AppTextField(
+            controller: controller.emailOrNimController,
+            labelText: 'Email atau NIM',
+            hintText: 'nanda@gmail.com atau 23090122',
+            keyboardType: TextInputType.emailAddress,
+          ),
           const SizedBox(height: 28),
-          _buildInputLabel('Kata Sandi'),
-          const SizedBox(height: AppSpacing.xs),
           _buildPasswordField(),
           const SizedBox(height: 18),
           _buildForgotPasswordLink(),
           const SizedBox(height: 22),
           _buildActionButtons(),
-          const SizedBox(height: 24),
-          _buildOrDivider(),
-          const SizedBox(height: 24),
-          _buildGoogleButton(),
         ],
-      ),
-    );
-  }
-
-  Widget _buildInputLabel(String label) {
-    return Text(
-      label,
-      style: AppTextStyles.button(color: AppTextColors.textPrimaryBlack),
-    );
-  }
-
-  Widget _buildEmailOrNimField() {
-    return TextFormField(
-      controller: controller.emailOrNimController,
-      keyboardType: TextInputType.emailAddress,
-      style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
-      decoration: const InputDecoration(
-        hintText: 'nanda@gmail.com atau 23090122',
-        prefixIcon: null,
-        prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
       ),
     );
   }
 
   Widget _buildPasswordField() {
     return Obx(
-      () => TextFormField(
+      () => AppTextField(
         controller: controller.passwordController,
+        labelText: 'Kata Sandi',
+        hintText: 'Masukan kata sandi',
         obscureText: controller.isPasswordHidden.value,
-        style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
-        decoration: InputDecoration(
-          hintText: 'Masukan kata sandi',
-          suffixIcon: GestureDetector(
-            onTap: controller.togglePasswordVisibility,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Icon(
-                controller.isPasswordHidden.value
-                    ? FluentIcons.eye_off_24_regular
-                    : FluentIcons.eye_24_regular,
-                color: AppIconColors.iconGrey,
-                size: 20,
-              ),
+        suffixIcon: GestureDetector(
+          onTap: controller.togglePasswordVisibility,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Icon(
+              controller.isPasswordHidden.value
+                  ? FluentIcons.eye_off_24_regular
+                  : FluentIcons.eye_24_regular,
+              color: AppIconColors.iconGrey,
+              size: 20,
             ),
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 48,
-            minHeight: 0,
           ),
         ),
       ),
@@ -179,72 +151,6 @@ class LoginView extends GetView<LoginController> {
   }
 
   Widget _buildActionButtons() {
-    return GestureDetector(
-      onTap: controller.onLogin,
-      child: Container(
-        width: double.infinity,
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.primary500,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Text(
-          'Masuk',
-          style: AppTextStyles.button(
-            fontSize: 16,
-            color: AppTextColors.textPrimaryWhite,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrDivider() {
-    return Row(
-      children: [
-        const Expanded(child: Divider(color: AppColors.grey200, thickness: 1)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(
-            'Atau',
-            style: AppTextStyles.bodySmall(
-              color: AppTextColors.textSecondaryDarkGrey,
-            ),
-          ),
-        ),
-        const Expanded(child: Divider(color: AppColors.grey200, thickness: 1)),
-      ],
-    );
-  }
-
-  Widget _buildGoogleButton() {
-    return GestureDetector(
-      onTap: controller.onGoogleLogin,
-      child: Container(
-        width: double.infinity,
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: AppColors.grey300),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('lib/assets/icons/google.png', width: 22, height: 22),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'Masuk dengan Google',
-              style: AppTextStyles.button(
-                fontSize: 14,
-                color: AppTextColors.textPrimaryBlack,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AppButton(label: 'Masuk', onTap: controller.onLogin);
   }
 }

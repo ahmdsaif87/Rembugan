@@ -362,7 +362,7 @@ class _LabeledPicker extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(
+                Icon(
                   FluentIcons.chevron_down_24_regular,
                   size: 16,
                   color: AppColors.textTertiary,
@@ -447,7 +447,7 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
             TextField(
               autofocus: true,
               onChanged: (value) => setState(() => _query = value),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Cari jurusan',
                 prefixIcon: Icon(
                   FluentIcons.search_24_regular,
@@ -591,7 +591,7 @@ class _SkillInput extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     FluentIcons.add_24_regular,
                     size: 13,
                     color: AppColors.textSecondary,
@@ -647,7 +647,7 @@ class _SkillDraftChip extends StatelessWidget {
           const SizedBox(width: 6),
           GestureDetector(
             onTap: onRemove,
-            child: const Icon(
+            child: Icon(
               FluentIcons.dismiss_24_regular,
               size: 12,
               color: AppColors.textTertiary,
@@ -736,7 +736,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
               onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
                 hintText: widget.searchHint,
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   FluentIcons.search_24_regular,
                   size: 18,
                   color: AppColors.textTertiary,

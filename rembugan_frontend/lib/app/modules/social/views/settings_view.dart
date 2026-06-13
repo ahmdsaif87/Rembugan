@@ -15,7 +15,7 @@ class SettingsView extends StatefulWidget {
 
 class _SettingsViewState extends State<SettingsView> {
   bool isDark = false;
-  String googleEmail = 'nanda.saif87@gmail.com';
+  String? linkedEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -101,13 +101,13 @@ class _SettingsViewState extends State<SettingsView> {
                       ),
                     ),
 
-                    // Google Account Tile
+                    // Linked email tile
                     _buildSettingsTile(
-                      icon: FluentIcons.person_accounts_24_regular,
-                      title: 'Akun Google',
-                      subtitle: googleEmail == 'Belum ditautkan'
-                          ? 'Hubungkan ke akun Google'
-                          : 'Tersambung: $googleEmail',
+                      icon: FluentIcons.mail_24_regular,
+                      title: 'Email Tertaut',
+                      subtitle: linkedEmail == null
+                          ? 'Tautkan email untuk pemulihan akun'
+                          : 'Terverifikasi: $linkedEmail',
                       cardColor: cardColor,
                       textColor: textColor,
                       subtitleColor: subtitleColor,
@@ -118,25 +118,23 @@ class _SettingsViewState extends State<SettingsView> {
                           vertical: AppSpacing.xxs,
                         ),
                         decoration: BoxDecoration(
-                          color: googleEmail == 'Belum ditautkan'
+                          color: linkedEmail == null
                               ? AppColors.danger50
                               : AppColors.success50,
                           borderRadius: BorderRadius.circular(AppRadius.xxs),
                         ),
                         child: Text(
-                          googleEmail == 'Belum ditautkan'
-                              ? 'Belum Taut'
-                              : 'Aktif',
+                          linkedEmail == null ? 'Belum Taut' : 'Aktif',
                           style: AppFonts.satoshiStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
-                            color: googleEmail == 'Belum ditautkan'
+                            color: linkedEmail == null
                                 ? AppColors.danger700
                                 : AppColors.success700,
                           ),
                         ),
                       ),
-                      onTap: () => _showGoogleAccountSheet(context, isDark),
+                      onTap: () => _showLinkEmailSheet(context, isDark),
                     ),
 
                     // Change Password Tile
@@ -488,7 +486,9 @@ class _SettingsViewState extends State<SettingsView> {
                 trailing ??
                     Icon(
                       FluentIcons.chevron_right_24_regular,
-                      color: isDark ? AppColors.white38 : AppColors.textTertiary,
+                      color: isDark
+                          ? AppColors.white38
+                          : AppColors.textTertiary,
                       size: 18,
                     ),
               ],
@@ -499,62 +499,15 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  void _showChangePasswordSheet(BuildContext context, bool isDark) {
+  Future<void> _showChangePasswordSheet(
+    BuildContext context,
+    bool isDark,
+  ) async {
     final currentPw = TextEditingController();
     final newPw = TextEditingController();
     final confirmPw = TextEditingController();
 
-    final textStyle = AppFonts.satoshiStyle(
-      fontSize: 13.5,
-      fontWeight: FontWeight.w600,
-      color: isDark ? AppColors.white : AppColors.textPrimary,
-    );
-
-    final inputDecoration = (String hint) => InputDecoration(
-      filled: true,
-      fillColor: isDark ? AppColors.grey800 : AppColors.grey50,
-      hintText: hint,
-      hintStyle: AppFonts.satoshiStyle(
-        fontSize: 13,
-        color: isDark
-            ? AppColors.white38
-            : AppColors.textTertiary.withValues(alpha: 0.6),
-      ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      isDense: true,
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(
-          color: isDark
-              ? AppColors.grey700
-              : AppColors.border.withValues(alpha: 0.8),
-          width: 1.0,
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(
-          color: isDark
-              ? AppColors.white54
-              : AppColors.textPrimary.withValues(alpha: 0.4),
-          width: 1.2,
-        ),
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(
-          color: isDark
-              ? AppColors.grey700
-              : AppColors.border.withValues(alpha: 0.8),
-          width: 1.0,
-        ),
-      ),
-    );
-
-    showModalBottomSheet<void>(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
@@ -605,11 +558,10 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
               ),
               const SizedBox(height: 6),
-              TextField(
+              AppTextField(
                 controller: currentPw,
                 obscureText: true,
-                decoration: inputDecoration('Masukkan password saat ini'),
-                style: textStyle,
+                hintText: 'Masukkan password saat ini',
               ),
               const SizedBox(height: 14),
 
@@ -623,11 +575,10 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
               ),
               const SizedBox(height: 6),
-              TextField(
+              AppTextField(
                 controller: newPw,
                 obscureText: true,
-                decoration: inputDecoration('Masukkan password baru'),
-                style: textStyle,
+                hintText: 'Masukkan password baru',
               ),
               const SizedBox(height: 14),
 
@@ -641,205 +592,189 @@ class _SettingsViewState extends State<SettingsView> {
                 ),
               ),
               const SizedBox(height: 6),
-              TextField(
+              AppTextField(
                 controller: confirmPw,
                 obscureText: true,
-                decoration: inputDecoration('Ulangi password baru'),
-                style: textStyle,
+                hintText: 'Ulangi password baru',
               ),
               const SizedBox(height: 22),
 
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: GestureDetector(
-                  onTap: () {
-                    if (newPw.text == confirmPw.text && newPw.text.isNotEmpty) {
-                      Get.back();
-                      Get.snackbar(
-                        'Sukses',
-                        'Password berhasil diperbarui!',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: isDark
-                            ? AppColors.grey700
-                            : AppColors.primary500,
-                        colorText: AppColors.white,
-                        margin: const EdgeInsets.all(AppSpacing.md),
-                        borderRadius: 12,
-                      );
-                    }
-                  },
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.white : AppColors.grey900,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Text(
-                      'Perbarui Password',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppColors.primary500 : AppColors.white,
-                      ),
-                    ),
-                  ),
-                ),
+              AppButton(
+                label: 'Perbarui Password',
+                onTap: () {
+                  if (newPw.text == confirmPw.text && newPw.text.isNotEmpty) {
+                    Get.back();
+                    Get.snackbar(
+                      'Sukses',
+                      'Password berhasil diperbarui!',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: isDark
+                          ? AppColors.grey700
+                          : AppColors.primary500,
+                      colorText: AppColors.white,
+                      margin: const EdgeInsets.all(AppSpacing.md),
+                      borderRadius: 12,
+                    );
+                  }
+                },
               ),
             ],
           ),
         ),
       ),
     );
+
+    currentPw.dispose();
+    newPw.dispose();
+    confirmPw.dispose();
   }
 
-  void _showGoogleAccountSheet(BuildContext context, bool isDark) {
-    showModalBottomSheet<void>(
+  Future<void> _showLinkEmailSheet(BuildContext context, bool isDark) async {
+    final emailController = TextEditingController(text: linkedEmail);
+    final otpController = TextEditingController();
+    var otpSent = false;
+    String? errorMessage;
+
+    await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.grey800 : AppColors.white,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppRadius.xl),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setModalState) => Container(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.grey800 : AppColors.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadius.xl),
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.grey700 : AppColors.grey300,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.grey100,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      FluentIcons.person_accounts_24_regular,
-                      size: 20,
-                      color: AppColors.info500,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Akun Google Terhubung',
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? AppColors.white
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          googleEmail,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.white54
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Tautan ini digunakan untuk mempermudah sinkronisasi data proyek, obrolan, dan keamanan akun Anda.',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 12.5,
-                  color: isDark ? AppColors.white70 : AppColors.textSecondary,
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Get.back();
-                        Get.showOverlay(
-                          asyncFunction: () async {
-                            await Future<void>.delayed(
-                              const Duration(milliseconds: 600),
-                            );
-                            setState(() {
-                              googleEmail = 'nanda.dev@gmail.com';
-                            });
-                            Get.snackbar(
-                              'Sukses',
-                              'Akun Google berhasil diubah ke nanda.dev@gmail.com',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: isDark
-                                  ? AppColors.grey700
-                                  : AppColors.primary500,
-                              colorText: AppColors.white,
-                              margin: const EdgeInsets.all(AppSpacing.md),
-                              borderRadius: 12,
-                            );
-                          },
-                          loadingWidget: const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.white,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.white : AppColors.grey900,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Text(
-                          'Ganti Akun',
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? AppColors.primary500
-                                : AppColors.white,
-                          ),
-                        ),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.grey700 : AppColors.grey300,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Get.back();
+                  const SizedBox(height: 20),
+                  Text(
+                    linkedEmail == null ? 'Tautkan Email' : 'Ganti Email',
+                    style: AppFonts.headingStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    otpSent
+                        ? 'Masukkan kode OTP 6 digit yang dikirim ke ${emailController.text.trim()}.'
+                        : 'Email akan diverifikasi dengan kode OTP sebelum ditautkan ke akun.',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12.5,
+                      color: isDark
+                          ? AppColors.white70
+                          : AppColors.textSecondary,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  AppTextField(
+                    controller: emailController,
+                    enabled: !otpSent,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    labelText: 'Alamat email',
+                    hintText: 'nama@email.com',
+                    prefixIcon: const Icon(FluentIcons.mail_24_regular),
+                  ),
+                  if (otpSent) ...[
+                    const SizedBox(height: 14),
+                    AppTextField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      labelText: 'Kode OTP',
+                      hintText: '000000',
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          otpController.clear();
+                          setModalState(() {
+                            errorMessage = null;
+                          });
+                          Get.snackbar(
+                            'OTP Dikirim Ulang',
+                            'Kode baru telah dikirim ke ${emailController.text.trim()}',
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        },
+                        child: const Text('Kirim ulang OTP'),
+                      ),
+                    ),
+                  ],
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      errorMessage!,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 12,
+                        color: AppColors.error500,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: FilledButton(
+                      onPressed: () {
+                        final email = emailController.text.trim();
+                        if (!otpSent) {
+                          if (!GetUtils.isEmail(email)) {
+                            setModalState(() {
+                              errorMessage =
+                                  'Masukkan alamat email yang valid.';
+                            });
+                            return;
+                          }
+                          setModalState(() {
+                            otpSent = true;
+                            errorMessage = null;
+                          });
+                          return;
+                        }
+
+                        if (!RegExp(r'^\d{6}$').hasMatch(otpController.text)) {
+                          setModalState(() {
+                            errorMessage =
+                                'Kode OTP harus terdiri dari 6 digit.';
+                          });
+                          return;
+                        }
+
                         setState(() {
-                          googleEmail = 'Belum ditautkan';
+                          linkedEmail = email;
                         });
+                        Get.back();
                         Get.snackbar(
-                          'Sukses',
-                          'Tautan Akun Google berhasil diputuskan.',
+                          'Email Terverifikasi',
+                          '$email berhasil ditautkan ke akun.',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: isDark
                               ? AppColors.grey700
@@ -849,38 +784,30 @@ class _SettingsViewState extends State<SettingsView> {
                           borderRadius: 12,
                         );
                       },
-                      child: Container(
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.transparent,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: isDark
+                            ? AppColors.white
+                            : AppColors.primary500,
+                        foregroundColor: isDark
+                            ? AppColors.primary500
+                            : AppColors.white,
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.grey700
-                                : AppColors.border,
-                          ),
-                        ),
-                        child: Text(
-                          'Putuskan',
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? AppColors.white
-                                : AppColors.textSecondary,
-                          ),
                         ),
                       ),
+                      child: Text(otpSent ? 'Verifikasi OTP' : 'Kirim OTP'),
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
+
+    emailController.dispose();
+    otpController.dispose();
   }
 
   void _showLogoutConfirmSheet(BuildContext context, bool isDark) {

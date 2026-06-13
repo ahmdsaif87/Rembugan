@@ -1070,8 +1070,10 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+                separatorBuilder: (_, __) => Divider(
+                  height: 1,
+                  color: AppColors.border.withValues(alpha: 0.4),
+                ),
                 itemBuilder: (context, index) {
                   final option = filtered[index];
                   final selected = option == widget.value;

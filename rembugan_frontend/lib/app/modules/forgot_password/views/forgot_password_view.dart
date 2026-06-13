@@ -1,8 +1,11 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_chrome.dart';
 import '../controllers/forgot_password_controller.dart';
 
 class ForgotPasswordView extends GetView<ForgotPasswordController> {
@@ -11,19 +14,34 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppSurfaceColors.surfaceWhite,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: Obx(
-          () => ListView(
-            padding: const EdgeInsets.fromLTRB(14, 24, 14, AppSpacing.xl),
+          () => Column(
             children: [
-              _buildBackButton(),
-              const SizedBox(height: 38),
-              _buildHeader(),
-              const SizedBox(height: 50),
-              controller.step.value == 0
-                  ? _buildEmailForm()
-                  : _buildResetPasswordForm(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: controller.goBack,
+                    icon: const Icon(
+                      FluentIcons.chevron_left_24_regular,
+                      color: AppColors.primary500,
+                      size: 25,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _buildStep(controller.step.value),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -31,218 +49,322 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
     );
   }
 
-  Widget _buildBackButton() {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: GestureDetector(
-        onTap: () {
-          if (controller.step.value == 1) {
-            controller.step.value = 0;
-          } else {
-            Get.back();
-          }
-        },
-        child: const SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(
-            FluentIcons.chevron_left_24_regular,
-            color: AppColors.primary500,
-            size: 23,
+  Widget _buildStep(int step) {
+    return switch (step) {
+      0 => _EmailStep(key: const ValueKey(0), controller: controller),
+      1 => _OtpStep(key: const ValueKey(1), controller: controller),
+      2 => _PasswordStep(key: const ValueKey(2), controller: controller),
+      3 => _SuccessStep(key: const ValueKey(3), controller: controller),
+      _ => const SizedBox(key: ValueKey(4)),
+    };
+  }
+}
+
+class _EmailStep extends StatelessWidget {
+  final ForgotPasswordController controller;
+
+  const _EmailStep({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: controller.formKeyEmail,
+      child: Column(
+        children: [
+          const SizedBox(height: 4),
+          Image.asset(
+            'lib/assets/img/forgot_password.png',
+            width: 260,
+            height: 260,
+            fit: BoxFit.contain,
           ),
-        ),
+          const SizedBox(height: 14),
+          const _Title(
+            title: 'Lupa kata sandi?',
+            subtitle:
+                'Masukkan email akunmu untuk menerima instruksi\npengaturan ulang kata sandi.',
+          ),
+          const SizedBox(height: 24),
+          AppTextField(
+            controller: controller.emailController,
+            labelText: 'Email',
+            hintText: 'nanda@gmail.com',
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              final email = value?.trim() ?? '';
+              if (email.isEmpty) return 'Email wajib diisi';
+              if (!GetUtils.isEmail(email)) return 'Format email tidak valid';
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          AppButton(label: 'Kirim', onTap: controller.onSendEmail),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildHeader() {
-    final title = controller.step.value == 0 ? 'Lupa Kata Sandi' : 'Kata Sandi Baru';
-    final subtitle = controller.step.value == 0
-        ? 'Masukkan email atau NIM terdaftar Anda untuk menerima instruksi pemulihan.'
-        : 'Silakan masukkan kata sandi baru Anda untuk memperbarui kata sandi akun.';
+class _OtpStep extends StatelessWidget {
+  final ForgotPasswordController controller;
+
+  const _OtpStep({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayEmail = controller.email.isEmpty
+        ? 'tim.jennings@example.com'
+        : controller.email;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(height: 54),
+        Lottie.asset(
+          'lib/assets/animations/Email.json',
+          width: 170,
+          height: 140,
+          fit: BoxFit.contain,
+          repeat: true,
+        ),
+        const SizedBox(height: 10),
+        _Title(
+          title: 'Cek Email Anda',
+          subtitle: 'Kami telah mengirimkan kode ke\n$displayEmail',
+        ),
+        const SizedBox(height: 32),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            controller.otpControllers.length,
+            (index) => Padding(
+              padding: EdgeInsets.only(
+                right: index == controller.otpControllers.length - 1 ? 0 : 12,
+              ),
+              child: SizedBox(
+                width: 70,
+                height: 70,
+                child: TextField(
+                  controller: controller.otpControllers[index],
+                  focusNode: controller.otpFocusNodes[index],
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.grey900,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(1),
+                  ],
+                  onChanged: (value) => controller.onOtpChanged(index, value),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.zero,
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: AppColors.primary500,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 28),
+        AppButton(label: 'Kirim', onTap: controller.onVerifyOtp),
+        const SizedBox(height: 20),
+        Obx(() {
+          final seconds = controller.resendSeconds.value;
+          return GestureDetector(
+            onTap: seconds == 0 ? controller.resendOtp : null,
+            child: Text.rich(
+              TextSpan(
+                text: 'Tidak menerima email? ',
+                children: [
+                  TextSpan(
+                    text: seconds == 0
+                        ? 'Kirim ulang'
+                        : 'Kirim ulang ($seconds)',
+                    style: AppFonts.satoshiStyle(
+                      fontWeight: FontWeight.w600,
+                      color: seconds == 0
+                          ? AppColors.primary500
+                          : AppColors.grey900,
+                    ),
+                  ),
+                ],
+              ),
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                color: AppColors.grey500,
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class _PasswordStep extends StatelessWidget {
+  final ForgotPasswordController controller;
+
+  const _PasswordStep({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: controller.formKeyReset,
+      child: Column(
+        children: [
+          const SizedBox(height: 142),
+          const _Title(
+            title: 'Buat Kata Sandi Baru',
+            subtitle: 'Buat kata sandi baru untuk mengamankan akunmu.',
+          ),
+          const SizedBox(height: 32),
+          Obx(
+            () => AppTextField(
+              controller: controller.newPasswordController,
+              labelText: 'Kata Sandi Baru',
+              hintText: 'Masukan kata sandi baru',
+              obscureText: controller.isNewPasswordHidden.value,
+              suffixIcon: _PasswordVisibilityButton(
+                hidden: controller.isNewPasswordHidden.value,
+                onTap: controller.toggleNewPasswordVisibility,
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Kata sandi baru wajib diisi';
+                }
+                if (value.length < 6) {
+                  return 'Kata sandi minimal 6 karakter';
+                }
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          Obx(
+            () => AppTextField(
+              controller: controller.confirmPasswordController,
+              labelText: 'Konfirmasi kata sandi',
+              hintText: 'Masukkan ulang kata sandi baru',
+              obscureText: controller.isConfirmPasswordHidden.value,
+              suffixIcon: _PasswordVisibilityButton(
+                hidden: controller.isConfirmPasswordHidden.value,
+                onTap: controller.toggleConfirmPasswordVisibility,
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Konfirmasi kata sandi wajib diisi';
+                }
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(height: 28),
+          AppButton(
+            label: 'Simpan Kata Sandi',
+            onTap: controller.onResetPassword,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuccessStep extends StatelessWidget {
+  final ForgotPasswordController controller;
+
+  const _SuccessStep({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 92),
+        Lottie.asset(
+          'lib/assets/animations/password.json',
+          width: 210,
+          height: 180,
+          fit: BoxFit.contain,
+          repeat: false,
+        ),
+        const SizedBox(height: 24),
+        const _Title(
+          title: 'Kata Sandi Berhasil\nDiubah',
+          subtitle:
+              'Kata sandi baru telah berhasil disimpan. Silakan masuk\nkembali ke akunmu.',
+        ),
+        const SizedBox(height: 26),
+        AppButton(label: 'Masuk kembali', onTap: controller.backToLogin),
+      ],
+    );
+  }
+}
+
+class _Title extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _Title({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
       children: [
         Text(
           title,
           textAlign: TextAlign.center,
-          style: AppFonts.headingStyle(
-            fontSize: 27,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primary800,
-            height: 1.18,
+          style: AppFonts.satoshiStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: AppColors.grey900,
+            height: 1.2,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: AppFonts.satoshiStyle(
-            fontSize: 15,
-            color: AppColors.grey600,
-            height: 1.35,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: AppColors.grey500,
+            height: 1.45,
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildEmailForm() {
-    return Form(
-      key: controller.formKeyEmail,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInputLabel('Email atau NIM'),
-          const SizedBox(height: AppSpacing.xs),
-          _buildEmailOrNimField(),
-          const SizedBox(height: 32),
-          _buildActionButton('Kirim Tautan Atur Ulang', controller.onSendResetLink),
-        ],
-      ),
-    );
-  }
+class _PasswordVisibilityButton extends StatelessWidget {
+  const _PasswordVisibilityButton({required this.hidden, required this.onTap});
 
-  Widget _buildResetPasswordForm() {
-    return Form(
-      key: controller.formKeyReset,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInputLabel('Kata Sandi Baru'),
-          const SizedBox(height: AppSpacing.xs),
-          _buildNewPasswordField(),
-          const SizedBox(height: 24),
-          _buildInputLabel('Konfirmasi Kata Sandi Baru'),
-          const SizedBox(height: AppSpacing.xs),
-          _buildConfirmPasswordField(),
-          const SizedBox(height: 32),
-          _buildActionButton('Simpan Kata Sandi', controller.onResetPassword),
-        ],
-      ),
-    );
-  }
+  final bool hidden;
+  final VoidCallback onTap;
 
-  Widget _buildInputLabel(String label) {
-    return Text(
-      label,
-      style: AppTextStyles.button(color: AppTextColors.textPrimaryBlack),
-    );
-  }
-
-  Widget _buildEmailOrNimField() {
-    return TextFormField(
-      controller: controller.emailOrNimController,
-      keyboardType: TextInputType.emailAddress,
-      style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Kolom ini wajib diisi';
-        }
-        return null;
-      },
-      decoration: const InputDecoration(
-        hintText: 'nanda@gmail.com atau 23090122',
-        prefixIcon: null,
-        prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-      ),
-    );
-  }
-
-  Widget _buildNewPasswordField() {
-    return Obx(
-      () => TextFormField(
-        controller: controller.newPasswordController,
-        obscureText: controller.isNewPasswordHidden.value,
-        style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Masukkan kata sandi baru';
-          }
-          if (value.length < 6) {
-            return 'Kata sandi minimal 6 karakter';
-          }
-          return null;
-        },
-        decoration: InputDecoration(
-          hintText: 'Masukkan kata sandi baru',
-          suffixIcon: GestureDetector(
-            onTap: controller.toggleNewPasswordVisibility,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Icon(
-                controller.isNewPasswordHidden.value
-                    ? FluentIcons.eye_off_24_regular
-                    : FluentIcons.eye_24_regular,
-                color: AppIconColors.iconGrey,
-                size: 20,
-              ),
-            ),
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 48,
-            minHeight: 0,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConfirmPasswordField() {
-    return Obx(
-      () => TextFormField(
-        controller: controller.confirmPasswordController,
-        obscureText: controller.isConfirmPasswordHidden.value,
-        style: AppTextStyles.bodyMedium(color: AppTextColors.textPrimaryBlack),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Ulangi kata sandi baru';
-          }
-          return null;
-        },
-        decoration: InputDecoration(
-          hintText: 'Masukkan ulang kata sandi baru',
-          suffixIcon: GestureDetector(
-            onTap: controller.toggleConfirmPasswordVisibility,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Icon(
-                controller.isConfirmPasswordHidden.value
-                    ? FluentIcons.eye_off_24_regular
-                    : FluentIcons.eye_24_regular,
-                color: AppIconColors.iconGrey,
-                size: 20,
-              ),
-            ),
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 48,
-            minHeight: 0,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.primary500,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.button(
-            fontSize: 16,
-            color: AppTextColors.textPrimaryWhite,
-          ),
-        ),
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(
+        hidden ? FluentIcons.eye_off_24_regular : FluentIcons.eye_24_regular,
+        color: AppColors.grey400,
+        size: 22,
       ),
     );
   }

@@ -527,7 +527,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                       const SizedBox(width: 8),
 
                       // Chevron right
-                      const Icon(
+                      Icon(
                         FluentIcons.chevron_right_24_regular,
                         size: 18,
                         color: AppColors.textTertiary,

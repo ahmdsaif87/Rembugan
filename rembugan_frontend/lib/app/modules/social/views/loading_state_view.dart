@@ -18,10 +18,10 @@ class LoadingStateView extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, __) {
           return AppSurface(
-            shadow: const [],
+            shadow: [],
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 CircleAvatar(
                   radius: 22,
                   backgroundColor: AppColors.surfaceSecondary,

@@ -25,11 +25,6 @@ class LoginController extends GetxController {
     }
   }
 
-  void onGoogleLogin() {
-    // TODO: Implementasi login Google
-    Get.snackbar('Google', 'Fitur login Google sedang dalam pengembangan');
-  }
-
   void onForgotPassword() {
     Get.toNamed(Routes.FORGOT_PASSWORD);
   }

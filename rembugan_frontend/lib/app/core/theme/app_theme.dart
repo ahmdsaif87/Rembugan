@@ -96,7 +96,12 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.grey100,
+        fillColor: WidgetStateColor.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return AppColors.primary50;
+          }
+          return AppColors.grey50;
+        }),
         hintStyle: AppTextStyles.bodyMedium(color: AppTextColors.textGrey),
         labelStyle: AppTextStyles.bodyMedium(
           color: AppTextColors.textPrimaryBlack,

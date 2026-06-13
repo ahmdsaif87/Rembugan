@@ -76,7 +76,7 @@ class RoomChatView extends GetView<RoomChatController> {
       elevation: 0,
       surfaceTintColor: AppColors.transparent,
       leading: IconButton(
-        icon: const Icon(
+        icon: Icon(
           FluentIcons.chevron_left_24_regular,
           color: AppColors.textPrimary,
         ),
@@ -116,7 +116,7 @@ class RoomChatView extends GetView<RoomChatController> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(
+          icon: Icon(
             FluentIcons.more_vertical_24_regular,
             color: AppColors.textPrimary,
           ),
@@ -205,12 +205,11 @@ class RoomChatView extends GetView<RoomChatController> {
                             // Shared post header (Avatar + Name)
                             Row(
                               children: [
-                                CircleAvatar(
+                                AppNetworkAvatar(
                                   radius: 12,
-                                  backgroundImage: NetworkImage(
-                                    sharedPost['avatarUrl'] ??
-                                        'https://i.pravatar.cc/100?img=33',
-                                  ),
+                                  imageUrl:
+                                      sharedPost['avatarUrl'] ??
+                                      'https://i.pravatar.cc/100?img=33',
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -265,7 +264,10 @@ class RoomChatView extends GetView<RoomChatController> {
                               ),
                             ],
                             const SizedBox(height: 8),
-                            Divider(height: 1, color: AppColors.grey200.withValues(alpha: 0.4)),
+                            Divider(
+                              height: 1,
+                              color: AppColors.grey200.withValues(alpha: 0.4),
+                            ),
                             const SizedBox(height: 6),
                             Center(
                               child: Text(
@@ -414,7 +416,7 @@ class RoomChatView extends GetView<RoomChatController> {
               horizontal: AppSpacing.md,
               vertical: AppSpacing.sm,
             ),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.grey50,
               border: Border(
                 top: BorderSide(color: AppColors.border, width: 1),
@@ -468,11 +470,11 @@ class RoomChatView extends GetView<RoomChatController> {
                   onTap: () => controller.removeAttachment(),
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.xxs),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.border,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       FluentIcons.dismiss_12_filled,
                       color: AppColors.textSecondary,
                       size: 12,
@@ -490,9 +492,7 @@ class RoomChatView extends GetView<RoomChatController> {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          decoration: const BoxDecoration(
-            color: AppColors.white,
-          ),
+          decoration: const BoxDecoration(color: AppColors.white),
           child: Row(
             children: [
               // Plus/Attachment Button
@@ -586,7 +586,7 @@ class RoomChatView extends GetView<RoomChatController> {
                     border: Border.all(color: AppColors.border),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     FluentIcons.add_24_regular,
                     color: AppColors.textSecondary,
                     size: 24,

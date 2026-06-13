@@ -882,11 +882,7 @@ class _RecommendedPersonCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: AppColors.primarySoft,
-              backgroundImage: NetworkImage(person.avatarUrl),
-            ),
+            AppNetworkAvatar(radius: 24, imageUrl: person.avatarUrl),
             const SizedBox(height: 8),
             Text(
               person.name,
@@ -1111,205 +1107,209 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                                 fontSize: 11,
                                 color: AppColors.grey400,
                                 fontWeight: FontWeight.w600,
-                                ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            'Teknik Informatika',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 12,
-                              color: AppColors.grey500,
-                              fontWeight: FontWeight.w500,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (widget.showFollowButton)
-                    GestureDetector(
-                      onTap: _toggleFollow,
-                      child: Container(
-                        height: 28,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(color: AppColors.primary500),
+                          ],
                         ),
-                        child: Text(
-                          _isFollowing ? 'Mengikuti' : 'Ikuti',
+                        const SizedBox(height: 1),
+                        Text(
+                          'Teknik Informatika',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: AppFonts.satoshiStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary500,
+                            fontSize: 12,
+                            color: AppColors.grey500,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                widget.content,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 15,
-                  color: AppColors.grey900,
-                  height: 1.36,
-                ),
-              ),
-              if (widget.imageAssets != null &&
-                  widget.imageAssets!.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                if (widget.imageAssets!.length == 1)
-                  GestureDetector(
-                    onTap: () => _showImageViewer(
-                      context,
-                      assetPath: widget.imageAssets!.first,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.asset(
-                        widget.imageAssets!.first,
-                        width: double.infinity,
-                        height: 373,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  )
-                else if (widget.imageAssets!.length == 2)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => _showImageViewer(
-                            context,
-                            assetPath: widget.imageAssets![0],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: Image.asset(
-                              widget.imageAssets![0],
-                              height: 236,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => _showImageViewer(
-                            context,
-                            assetPath: widget.imageAssets![1],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: Image.asset(
-                              widget.imageAssets![1],
-                              height: 236,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
-              ] else if (widget.hasImage && widget.imageUrl != null) ...[
-                const SizedBox(height: 16),
+                ),
+                if (widget.showFollowButton)
+                  GestureDetector(
+                    onTap: _toggleFollow,
+                    child: Container(
+                      height: 28,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(color: AppColors.primary500),
+                      ),
+                      child: Text(
+                        _isFollowing ? 'Mengikuti' : 'Ikuti',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary500,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              widget.content,
+              style: AppFonts.satoshiStyle(
+                fontSize: 15,
+                color: AppColors.grey900,
+                height: 1.36,
+              ),
+            ),
+            if (widget.imageAssets != null &&
+                widget.imageAssets!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              if (widget.imageAssets!.length == 1)
                 GestureDetector(
-                  onTap: () =>
-                      _showImageViewer(context, imageUrl: widget.imageUrl),
+                  onTap: () => _showImageViewer(
+                    context,
+                    assetPath: widget.imageAssets!.first,
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    child: Image.network(
-                      widget.imageUrl!,
+                    child: Image.asset(
+                      widget.imageAssets!.first,
                       width: double.infinity,
                       height: 373,
                       fit: BoxFit.cover,
                     ),
                   ),
+                )
+              else if (widget.imageAssets!.length == 2)
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _showImageViewer(
+                          context,
+                          assetPath: widget.imageAssets![0],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          child: Image.asset(
+                            widget.imageAssets![0],
+                            height: 236,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _showImageViewer(
+                          context,
+                          assetPath: widget.imageAssets![1],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          child: Image.asset(
+                            widget.imageAssets![1],
+                            height: 236,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _buildInteractionItem(
-                    _isLiked ? FluentIcons.heart_24_filled : FluentIcons.heart_24_regular,
-                    '$_likeCount',
-                    'menyukai postingan',
-                    _isLiked ? AppColors.error500 : AppColors.grey500,
-                    onTap: _toggleLike,
+            ] else if (widget.hasImage && widget.imageUrl != null) ...[
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () =>
+                    _showImageViewer(context, imageUrl: widget.imageUrl),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: Image.network(
+                    widget.imageUrl!,
+                    width: double.infinity,
+                    height: 373,
+                    fit: BoxFit.cover,
                   ),
-                  const SizedBox(width: 18),
-                  _buildInteractionItem(
-                    FluentIcons.chat_24_regular,
-                    '20',
-                    'berkomentar',
-                    AppColors.grey500,
-                    onTap: widget.onShowComments,
-                  ),
-                  const Spacer(),
-                  _buildInteractionItem(
-                    FluentIcons.send_24_regular,
-                    '',
-                    'membagikan postingan',
-                    AppColors.grey500,
-                    onTap: widget.onShowShare,
-                  ),
-                  const SizedBox(width: 22),
-                  _buildInteractionItem(
-                    _isBookmarked ? FluentIcons.bookmark_24_filled : FluentIcons.bookmark_24_regular,
-                    '',
-                    'menyimpan postingan',
-                    _isBookmarked ? AppColors.warning500 : AppColors.grey500,
-                    onTap: _toggleBookmark,
-                  ),
-                ],
+                ),
               ),
             ],
-          ),
-        ),
-      );
-    }
-
-    Widget _buildInteractionItem(
-      IconData icon,
-      String count,
-      String feature,
-      Color activeColor, {
-      required VoidCallback onTap,
-    }) {
-      return GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 2,
-            vertical: AppSpacing.xs,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: activeColor, size: 22),
-              if (count.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Text(
-                  count,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _buildInteractionItem(
+                  _isLiked
+                      ? FluentIcons.heart_24_filled
+                      : FluentIcons.heart_24_regular,
+                  '$_likeCount',
+                  'menyukai postingan',
+                  _isLiked ? AppColors.error500 : AppColors.grey500,
+                  onTap: _toggleLike,
+                ),
+                const SizedBox(width: 18),
+                _buildInteractionItem(
+                  FluentIcons.chat_24_regular,
+                  '20',
+                  'berkomentar',
+                  AppColors.grey500,
+                  onTap: widget.onShowComments,
+                ),
+                const Spacer(),
+                _buildInteractionItem(
+                  FluentIcons.send_24_regular,
+                  '',
+                  'membagikan postingan',
+                  AppColors.grey500,
+                  onTap: widget.onShowShare,
+                ),
+                const SizedBox(width: 22),
+                _buildInteractionItem(
+                  _isBookmarked
+                      ? FluentIcons.bookmark_24_filled
+                      : FluentIcons.bookmark_24_regular,
+                  '',
+                  'menyimpan postingan',
+                  _isBookmarked ? AppColors.warning500 : AppColors.grey500,
+                  onTap: _toggleBookmark,
                 ),
               ],
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
+
+  Widget _buildInteractionItem(
+    IconData icon,
+    String count,
+    String feature,
+    Color activeColor, {
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 2,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: activeColor, size: 22),
+            if (count.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Text(
+                count,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
