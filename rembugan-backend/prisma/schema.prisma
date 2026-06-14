@@ -17,12 +17,12 @@ model User {
   // Kredensial (Multi-Auth)
   nim           String    @unique // Wajib, identitas utama mahasiswa
   password      String    // Wajib, di-hash saat registrasi
-  googleId      String?   @unique // Opsional, diisi jika menautkan akun Google
   email         String?   @unique
   email_verified Boolean  @default(false)
   
   // Data Profil Dasar
   full_name     String
+  handle        String?   @unique // @username untuk profil
   major         String
   bio           String?
   photo_url     String?   
@@ -49,10 +49,12 @@ model User {
   comments      ShowcaseComment[]
   sentConnections Connection[]       @relation("SentConnections")
   receivedConnections Connection[]   @relation("ReceivedConnections")
+  uploadedFiles   ProjectFile[]
   notifications Notification[]
 
-  // Relasi ke OTP
+  // Relasi ke OTP & Saved Items
   otp_codes     OtpCode[]
+  savedItems    SavedItem[]
 
   // Timestamps
   created_at    DateTime  @default(now())
@@ -71,6 +73,9 @@ model OtpCode {
   created_at DateTime @default(now())
 
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([email])
 }
 
 // 2. ENTITAS SKILL & PENGALAMAN (PORTFOLIO)
@@ -111,14 +116,29 @@ model Project {
   required_skills String[]             // Array of String untuk memudahkan pencarian AI
   status          String               @default("open") // Status: 'open', 'ongoing', 'completed'
   
+  // Field tambahan untuk UI Flutter
+  category        String?              // Kategori proyek (Tech, Design, Business, dll)
+  faculty         String?              // Fakultas terkait proyek
+  deadline        DateTime?            // Batas waktu pendaftaran
+  total_slots     Int?                 // Total slot anggota yang dibutuhkan
+  
   owner           User                 @relation("ProjectOwner", fields: [owner_id], references: [id])
   members         ProjectMember[]
   applications    ProjectApplication[]
   tasks           Task[]
   messages        Message[]
   showcases       Showcase[]
-  
+  invites         ProjectInvite[]
+  savedBy         SavedItem[]
+  files           ProjectFile[]
+
   created_at      DateTime             @default(now())
+
+  @@index([status])
+  @@index([owner_id])
+  @@index([category])
+  @@index([faculty])
+  @@index([deadline])
 }
 
 model ProjectApplication {
@@ -130,6 +150,9 @@ model ProjectApplication {
   project      Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   applicant    User     @relation(fields: [applicant_id], references: [id], onDelete: Cascade)
   applied_at   DateTime @default(now())
+
+  @@index([project_id, status])
+  @@index([applicant_id])
 }
 
 model ProjectMember {
@@ -140,6 +163,38 @@ model ProjectMember {
   
   project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@index([user_id])
+}
+
+// 3b. UNDANGAN PROYEK (QR INVITE)
+model ProjectInvite {
+  id          String    @id @default(uuid())
+  project_id  Int
+  token       String    @unique
+  created_by  String
+  expires_at  DateTime
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+
+  project     Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+}
+
+// 3c. ITEM YANG DISIMPAN (BOOKMARK)
+model SavedItem {
+  id         Int      @id @default(autoincrement())
+  user_id    String
+  project_id Int?
+  showcase_id String?
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  project    Project? @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  showcase   Showcase? @relation(fields: [showcase_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, project_id])
+  @@unique([user_id, showcase_id])
 }
 
 // 4. ENTITAS WORKSPACE (KANBAN & CHAT)
@@ -154,6 +209,9 @@ model Task {
   project     Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   assignee    User?    @relation("TaskAssignee", fields: [assignee_id], references: [id], onDelete: SetNull)
   created_at  DateTime @default(now())
+
+  @@index([project_id, status])
+  @@index([assignee_id])
 }
 
 model Message {
@@ -168,8 +226,12 @@ model Message {
   sender      User     @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Cascade)
   receiver    User?    @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Cascade)
   project     Project? @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  
+
   created_at  DateTime @default(now())
+
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([project_id])
 }
 
 // 5. ENTITAS SHOWCASE (PORTOFOLIO/DOKUMENTASI)
@@ -187,6 +249,9 @@ model Showcase {
   project           Project? @relation(fields: [linked_project_id], references: [id], onDelete: SetNull)
   likes             ShowcaseLike[]
   comments          ShowcaseComment[]
+  savedBy           SavedItem[]
+
+  @@index([author_id])
 }
 
 // 6. INTERAKSI SHOWCASE (LIKE & KOMENTAR)
@@ -216,6 +281,21 @@ model ShowcaseComment {
   replies     ShowcaseComment[] @relation("CommentReplies")
 }
 
+// 6b. WORKSPACE FILES
+model ProjectFile {
+  id         Int      @id @default(autoincrement())
+  project_id Int
+  user_id    String
+  name       String
+  url        String
+  size       Int?     // size in bytes
+  mime_type  String?
+  created_at DateTime @default(now())
+
+  project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  uploader   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
 // 7. KONEKSI & NOTIFIKASI
 model Connection {
   id          Int      @id @default(autoincrement())
@@ -241,4 +321,7 @@ model Notification {
   created_at  DateTime @default(now())
 
   user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, is_read])
+  @@index([type])
 }

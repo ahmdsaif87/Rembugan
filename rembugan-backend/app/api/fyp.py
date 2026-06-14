@@ -1,12 +1,15 @@
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
-from zoneinfo import ZoneInfo
+from app.core.dates import tz_iso
 
 from app.core.security import verify_token
 from app.core.database import get_db
+from app.core.constants import PJ_OPEN, FYP_MAX_ROWS
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 from app.services.matchmaking import calculate_match_score
-from app.api.competitions import collection as competition_collection
+from app.services.competitions import get_competition_collection
 
 router = APIRouter(prefix="/fyp", tags=["Halaman Beranda (FYP)"])
 
@@ -51,13 +54,15 @@ async def get_fyp(
             "author_photo": s.author.photo_url if s.author else None,
             "likes_count": len(s.likes) if s.likes else 0,
             "comments_count": len(s.comments) if s.comments else 0,
-            "created_at": s.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "created_at": tz_iso(s.created_at),
         })
 
     # 2. Ambil Project Offerings (Limit 10 paling relevan)
+    # Cap max 500 project di memory untuk scoring safety
     projects = await db.project.find_many(
-        where={"status": "open", "owner_id": {"not": uid}},
+        where={"status": PJ_OPEN, "owner_id": {"not": uid}},
         include={"owner": True},
+        take=FYP_MAX_ROWS,
     )
     scored_projects = []
     for p in projects:
@@ -70,7 +75,7 @@ async def get_fyp(
             "required_skills": p.required_skills,
             "owner_name": p.owner.full_name if p.owner else None,
             "match_score": score,
-            "created_at": p.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "created_at": tz_iso(p.created_at),
         })
     scored_projects.sort(key=lambda x: x["match_score"], reverse=True)
     project_data = scored_projects[:10]
@@ -78,7 +83,8 @@ async def get_fyp(
     # 3. Ambil Lomba (Limit 5 paling relevan)
     competition_data = []
     try:
-        cursor = competition_collection.find({}).limit(50)
+        coll = get_competition_collection()
+        cursor = coll.find({}).limit(50)
         lomba_data = await cursor.to_list(length=50)
         for item in lomba_data:
             item["_id"] = str(item["_id"])
@@ -98,7 +104,7 @@ async def get_fyp(
         competition_data = competition_data[:5]
     except Exception as e:
         # Jangan sampai gagalkan endpoint ini jika API Lomba mati
-        print(f"Error fetching lomba: {e}")
+        logger.exception("Error fetching lomba")
 
     return {
         "status": "success",

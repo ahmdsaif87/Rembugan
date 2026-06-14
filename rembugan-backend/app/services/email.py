@@ -1,14 +1,19 @@
+import asyncio
 import os
-import random
+import secrets
 import hashlib
 import resend
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 resend.api_key = os.getenv("RESEND_API_KEY")
 RESEND_FROM = os.getenv("RESEND_FROM", "Rembugan <noreply@ahmadsaif.web.id>")
 
 
 def generate_otp() -> str:
-    return f"{random.randint(100000, 999999)}"
+    """Generate 6-digit OTP menggunakan CSPRNG."""
+    return f"{secrets.randbelow(1_000_000):06d}"
 
 
 def hash_otp(otp: str) -> str:
@@ -123,21 +128,28 @@ def render_otp_template(otp: str, expiry_minutes: int = 5) -> str:
 </html>"""
 
 
-def send_otp_email(to_email: str, otp: str):
-    html = render_otp_template(otp)
-    sent = False
+def _send_email_sync(to_email: str, subject: str, html: str) -> bool:
+    """Sync email sender — dipanggil via run_in_executor."""
     try:
         resend.Emails.send({
             "from": RESEND_FROM,
             "to": [to_email],
-            "subject": "Kode OTP Verifikasi Email - Rembugan",
+            "subject": subject,
             "html": html,
         })
-        sent = True
+        return True
     except Exception as e:
-        print(f"[EMAIL] Resend gagal ke {to_email}: {e}")
+        logger.error(f"Gagal kirim ke {to_email}: {e}")
+        return False
+
+
+async def send_otp_email(to_email: str, otp: str):
+    """Async version — tidak blocking event loop."""
+    html = render_otp_template(otp)
+    loop = asyncio.get_running_loop()
+    sent = await loop.run_in_executor(
+        None, _send_email_sync, to_email,
+        "Kode OTP Verifikasi Email - Rembugan", html,
+    )
     if not sent:
-        print(f"\n===== OTP DEV FALLBACK =====")
-        print(f"  Email: {to_email}")
-        print(f"  OTP:   {otp}")
-        print(f"=============================\n")
+        logger.warning(f"OTP DEV FALLBACK — Email: {to_email}, OTP: {otp}")

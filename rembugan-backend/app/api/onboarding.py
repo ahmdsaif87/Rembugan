@@ -1,6 +1,7 @@
+import asyncio
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from prisma import Prisma, Json
-from zoneinfo import ZoneInfo
+from app.core.dates import tz_iso
 
 from app.core.security import verify_token
 from app.core.database import get_db
@@ -12,8 +13,18 @@ from app.services.storage import upload_image_to_cloudinary
 router = APIRouter(prefix="/onboarding", tags=["1. AI & Onboarding"])
 
 
+def _format_nama(nama: str) -> str:
+    """Ubah nama kapital jadi title case."""
+    if not nama or nama == "Tidak Terdeteksi":
+        return nama
+    return nama.title()
+
+
 @router.post("/extract-cv", summary="Ekstrak Data CV (OCR + AI)")
-async def extract_cv_data(file: UploadFile = File(...)):
+async def extract_cv_data(
+    file: UploadFile = File(...),
+    user_token: dict = Depends(verify_token),
+):
     """
     Upload file PDF CV, lalu:
     1. Ekstrak foto profil dari PDF
@@ -25,29 +36,32 @@ async def extract_cv_data(file: UploadFile = File(...)):
 
     file_bytes = await file.read()
 
-    # 1. Ekstrak foto dari PDF
+    loop = asyncio.get_running_loop()
+
+    # 1. Ekstrak foto dari PDF (blocking → run_in_executor)
     photo_url = None
     try:
-        photo_bytes = extract_photo_from_pdf(file_bytes)
+        photo_bytes = await loop.run_in_executor(None, extract_photo_from_pdf, file_bytes)
         if photo_bytes:
-            photo_url = upload_image_to_cloudinary(photo_bytes)
+            photo_url = await upload_image_to_cloudinary(photo_bytes)
     except Exception:
-        pass  # Foto opsional, tidak perlu gagalkan proses
+        pass
 
-    # 2. Ekstrak teks mentah via OCR
-    raw_text = extract_text_from_pdf(file_bytes)
+    # 2. Ekstrak teks mentah via OCR (blocking → run_in_executor)
+    raw_text = await loop.run_in_executor(None, extract_text_from_pdf, file_bytes)
 
-    # 3. Rapikan teks menjadi JSON pakai AI
-    ai_result = process_resume_with_ai(raw_text)
+    # 3. Rapikan teks menjadi JSON pakai AI (blocking → run_in_executor)
+    ai_result = await loop.run_in_executor(None, process_resume_with_ai, raw_text)
 
     return {
         "status": "success",
         "message": "Analisis CV selesai!",
         "data": {
             "photo_url": photo_url,
-            "nama": ai_result.get("nama", "Tidak Terdeteksi"),
+            "nama": _format_nama(ai_result.get("nama", "Tidak Terdeteksi")),
             "skills_terdeteksi": ai_result.get("skills", []),
-            "bio_suggestion": ai_result.get("bio_suggestion", "")
+            "bio_suggestion": ai_result.get("bio_suggestion", ""),
+            "experiences": ai_result.get("experiences", []),
         }
     }
 
@@ -85,22 +99,26 @@ async def save_user_profile(
         data=update_data,
     )
 
-    # 2. Sinkronisasi Skills
+    # 2. Sinkronisasi Skills (batch — avoid N×2 Prisma round trips)
     await db.userskill.delete_many(where={"user_id": uid})
 
-    for skill_name in data.skills:
-        skill = await db.skill.upsert(
-            where={"name": skill_name},
-            data={
-                "create": {"name": skill_name},
-                "update": {},
-            },
+    if data.skills:
+        existing_skills = await db.skill.find_many(
+            where={"name": {"in": data.skills}}
         )
-        await db.userskill.create(
-            data={
-                "user_id": uid,
-                "skill_id": skill.id,
-            }
+        name_to_id = {s.name: s.id for s in existing_skills}
+
+        new_names = [n for n in data.skills if n not in name_to_id]
+        if new_names:
+            await db.skill.create_many(data=[{"name": n} for n in new_names])
+            new_skills = await db.skill.find_many(
+                where={"name": {"in": new_names}}
+            )
+            for s in new_skills:
+                name_to_id[s.name] = s.id
+
+        await db.userskill.create_many(
+            data=[{"user_id": uid, "skill_id": name_to_id[n]} for n in data.skills]
         )
 
     return {
@@ -146,7 +164,6 @@ async def get_my_profile(
             "email": user.email,
             "skills": skill_names,
             "social_links": user.social_links,
-            "google_linked": user.googleId is not None,
-            "created_at": user.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "created_at": tz_iso(user.created_at),
         },
     }

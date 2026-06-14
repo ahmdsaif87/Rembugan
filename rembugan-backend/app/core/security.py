@@ -4,35 +4,22 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import bcrypt
-import firebase_admin
-from firebase_admin import credentials, auth
-
 security = HTTPBearer()
 
 # ==========================================
-# KONFIGURASI
+# KONFIGURASI — WAJIB SET DI ENVIRONMENT
 # ==========================================
-JWT_SECRET = os.getenv("JWT_SECRET_KEY", "fallback-secret-key")
+JWT_SECRET = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET_KEY wajib diset di environment variable! Jangan pakai default.")
+
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 7
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@rembugan.com")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
-
-# ==========================================
-# FIREBASE SETUP
-# ==========================================
-def setup_firebase():
-    if not firebase_admin._apps:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        root_dir = os.path.dirname(os.path.dirname(current_dir))
-        cred_path = os.path.join(root_dir, "firebase-admin.json")
-
-        if not os.path.exists(cred_path):
-            raise FileNotFoundError(f"File Firebase tidak ditemukan di: {cred_path}")
-
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred)
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+    raise RuntimeError("ADMIN_EMAIL dan ADMIN_PASSWORD wajib diset di environment variable!")
 
 
 # ==========================================
@@ -78,37 +65,20 @@ def _verify_jwt(token: str) -> dict:
 # ==========================================
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """
-    Verifikasi token dari header Authorization.
-    Mendukung 2 jenis token:
-      1. JWT (dari login NIM+Password)
-      2. Firebase ID Token (dari login Google)
+    Verifikasi JWT token dari header Authorization.
 
     Returns:
         dict: {"uid": "...", "email": "..."} 
     """
     token = credentials.credentials
 
-    # 1. Coba decode sebagai JWT terlebih dahulu
     try:
         return _verify_jwt(token)
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-        pass  # Bukan JWT yang valid, coba Firebase
-
-    # 2. Coba decode sebagai Firebase token
-    try:
-        decoded_token = auth.verify_id_token(token)
-        return {
-            "uid": decoded_token["uid"],
-            "email": decoded_token.get("email"),
-        }
-    except Exception:
-        pass  # Bukan Firebase token yang valid juga
-
-    # 3. Kedua metode gagal
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Token tidak valid atau sudah kadaluarsa. Silakan login ulang.",
-    )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token tidak valid atau sudah kadaluarsa. Silakan login ulang.",
+        )
 
 
 # ==========================================
@@ -136,6 +106,27 @@ def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(secur
         )
 
     return payload
+
+
+# ==========================================
+# OPTIONAL TOKEN VERIFIER (untuk endpoint publik)
+# ==========================================
+def verify_token_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(
+        HTTPBearer(auto_error=False)
+    ),
+) -> dict | None:
+    """
+    Sama seperti verify_token, tapi tidak raise error jika token tidak ada.
+    Returns None jika tidak ada token, atau dict jika valid.
+    """
+    if credentials is None:
+        return None
+    token = credentials.credentials
+    try:
+        return _verify_jwt(token)
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
 
 
 # ==========================================

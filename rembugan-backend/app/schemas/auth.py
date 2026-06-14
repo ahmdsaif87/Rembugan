@@ -21,11 +21,6 @@ class AdminLoginInput(BaseModel):
     password: str = Field(..., description="Password admin")
 
 
-class LinkGoogleInput(BaseModel):
-    """Data untuk menautkan akun Google ke profil yang sudah ada."""
-    firebase_token: str = Field(..., description="ID Token dari Firebase Auth (Google Sign-In)")
-
-
 class SendOtpInput(BaseModel):
     """Data untuk mengirim OTP ke email."""
     email: str = Field(..., description="Alamat email tujuan")
@@ -37,6 +32,24 @@ class VerifyOtpInput(BaseModel):
     otp: str = Field(..., min_length=6, max_length=6, description="Kode OTP 6 digit")
 
 
+class ForgotPasswordSendOtpInput(BaseModel):
+    """Data untuk minta OTP reset password via NIM."""
+    nim: str = Field(..., min_length=5, description="NIM mahasiswa")
+
+
+class ForgotPasswordResetInput(BaseModel):
+    """Data untuk reset password setelah verifikasi OTP."""
+    nim: str = Field(..., min_length=5, description="NIM mahasiswa")
+    otp: str = Field(..., min_length=6, max_length=6, description="Kode OTP 6 digit")
+    new_password: str = Field(..., min_length=6, description="Password baru minimal 6 karakter")
+
+
+class AdminResetPasswordInput(BaseModel):
+    """Data untuk admin reset password user."""
+    nim: str = Field(..., min_length=5, description="NIM mahasiswa")
+    new_password: str = Field(..., min_length=6, description="Password baru minimal 6 karakter")
+
+
 class AdminCreateUserInput(BaseModel):
     """Data untuk admin membuat user baru."""
     nim: str = Field(..., min_length=5, description="NIM mahasiswa")
@@ -45,9 +58,4 @@ class AdminCreateUserInput(BaseModel):
     major: str = Field(..., min_length=2, description="Program studi / jurusan")
 
 
-class TokenResponse(BaseModel):
-    """Response berisi access token."""
-    access_token: str
-    token_type: str = "bearer"
-    user_id: str
-    full_name: str
+

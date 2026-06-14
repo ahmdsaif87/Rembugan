@@ -2,10 +2,36 @@ from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
 from app.core.database import get_db
 from app.core.security import verify_admin_token, hash_password
-from app.schemas.auth import AdminCreateUserInput
-from typing import List, Dict, Any
+from app.schemas.auth import AdminCreateUserInput, AdminResetPasswordInput
+from app.core.constants import PJ_COMPLETED, APP_PENDING
 
 router = APIRouter(prefix="/admin", tags=["Admin Dashboard"])
+
+
+@router.post("/users/reset-password", summary="[Admin] Reset Password User")
+async def admin_reset_user_password(
+    data: AdminResetPasswordInput,
+    admin_token: dict = Depends(verify_admin_token),
+    db: Prisma = Depends(get_db),
+):
+    """
+    Admin mereset password user berdasarkan NIM.
+    Berguna untuk user yang belum punya email dan lupa password.
+    """
+    user = await db.user.find_unique(where={"nim": data.nim})
+    if not user:
+        raise HTTPException(status_code=404, detail="User dengan NIM tersebut tidak ditemukan.")
+
+    new_hashed = hash_password(data.new_password)
+    await db.user.update(
+        where={"id": user.id},
+        data={"password": new_hashed},
+    )
+
+    return {
+        "status": "success",
+        "message": f"Password user {user.full_name} (NIM: {data.nim}) berhasil direset.",
+    }
 
 
 @router.post("/users", summary="[Admin] Register User Baru")
@@ -56,7 +82,7 @@ async def get_dashboard_stats(
     total_users = await db.user.count()
 
     # Get active projects (status != 'completed')
-    active_projects = await db.project.count(where={"status": {"not": "completed"}})
+    active_projects = await db.project.count(        where={"status": {"not": PJ_COMPLETED}})
 
     # Get total projects
     total_projects = await db.project.count()
@@ -65,17 +91,12 @@ async def get_dashboard_stats(
     total_showcases = await db.showcase.count()
 
     # Get pending applications
-    pending_applications = await db.projectapplication.count(where={"status": "pending"})
+    pending_applications = await db.projectapplication.count(        where={"status": APP_PENDING})
 
     # Get total tasks
     total_tasks = await db.task.count()
 
-    # Get competitions count from MongoDB
-    try:
-        from app.api.competitions import collection as competition_collection
-        scraped_competitions = await competition_collection.count_documents({})
-    except:
-        scraped_competitions = 0
+    scraped_competitions = await _count_competitions()
 
     return {
         "status": "success",
@@ -271,8 +292,8 @@ async def get_recent_competitions(
     Get recent competitions from MongoDB
     """
     try:
-        from app.api.competitions import collection as competition_collection
-        cursor = competition_collection.find({}).limit(limit)
+        coll = get_competition_collection()
+        cursor = coll.find({}).limit(limit)
         recent_data = await cursor.to_list(length=None)
         for item in recent_data:
             item["_id"] = str(item["_id"])
@@ -372,12 +393,25 @@ async def delete_competition(
     """
     Delete a competition from MongoDB
     """
+    deleted = await _delete_competition(competition_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Competition not found")
+    return {"status": "success", "message": "Competition deleted successfully"}
+
+
+async def _count_competitions() -> int:
     try:
-        from app.api.competitions import collection as competition_collection
+        coll = get_competition_collection()
+        return await coll.count_documents({})
+    except Exception:
+        return 0
+
+
+async def _delete_competition(competition_id: str) -> bool:
+    try:
         from bson.objectid import ObjectId
-        result = await competition_collection.delete_one({"_id": ObjectId(competition_id)})
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Competition not found")
-        return {"status": "success", "message": "Competition deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        coll = get_competition_collection()
+        result = await coll.delete_one({"_id": ObjectId(competition_id)})
+        return result.deleted_count > 0
+    except Exception:
+        return False

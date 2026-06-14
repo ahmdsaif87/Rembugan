@@ -1,24 +1,33 @@
+import time
+import uuid
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from app.core.config import setup_cloudinary
-from app.core.security import setup_firebase
 from app.core.database import db
+from app.core.rate_limit import limiter
+from app.core.logger import setup_logging, get_logger
+
+logger = get_logger("main")
+setup_logging()
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload, qr, saved, posts
 from app.api.admin import router as admin_router
 
 # Inisialisasi Layanan External
 setup_cloudinary()
-setup_firebase()
 
 # Lifecycle: Connect & Disconnect Database
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect()
-    print("Database terhubung!")
+    logger.info("Database terhubung!")
     yield
     await db.disconnect()
-    print("Database terputus.")
+    logger.info("Database terputus.")
 
 # Inisialisasi App
 app = FastAPI(
@@ -30,6 +39,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Daftarkan Rate Limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Daftarkan Semua Endpoint
 app.include_router(auth.router)
@@ -45,17 +58,72 @@ app.include_router(profile.router)
 app.include_router(notifications.router)
 app.include_router(connections.router)
 app.include_router(upload.router)
+app.include_router(qr.router)
+app.include_router(saved.router)
+app.include_router(posts.router)
 app.include_router(admin_router)
 
 # Middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5500", "http://localhost:5500", "http://0.0.0.0:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://0.0.0.0:3000",
+        "http://localhost:36211",
+        "https://rembugan.vercel.app",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Authorization", "Content-Type", "Accept",
+        "Origin", "X-Requested-With",
+    ],
+    expose_headers=["X-Request-ID"],
 )
+
+# Request body size limit — 10MB
+MAX_BODY_SIZE = 10 * 1024 * 1024
+
+@app.middleware("http")
+async def request_id_and_size_limit(request: Request, call_next):
+    request_id = str(uuid.uuid4())[:8]
+    request.state.request_id = request_id
+
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_BODY_SIZE:
+        return JSONResponse(
+            status_code=413,
+            content={"detail": "Request body terlalu besar. Maksimal 10MB."},
+        )
+
+    start = time.time()
+    response = await call_next(request)
+    elapsed = (time.time() - start) * 1000
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Response-Time-Ms"] = str(int(elapsed))
+    return response
+
 
 @app.get("/", tags=["0. Root"])
 async def root():
     return {"message": "REMBUGAN API Aktif!", "version": "1.0.0"}
+
+
+@app.get("/healthz", tags=["0. Root"])
+async def healthz():
+    db_ok = False
+    try:
+        await db.execute_raw("SELECT 1")
+        db_ok = True
+    except Exception:
+        db_ok = False
+    return {
+        "status": "healthy" if db_ok else "degraded",
+        "database": "connected" if db_ok else "disconnected",
+        "timestamp": time.time(),
+    }

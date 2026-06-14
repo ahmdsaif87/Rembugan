@@ -8,6 +8,8 @@ import {
   FolderX,
   Trash2Icon,
   EyeIcon,
+  QrCodeIcon,
+  Loader2,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -39,6 +41,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { fetchProjects, deleteProject } from "@/lib/api"
+import { QrCodeDialog } from "@/components/qr-code"
+import { toast } from "sonner"
 
 interface Project {
   id: number
@@ -58,11 +62,19 @@ const statusColors: Record<string, string> = {
   completed: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
 export default function ProjectsPage() {
   const queryClient = useQueryClient()
   const [detailProject, setDetailProject] = useState<Project | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [qrProject, setQrProject] = useState<Project | null>(null)
+  const [qrOpen, setQrOpen] = useState(false)
+  const [qrData, setQrData] = useState("")
+  const [qrLoading, setQrLoading] = useState(false)
+  const [qrInviteData, setQrInviteData] = useState("")
 
   const { data: projects = [], isLoading: loading } = useQuery({
     queryKey: ['projects'],
@@ -71,6 +83,34 @@ export default function ProjectsPage() {
       return (res.status === 'success' ? res.data : []) as Project[]
     },
   })
+
+  async function handleGenerateQr(project: Project) {
+    setQrLoading(true)
+    setQrProject(project)
+    setQrInviteData("")
+    try {
+      const token = localStorage.getItem("admin_token")
+      const res = await fetch(`${API_BASE_URL}/qr/project/${project.id}/invite`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      const data = await res.json()
+      if (data.status === "success") {
+        setQrData(data.data.qr_data)
+        setQrInviteData(data.data.qr_data)
+        setQrOpen(true)
+      } else {
+        toast.error(data.detail || "Gagal generate QR")
+      }
+    } catch {
+      toast.error("Network error")
+    } finally {
+      setQrLoading(false)
+    }
+  }
 
   const deleteMutation = useMutation({
     mutationFn: deleteProject,
@@ -89,6 +129,27 @@ export default function ProjectsPage() {
   }, [projects, statusFilter])
 
   const columns: ColumnDef<Project>[] = [
+    {
+      id: "qr",
+      header: "QR",
+      cell: ({ row }) => {
+        const project = row.original
+        return (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setQrProject(project)
+              setQrData(`${APP_URL}/p/${project.id}`)
+              setQrOpen(true)
+            }}
+          >
+            <QrCodeIcon className="h-4 w-4" />
+          </Button>
+        )
+      },
+    },
     {
       accessorKey: "id",
       header: "ID",
@@ -195,6 +256,10 @@ export default function ProjectsPage() {
                   <EyeIcon />
                   View Details
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGenerateQr(project)} disabled={qrLoading}>
+                  {qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCodeIcon />}
+                  {qrLoading ? "Generating..." : "QR Invite"}
+                </DropdownMenuItem>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem className="text-destructive">
                     <Trash2Icon />
@@ -278,6 +343,45 @@ export default function ProjectsPage() {
           { label: "Tasks", value: String(detailProject?.tasks?.length ?? 0) },
           { label: "Created", value: detailProject?.created_at ? new Date(detailProject.created_at).toLocaleDateString() : "—" },
         ]}
+        />
+
+        <div className="flex gap-2 px-6 pb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-2"
+            onClick={() => {
+              if (detailProject) {
+                setQrData(`${APP_URL}/p/${detailProject.id}`)
+                setQrInviteData("")
+                setQrProject(detailProject)
+                setQrOpen(true)
+              }
+            }}
+          >
+            <QrCodeIcon className="h-4 w-4" />
+            Project QR
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-2"
+            onClick={() => {
+              if (detailProject) handleGenerateQr(detailProject)
+            }}
+            disabled={qrLoading}
+          >
+            {qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCodeIcon className="h-4 w-4" />}
+            {qrLoading ? "Generating..." : "Invite QR"}
+          </Button>
+        </div>
+
+      <QrCodeDialog
+        open={qrOpen}
+        onOpenChange={setQrOpen}
+        data={qrData}
+        title={qrProject ? (qrInviteData ? `Invite: ${qrProject.title}` : `Project: ${qrProject.title}`) : "QR"}
+        description={qrInviteData ? "Scan to join this project" : "Scan to view project details"}
       />
     </div>
   )

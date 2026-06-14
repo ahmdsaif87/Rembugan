@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
@@ -429,16 +432,63 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
             if (!widget.isManual) ...[
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 34,
-                    backgroundColor: c.primarySoft,
-                    backgroundImage: AssetImage(profile.avatarAsset),
+                  GestureDetector(
+                    onTap: widget.controller.pickProfilePhoto,
+                    child: Obx(() {
+                      final localPath =
+                          widget.controller.localPhotoPath.value;
+                      final hasPhoto = localPath != null ||
+                          profile.hasResumePhoto;
+
+                      return Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 34,
+                            backgroundColor: c.primarySoft,
+                            backgroundImage: hasPhoto
+                                ? (localPath != null
+                                    ? (kIsWeb
+                                        ? null
+                                        : FileImage(File(localPath)))
+                                    : widget.controller.photoUrl != null
+                                        ? NetworkImage(
+                                            widget.controller.photoUrl!)
+                                        : null)
+                                : null,
+                            child: hasPhoto
+                                ? null
+                                : const Icon(
+                                    FluentIcons.camera_24_regular,
+                                    color: AppColors.textSecondary,
+                                    size: 28,
+                                  ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary500,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                FluentIcons.add_16_regular,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                   ),
                   const SizedBox(width: 12),
                   _AiBadge(
-                    label: profile.hasResumePhoto
-                        ? 'Foto CV terdeteksi'
-                        : 'Avatar default digunakan',
+                    label: widget.controller.localPhotoPath.value != null ||
+                            profile.hasResumePhoto
+                        ? 'Foto profil terpasang'
+                        : 'Klik foto untuk upload',
                   ),
                 ],
               ),
