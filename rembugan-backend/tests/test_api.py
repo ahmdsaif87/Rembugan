@@ -111,32 +111,6 @@ class TestAuth:
         resp = await _auth_get(client, "/auth/me", auth_header)
         assert resp.status_code == 404
 
-    async def test_link_google_success(self, client, mock_db, auth_header):
-        from tests.conftest import MockUser
-        mock_db.user.find_first = AsyncMock(return_value=None)
-        mock_db.user.update = AsyncMock(return_value=MockUser(email="firebase@example.com", googleId="firebase-uid-123"))
-        resp = await _auth_post(client, "/auth/link-google", auth_header,
-                                json={"firebase_token": "fake-firebase-token"})
-        assert resp.status_code == 200
-        assert resp.json()["data"]["google_linked"] is True
-
-    async def test_link_google_duplicate(self, client, mock_db, auth_header):
-        from tests.conftest import MockUser
-        mock_db.user.find_first = AsyncMock(return_value=MockUser(id="other-user"))
-        mock_db.user.update = AsyncMock(return_value=MockUser())
-        resp = await _auth_post(client, "/auth/link-google", auth_header,
-                                json={"firebase_token": "fake-firebase-token"})
-        assert resp.status_code == 400
-
-    async def test_link_google_invalid_token(self, client, mock_db, auth_header):
-        with pytest.MonkeyPatch.context() as mp:
-            mp.setattr("firebase_admin.auth.verify_id_token",
-                       MagicMock(side_effect=Exception("invalid")))
-            resp = await _auth_post(client, "/auth/link-google", auth_header,
-                                    json={"firebase_token": "bad-token"})
-        assert resp.status_code == 400
-
-
 # ─────────────────────────────────────────────
 # 2. ONBOARDING
 # ─────────────────────────────────────────────

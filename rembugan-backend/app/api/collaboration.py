@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
-
-from app.core.security import verify_token
 from app.core.database import get_db
+from app.core.security import verify_token
+from app.core.constants import PJ_OPEN, APP_PENDING, APP_ACCEPTED, ROLE_ANGGOTA
 from app.schemas.collaboration import ApplyInput, ApplicationRespondInput
 
 router = APIRouter(prefix="/collaboration", tags=["3. Collaboration & Apply"])
@@ -26,7 +26,7 @@ async def apply_to_project(
     project = await db.project.find_unique(where={"id": data.project_id})
     if not project:
         raise HTTPException(status_code=404, detail="Proyek tidak ditemukan.")
-    if project.status != "open":
+    if project.status != PJ_OPEN:
         raise HTTPException(status_code=400, detail="Proyek ini sudah tidak menerima lamaran.")
     if project.owner_id == applicant_uid:
         raise HTTPException(status_code=400, detail="Tidak bisa melamar ke proyek sendiri.")
@@ -128,7 +128,7 @@ async def respond_to_application(
     if application.project.owner_id != user_id:
         raise HTTPException(status_code=403, detail="Hanya owner proyek yang bisa merespons lamaran.")
 
-    if application.status != "pending":
+    if application.status != APP_PENDING:
         raise HTTPException(status_code=400, detail=f"Lamaran sudah di-{application.status}.")
 
     # Update status lamaran
@@ -138,7 +138,7 @@ async def respond_to_application(
     )
 
     # Jika accepted, tambahkan sebagai member
-    if data.status == "accepted":
+    if data.status == APP_ACCEPTED:
         await db.projectmember.create(
             data={
                 "project_id": application.project_id,

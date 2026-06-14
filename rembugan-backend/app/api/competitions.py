@@ -1,16 +1,12 @@
-import os
 from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
-from motor.motor_asyncio import AsyncIOMotorClient
 from app.core.security import verify_token
 from app.core.database import get_db
+from app.services.competitions import get_competition_collection
 
 router = APIRouter(prefix="/competitions", tags=["Lomba / Competitions"])
 
-MONGO_URI = os.getenv("MONGO_URI")
-client = AsyncIOMotorClient(MONGO_URI)
-db_mongo = client["competition_scraper"]
-collection = db_mongo["competition"]
+collection = get_competition_collection()
 
 @router.get("/all", summary="Lihat Semua Lomba")
 async def get_all_competitions():

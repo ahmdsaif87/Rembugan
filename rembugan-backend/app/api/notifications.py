@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from prisma import Prisma
-from zoneinfo import ZoneInfo
+from app.core.dates import tz_iso
 from app.core.database import get_db
 from app.core.security import verify_token
 
@@ -8,6 +8,8 @@ router = APIRouter(prefix="/notifications", tags=["Notifikasi"])
 
 @router.get("/", summary="Lihat Semua Notifikasi")
 async def get_notifications(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
@@ -15,7 +17,9 @@ async def get_notifications(
     
     notifications = await db.notification.find_many(
         where={"user_id": uid},
-        order={"created_at": "desc"}
+        order={"created_at": "desc"},
+        skip=(page - 1) * limit,
+        take=limit,
     )
     
     result = []
@@ -27,7 +31,7 @@ async def get_notifications(
             "content": n.content,
             "is_read": n.is_read,
             "link": n.link,
-            "created_at": n.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat()
+            "created_at": tz_iso(n.created_at)
         })
         
     return {"status": "success", "data": result}

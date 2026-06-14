@@ -12,6 +12,7 @@ import {
   EyeIcon,
   PlusIcon,
   Loader2,
+  QrCodeIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -57,6 +58,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { fetchUsers, deleteUser, createUser } from "@/lib/api"
+import { QrCodeDialog } from "@/components/qr-code"
 
 interface User {
   id: string
@@ -73,6 +75,9 @@ interface User {
   memberships?: Array<any>
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
 export default function UsersPage() {
   const queryClient = useQueryClient()
   const [detailUser, setDetailUser] = useState<User | null>(null)
@@ -80,6 +85,8 @@ export default function UsersPage() {
   const [onboardFilter, setOnboardFilter] = useState<string>("all")
   const [addOpen, setAddOpen] = useState(false)
   const [form, setForm] = useState({ nim: "", full_name: "", major: "", password: "" })
+  const [qrUser, setQrUser] = useState<User | null>(null)
+  const [qrOpen, setQrOpen] = useState(false)
 
   const { data: users = [], isLoading: loading } = useQuery({
     queryKey: ['users'],
@@ -253,6 +260,10 @@ export default function UsersPage() {
                   <EyeIcon />
                   View Details
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setQrUser(user); setQrOpen(true); }}>
+                  <QrCodeIcon />
+                  QR Profile
+                </DropdownMenuItem>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem className="text-destructive">
                     <Trash2Icon />
@@ -412,6 +423,14 @@ export default function UsersPage() {
           { label: "Skills", value: detailUser?.skills?.map(s => s.skill.name).join(", ") },
           { label: "Joined", value: detailUser?.created_at ? new Date(detailUser.created_at).toLocaleDateString() : "—" },
         ]}
+      />
+
+      <QrCodeDialog
+        open={qrOpen}
+        onOpenChange={setQrOpen}
+        data={qrUser ? `${APP_URL}/u/${qrUser.id}` : ""}
+        title={qrUser ? `Profile: ${qrUser.full_name}` : "QR Profile"}
+        description="Scan this QR code to view the user's profile"
       />
     </div>
   )

@@ -1,197 +1,222 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from prisma import Prisma
 from app.core.database import get_db
 from app.core.security import verify_token
+from app.core.constants import CON_PENDING, CON_ACCEPTED, CON_REJECTED, NOTIF_CONN_REQUEST, NOTIF_CONN_ACCEPTED
+from app.services.notification import notify
 
 router = APIRouter(prefix="/connections", tags=["Koneksi (Teman)"])
 
+
 @router.get("/", summary="Lihat Koneksi Saya (yang sudah accepted)")
 async def get_my_connections(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
     uid = user_token.get("uid")
-    conns = await db.connection.find_many(
+    connections = await db.connection.find_many(
         where={
             "OR": [
-                {"sender_id": uid, "status": "accepted"},
-                {"receiver_id": uid, "status": "accepted"},
+                {"sender_id": uid, "status": CON_ACCEPTED},
+                {"receiver_id": uid, "status": CON_ACCEPTED},
             ]
         },
-        include={"sender": True, "receiver": True},
+        include={
+            "sender": True,
+            "receiver": True,
+        },
+        skip=(page - 1) * limit,
+        take=limit,
     )
+
     result = []
-    for c in conns:
-        other = c.receiver if c.sender_id == uid else c.sender
+    for conn in connections:
+        other = conn.receiver if conn.sender_id == uid else conn.sender
         result.append({
-            "connection_id": c.id,
+            "id": conn.id,
             "user_id": other.id,
             "full_name": other.full_name,
+            "handle": other.handle,
             "photo_url": other.photo_url,
-            "bio": other.bio,
-            "connected_at": c.created_at.isoformat(),
+            "major": other.major,
+            "created_at": conn.created_at.isoformat(),
         })
+
     return {"status": "success", "data": result}
 
-@router.get("/requests", summary="Lihat Permintaan Koneksi Masuk")
-async def get_pending_requests(
+
+@router.get("/incoming", summary="Lihat Permintaan Koneksi Masuk")
+async def get_incoming_requests(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
     uid = user_token.get("uid")
-    reqs = await db.connection.find_many(
-        where={"receiver_id": uid, "status": "pending"},
+    requests = await db.connection.find_many(
+        where={"receiver_id": uid, "status": CON_PENDING},
         include={"sender": True},
         order={"created_at": "desc"},
+        skip=(page - 1) * limit,
+        take=limit,
     )
+
     result = []
-    for r in reqs:
+    for req in requests:
         result.append({
-            "connection_id": r.id,
-            "user_id": r.sender.id,
-            "full_name": r.sender.full_name,
-            "photo_url": r.sender.photo_url,
-            "bio": r.sender.bio,
-            "requested_at": r.created_at.isoformat(),
+            "id": req.id,
+            "sender_id": req.sender_id,
+            "full_name": req.sender.full_name,
+            "handle": req.sender.handle,
+            "photo_url": req.sender.photo_url,
+            "major": req.sender.major,
+            "created_at": req.created_at.isoformat(),
         })
+
     return {"status": "success", "data": result}
 
-@router.get("/user/{user_id}", summary="Lihat Koneksi User Lain (yang sudah accepted)")
+
+@router.get("/sent", summary="Lihat Permintaan Koneksi Terkirim")
+async def get_sent_requests(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    uid = user_token.get("uid")
+    requests = await db.connection.find_many(
+        where={"sender_id": uid, "status": CON_PENDING},
+        include={"receiver": True},
+        order={"created_at": "desc"},
+        skip=(page - 1) * limit,
+        take=limit,
+    )
+
+    result = []
+    for req in requests:
+        result.append({
+            "id": req.id,
+            "receiver_id": req.receiver_id,
+            "full_name": req.receiver.full_name,
+            "handle": req.receiver.handle,
+            "photo_url": req.receiver.photo_url,
+            "major": req.receiver.major,
+            "created_at": req.created_at.isoformat(),
+        })
+
+    return {"status": "success", "data": result}
+
+
+@router.get("/{user_id}", summary="Lihat Koneksi User Lain")
 async def get_user_connections(
     user_id: str,
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
-    conns = await db.connection.find_many(
+    uid = user_token.get("uid")
+    connections = await db.connection.find_many(
         where={
             "OR": [
-                {"sender_id": user_id, "status": "accepted"},
-                {"receiver_id": user_id, "status": "accepted"},
+                {"sender_id": user_id, "status": CON_ACCEPTED},
+                {"receiver_id": user_id, "status": CON_ACCEPTED},
             ]
         },
-        include={"sender": True, "receiver": True},
+        include={
+            "sender": True,
+            "receiver": True,
+        }
     )
+
     result = []
-    for c in conns:
-        other = c.receiver if c.sender_id == user_id else c.sender
+    for conn in connections:
+        other = conn.receiver if conn.sender_id == user_id else conn.sender
         result.append({
-            "connection_id": c.id,
+            "id": conn.id,
             "user_id": other.id,
             "full_name": other.full_name,
+            "handle": other.handle,
             "photo_url": other.photo_url,
-            "bio": other.bio,
-            "connected_at": c.created_at.isoformat(),
+            "major": other.major,
+            "created_at": conn.created_at.isoformat(),
         })
+
     return {"status": "success", "data": result}
 
-@router.get("/sent", summary="Lihat Permintaan Koneksi yang Saya Kirim (Pending)")
-async def get_sent_requests(
-    user_token: dict = Depends(verify_token),
-    db: Prisma = Depends(get_db),
-):
-    uid = user_token.get("uid")
-    reqs = await db.connection.find_many(
-        where={"sender_id": uid, "status": "pending"},
-        include={"receiver": True},
-        order={"created_at": "desc"},
-    )
-    result = []
-    for r in reqs:
-        result.append({
-            "connection_id": r.id,
-            "user_id": r.receiver.id,
-            "full_name": r.receiver.full_name,
-            "photo_url": r.receiver.photo_url,
-            "bio": r.receiver.bio,
-            "requested_at": r.created_at.isoformat(),
-        })
-    return {"status": "success", "data": result}
 
-@router.post("/request/{receiver_id}", summary="Kirim Permintaan Koneksi")
+@router.post("/send/{receiver_id}", summary="Kirim Permintaan Koneksi")
 async def send_connection_request(
     receiver_id: str,
+    background_tasks: BackgroundTasks,
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
     uid = user_token.get("uid")
+
     if uid == receiver_id:
-        raise HTTPException(status_code=400, detail="Tidak dapat mengirim permintaan ke diri sendiri")
-        
-    receiver = await db.user.find_unique(where={"id": receiver_id})
-    if not receiver:
-        raise HTTPException(status_code=404, detail="User tidak ditemukan")
-        
-    # Cek apakah sudah ada koneksi
+        raise HTTPException(status_code=400, detail="Tidak bisa terhubung dengan diri sendiri.")
+
     existing = await db.connection.find_first(
         where={
             "OR": [
                 {"sender_id": uid, "receiver_id": receiver_id},
-                {"sender_id": receiver_id, "receiver_id": uid}
+                {"sender_id": receiver_id, "receiver_id": uid},
             ]
         }
     )
-    
     if existing:
         raise HTTPException(status_code=400, detail=f"Koneksi sudah ada dengan status: {existing.status}")
-        
+
     conn = await db.connection.create(
-        data={
-            "sender_id": uid,
-            "receiver_id": receiver_id,
-            "status": "pending"
-        }
+        data={"sender_id": uid, "receiver_id": receiver_id, "status": CON_PENDING}
     )
-    
-    # Buat Notifikasi
+
     sender = await db.user.find_unique(where={"id": uid})
-    await db.notification.create(
-        data={
-            "user_id": receiver_id,
-            "type": "connection_request",
-            "title": "Permintaan Koneksi Baru",
-            "content": f"{sender.full_name} ingin terhubung dengan Anda.",
-            "link": f"/profile/{uid}"
-        }
+    background_tasks.add_task(
+        notify, db, receiver_id, NOTIF_CONN_REQUEST,
+        "Permintaan Koneksi Baru",
+        f"{sender.full_name} ingin terhubung dengan Anda.",
+        f"/profile/{uid}",
     )
-    
+
     return {"status": "success", "message": "Permintaan terkirim"}
+
 
 @router.put("/accept/{connection_id}", summary="Terima Permintaan Koneksi")
 async def accept_connection(
     connection_id: int,
+    background_tasks: BackgroundTasks,
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
     uid = user_token.get("uid")
-    
+
     conn = await db.connection.find_unique(where={"id": connection_id})
     if not conn:
         raise HTTPException(status_code=404, detail="Koneksi tidak ditemukan")
-        
+
     if conn.receiver_id != uid:
         raise HTTPException(status_code=403, detail="Anda bukan penerima permintaan ini")
-        
-    if conn.status != "pending":
+
+    if conn.status != CON_PENDING:
         raise HTTPException(status_code=400, detail="Permintaan ini sudah diproses")
-        
+
     await db.connection.update(
         where={"id": connection_id},
-        data={"status": "accepted"}
+        data={"status": CON_ACCEPTED}
     )
-    
-    # Buat Notifikasi ke pengirim
+
     receiver = await db.user.find_unique(where={"id": uid})
-    await db.notification.create(
-        data={
-            "user_id": conn.sender_id,
-            "type": "connection_accepted",
-            "title": "Permintaan Koneksi Diterima",
-            "content": f"{receiver.full_name} menerima permintaan koneksi Anda.",
-            "link": f"/profile/{uid}"
-        }
+    background_tasks.add_task(
+        notify, db, conn.sender_id, NOTIF_CONN_ACCEPTED,
+        "Permintaan Koneksi Diterima",
+        f"{receiver.full_name} menerima permintaan koneksi Anda.",
+        f"/profile/{uid}",
     )
-    
+
     return {"status": "success", "message": "Koneksi diterima"}
+
 
 @router.put("/reject/{connection_id}", summary="Tolak Permintaan Koneksi")
 async def reject_connection(
@@ -200,17 +225,20 @@ async def reject_connection(
     db: Prisma = Depends(get_db),
 ):
     uid = user_token.get("uid")
-    
+
     conn = await db.connection.find_unique(where={"id": connection_id})
     if not conn:
         raise HTTPException(status_code=404, detail="Koneksi tidak ditemukan")
-        
+
     if conn.receiver_id != uid:
         raise HTTPException(status_code=403, detail="Anda bukan penerima permintaan ini")
-        
+
+    if conn.status != CON_PENDING:
+        raise HTTPException(status_code=400, detail="Permintaan ini sudah diproses")
+
     await db.connection.update(
         where={"id": connection_id},
-        data={"status": "rejected"}
+        data={"status": CON_REJECTED}
     )
-    
+
     return {"status": "success", "message": "Koneksi ditolak"}

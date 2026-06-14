@@ -69,7 +69,7 @@ class _EmailStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: controller.formKeyEmail,
+      key: controller.formKeyNim,
       child: Column(
         children: [
           const SizedBox(height: 4),
@@ -83,23 +83,23 @@ class _EmailStep extends StatelessWidget {
           const _Title(
             title: 'Lupa kata sandi?',
             subtitle:
-                'Masukkan email akunmu untuk menerima instruksi\npengaturan ulang kata sandi.',
+                'Masukkan NIM akunmu untuk menerima instruksi\npengaturan ulang kata sandi.',
           ),
           const SizedBox(height: 24),
           AppTextField(
-            controller: controller.emailController,
-            labelText: 'Email',
-            hintText: 'nanda@gmail.com',
-            keyboardType: TextInputType.emailAddress,
+            controller: controller.nimController,
+            labelText: 'NIM',
+            hintText: '23090122',
+            keyboardType: TextInputType.number,
             validator: (value) {
-              final email = value?.trim() ?? '';
-              if (email.isEmpty) return 'Email wajib diisi';
-              if (!GetUtils.isEmail(email)) return 'Format email tidak valid';
+              final nim = value?.trim() ?? '';
+              if (nim.isEmpty) return 'NIM wajib diisi';
+              if (nim.length < 5) return 'NIM minimal 5 karakter';
               return null;
             },
           ),
           const SizedBox(height: 20),
-          AppButton(label: 'Kirim', onTap: controller.onSendEmail),
+          AppButton(label: 'Kirim', onTap: controller.onSendOtp),
         ],
       ),
     );
@@ -114,9 +114,7 @@ class _OtpStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final displayEmail = controller.email.isEmpty
-        ? 'tim.jennings@example.com'
-        : controller.email;
+    final displayNim = controller.nim.isEmpty ? '*****' : controller.nim;
 
     return Column(
       children: [
@@ -131,7 +129,7 @@ class _OtpStep extends StatelessWidget {
         const SizedBox(height: 10),
         _Title(
           title: 'Cek Email Anda',
-          subtitle: 'Kami telah mengirimkan kode ke\n$displayEmail',
+            subtitle: 'Kode OTP telah dikirim ke NIM $displayNim',
         ),
         const SizedBox(height: 32),
         Row(
@@ -140,18 +138,18 @@ class _OtpStep extends StatelessWidget {
             controller.otpControllers.length,
             (index) => Padding(
               padding: EdgeInsets.only(
-                right: index == controller.otpControllers.length - 1 ? 0 : 12,
+                right: index == controller.otpControllers.length - 1 ? 0 : 8,
               ),
               child: SizedBox(
-                width: 70,
-                height: 70,
+                width: 52,
+                height: 60,
                 child: TextField(
                   controller: controller.otpControllers[index],
                   focusNode: controller.otpFocusNodes[index],
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
                   style: AppFonts.satoshiStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: c.grey900,
                   ),

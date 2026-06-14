@@ -3,27 +3,30 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/auth_service.dart';
 import '../../../core/theme/theme.dart';
 
 class ForgotPasswordController extends GetxController {
-  final step = 0.obs;
-  final resendSeconds = 13.obs;
+  final _auth = Get.find<AuthService>();
 
-  final emailController = TextEditingController();
-  final otpControllers = List.generate(4, (_) => TextEditingController());
-  final otpFocusNodes = List.generate(4, (_) => FocusNode());
+  final step = 0.obs;
+  final resendSeconds = 60.obs;
+
+  final nimController = TextEditingController();
+  final otpControllers = List.generate(6, (_) => TextEditingController());
+  final otpFocusNodes = List.generate(6, (_) => FocusNode());
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
   final isNewPasswordHidden = true.obs;
   final isConfirmPasswordHidden = true.obs;
 
-  final formKeyEmail = GlobalKey<FormState>();
+  final formKeyNim = GlobalKey<FormState>();
   final formKeyReset = GlobalKey<FormState>();
 
   Timer? _resendTimer;
 
-  String get email => emailController.text.trim();
+  String get nim => nimController.text.trim();
 
   void goBack() {
     if (step.value == 0) {
@@ -33,8 +36,15 @@ class ForgotPasswordController extends GetxController {
     step.value--;
   }
 
-  void onSendEmail() {
-    if (formKeyEmail.currentState?.validate() != true) return;
+  void onSendOtp() async {
+    if (formKeyNim.currentState?.validate() != true) return;
+
+    final error = await _auth.forgotPasswordSendOtp(nim);
+    if (error != null) {
+      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     step.value = 1;
     _startResendTimer();
   }
@@ -48,11 +58,11 @@ class ForgotPasswordController extends GetxController {
   }
 
   void onVerifyOtp() {
-    final code = otpControllers.map((controller) => controller.text).join();
+    final code = otpControllers.map((c) => c.text).join();
     if (code.length != otpControllers.length) {
       Get.snackbar(
         'Kode belum lengkap',
-        'Masukkan 4 digit kode yang dikirim ke email Anda.',
+        'Masukkan 6 digit kode yang dikirim ke email Anda.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
@@ -61,12 +71,20 @@ class ForgotPasswordController extends GetxController {
     step.value = 2;
   }
 
-  void resendOtp() {
+  void resendOtp() async {
     if (resendSeconds.value > 0) return;
-    for (final controller in otpControllers) {
-      controller.clear();
+
+    for (final c in otpControllers) {
+      c.clear();
     }
     otpFocusNodes.first.requestFocus();
+
+    final error = await _auth.forgotPasswordSendOtp(nim);
+    if (error != null) {
+      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     _startResendTimer();
   }
 
@@ -78,7 +96,7 @@ class ForgotPasswordController extends GetxController {
     isConfirmPasswordHidden.toggle();
   }
 
-  void onResetPassword() {
+  void onResetPassword() async {
     if (formKeyReset.currentState?.validate() != true) return;
     if (newPasswordController.text != confirmPasswordController.text) {
       Get.snackbar(
@@ -90,7 +108,21 @@ class ForgotPasswordController extends GetxController {
       );
       return;
     }
+
+    final otp = otpControllers.map((c) => c.text).join();
     FocusManager.instance.primaryFocus?.unfocus();
+
+    final error = await _auth.forgotPasswordReset(
+      nim: nim,
+      otp: otp,
+      newPassword: newPasswordController.text,
+    );
+
+    if (error != null) {
+      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     step.value = 3;
   }
 
@@ -102,7 +134,7 @@ class ForgotPasswordController extends GetxController {
 
   void _startResendTimer() {
     _resendTimer?.cancel();
-    resendSeconds.value = 13;
+    resendSeconds.value = 60;
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (resendSeconds.value == 0) {
         timer.cancel();
@@ -115,12 +147,12 @@ class ForgotPasswordController extends GetxController {
   @override
   void onClose() {
     _resendTimer?.cancel();
-    emailController.dispose();
-    for (final controller in otpControllers) {
-      controller.dispose();
+    nimController.dispose();
+    for (final c in otpControllers) {
+      c.dispose();
     }
-    for (final focusNode in otpFocusNodes) {
-      focusNode.dispose();
+    for (final fn in otpFocusNodes) {
+      fn.dispose();
     }
     newPasswordController.dispose();
     confirmPasswordController.dispose();

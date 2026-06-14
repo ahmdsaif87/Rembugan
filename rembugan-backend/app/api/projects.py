@@ -1,9 +1,11 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from prisma import Prisma
-from zoneinfo import ZoneInfo
+from app.core.dates import tz_iso
 
 from app.core.security import verify_token
 from app.core.database import get_db
+from app.core.constants import PJ_OPEN, PJ_COMPLETED, ROLE_KETUA, EXPLORE_MAX_ROWS
 from app.schemas.project import ProjectCreateInput
 from app.services.matchmaking import calculate_match_score
 
@@ -26,19 +28,29 @@ async def create_project(
     if not user:
         raise HTTPException(status_code=404, detail="User belum terdaftar. Harap selesaikan onboarding.")
 
-    project = await db.project.create(
-        data={
-            "owner_id": uid,
-            "title": data.title,
-            "description": data.description,
-            "required_skills": data.required_skills,
-            "members": {
-                "create": {
-                    "user_id": uid,
-                    "role": "Ketua",
-                }
-            },
+    create_data = {
+        "owner_id": uid,
+        "title": data.title,
+        "description": data.description,
+        "required_skills": data.required_skills,
+        "members": {
+            "create": {
+                "user_id": uid,
+                "role": ROLE_KETUA,
+            }
         },
+    }
+    if data.category is not None:
+        create_data["category"] = data.category
+    if data.faculty is not None:
+        create_data["faculty"] = data.faculty
+    if data.deadline is not None:
+        create_data["deadline"] = data.deadline
+    if data.total_slots is not None:
+        create_data["total_slots"] = data.total_slots
+
+    project = await db.project.create(
+        data=create_data,
         include={"owner": True, "members": True},
     )
 
@@ -51,8 +63,13 @@ async def create_project(
             "description": project.description,
             "required_skills": project.required_skills,
             "status": project.status,
+            "category": project.category,
+            "faculty": project.faculty,
+            "deadline": tz_iso(project.deadline) if project.deadline else None,
+            "total_slots": project.total_slots,
+            "filled_slots": len(project.members) if project.members else 0,
             "owner": project.owner.full_name if project.owner else None,
-            "created_at": project.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "created_at": tz_iso(project.created_at),
         },
     }
 
@@ -61,12 +78,19 @@ async def create_project(
 async def get_all_projects(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
+    category: str = Query(None, description="Filter by category"),
+    faculty: str = Query(None, description="Filter by faculty"),
+    min_slots: int = Query(None, ge=1, description="Min total slots"),
+    max_slots: int = Query(None, ge=1, description="Max total slots"),
+    deadline_before: str = Query(None, description="Filter deadline before (ISO datetime)"),
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
     """
     Ambil daftar semua proyek dengan status 'open', lengkap dengan info owner.
     Daftar diurutkan berdasarkan 'Match Score' (kecocokan skill user dengan kebutuhan proyek).
+
+    Mendukung filter: category, faculty, min_slots, max_slots, deadline_before.
     """
     uid = user_token.get("uid")
     
@@ -81,14 +105,38 @@ async def get_all_projects(
 
     user_skills = [us.skill.name for us in user.skills] if user.skills else []
 
-    # Ambil proyek-proyek yang open dan bukan milik user sendiri
+    # Build filter conditions
+    where_conditions = {"status": PJ_OPEN, "owner_id": {"not": uid}}
+    if category:
+        where_conditions["category"] = category
+    if faculty:
+        where_conditions["faculty"] = faculty
+    if min_slots is not None:
+        where_conditions["total_slots"] = {"gte": min_slots}
+    if max_slots is not None:
+        if "total_slots" in where_conditions:
+            where_conditions["total_slots"]["lte"] = max_slots
+        else:
+            where_conditions["total_slots"] = {"lte": max_slots}
+    if deadline_before:
+        try:
+            dt = datetime.fromisoformat(deadline_before)
+            where_conditions["deadline"] = {"lte": dt}
+        except ValueError:
+            pass
+
+    # Hitung total dulu, baru ambil page dengan cap maksimal
+    total_available = await db.project.count(where=where_conditions)
+    max_fetch = min(total_available, EXPLORE_MAX_ROWS)  # safety cap
+    
     projects = await db.project.find_many(
-        where={"status": "open", "owner_id": {"not": uid}},
+        where=where_conditions,
         include={
             "owner": True,
             "members": True,
         },
         order={"created_at": "desc"},
+        take=max_fetch,
     )
 
     scored_projects = []
@@ -100,10 +148,15 @@ async def get_all_projects(
             "description": p.description,
             "required_skills": p.required_skills,
             "status": p.status,
+            "category": p.category,
+            "faculty": p.faculty,
+            "deadline": tz_iso(p.deadline) if p.deadline else None,
+            "total_slots": p.total_slots,
+            "filled_slots": len(p.members) if p.members else 0,
             "owner_name": p.owner.full_name if p.owner else None,
             "member_count": len(p.members) if p.members else 0,
             "match_score": score,
-            "created_at": p.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "created_at": tz_iso(p.created_at),
         })
         
     # Urutkan berdasarkan match score (tertinggi di atas)
@@ -117,7 +170,7 @@ async def get_all_projects(
         "status": "success", 
         "page": page,
         "limit": limit,
-        "total_projects_available": len(scored_projects),
+        "total_projects_available": total_available,
         "data": paginated_projects
     }
 
@@ -144,8 +197,13 @@ async def get_my_projects(
             "description": p.description,
             "required_skills": p.required_skills,
             "status": p.status,
+            "category": p.category,
+            "faculty": p.faculty,
+            "deadline": tz_iso(p.deadline) if p.deadline else None,
+            "total_slots": p.total_slots,
+            "filled_slots": len(p.members) if p.members else 0,
             "member_count": len(p.members) if p.members else 0,
-            "created_at": p.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "created_at": tz_iso(p.created_at),
         })
 
     return {"status": "success", "data": result}
@@ -199,10 +257,15 @@ async def get_project_detail(
             "description": project.description,
             "required_skills": project.required_skills,
             "status": project.status,
+            "category": project.category,
+            "faculty": project.faculty,
+            "deadline": tz_iso(project.deadline) if project.deadline else None,
+            "total_slots": project.total_slots,
+            "filled_slots": len(project.members) if project.members else 0,
             "owner_name": project.owner.full_name if project.owner else None,
             "members": members,
             "tasks": tasks,
-            "created_at": project.created_at.astimezone(ZoneInfo("Asia/Jakarta")).isoformat(),
+            "created_at": tz_iso(project.created_at),
         },
     }
 
@@ -226,7 +289,7 @@ async def archive_project(
     # Update status
     updated = await db.project.update(
         where={"id": project_id},
-        data={"status": "completed"},
+        data={"status": PJ_COMPLETED},
         select={"id": True, "status": True},
     )
     return {"status": "success", "data": updated}

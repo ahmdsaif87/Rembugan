@@ -40,7 +40,6 @@ class MockUser:
             bio="A test bio",
             photo_url="https://example.com/photo.jpg",
             email="test@example.com",
-            googleId=None,
             social_links=None,
             is_onboarded=False,
             skills=[],
@@ -271,16 +270,6 @@ def mock_groq():
         })
         mock_response.choices = [mock_choice]
         mock.chat.completions.create.return_value = mock_response
-        yield mock
-
-
-@pytest.fixture(autouse=True)
-def mock_firebase():
-    with patch("firebase_admin.auth.verify_id_token") as mock:
-        mock.return_value = {
-            "uid": "firebase-uid-123",
-            "email": "firebase@example.com"
-        }
         yield mock
 
 

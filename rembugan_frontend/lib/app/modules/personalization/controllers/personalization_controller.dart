@@ -1,15 +1,44 @@
-import 'package:get/get.dart';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
+import '../../../core/config/api_config.dart';
+import '../../../core/services/api_client.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/profile_service.dart';
 
 class PersonalizationController extends GetxController {
   final ProfileService _profileService = Get.find<ProfileService>();
+  final ApiClient _api = Get.find<ApiClient>();
+  final AuthService _auth = Get.find<AuthService>();
 
   final isUploading = false.obs;
   final isScanned = false.obs;
   final isManualInput = false.obs;
   final scanningStep = 0.obs;
-  final extractedProfile = ProfileService.seedProfile.obs;
+  final extractedProfile = const ProfileData(
+    name: '',
+    handle: '',
+    bio: '',
+    major: '',
+    socialLink: '',
+    skills: [],
+    experiences: [],
+    collaborationHistory: [],
+    hasResumePhoto: false,
+  ).obs;
+
+  String? _photoUrl;
+  final RxnString _localPhotoPath = RxnString(null);
+
+  RxnString get localPhotoPath => _localPhotoPath;
+  String? get photoUrl => _photoUrl;
 
   final extractionSteps = const [
     'Membaca struktur PDF resume',
@@ -19,63 +48,173 @@ class PersonalizationController extends GetxController {
     'Membentuk profile kolaborasi',
   ];
 
-  void simulateUpload() async {
+  Future<void> pickAndExtractCv() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
     isUploading.value = true;
     isScanned.value = false;
     scanningStep.value = 0;
 
-    for (var index = 0; index < extractionSteps.length; index++) {
-      scanningStep.value = index;
-      await Future.delayed(const Duration(milliseconds: 650));
-    }
+    try {
+      for (var i = 0; i < extractionSteps.length; i++) {
+        scanningStep.value = i;
+        await Future.delayed(const Duration(milliseconds: 400));
+      }
 
-    extractedProfile.value = ProfileService.seedProfile.copyWith(
-      name: 'Dede Fernanda',
-      handle: '@dede.flutter',
-      bio:
-          'Mahasiswa Informatika yang fokus pada pengembangan mobile app dan UI/UX design dengan pengalaman membangun aplikasi berbasis Flutter, Firebase, dan proyek kolaboratif kampus. Terbiasa bekerja dalam sprint kecil, merapikan design system, dan menerjemahkan kebutuhan pengguna menjadi pengalaman mobile yang clean.',
-      skills: [
-        'Flutter',
-        'Dart',
-        'Firebase',
-        'Figma',
-        'UI/UX',
-        'Python',
-        'REST API',
-        'GetX',
-      ],
-      experiences: const [
-        ProfileExperience(
-          title: 'Mobile App Developer',
-          organization: 'Proyek Kampus Sistem Mentoring',
-          duration: 'Feb 2025 - Jun 2025',
-          description:
-              'Membangun aplikasi mentoring mahasiswa dengan flow jadwal, chat dasar, dan dashboard peserta.',
-          techStack: ['Flutter', 'GetX', 'Firebase'],
-        ),
-        ProfileExperience(
-          title: 'UI/UX Designer',
-          organization: 'Komunitas Informatika',
-          duration: 'Agu 2025 - Des 2025',
-          description:
-              'Mendesain prototype mobile, komponen reusable, dan validasi usability untuk program mentoring kampus.',
-          techStack: ['Figma', 'Design System'],
-        ),
-        ProfileExperience(
-          title: 'Finalist Product Sprint',
-          organization: 'Hackathon EduCollab',
-          duration: 'Nov 2025',
-          description:
-              'Berkolaborasi sebagai frontend lead untuk membangun MVP matching tim dan presentasi produk.',
-          techStack: ['Flutter', 'REST API'],
-        ),
-      ],
-      hasResumePhoto: false,
+      final token = await _api.getToken();
+      final uri = Uri.parse('${ApiConfig.baseUrl}/onboarding/extract-cv');
+
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      if (kIsWeb) {
+        final bytes = file.bytes;
+        if (bytes == null) throw Exception('Gagal membaca file');
+        request.files.add(http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: file.name,
+          contentType: MediaType('application', 'pdf'),
+        ));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath(
+          'file',
+          file.path!,
+          filename: file.name,
+          contentType: MediaType('application', 'pdf'),
+        ));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        throw Exception('Gagal mengekstrak CV');
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final responseData = json['data'] as Map<String, dynamic>;
+
+      _photoUrl = responseData['photo_url'] as String?;
+      final nama = responseData['nama'] as String? ?? '';
+      final skills = (responseData['skills_terdeteksi'] as List?)
+              ?.map((s) => s.toString())
+              .toList() ??
+          [];
+      final bio = responseData['bio_suggestion'] as String? ?? '';
+      final experiencesRaw = responseData['experiences'] as List? ?? [];
+
+      final experiences = experiencesRaw.map((e) {
+        final exp = e as Map<String, dynamic>;
+        return ProfileExperience(
+          title: exp['title'] as String? ?? '',
+          organization: exp['organization'] as String? ?? '',
+          duration: exp['duration'] as String? ?? '',
+          description: exp['description'] as String? ?? '',
+          techStack: (exp['tech_stack'] as List?)
+                  ?.map((t) => t.toString())
+                  .toList() ??
+              [],
+        );
+      }).toList();
+
+      extractedProfile.value = ProfileData(
+        name: nama.isNotEmpty ? nama : '',
+        handle: '',
+        bio: bio,
+        major: '',
+        socialLink: '',
+        skills: skills,
+        experiences: experiences,
+        collaborationHistory: const [],
+        hasResumePhoto: _photoUrl != null,
+      );
+
+      isUploading.value = false;
+      isScanned.value = true;
+    } catch (e) {
+      isUploading.value = false;
+      Get.snackbar('Gagal', 'Gagal mengekstrak CV. Coba lagi.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  // ignore: avoid_future_delayed_no_future
+  void simulateUpload() => pickAndExtractCv();
+
+  Future<void> pickProfilePhoto() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['png', 'jpg', 'jpeg', 'webp'],
     );
 
-    await Future.delayed(const Duration(seconds: 3)); // Simulate AI processing
-    isUploading.value = false;
-    isScanned.value = true;
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+
+    // Validate size (5MB)
+    final sizeBytes = file.size;
+    if (sizeBytes > 5 * 1024 * 1024) {
+      Get.snackbar('Ukuran terlalu besar', 'Maksimal foto 5 MB.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    // Set local preview immediately
+    if (!kIsWeb) {
+      _localPhotoPath.value = file.path;
+    }
+
+    // Upload to backend
+    try {
+      final token = await _api.getToken();
+      final uri = Uri.parse('${ApiConfig.baseUrl}/upload/image');
+
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      if (kIsWeb) {
+        final bytes = file.bytes;
+        if (bytes == null) throw Exception('Gagal membaca file');
+        request.files.add(http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: file.name,
+          contentType: MediaType('image', file.extension ?? 'jpeg'),
+        ));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath(
+          'file',
+          file.path!,
+          filename: file.name,
+          contentType: MediaType('image', file.extension ?? 'jpeg'),
+        ));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        _photoUrl = json['data']['url'] as String?;
+        if (_photoUrl != null) {
+          extractedProfile.value =
+              extractedProfile.value.copyWith(hasResumePhoto: true);
+        }
+      } else {
+        Get.snackbar('Gagal', 'Upload foto gagal.',
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      Get.snackbar('Gagal', 'Upload foto gagal.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   void updateName(String value) {
@@ -144,13 +283,16 @@ class PersonalizationController extends GetxController {
     isManualInput.value = true;
     isUploading.value = false;
     isScanned.value = false;
-    extractedProfile.value = ProfileService.seedProfile.copyWith(
+    extractedProfile.value = const ProfileData(
       name: '',
+      handle: '',
       bio: '',
       major: '',
       socialLink: '',
-      skills: const [],
-      experiences: const [],
+      skills: [],
+      experiences: [],
+      collaborationHistory: [],
+      hasResumePhoto: false,
     );
   }
 
@@ -162,8 +304,39 @@ class PersonalizationController extends GetxController {
     );
   }
 
-  void generateProfile() {
-    _profileService.updateProfile(extractedProfile.value);
+  Future<void> generateProfile() async {
+    final profile = extractedProfile.value;
+    if (profile.name.trim().isEmpty) {
+      Get.snackbar('Nama wajib diisi', '',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    try {
+      await _api.put('/onboarding/save-profile', data: {
+        'full_name': profile.name,
+        'bio': profile.bio,
+        'photo_url': _photoUrl,
+        'skills': profile.skills,
+        'social_links': profile.socialLink.isNotEmpty
+            ? {'website': profile.socialLink}
+            : null,
+      });
+
+      _profileService.updateProfile(profile);
+
+      final user = _auth.currentUser.value;
+      if (user != null) {
+        _auth.currentUser.value = user.copyWith(isOnboarded: true);
+        _auth.currentUser.refresh();
+      }
+
+      Get.offAllNamed('/home');
+    } on DioException catch (e) {
+      final detail = e.response?.data['detail'];
+      Get.snackbar('Gagal', detail?.toString() ?? 'Gagal menyimpan profil.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   void reset() {
@@ -171,6 +344,17 @@ class PersonalizationController extends GetxController {
     isScanned.value = false;
     isManualInput.value = false;
     scanningStep.value = 0;
-    extractedProfile.value = ProfileService.seedProfile;
+    _photoUrl = null;
+    extractedProfile.value = const ProfileData(
+      name: '',
+      handle: '',
+      bio: '',
+      major: '',
+      socialLink: '',
+      skills: [],
+      experiences: [],
+      collaborationHistory: [],
+      hasResumePhoto: false,
+    );
   }
 }

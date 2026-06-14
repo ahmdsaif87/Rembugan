@@ -16,6 +16,11 @@ dependencies:
   fluentui_system_icons: ^1.1.273
   forui: ^0.21.3
   lottie: ^3.3.3
+  dio: ^5.8.0
+  flutter_secure_storage: ^9.2.4
+  pretty_dio_logger: ^1.4.0
+  file_picker: ^8.1.7
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
