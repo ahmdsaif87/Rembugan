@@ -129,7 +129,7 @@ class _OtpStep extends StatelessWidget {
         const SizedBox(height: 10),
         _Title(
           title: 'Cek Email Anda',
-            subtitle: 'Kode OTP telah dikirim ke NIM $displayNim',
+            subtitle: 'Kode OTP telah dikirim ke email yang terdaftar dengan NIM $displayNim',
         ),
         const SizedBox(height: 32),
         Row(
