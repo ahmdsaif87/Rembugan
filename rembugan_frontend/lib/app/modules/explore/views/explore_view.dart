@@ -15,23 +15,20 @@ import '../domain/entities/project.dart';
 class ExploreView extends GetView<ExploreController> {
   const ExploreView({super.key});
 
-  static const _ink = AppColors.grey900;
-  static const _muted = AppColors.grey500;
-  static const _chip = AppColors.grey50;
-  static const _line = AppColors.grey200;
   static const _brand = AppColors.primary500;
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.grey50,
+      backgroundColor: c.grey50,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Container(
               width: double.infinity,
-              color: AppColors.white,
+              color: c.surface,
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: Column(
                 children: [
@@ -176,6 +173,7 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   void _showFilterSheet(BuildContext context, ExploreTab tab) {
+    final c = AppC.of(context);
     final title = tab.isCompetition
         ? 'Filter lomba'
         : tab.isPeople
@@ -193,12 +191,12 @@ class ExploreView extends GetView<ExploreController> {
         expand: false,
         builder: (context, scrollController) {
           return Container(
-            decoration: const BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.vertical(
+            decoration: BoxDecoration(
+              color: c.background,
+              borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.xl),
               ),
-              border: Border(top: BorderSide(color: AppColors.border)),
+              border: Border(top: BorderSide(color: c.border)),
             ),
             child: ListView(
               controller: scrollController,
@@ -214,7 +212,7 @@ class ExploreView extends GetView<ExploreController> {
                     width: 42,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.borderStrong,
+                      color: c.borderStrong,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -225,7 +223,7 @@ class ExploreView extends GetView<ExploreController> {
                   style: AppFonts.headingStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -233,7 +231,7 @@ class ExploreView extends GetView<ExploreController> {
                   'Persempit hasil dengan opsi yang paling relevan.',
                   style: AppFonts.interStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
                 if (tab.isPeople) ...[
@@ -276,6 +274,7 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   static void showProjectSheet(BuildContext context, Project project) {
+    final c = AppC.of(context);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -296,7 +295,7 @@ class ExploreView extends GetView<ExploreController> {
                     AppColors.warning500,
                   ),
                   _Pill(project.faculty, AppColors.info50, AppColors.info600),
-                  _Pill('FTIK', AppColors.grey100, _muted),
+                  _Pill('FTIK', c.grey100, c.textSecondary),
                 ],
               ),
               const SizedBox(height: 18),
@@ -306,20 +305,20 @@ class ExploreView extends GetView<ExploreController> {
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                   height: 1.15,
-                  color: _ink,
+                  color: c.textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.schedule, size: 16, color: _muted),
+                  Icon(Icons.schedule, size: 16, color: c.textSecondary),
                   const SizedBox(width: 5),
                   Text(
                     'Deadline ${project.deadline}',
                     style: AppFonts.satoshiStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: _muted,
+                      color: c.textSecondary,
                     ),
                   ),
                 ],
@@ -330,7 +329,7 @@ class ExploreView extends GetView<ExploreController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   height: 1.55,
-                  color: AppColors.grey500,
+                  color: c.textSecondary,
                 ),
               ),
               const SizedBox(height: 22),
@@ -339,14 +338,14 @@ class ExploreView extends GetView<ExploreController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: _ink,
+                  color: c.textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 children: project.skills
-                    .map((skill) => _Pill(skill, _chip, AppColors.grey500))
+                    .map((skill) => _Pill(skill, c.grey50, c.textSecondary))
                     .toList(),
               ),
               const SizedBox(height: 24),
@@ -355,7 +354,7 @@ class ExploreView extends GetView<ExploreController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: _ink,
+                  color: c.textPrimary,
                 ),
               ),
               const SizedBox(height: 14),
@@ -411,6 +410,7 @@ class ExploreView extends GetView<ExploreController> {
     Competition competition,
     int index,
   ) {
+    final c = AppC.of(context);
     final posterAsset = switch (index % 4) {
       0 => 'lib/assets/img/contoh poster1.jpeg',
       1 => 'lib/assets/img/contoh poster2.jpeg',
@@ -478,9 +478,9 @@ ${competition.registrationLink}
                       height: 320,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppColors.grey100,
+                        color: c.grey100,
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.grey200, width: 1),
+                        border: Border.all(color: c.border, width: 1),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -505,7 +505,7 @@ ${competition.registrationLink}
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       height: 1.18,
-                      color: _ink,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -515,7 +515,7 @@ ${competition.registrationLink}
                     style: AppFonts.satoshiStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -529,7 +529,7 @@ ${competition.registrationLink}
                   ],
 
                   // Divider
-                  const Divider(color: AppColors.border, height: 1),
+                  Divider(color: c.border, height: 1),
                   const SizedBox(height: 16),
 
                   // 4. caption
@@ -541,7 +541,7 @@ ${competition.registrationLink}
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
                           height: 1.6,
-                          color: AppColors.grey700,
+                          color: c.grey700,
                         ),
                       ),
                       if (showSeeMore) ...[
@@ -623,13 +623,14 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Row(
       children: [
         Expanded(
           child: Container(
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.grey100,
+              color: c.grey100,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: TextField(
@@ -637,21 +638,21 @@ class _SearchBar extends StatelessWidget {
               onChanged: onChanged,
               style: AppFonts.satoshiStyle(
                 fontSize: 13.5,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: AppFonts.satoshiStyle(
                   fontSize: 13.5,
-                  color: ExploreView._muted,
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
                 filled: true,
-                fillColor: AppColors.grey100,
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.only(left: 11, right: 8),
-                  child: Icon(Icons.search, color: AppColors.grey900, size: 19),
+                fillColor: c.grey100,
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 11, right: 8),
+                  child: Icon(Icons.search, color: c.grey900, size: 19),
                 ),
                 prefixIconConstraints: const BoxConstraints(
                   minWidth: 39,
@@ -683,14 +684,14 @@ class _SearchBar extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: c.surface,
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: AppColors.grey200, width: 1.0),
+              border: Border.all(color: c.border, width: 1.0),
             ),
-            child: const Icon(
+            child: Icon(
               FluentIcons.filter_24_regular,
               size: 20,
-              color: AppColors.grey900,
+              color: c.grey900,
             ),
           ),
         ),
@@ -873,14 +874,15 @@ class _SortOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       height: 45,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: selected ? AppColors.primary500 : AppColors.white,
+        color: selected ? AppColors.primary500 : c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: selected ? AppColors.primary500 : AppColors.border,
+          color: selected ? AppColors.primary500 : c.border,
         ),
       ),
       child: Row(
@@ -889,7 +891,7 @@ class _SortOption extends StatelessWidget {
           Icon(
             icon,
             size: 15,
-            color: selected ? AppColors.white : AppColors.textSecondary,
+            color: selected ? AppColors.white : c.textSecondary,
           ),
           const SizedBox(width: 7),
           Flexible(
@@ -900,7 +902,7 @@ class _SortOption extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selected ? AppColors.white : AppColors.textSecondary,
+                color: selected ? AppColors.white : c.textSecondary,
               ),
             ),
           ),
@@ -927,6 +929,7 @@ class _FilterSelectField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return _FilterPanel(
       label: label,
       child: InkWell(
@@ -936,13 +939,13 @@ class _FilterSelectField extends StatelessWidget {
           height: 48,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: c.surface,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: c.border),
           ),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.textTertiary),
+              Icon(icon, size: 18, color: c.textTertiary),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -952,14 +955,14 @@ class _FilterSelectField extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 FluentIcons.chevron_down_24_regular,
                 size: 16,
-                color: AppColors.textTertiary,
+                color: c.textTertiary,
               ),
             ],
           ),
@@ -1005,6 +1008,7 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final filtered = widget.options
         .where((option) => option.toLowerCase().contains(_query.toLowerCase()))
         .toList();
@@ -1023,9 +1027,9 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
           20,
           MediaQuery.of(context).padding.bottom + 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
         ),
@@ -1038,7 +1042,7 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderStrong,
+                  color: c.borderStrong,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -1049,7 +1053,7 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
               style: AppFonts.satoshiStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -1058,10 +1062,10 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
               onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
                 hintText: 'Cari ${widget.title.toLowerCase()}',
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   FluentIcons.search_24_regular,
                   size: 18,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
               ),
             ),
@@ -1072,7 +1076,7 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) => Divider(
                   height: 1,
-                  color: AppColors.border.withValues(alpha: 0.4),
+                  color: c.border.withValues(alpha: 0.4),
                 ),
                 itemBuilder: (context, index) {
                   final option = filtered[index];
@@ -1094,7 +1098,7 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
                               style: AppFonts.satoshiStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: c.textPrimary,
                               ),
                             ),
                           ),
@@ -1126,12 +1130,13 @@ class _FilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.grey50,
+        color: c.grey50,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1141,7 +1146,7 @@ class _FilterPanel extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: c.textSecondary,
             ),
           ),
           const SizedBox(height: 9),
@@ -1157,12 +1162,13 @@ class _ProfileFilterPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         children: [
@@ -1180,7 +1186,7 @@ class _ProfileFilterPreview extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -1188,7 +1194,7 @@ class _ProfileFilterPreview extends StatelessWidget {
                   'Filter membantu menemukan calon kolaborator yang relevan.',
                   style: AppFonts.satoshiStyle(
                     fontSize: 11,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
               ],
@@ -1213,6 +1219,7 @@ class _SegmentButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -1233,7 +1240,7 @@ class _SegmentButton extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: active ? ExploreView._ink : AppColors.grey400,
+              color: active ? c.textPrimary : c.grey400,
             ),
           ),
         ),
@@ -1326,6 +1333,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
@@ -1337,7 +1345,7 @@ class _SectionHeader extends StatelessWidget {
               style: AppFonts.headingStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: ExploreView._ink,
+                color: c.textPrimary,
                 height: 1.1,
               ),
             ),
@@ -1346,7 +1354,7 @@ class _SectionHeader extends StatelessWidget {
             trailing,
             style: AppFonts.satoshiStyle(
               fontSize: 11,
-              color: AppColors.textTertiary,
+              color: c.textTertiary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1369,6 +1377,7 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final visibleSkills = project.skills.take(2).toList();
 
     return GestureDetector(
@@ -1376,9 +1385,9 @@ class _ProjectCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: AppColors.grey200, width: 1),
+          border: Border.all(color: c.border, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.black.withValues(alpha: 0.07),
@@ -1418,7 +1427,7 @@ class _ProjectCard extends StatelessWidget {
                 fontSize: 17,
                 height: 1.15,
                 fontWeight: FontWeight.w800,
-                color: ExploreView._ink,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 10),
@@ -1430,7 +1439,7 @@ class _ProjectCard extends StatelessWidget {
                 fontSize: 13,
                 height: 1.24,
                 fontWeight: FontWeight.w400,
-                color: AppColors.grey600,
+                color: c.grey600,
               ),
             ),
             const SizedBox(height: 16),
@@ -1440,7 +1449,7 @@ class _ProjectCard extends StatelessWidget {
               children: visibleSkills
                   .map(
                     (skill) =>
-                        _MiniChip(label: skill, color: AppColors.grey100),
+                        _MiniChip(label: skill, color: c.grey100),
                   )
                   .toList(),
             ),
@@ -1454,14 +1463,14 @@ class _ProjectCard extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.grey500,
+                    color: c.textSecondary,
                   ),
                 ),
                 const Spacer(),
-                const Icon(
+                Icon(
                   FluentIcons.people_team_24_filled,
                   size: 23,
-                  color: AppColors.grey700,
+                  color: c.grey700,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -1488,6 +1497,7 @@ class _ProjectAvatarStack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final visibleCount = count.clamp(1, 2);
 
     return SizedBox(
@@ -1504,7 +1514,7 @@ class _ProjectAvatarStack extends StatelessWidget {
                 height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.white, width: 1.4),
+                  border: Border.all(color: c.surface, width: 1.4),
                 ),
                 child: const CircleAvatar(
                   radius: 10,
@@ -1517,14 +1527,14 @@ class _ProjectAvatarStack extends StatelessWidget {
             child: Container(
               width: 22,
               height: 22,
-              decoration: const BoxDecoration(
-                color: AppColors.grey100,
+              decoration: BoxDecoration(
+                color: c.grey100,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 FluentIcons.add_16_filled,
                 size: 15,
-                color: AppColors.grey500,
+                color: c.grey500,
               ),
             ),
           ),
@@ -1547,6 +1557,7 @@ class _CompetitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     // Select from our beautiful local competition posters
     final posterAsset = switch (index % 4) {
       0 => 'lib/assets/img/contoh poster1.jpeg',
@@ -1559,9 +1570,9 @@ class _CompetitionCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: AppColors.grey200),
+          border: Border.all(color: c.border),
           boxShadow: [
             BoxShadow(
               color: AppColors.black.withValues(alpha: 0.04),
@@ -1598,7 +1609,7 @@ class _CompetitionCard extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         height: 1.2,
-                        color: ExploreView._ink,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1609,7 +1620,7 @@ class _CompetitionCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.grey400,
+                        color: c.grey400,
                       ),
                     ),
                     const Spacer(),
@@ -1751,10 +1762,11 @@ class _TinyTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.grey100,
+        color: c.grey100,
         borderRadius: BorderRadius.circular(AppRadius.xxs),
       ),
       child: Text(
@@ -1762,7 +1774,7 @@ class _TinyTag extends StatelessWidget {
         style: AppFonts.satoshiStyle(
           fontSize: 8,
           fontWeight: FontWeight.w600,
-          color: AppColors.textTertiary,
+          color: c.textTertiary,
         ),
       ),
     );
@@ -1776,6 +1788,7 @@ class _DetailSheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 42),
@@ -1785,9 +1798,9 @@ class _DetailSheetFrame extends StatelessWidget {
         28,
         MediaQuery.of(context).padding.bottom + 22,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1797,7 +1810,7 @@ class _DetailSheetFrame extends StatelessWidget {
               width: 48,
               height: 5,
               decoration: BoxDecoration(
-                color: AppColors.borderStrong,
+                color: c.borderStrong,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
@@ -1848,6 +1861,7 @@ class _MiniChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
       decoration: BoxDecoration(
@@ -1859,7 +1873,7 @@ class _MiniChip extends StatelessWidget {
         style: AppFonts.satoshiStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.grey700,
+          color: c.grey700,
         ),
       ),
     );
@@ -1874,6 +1888,7 @@ class _TeamMember extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       children: [
         CircleAvatar(
@@ -1885,7 +1900,7 @@ class _TeamMember extends StatelessWidget {
           name,
           style: AppFonts.satoshiStyle(
             fontSize: 10,
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
           ),
         ),
       ],
@@ -1898,6 +1913,7 @@ class _EmptyMember extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       children: [
         Container(
@@ -1906,18 +1922,18 @@ class _EmptyMember extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.borderStrong,
+              color: c.borderStrong,
               style: BorderStyle.solid,
             ),
           ),
-          child: const Icon(Icons.add, size: 18, color: AppColors.borderStrong),
+          child: Icon(Icons.add, size: 18, color: c.borderStrong),
         ),
         const SizedBox(height: 6),
         Text(
           'Terbuka',
           style: AppFonts.satoshiStyle(
             fontSize: 10,
-            color: AppColors.textTertiary,
+            color: c.textTertiary,
           ),
         ),
       ],
@@ -1932,12 +1948,13 @@ class _OwnerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: ExploreView._line),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         children: [
@@ -1954,7 +1971,7 @@ class _OwnerTile extends StatelessWidget {
                   'Diposting oleh',
                   style: AppFonts.satoshiStyle(
                     fontSize: 10,
-                    color: ExploreView._muted,
+                    color: c.textSecondary,
                   ),
                 ),
                 Text(
@@ -1962,14 +1979,14 @@ class _OwnerTile extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: ExploreView._ink,
+                    color: c.textPrimary,
                   ),
                 ),
                 Text(
                   '${project.posterRole} - FTIK',
                   style: AppFonts.satoshiStyle(
                     fontSize: 10,
-                    color: ExploreView._muted,
+                    color: c.textSecondary,
                   ),
                 ),
               ],
@@ -1981,9 +1998,9 @@ class _OwnerTile extends StatelessWidget {
               vertical: AppSpacing.xs,
             ),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: c.background,
               borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: c.border),
             ),
             child: Text(
               'Profil',
@@ -2038,6 +2055,7 @@ class _OutlineAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -2046,14 +2064,14 @@ class _OutlineAction extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: c.border),
         ),
         child: Text(
           label,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
           ),
         ),
       ),
@@ -2078,6 +2096,7 @@ class _PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Material(
       color: AppColors.transparent,
       child: InkWell(
@@ -2086,9 +2105,9 @@ class _PersonCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: c.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.grey200, width: 1),
+            border: Border.all(color: c.border, width: 1),
             boxShadow: [
               BoxShadow(
                 color: AppColors.black.withValues(alpha: 0.04),
@@ -2115,14 +2134,14 @@ class _PersonCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: ExploreView._ink,
+                        color: c.textPrimary,
                       ),
                     ),
                     Text(
                       role,
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
-                        color: ExploreView._muted,
+                        color: c.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -2131,17 +2150,17 @@ class _PersonCard extends StatelessWidget {
                       children: tags
                           .map(
                             (tag) =>
-                                _MiniChip(label: tag, color: ExploreView._chip),
+                                _MiniChip(label: tag, color: c.grey50),
                           )
                           .toList(),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.send_outlined,
                 size: 20,
-                color: ExploreView._muted,
+                color: c.textSecondary,
               ),
             ],
           ),
@@ -2216,6 +2235,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final isUrgent = daysLeft <= 5;
     final isWarning = daysLeft <= 10;
 
@@ -2334,7 +2354,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
                 'Pendaftaran Dibuka',
                 style: AppFonts.satoshiStyle(
                   fontSize: 9.5,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
               ),
               Text(
@@ -2346,7 +2366,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w600,
-                  color: isUrgent ? AppColors.error500 : AppColors.textTertiary,
+                  color: isUrgent ? AppColors.error500 : c.textTertiary,
                 ),
               ),
             ],

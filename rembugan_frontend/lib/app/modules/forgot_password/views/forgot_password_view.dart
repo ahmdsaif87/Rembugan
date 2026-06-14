@@ -13,8 +13,9 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: c.background,
       body: SafeArea(
         child: Obx(
           () => Column(
@@ -112,6 +113,7 @@ class _OtpStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final displayEmail = controller.email.isEmpty
         ? 'tim.jennings@example.com'
         : controller.email;
@@ -151,7 +153,7 @@ class _OtpStep extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.grey900,
+                    color: c.grey900,
                   ),
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
@@ -200,17 +202,16 @@ class _OtpStep extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: seconds == 0
                           ? AppColors.primary500
-                          : AppColors.grey900,
+                          : c.grey900,
                     ),
                   ),
                 ],
               ),
               style: AppFonts.satoshiStyle(
                 fontSize: 14,
-                color: AppColors.grey500,
+                color: c.grey500,
               ),
-            ),
-          );
+            ));
         }),
       ],
     );
@@ -323,6 +324,7 @@ class _Title extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       children: [
         Text(
@@ -331,7 +333,7 @@ class _Title extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: AppColors.grey900,
+            color: c.grey900,
             height: 1.2,
           ),
         ),
@@ -342,7 +344,7 @@ class _Title extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: AppColors.grey500,
+            color: c.grey500,
             height: 1.45,
           ),
         ),

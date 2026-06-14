@@ -11,17 +11,18 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppSurfaceColors.surfaceWhite,
+      backgroundColor: c.background,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(14, 24, 14, AppSpacing.xl),
           children: [
             _buildBackButton(),
             const SizedBox(height: 38),
-            _buildHeader(),
+            _buildHeader(c),
             const SizedBox(height: 50),
-            _buildFormContent(),
+            _buildFormContent(c),
           ],
         ),
       ),
@@ -46,7 +47,7 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppC c) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -59,7 +60,7 @@ class LoginView extends GetView<LoginController> {
                 style: AppFonts.headingStyle(
                   fontSize: 27,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primary800,
+                  color: c.textPrimary,
                   height: 1.18,
                 ),
               ),
@@ -69,7 +70,7 @@ class LoginView extends GetView<LoginController> {
           style: AppFonts.headingStyle(
             fontSize: 25,
             fontWeight: FontWeight.w800,
-            color: AppColors.grey900,
+            color: c.grey900,
             height: 1.2,
           ),
         ),
@@ -79,7 +80,7 @@ class LoginView extends GetView<LoginController> {
           textAlign: TextAlign.center,
           style: AppFonts.satoshiStyle(
             fontSize: 15,
-            color: AppColors.grey600,
+            color: c.grey600,
             height: 1.35,
           ),
         ),
@@ -87,7 +88,7 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
-  Widget _buildFormContent() {
+  Widget _buildFormContent(AppC c) {
     return Form(
       key: controller.formKey,
       child: Column(
@@ -100,7 +101,7 @@ class LoginView extends GetView<LoginController> {
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 28),
-          _buildPasswordField(),
+          _buildPasswordField(c),
           const SizedBox(height: 18),
           _buildForgotPasswordLink(),
           const SizedBox(height: 22),
@@ -110,7 +111,7 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(AppC c) {
     return Obx(
       () => AppTextField(
         controller: controller.passwordController,
@@ -125,7 +126,7 @@ class LoginView extends GetView<LoginController> {
               controller.isPasswordHidden.value
                   ? FluentIcons.eye_off_24_regular
                   : FluentIcons.eye_24_regular,
-              color: AppIconColors.iconGrey,
+              color: c.grey400,
               size: 20,
             ),
           ),

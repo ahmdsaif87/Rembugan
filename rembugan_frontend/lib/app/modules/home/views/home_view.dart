@@ -18,14 +18,15 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: c.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            _buildHeader(),
-            _buildTabs(),
+            _buildHeader(context),
+            _buildTabs(context),
             Expanded(
               child: Obx(
                 () => ListView(
@@ -41,7 +42,8 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       child: Row(
@@ -52,7 +54,7 @@ class HomeView extends GetView<HomeController> {
               style: AppFonts.headingStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.w800,
-                color: AppColors.grey900,
+                color: c.grey900,
                 height: 1.1,
               ),
             ),
@@ -73,18 +75,19 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildTabs() {
+  Widget _buildTabs(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.grey200)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: c.border)),
         ),
         child: Obx(
           () => Row(
             children: [
-              _buildTabButton('Untukmu', controller.activeTab.value == 0, 0),
-              _buildTabButton('Mengikuti', controller.activeTab.value == 1, 1),
+              _buildTabButton('Untukmu', controller.activeTab.value == 0, 0, context),
+              _buildTabButton('Mengikuti', controller.activeTab.value == 1, 1, context),
             ],
           ),
         ),
@@ -92,7 +95,8 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildTabButton(String label, bool active, int index) {
+  Widget _buildTabButton(String label, bool active, int index, BuildContext context) {
+    final c = AppC.of(context);
     return Expanded(
       child: GestureDetector(
         onTap: () => controller.setTab(index),
@@ -114,7 +118,7 @@ class HomeView extends GetView<HomeController> {
             style: AppFonts.satoshiStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w800,
-              color: active ? AppColors.grey900 : AppColors.grey400,
+              color: active ? c.textPrimary : c.grey400,
             ),
           ),
         ),
@@ -132,6 +136,7 @@ class HomeView extends GetView<HomeController> {
   }
 
   List<Widget> _buildMixedFeed(BuildContext context) {
+    final c = AppC.of(context);
     if (controller.activeTab.value == 1) {
       // "Mengikuti" tab gets the original pure posts (or customized)
       return [
@@ -151,20 +156,20 @@ class HomeView extends GetView<HomeController> {
           onShowComments: () => showCommentsSheet(context),
           onShowShare: () => _showShareSheet(context),
         ),
-        const Divider(height: 1, color: AppColors.grey200),
+        Divider(height: 1, color: c.border),
         _PostCardWidget(
           avatarUrl: 'https://i.pravatar.cc/100?img=12',
           name: 'Marvin McKinney',
           subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
           content:
-              'Tadi siang habis coba fitur scan resume terbaru di Rembugan, gila ternyata akurat banget ya! Skill Figma langsung ke-detect otomatis. UI-nya juga clean banget, jadi makin semangat nyari proyek kolaborasi di sini. Mantap tim developer! 👏✨',
+              'Tadi siang habis coba fitur scan resume terbaru di Rembugan, gila ternyata akurat banget ya! Skill Figma langsung ke-detect otomatis. UI-nya juga clean banget, jadi makin semangat nyari proyek kolaborasi di sini. Mantap tim developer! 👏',
           hasImage: false,
           initialLikes: 98,
           showFollowButton: false,
           onShowComments: () => showCommentsSheet(context),
           onShowShare: () => _showShareSheet(context),
         ),
-        const Divider(height: 1, color: AppColors.grey200),
+        Divider(height: 1, color: c.border),
         _PostCardWidget(
           avatarUrl: 'https://i.pravatar.cc/100?img=12',
           name: 'Marvin McKinney',
@@ -177,13 +182,13 @@ class HomeView extends GetView<HomeController> {
           onShowComments: () => showCommentsSheet(context),
           onShowShare: () => _showShareSheet(context),
         ),
-        const Divider(height: 1, color: AppColors.grey200),
+        Divider(height: 1, color: c.border),
         _PostCardWidget(
           avatarUrl: 'https://i.pravatar.cc/100?img=33',
           name: 'Cameron Williamson',
           subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
           content:
-              'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎨✍️',
+              'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎉',
           hasImage: true,
           imageAssets: const ['lib/assets/img/contoh poster1.jpeg'],
           initialLikes: 87,
@@ -212,25 +217,25 @@ class HomeView extends GetView<HomeController> {
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: AppColors.grey200),
+      Divider(height: 1, color: c.border),
 
       // Proyek Rekomendasi
       _buildRecommendedProjectsSection(context),
-      const Divider(height: 1, color: AppColors.grey200),
+      Divider(height: 1, color: c.border),
 
       _PostCardWidget(
         avatarUrl: 'https://i.pravatar.cc/100?img=12',
         name: 'Marvin McKinney',
         subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
         content:
-            'Tadi siang habis coba fitur scan resume terbaru di Rembugan, gila ternyata akurat banget ya! Skill Figma langsung ke-detect otomatis. UI-nya juga clean banget, jadi makin semangat nyari proyek kolaborasi di sini. Mantap tim developer! 👏✨',
+            'Tadi siang habis coba fitur scan resume terbaru di Rembugan, gila ternyata akurat banget ya! Skill Figma langsung ke-detect otomatis. UI-nya juga clean banget, jadi makin semangat nyari proyek kolaborasi di sini. Mantap tim developer! 👏',
         hasImage: false,
         initialLikes: 98,
         showFollowButton: true,
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: AppColors.grey200),
+      Divider(height: 1, color: c.border),
 
       _PostCardWidget(
         avatarUrl: 'https://i.pravatar.cc/100?img=12',
@@ -244,18 +249,18 @@ class HomeView extends GetView<HomeController> {
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: AppColors.grey200),
+      Divider(height: 1, color: c.border),
 
       // Lomba Rekomendasi
       _buildRecommendedCompetitionsSection(context),
-      const Divider(height: 1, color: AppColors.grey200),
+      Divider(height: 1, color: c.border),
 
       _PostCardWidget(
         avatarUrl: 'https://i.pravatar.cc/100?img=33',
         name: 'Cameron Williamson',
         subtitle: 'D4 Teknik Informatika - 2 jam yang lalu',
         content:
-            'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎨✍️',
+            'Guys, pendaftaran Essay & Poster Competition Creative Fest 2026 udah mau ditutup tanggal 20 Juni besok. Buat yang pengen asah portofolio tingkat nasional wajib banget ikut sih. Link registrasi ada di detail lomba ya! 🎉',
         hasImage: true,
         imageAssets: const ['lib/assets/img/contoh poster1.jpeg'],
         initialLikes: 87,
@@ -263,7 +268,7 @@ class HomeView extends GetView<HomeController> {
         onShowComments: () => showCommentsSheet(context),
         onShowShare: () => _showShareSheet(context),
       ),
-      const Divider(height: 1, color: AppColors.grey200),
+      Divider(height: 1, color: c.border),
 
       // Orang Rekomendasi
       _buildRecommendedPeopleSection(context),
@@ -272,6 +277,7 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildRecommendedProjectsSection(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -285,19 +291,19 @@ class HomeView extends GetView<HomeController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ],
           ),
         ),
         SizedBox(
-          height: 190,
+          height: 214,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -319,6 +325,7 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildRecommendedCompetitionsSection(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -332,13 +339,13 @@ class HomeView extends GetView<HomeController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ],
           ),
@@ -370,6 +377,7 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildRecommendedPeopleSection(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -383,13 +391,13 @@ class HomeView extends GetView<HomeController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ],
           ),
@@ -426,21 +434,18 @@ class _HeaderIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 24,
         height: 32,
-        child: Icon(icon, size: 24, color: AppColors.grey900),
+        child: Icon(icon, size: 24, color: c.grey900),
       ),
     );
   }
 }
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  RECOMMENDED CARDS WIDGETS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 class _RecommendedProjectCard extends StatefulWidget {
   final Project project;
@@ -463,41 +468,9 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Determine index-based semantic color, badge, and reason
-    final Color semanticColor = switch (widget.index % 2) {
-      0 => AppColors.warning500, // Amber/Yellow (Cocok Untukmu)
-      _ => AppColors.success500, // Green (Direkomendasikan)
-    };
-
-    final String badgeText = switch (widget.index % 2) {
-      0 => '✨ Cocok Untukmu',
-      _ => '⭐ Direkomendasikan',
-    };
-
-    final Color badgeBg = switch (widget.index % 2) {
-      0 => AppColors.warning50,
-      _ => AppColors.success50,
-    };
-
-    final Color badgeBorder = switch (widget.index % 2) {
-      0 => AppColors.warning100,
-      _ => AppColors.success100,
-    };
-
-    final Color badgeTextCol = switch (widget.index % 2) {
-      0 => AppColors.warning700,
-      _ => AppColors.success500,
-    };
-
-    final String reasonText = switch (widget.index % 2) {
-      0 => 'Sesuai dengan keahlian Flutter kamu',
-      _ => 'Banyak dicari di jurusan kamu',
-    };
-
-    final IconData reasonIcon = switch (widget.index % 2) {
-      0 => Icons.auto_awesome_outlined,
-      _ => Icons.trending_up_rounded,
-    };
+    final c = AppC.of(context);
+    final visibleSkills = widget.project.skills.take(2).toList();
+    final matchLabel = widget.index.isEven ? 'Sesuai skill' : 'Cocok jurusan';
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -511,12 +484,12 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: 280,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
           decoration: BoxDecoration(
-            color: AppColors.grey50, // premium off-white/cool-gray surface!
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            color: c.surface,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
-              color: _isPressed ? AppColors.grey400 : AppColors.grey300,
-              width: 1.2,
+              color: _isPressed ? AppColors.primary200 : c.border,
             ),
             boxShadow: _isPressed
                 ? [
@@ -526,177 +499,292 @@ class _RecommendedProjectCardState extends State<_RecommendedProjectCard> {
                       offset: const Offset(0, 2),
                     ),
                   ]
-                : AppShadows.medium,
+                : [
+                    BoxShadow(
+                      color: AppColors.black.withValues(alpha: 0.07),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Stack(
-              children: [
-                // Top subtle semantic color accent strip!
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  height: 3,
-                  child: Container(color: semanticColor),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 15, 14, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top Row (Category Tag & Premium Small Badge)
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 3.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.grey100,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                            child: Text(
-                              widget.project.category.toUpperCase(),
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.grey600,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 3.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: badgeBg,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: badgeBorder,
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Text(
-                              badgeText,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w800,
-                                color: badgeTextCol,
-                              ),
-                            ),
-                          ),
-                        ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.project.faculty.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 10.5,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.info700,
                       ),
-                      const SizedBox(height: 10),
-                      // Title
-                      Text(
-                        widget.project.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      // Description
-                      Text(
-                        widget.project.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 11.5,
-                          height: 1.35,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const Spacer(),
-                      // Subtle Alasan Rekomendasi (Helper text)
-                      Row(
-                        children: [
-                          Icon(
-                            reasonIcon,
-                            size: 12.5,
-                            color: semanticColor.withValues(alpha: 0.85),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              reasonText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Divider(height: 1, color: AppColors.grey200),
-                      const SizedBox(height: 8),
-                      // Bottom Row (Owner Avatar & Slot Status)
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 9,
-                            backgroundImage: const AssetImage(
-                              'lib/assets/img/avatar.png',
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              widget.project.postedBy,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: badgeBg.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.xxs,
-                              ),
-                            ),
-                            child: Text(
-                              '${widget.project.openSlots} slot',
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: badgeTextCol,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
+                  _FeedMatchBadge(label: matchLabel),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                widget.project.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                height: 1.15,
+                fontWeight: FontWeight.w800,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.project.description,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppFonts.satoshiStyle(
+                fontSize: 11,
+                height: 1.25,
+                color: c.grey600,
                 ),
-              ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: visibleSkills
+                    .map(
+                      (skill) =>
+                          _FeedMiniChip(label: skill, color: c.grey100),
+                    )
+                    .toList(),
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  _FeedProjectAvatarStack(count: widget.project.memberAvatars.length),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.project.postedAgo,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w500,
+                    color: c.grey500,
+                  ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    FluentIcons.people_team_24_filled,
+                    size: 16,
+                    color: c.grey700,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '${widget.project.filledSlots}/${widget.project.totalSlots}',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.success500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedMatchBadge extends StatelessWidget {
+  const _FeedMatchBadge({required this.label});
+
+  final String label;
+
+  _StatusTone get tone {
+    final value = label.toLowerCase();
+    if (value.contains('cocok')) {
+      return const _StatusTone(
+        background: AppColors.info50,
+        border: AppColors.info50,
+        foreground: AppColors.info700,
+      );
+    }
+    if (value.contains('ditutup') || value.contains('deadline')) {
+      return const _StatusTone(
+        background: AppColors.warning50,
+        border: AppColors.warning100,
+        foreground: AppColors.warning700,
+      );
+    }
+    if (value.contains('penuh')) {
+      return const _StatusTone(
+        background: AppColors.danger50,
+        border: AppColors.danger100,
+        foreground: AppColors.danger600,
+      );
+    }
+    if (value.contains('trending')) {
+      return const _StatusTone(
+        background: AppColors.info50,
+        border: AppColors.info100,
+        foreground: AppColors.info600,
+      );
+    }
+    if (value.contains('baru')) {
+      return const _StatusTone(
+        background: AppColors.primary50,
+        border: AppColors.primary50,
+        foreground: AppColors.primary400,
+      );
+    }
+    return const _StatusTone(
+      background: AppColors.info50,
+      border: AppColors.info50,
+      foreground: AppColors.info700,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = tone;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: style.background,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        border: Border.all(color: style.background),
+      ),
+      child: Text(
+        label,
+        style: AppFonts.satoshiStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w700,
+          color: style.foreground,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusTone {
+  const _StatusTone({
+    required this.background,
+    required this.border,
+    required this.foreground,
+  });
+
+  final Color background;
+  final Color border;
+  final Color foreground;
+}
+
+class _FeedMiniChip extends StatelessWidget {
+  const _FeedMiniChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+      ),
+      child: Text(
+        label,
+        style: AppFonts.satoshiStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w600,
+          color: c.grey700,
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedProjectAvatarStack extends StatelessWidget {
+  const _FeedProjectAvatarStack({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    final visibleCount = count.clamp(1, 2);
+
+    return SizedBox(
+      width: 57,
+      height: 22,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var i = 0; i < visibleCount; i++)
+            Positioned(
+              left: i * 15,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.surface, width: 1.4),
+                ),
+                child: CircleAvatar(
+                  radius: 10,
+                  backgroundImage: AssetImage('lib/assets/img/avatar.png'),
+                ),
+              ),
+            ),
+          Positioned(
+            left: visibleCount * 15,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: c.grey100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.add,
+                size: 14,
+                color: c.grey500,
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedSkillChip extends StatelessWidget {
+  const _FeedSkillChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: c.grey100,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: AppFonts.satoshiStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: c.grey600,
         ),
       ),
     );
@@ -869,12 +957,13 @@ class _RecommendedPersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       width: 165,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 1.2),
+        border: Border.all(color: c.border, width: 1.2),
         boxShadow: AppShadows.soft,
       ),
       child: Padding(
@@ -891,7 +980,7 @@ class _RecommendedPersonCard extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 2),
@@ -901,7 +990,7 @@ class _RecommendedPersonCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppFonts.satoshiStyle(
                 fontSize: 10,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -918,7 +1007,7 @@ class _RecommendedPersonCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primarySoft,
+                        color: c.primarySoft,
                         borderRadius: BorderRadius.circular(AppRadius.xxs),
                       ),
                       child: Text(
@@ -926,7 +1015,7 @@ class _RecommendedPersonCard extends StatelessWidget {
                         style: AppFonts.satoshiStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                     ),
@@ -942,10 +1031,10 @@ class _RecommendedPersonCard extends StatelessWidget {
                   onPressed: onFollow,
                   style: TextButton.styleFrom(
                     backgroundColor: person.isFollowing.value
-                        ? AppColors.grey100
+                        ? c.grey100
                         : AppColors.primary,
                     foregroundColor: person.isFollowing.value
-                        ? AppColors.textSecondary
+                        ? c.textSecondary
                         : AppColors.white,
                     padding: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
@@ -958,7 +1047,7 @@ class _RecommendedPersonCard extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: person.isFollowing.value
-                          ? AppColors.textSecondary
+                          ? c.textSecondary
                           : AppColors.white,
                     ),
                   ),
@@ -1016,6 +1105,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
   }
 
   void _toggleFollow() {
+    final c = AppC.of(context);
     setState(() {
       _isFollowing = !_isFollowing;
     });
@@ -1025,8 +1115,8 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
           ? 'Kamu sekarang mengikuti ${widget.name}.'
           : 'Kamu berhenti mengikuti ${widget.name}.',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: _isFollowing ? AppColors.success50 : AppColors.white,
-      colorText: _isFollowing ? AppColors.success700 : AppColors.textPrimary,
+      backgroundColor: _isFollowing ? AppColors.success50 : c.surface,
+      colorText: _isFollowing ? AppColors.success700 : c.textPrimary,
       duration: const Duration(seconds: 2),
     );
   }
@@ -1043,6 +1133,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
   }
 
   void _toggleBookmark() {
+    final c = AppC.of(context);
     setState(() {
       _isBookmarked = !_isBookmarked;
     });
@@ -1052,18 +1143,19 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
           ? 'Postingan berhasil disimpan ke penanda kamu.'
           : 'Postingan dihapus dari penanda kamu.',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: _isBookmarked ? AppColors.success50 : AppColors.white,
-      colorText: _isBookmarked ? AppColors.success700 : AppColors.textPrimary,
+      backgroundColor: _isBookmarked ? AppColors.success50 : c.surface,
+      colorText: _isBookmarked ? AppColors.success700 : c.textPrimary,
       duration: const Duration(seconds: 2),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: widget.onShowComments,
       child: Container(
-        color: AppColors.white,
+        color: c.surface,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1073,10 +1165,10 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
               children: [
                 GestureDetector(
                   onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 20,
-                    backgroundColor: AppColors.primarySoft,
-                    backgroundImage: AssetImage('lib/assets/img/avatar.png'),
+                    backgroundColor: c.primarySoft,
+                    backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1096,7 +1188,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                                 style: AppFonts.satoshiStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.grey900,
+                                  color: c.textPrimary,
                                 ),
                               ),
                             ),
@@ -1105,7 +1197,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                               '• 5 Menit',
                               style: AppFonts.satoshiStyle(
                                 fontSize: 11,
-                                color: AppColors.grey400,
+                                color: c.grey400,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1118,7 +1210,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                           overflow: TextOverflow.ellipsis,
                           style: AppFonts.satoshiStyle(
                             fontSize: 12,
-                            color: AppColors.grey500,
+                            color: c.grey500,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1134,7 +1226,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: c.surface,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(color: AppColors.primary500),
                       ),
@@ -1154,9 +1246,9 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
             Text(
               widget.content,
               style: AppFonts.satoshiStyle(
-                fontSize: 15,
-                color: AppColors.grey900,
-                height: 1.36,
+                fontSize: 14,
+                color: c.textPrimary,
+                height: 1.38,
               ),
             ),
             if (widget.imageAssets != null &&
@@ -1241,7 +1333,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                       : FluentIcons.heart_24_regular,
                   '$_likeCount',
                   'menyukai postingan',
-                  _isLiked ? AppColors.error500 : AppColors.grey500,
+                  _isLiked ? AppColors.error500 : c.grey500,
                   onTap: _toggleLike,
                 ),
                 const SizedBox(width: 18),
@@ -1249,7 +1341,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                   FluentIcons.chat_24_regular,
                   '20',
                   'berkomentar',
-                  AppColors.grey500,
+                  c.grey500,
                   onTap: widget.onShowComments,
                 ),
                 const Spacer(),
@@ -1257,7 +1349,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                   FluentIcons.send_24_regular,
                   '',
                   'membagikan postingan',
-                  AppColors.grey500,
+                  c.grey500,
                   onTap: widget.onShowShare,
                 ),
                 const SizedBox(width: 22),
@@ -1267,7 +1359,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                       : FluentIcons.bookmark_24_regular,
                   '',
                   'menyimpan postingan',
-                  _isBookmarked ? AppColors.warning500 : AppColors.grey500,
+                  _isBookmarked ? AppColors.warning500 : c.grey500,
                   onTap: _toggleBookmark,
                 ),
               ],
@@ -1285,6 +1377,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
     Color activeColor, {
     required VoidCallback onTap,
   }) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -1301,7 +1394,7 @@ class _PostCardWidgetState extends State<_PostCardWidget> {
                 count,
                 style: AppFonts.satoshiStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1330,10 +1423,11 @@ class _ShareSheetState extends State<_ShareSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
       child: Column(
@@ -1345,7 +1439,7 @@ class _ShareSheetState extends State<_ShareSheet> {
               width: 38,
               height: 4.5,
               decoration: BoxDecoration(
-                color: AppColors.grey200,
+                color: c.grey200,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
@@ -1356,34 +1450,34 @@ class _ShareSheetState extends State<_ShareSheet> {
             style: AppFonts.headingStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
             ),
           ),
           const SizedBox(height: 14),
           TextField(
             style: AppFonts.satoshiStyle(
               fontSize: 13,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
             ),
             decoration: InputDecoration(
               hintText: 'Cari teman...',
               hintStyle: AppFonts.satoshiStyle(
                 fontSize: 12,
-                color: AppColors.textTertiary,
+                color: c.textTertiary,
               ),
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 FluentIcons.search_24_regular,
                 size: 18,
-                color: AppColors.textTertiary,
+                color: c.textTertiary,
               ),
               filled: true,
-              fillColor: AppColors.grey50,
+              fillColor: c.grey50,
               contentPadding: const EdgeInsets.symmetric(
                 vertical: AppSpacing.sm,
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: const BorderSide(color: AppColors.grey200),
+                borderSide: BorderSide(color: c.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -1416,7 +1510,7 @@ class _ShareSheetState extends State<_ShareSheet> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: c.textPrimary,
                           ),
                         ),
                       ),
@@ -1438,10 +1532,10 @@ class _ShareSheetState extends State<_ShareSheet> {
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: friend['sent']
-                              ? AppColors.grey100
+                              ? c.grey100
                               : AppColors.primary,
                           foregroundColor: friend['sent']
-                              ? AppColors.textTertiary
+                              ? c.textTertiary
                               : AppColors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(
@@ -1466,7 +1560,7 @@ class _ShareSheetState extends State<_ShareSheet> {
               },
             ),
           ),
-          const Divider(color: AppColors.grey200),
+          Divider(color: c.border),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1525,6 +1619,7 @@ class _ShareSheetState extends State<_ShareSheet> {
     required String label,
     required VoidCallback onTap,
   }) {
+    final c = AppC.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -1535,11 +1630,11 @@ class _ShareSheetState extends State<_ShareSheet> {
             Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(
-                color: AppColors.grey100,
+              decoration: BoxDecoration(
+                color: c.grey100,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: AppColors.textPrimary, size: 20),
+              child: Icon(icon, color: c.textPrimary, size: 20),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1547,7 +1642,7 @@ class _ShareSheetState extends State<_ShareSheet> {
               style: AppFonts.satoshiStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ),
           ],

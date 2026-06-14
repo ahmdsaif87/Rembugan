@@ -24,8 +24,9 @@ class CommentView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -37,7 +38,7 @@ class CommentView extends StatelessWidget {
                     width: 42,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.borderStrong,
+                      color: c.borderStrong,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -55,7 +56,7 @@ class CommentView extends StatelessWidget {
                           style: AppFonts.headingStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: c.textPrimary,
                           ),
                         ),
                       ),
@@ -65,7 +66,7 @@ class CommentView extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+            Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -80,7 +81,7 @@ class CommentView extends StatelessWidget {
                           'Kami sedang mencari Flutter dev untuk bantu polishing flow onboarding dan chat. Ada yang tertarik kolaborasi minggu ini?',
                     ),
                   ),
-                  Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+                  Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
                   const _CommentTile(
                     name: 'Dede Fernanda',
                     avatarUrl: 'https://i.pravatar.cc/100?img=60',
@@ -93,7 +94,7 @@ class CommentView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Divider(height: 1, indent: 64, color: AppColors.border.withValues(alpha: 0.4)),
+                  Divider(height: 1, indent: 64, color: c.border.withValues(alpha: 0.4)),
                   const _CommentTile(
                     name: 'Raka Pratama',
                     avatarUrl: 'https://i.pravatar.cc/100?img=47',
@@ -126,6 +127,7 @@ class _CommentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(
@@ -147,7 +149,7 @@ class _CommentTile extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -155,7 +157,7 @@ class _CommentTile extends StatelessWidget {
                       '12m',
                       style: AppFonts.satoshiStyle(
                         fontSize: 12,
-                        color: AppColors.textTertiary,
+                        color: c.textTertiary,
                       ),
                     ),
                   ],
@@ -166,7 +168,7 @@ class _CommentTile extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 13,
                     height: 1.45,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -206,12 +208,13 @@ class _ReplyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: AppSpacing.md, top: 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(width: 1, height: 42, color: AppColors.border),
+          Container(width: 1, height: 42, color: c.border),
           const SizedBox(width: 12),
           Expanded(
             child: Text.rich(
@@ -222,14 +225,14 @@ class _ReplyTile extends StatelessWidget {
                     style: AppFonts.satoshiStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                   TextSpan(
                     text: body,
                     style: AppFonts.satoshiStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -256,6 +259,7 @@ class _CommentAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -267,14 +271,14 @@ class _CommentAction extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: AppColors.textTertiary),
+            Icon(icon, size: 16, color: c.textTertiary),
             const SizedBox(width: 5),
             Text(
               label,
               style: AppFonts.satoshiStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ),
           ],
@@ -289,6 +293,7 @@ class _ReplyComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -296,8 +301,8 @@ class _ReplyComposer extends StatelessWidget {
         16,
         MediaQuery.of(context).padding.bottom + 10,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
+      decoration: BoxDecoration(
+        color: c.surface,
       ),
       child: Row(
         children: [
@@ -310,11 +315,11 @@ class _ReplyComposer extends StatelessWidget {
             child: TextField(
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.surfaceSecondary,
+                fillColor: c.surfaceSecondary,
                 hintText: 'Tulis komentar...',
                 hintStyle: AppFonts.satoshiStyle(
                   fontSize: 13.5,
-                  color: AppColors.textTertiary.withValues(alpha: 0.6),
+                  color: c.textTertiary.withValues(alpha: 0.6),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
@@ -323,28 +328,28 @@ class _ReplyComposer extends StatelessWidget {
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
-                    color: AppColors.border.withValues(alpha: 0.8),
+                    color: c.border.withValues(alpha: 0.8),
                     width: 1.0,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
-                    color: AppColors.textPrimary.withValues(alpha: 0.4),
+                    color: c.textPrimary.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
-                    color: AppColors.border.withValues(alpha: 0.8),
+                    color: c.border.withValues(alpha: 0.8),
                     width: 1.0,
                   ),
                 ),
               ),
               style: AppFonts.satoshiStyle(
                 fontSize: 13.5,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
           ),
@@ -358,11 +363,11 @@ class _ReplyComposer extends StatelessWidget {
                 color: AppColors.primary500,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Center(
+              child: Center(
                 child: Icon(
                   FluentIcons.send_24_filled,
                   size: 16,
-                  color: AppColors.white,
+                  color: c.surface,
                 ),
               ),
             ),

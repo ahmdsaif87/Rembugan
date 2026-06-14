@@ -17,8 +17,9 @@ class _OtherProfileViewState extends State<OtherProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: c.background,
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -39,7 +40,7 @@ class _OtherProfileViewState extends State<OtherProfileView> {
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.grey900,
+                    color: c.grey900,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -87,6 +88,7 @@ class _ProfileCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final topPadding = MediaQuery.of(context).padding.top;
 
     return SizedBox(
@@ -101,7 +103,7 @@ class _ProfileCover extends StatelessWidget {
             ),
           ),
           Positioned.fill(
-            child: Container(color: AppColors.white.withValues(alpha: 0.18)),
+            child: Container(color: c.surface.withValues(alpha: 0.18)),
           ),
           Positioned(
             top: topPadding + 16,
@@ -131,7 +133,7 @@ class _ProfileCover extends StatelessWidget {
               ),
               child: CircleAvatar(
                 backgroundImage: AssetImage(avatarAsset),
-                backgroundColor: AppColors.grey100,
+                backgroundColor: c.grey100,
               ),
             ),
           ),
@@ -149,16 +151,17 @@ class _ProfileCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.9),
+          color: c.surface.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        child: Icon(icon, size: 23, color: AppColors.grey900),
+        child: Icon(icon, size: 23, color: c.grey900),
       ),
     );
   }
@@ -169,6 +172,7 @@ class _ProfileIdentity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -179,7 +183,7 @@ class _ProfileIdentity extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: AppColors.grey900,
+            color: c.grey900,
             height: 1.1,
           ),
         ),
@@ -189,7 +193,7 @@ class _ProfileIdentity extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: AppColors.grey500,
+            color: c.grey500,
           ),
         ),
         const SizedBox(height: 10),
@@ -198,7 +202,7 @@ class _ProfileIdentity extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             height: 1.32,
-            color: AppColors.grey900,
+            color: c.grey900,
           ),
         ),
         const SizedBox(height: 8),
@@ -236,22 +240,23 @@ class _SkillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.grey200),
+        border: Border.all(color: c.grey200),
       ),
       child: Text(
         label,
         style: AppFonts.satoshiStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
       ),
     );
@@ -271,6 +276,7 @@ class _ProfileActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Row(
       children: [
         Expanded(
@@ -280,16 +286,20 @@ class _ProfileActions extends StatelessWidget {
               height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isFollowing ? AppColors.grey100 : AppColors.primary500,
+                color: isFollowing ? c.grey100 : AppColors.primary500,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: isFollowing ? Border.all(color: AppColors.border) : null,
+                border: isFollowing
+                    ? Border.all(color: c.border)
+                    : null,
               ),
               child: Text(
                 isFollowing ? 'Mengikuti' : 'Ikuti',
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: isFollowing ? AppColors.textSecondary : AppColors.white,
+                  color: isFollowing
+                      ? c.textSecondary
+                      : c.surface,
                 ),
               ),
             ),
@@ -302,13 +312,13 @@ class _ProfileActions extends StatelessWidget {
             width: 42,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: c.surface,
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: AppColors.borderStrong),
+              border: Border.all(color: c.borderStrong),
             ),
             child: Icon(
               FluentIcons.chat_24_regular,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
               size: 22,
             ),
           ),
@@ -326,11 +336,12 @@ class _ProfileTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     const tabs = ['Postingan', 'Pengalaman', 'Keahlian', 'Kolaborasi'];
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+        border: Border(bottom: BorderSide(color: c.border)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -360,6 +371,7 @@ class _ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -375,7 +387,7 @@ class _ProfileTab extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 14,
                 fontWeight: active ? FontWeight.bold : FontWeight.w500,
-                color: active ? AppColors.primary500 : AppColors.textTertiary,
+                color: active ? AppColors.primary500 : c.textTertiary,
               ),
             ),
           ),
@@ -401,6 +413,7 @@ class _ProfileTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     if (activeIndex == 1) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -409,7 +422,7 @@ class _ProfileTabContent extends StatelessWidget {
           'Belum ada riwayat pengalaman',
           style: AppFonts.satoshiStyle(
             fontSize: 13,
-            color: AppColors.textTertiary,
+            color: c.textTertiary,
           ),
         ),
       );
@@ -430,7 +443,7 @@ class _ProfileTabContent extends StatelessWidget {
           'Belum ada riwayat kolaborasi',
           style: AppFonts.satoshiStyle(
             fontSize: 13,
-            color: AppColors.textTertiary,
+            color: c.textTertiary,
           ),
         ),
       );
@@ -507,10 +520,11 @@ class _PostCardState extends State<_PostCard> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: AppShadows.soft,
       ),
@@ -527,7 +541,7 @@ class _PostCardState extends State<_PostCard> {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: AppColors.primarySoft,
+                    backgroundColor: c.primarySoft,
                     backgroundImage: AssetImage(widget.avatarAsset),
                   ),
                   const SizedBox(width: 10),
@@ -535,32 +549,32 @@ class _PostCardState extends State<_PostCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.name,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.grey900,
+                          Text(
+                            widget.name,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: c.grey900,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 11.5,
-                            color: AppColors.grey400,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 11.5,
+                              color: c.grey400,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     FluentIcons.more_vertical_24_regular,
-                    color: AppColors.grey400,
+                    color: c.grey400,
                     size: 20,
                   ),
                 ],
@@ -569,8 +583,8 @@ class _PostCardState extends State<_PostCard> {
               Text(
                 widget.content,
                 style: AppFonts.satoshiStyle(
-                  fontSize: 14.5,
-                  color: AppColors.grey900,
+                  fontSize: 13.5,
+                  color: c.grey900,
                   height: 1.45,
                 ),
               ),
@@ -590,30 +604,34 @@ class _PostCardState extends State<_PostCard> {
               Row(
                 children: [
                   _buildInteractionItem(
-                    _isLiked ? FluentIcons.heart_24_filled : FluentIcons.heart_24_regular,
+                    _isLiked
+                        ? FluentIcons.heart_24_filled
+                        : FluentIcons.heart_24_regular,
                     '$_likeCount',
-                    _isLiked ? AppColors.error500 : AppColors.grey500,
+                    _isLiked ? AppColors.error500 : c.grey500,
                     onTap: _toggleLike,
                   ),
                   const SizedBox(width: 22),
                   _buildInteractionItem(
                     FluentIcons.chat_24_regular,
                     widget.commentCount,
-                    AppColors.grey500,
+                    c.grey500,
                     onTap: () {},
                   ),
                   const Spacer(),
                   _buildInteractionItem(
                     FluentIcons.send_24_regular,
                     '',
-                    AppColors.grey500,
+                    c.grey500,
                     onTap: () {},
                   ),
                   const SizedBox(width: 20),
                   _buildInteractionItem(
-                    _isBookmarked ? FluentIcons.bookmark_24_filled : FluentIcons.bookmark_24_regular,
+                    _isBookmarked
+                        ? FluentIcons.bookmark_24_filled
+                        : FluentIcons.bookmark_24_regular,
                     '',
-                    _isBookmarked ? AppColors.warning500 : AppColors.grey500,
+                    _isBookmarked ? AppColors.warning500 : c.grey500,
                     onTap: _toggleBookmark,
                   ),
                 ],
@@ -631,6 +649,7 @@ class _PostCardState extends State<_PostCard> {
     Color activeColor, {
     required VoidCallback onTap,
   }) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -647,7 +666,7 @@ class _PostCardState extends State<_PostCard> {
                 count,
                 style: AppFonts.satoshiStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

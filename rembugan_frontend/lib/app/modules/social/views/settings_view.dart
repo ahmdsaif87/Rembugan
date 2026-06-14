@@ -2,6 +2,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/theme_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
@@ -14,22 +15,20 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  bool isDark = false;
   String? linkedEmail;
 
   @override
   Widget build(BuildContext context) {
-    // Premium theme-aware local styling for instant visual feedback
-    final backgroundColor = isDark
-        ? AppColors.primary500
-        : AppColors.background;
-    final cardColor = isDark ? AppColors.grey800 : AppColors.white;
-    final textColor = isDark ? AppColors.white : AppColors.textPrimary;
-    final subtitleColor = isDark ? AppColors.white60 : AppColors.textSecondary;
-    final borderColor = isDark ? AppColors.grey700 : AppColors.border;
+    final themeService = Get.find<ThemeService>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final c = AppC.of(context);
+    final cardColor = c.card;
+    final textColor = c.textPrimary;
+    final subtitleColor = c.textSecondary;
+    final borderColor = c.border;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppLayeredBackground(
         child: SafeArea(
           child: Column(
@@ -93,9 +92,7 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.white38
-                              : AppColors.textTertiary,
+                          color: c.textTertiary.withValues(alpha: isDark ? 0.38 : 1.0),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -162,9 +159,7 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.white38
-                              : AppColors.textTertiary,
+                          color: c.textTertiary.withValues(alpha: isDark ? 0.38 : 1.0),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -222,9 +217,7 @@ class _SettingsViewState extends State<SettingsView> {
                             height: 38,
                             padding: const EdgeInsets.all(3),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.grey800
-                                  : AppColors.grey100,
+                              color: c.grey100,
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Row(
@@ -232,17 +225,13 @@ class _SettingsViewState extends State<SettingsView> {
                                 Expanded(
                                   child: GestureDetector(
                                     onTap: () {
-                                      setState(() {
-                                        isDark = false;
-                                      });
+                                      themeService.setDarkMode(false);
                                     },
                                     child: Container(
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
                                         color: !isDark
-                                            ? (isDark
-                                                  ? AppColors.grey800
-                                                  : AppColors.white)
+                                            ? c.card
                                             : AppColors.transparent,
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.xs,
@@ -267,8 +256,8 @@ class _SettingsViewState extends State<SettingsView> {
                                                 .weather_sunny_24_regular,
                                             size: 15,
                                             color: !isDark
-                                                ? AppColors.textPrimary
-                                                : AppColors.textTertiary,
+                                                ? c.textPrimary
+                                                : c.textTertiary,
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
@@ -277,8 +266,8 @@ class _SettingsViewState extends State<SettingsView> {
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
                                               color: !isDark
-                                                  ? AppColors.textPrimary
-                                                  : AppColors.textTertiary,
+                                                  ? c.textPrimary
+                                                  : c.textTertiary,
                                             ),
                                           ),
                                         ],
@@ -289,17 +278,13 @@ class _SettingsViewState extends State<SettingsView> {
                                 Expanded(
                                   child: GestureDetector(
                                     onTap: () {
-                                      setState(() {
-                                        isDark = true;
-                                      });
+                                      themeService.setDarkMode(true);
                                     },
                                     child: Container(
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
                                         color: isDark
-                                            ? (isDark
-                                                  ? AppColors.grey800
-                                                  : AppColors.white)
+                                            ? c.card
                                             : AppColors.transparent,
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.xs,
@@ -324,7 +309,7 @@ class _SettingsViewState extends State<SettingsView> {
                                             size: 15,
                                             color: isDark
                                                 ? AppColors.white
-                                                : AppColors.textTertiary,
+                                                : c.textTertiary,
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
@@ -334,7 +319,7 @@ class _SettingsViewState extends State<SettingsView> {
                                               fontWeight: FontWeight.w600,
                                               color: isDark
                                                   ? AppColors.white
-                                                  : AppColors.textTertiary,
+                                                  : c.textTertiary,
                                             ),
                                           ),
                                         ],
@@ -362,9 +347,7 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.white38
-                              : AppColors.textTertiary,
+                          color: c.textTertiary.withValues(alpha: isDark ? 0.38 : 1.0),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -393,9 +376,7 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? AppColors.white38
-                              : AppColors.textTertiary,
+                          color: c.textTertiary.withValues(alpha: isDark ? 0.38 : 1.0),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -486,9 +467,7 @@ class _SettingsViewState extends State<SettingsView> {
                 trailing ??
                     Icon(
                       FluentIcons.chevron_right_24_regular,
-                      color: isDark
-                          ? AppColors.white38
-                          : AppColors.textTertiary,
+                      color: subtitleColor,
                       size: 18,
                     ),
               ],
@@ -503,6 +482,7 @@ class _SettingsViewState extends State<SettingsView> {
     BuildContext context,
     bool isDark,
   ) async {
+    final c = AppC.of(context);
     final currentPw = TextEditingController();
     final newPw = TextEditingController();
     final confirmPw = TextEditingController();
@@ -518,106 +498,104 @@ class _SettingsViewState extends State<SettingsView> {
         child: Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.grey800 : AppColors.white,
+            color: c.surfaceElevated,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppRadius.xl),
             ),
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.grey700 : AppColors.grey300,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: c.grey300,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Ganti Password',
-                style: AppFonts.headingStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.white : AppColors.textPrimary,
+                const SizedBox(height: 20),
+                Text(
+                  'Ganti Password',
+                  style: AppFonts.headingStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-              Text(
-                'PASSWORD SEKARANG',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.white38 : AppColors.textTertiary,
-                  letterSpacing: 0.5,
+                Text(
+                  'PASSWORD SEKARANG',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: c.textTertiary.withValues(alpha: isDark ? 0.38 : 1.0),
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              AppTextField(
-                controller: currentPw,
-                obscureText: true,
-                hintText: 'Masukkan password saat ini',
-              ),
-              const SizedBox(height: 14),
-
-              Text(
-                'PASSWORD BARU',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.white38 : AppColors.textTertiary,
-                  letterSpacing: 0.5,
+                const SizedBox(height: 6),
+                AppTextField(
+                  controller: currentPw,
+                  obscureText: true,
+                  hintText: 'Masukkan password saat ini',
                 ),
-              ),
-              const SizedBox(height: 6),
-              AppTextField(
-                controller: newPw,
-                obscureText: true,
-                hintText: 'Masukkan password baru',
-              ),
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              Text(
-                'KONFIRMASI PASSWORD BARU',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.white38 : AppColors.textTertiary,
-                  letterSpacing: 0.5,
+                Text(
+                  'PASSWORD BARU',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: c.textTertiary.withValues(alpha: isDark ? 0.38 : 1.0),
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              AppTextField(
-                controller: confirmPw,
-                obscureText: true,
-                hintText: 'Ulangi password baru',
-              ),
-              const SizedBox(height: 22),
+                const SizedBox(height: 6),
+                AppTextField(
+                  controller: newPw,
+                  obscureText: true,
+                  hintText: 'Masukkan password baru',
+                ),
+                const SizedBox(height: 14),
 
-              AppButton(
-                label: 'Perbarui Password',
-                onTap: () {
-                  if (newPw.text == confirmPw.text && newPw.text.isNotEmpty) {
-                    Get.back();
-                    Get.snackbar(
-                      'Sukses',
-                      'Password berhasil diperbarui!',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: isDark
-                          ? AppColors.grey700
-                          : AppColors.primary500,
-                      colorText: AppColors.white,
-                      margin: const EdgeInsets.all(AppSpacing.md),
-                      borderRadius: 12,
-                    );
-                  }
-                },
-              ),
+                Text(
+                  'KONFIRMASI PASSWORD BARU',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: c.textTertiary.withValues(alpha: isDark ? 0.38 : 1.0),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                AppTextField(
+                  controller: confirmPw,
+                  obscureText: true,
+                  hintText: 'Ulangi password baru',
+                ),
+                const SizedBox(height: 22),
+
+                AppButton(
+                  label: 'Perbarui Password',
+                  onTap: () {
+                    if (newPw.text == confirmPw.text && newPw.text.isNotEmpty) {
+                      Get.back();
+                      Get.snackbar(
+                        'Sukses',
+                        'Password berhasil diperbarui!',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: AppColors.primary500,
+                        colorText: AppColors.white,
+                        margin: const EdgeInsets.all(AppSpacing.md),
+                        borderRadius: 12,
+                      );
+                    }
+                  },
+                ),
             ],
           ),
         ),
@@ -630,6 +608,7 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _showLinkEmailSheet(BuildContext context, bool isDark) async {
+    final c = AppC.of(context);
     final emailController = TextEditingController(text: linkedEmail);
     final otpController = TextEditingController();
     var otpSent = false;
@@ -647,7 +626,7 @@ class _SettingsViewState extends State<SettingsView> {
           builder: (context, setModalState) => Container(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.grey800 : AppColors.white,
+              color: c.surfaceElevated,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.xl),
               ),
@@ -662,7 +641,7 @@ class _SettingsViewState extends State<SettingsView> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.grey700 : AppColors.grey300,
+                        color: c.grey300,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
@@ -673,7 +652,7 @@ class _SettingsViewState extends State<SettingsView> {
                     style: AppFonts.headingStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.white : AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -683,9 +662,7 @@ class _SettingsViewState extends State<SettingsView> {
                         : 'Email akan diverifikasi dengan kode OTP sebelum ditautkan ke akun.',
                     style: AppFonts.satoshiStyle(
                       fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.white70
-                          : AppColors.textSecondary,
+                      color: c.textSecondary,
                       height: 1.45,
                     ),
                   ),
@@ -776,21 +753,15 @@ class _SettingsViewState extends State<SettingsView> {
                           'Email Terverifikasi',
                           '$email berhasil ditautkan ke akun.',
                           snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: isDark
-                              ? AppColors.grey700
-                              : AppColors.primary500,
+                          backgroundColor: AppColors.primary500,
                           colorText: AppColors.white,
                           margin: const EdgeInsets.all(AppSpacing.md),
                           borderRadius: 12,
                         );
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppColors.white
-                            : AppColors.primary500,
-                        foregroundColor: isDark
-                            ? AppColors.primary500
-                            : AppColors.white,
+                        backgroundColor: AppColors.primary500,
+                        foregroundColor: AppColors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
@@ -811,13 +782,14 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   void _showLogoutConfirmSheet(BuildContext context, bool isDark) {
+    final c = AppC.of(context);
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.transparent,
       builder: (_) => Container(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.grey800 : AppColors.white,
+          color: c.surfaceElevated,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
@@ -831,7 +803,7 @@ class _SettingsViewState extends State<SettingsView> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.grey700 : AppColors.grey300,
+                  color: c.grey300,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -863,9 +835,7 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.white
-                              : AppColors.textPrimary,
+                          color: c.textPrimary,
                         ),
                       ),
                       Text(
@@ -887,7 +857,7 @@ class _SettingsViewState extends State<SettingsView> {
               'Apakah Anda yakin ingin keluar dari Rembugan? Anda harus masuk kembali menggunakan email dan password untuk mengakses proyek dan obrolan Anda.',
               style: AppFonts.satoshiStyle(
                 fontSize: 12.5,
-                color: isDark ? AppColors.white70 : AppColors.textSecondary,
+                color: c.textSecondary,
                 height: 1.45,
               ),
             ),
@@ -950,7 +920,7 @@ class _SettingsViewState extends State<SettingsView> {
                         color: AppColors.transparent,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(
-                          color: isDark ? AppColors.grey700 : AppColors.border,
+                          color: c.border,
                         ),
                       ),
                       child: Text(
@@ -958,9 +928,7 @@ class _SettingsViewState extends State<SettingsView> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.white
-                              : AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                     ),

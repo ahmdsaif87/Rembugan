@@ -7,11 +7,6 @@ import '../../../core/widgets/app_chrome.dart';
 import '../controllers/team_controller.dart';
 import 'workspace_detail_view.dart';
 
-// ── Semantic palette (desaturated, subtle) ──
-const _ink = AppColors.grey900;
-const _sub = AppColors.grey500;
-const _faint = AppColors.grey400;
-
 const _green = AppColors.success600; // online/success
 const _amber = AppColors.warning700; // pending/deadline
 const _amberBg = AppColors.warning50;
@@ -24,12 +19,13 @@ class TeamView extends GetView<TeamController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final owned = controller.ownedWorkspaces;
     final joined = controller.joinedWorkspaces;
     final total = controller.workspaces.length;
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: c.background,
       body: AppLayeredBackground(
         child: SafeArea(
           child: Column(
@@ -48,7 +44,7 @@ class TeamView extends GetView<TeamController> {
                             style: AppFonts.headingStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                               height: 1.1,
                             ),
                           ),
@@ -68,7 +64,7 @@ class TeamView extends GetView<TeamController> {
                                 '$total workspace',
                                 style: AppFonts.satoshiStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary,
+                                  color: c.textSecondary,
                                 ),
                               ),
                             ],
@@ -91,14 +87,14 @@ class TeamView extends GetView<TeamController> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                 child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppColors.grey200)),
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: c.border)),
                   ),
                   child: Obx(
                     () => Row(
                       children: [
-                        _buildTabButton('Workspace Saya', controller.workspaceTabIndex.value == 0, 0),
-                        _buildTabButton('Diikuti', controller.workspaceTabIndex.value == 1, 1),
+                        _buildTabButton(c, 'Workspace Saya', controller.workspaceTabIndex.value == 0, 0),
+                        _buildTabButton(c, 'Diikuti', controller.workspaceTabIndex.value == 1, 1),
                       ],
                     ),
                   ),
@@ -124,7 +120,7 @@ class TeamView extends GetView<TeamController> {
                                   ? FluentIcons.briefcase_24_regular
                                   : FluentIcons.people_team_24_regular,
                               size: 36,
-                              color: _faint,
+                              color: c.grey400,
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -134,18 +130,18 @@ class TeamView extends GetView<TeamController> {
                               style: AppFonts.satoshiStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: _sub,
-                              ),
+                              color: c.grey500,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              controller.workspaceTabIndex.value == 0
-                                  ? 'Buat workspace baru untuk memulai kolaborasi.'
-                                  : 'Gabung ke workspace tim untuk berkolaborasi.',
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            controller.workspaceTabIndex.value == 0
+                                ? 'Buat workspace baru untuk memulai kolaborasi.'
+                                : 'Gabung ke workspace tim untuk berkolaborasi.',
                               textAlign: TextAlign.center,
                               style: AppFonts.satoshiStyle(
                                 fontSize: 12,
-                                color: _faint,
+                                color: c.grey400,
                               ),
                             ),
                           ],
@@ -177,7 +173,7 @@ class TeamView extends GetView<TeamController> {
     Get.to<void>(() => const WorkspaceDetailView());
   }
 
-  Widget _buildTabButton(String label, bool active, int index) {
+  Widget _buildTabButton(AppC c, String label, bool active, int index) {
     return Expanded(
       child: GestureDetector(
         onTap: () => controller.workspaceTabIndex.value = index,
@@ -202,7 +198,7 @@ class TeamView extends GetView<TeamController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
-                  color: active ? AppColors.grey900 : AppColors.grey400,
+                  color: active ? c.grey900 : c.grey400,
                 ),
               ),
               const SizedBox(width: 6),
@@ -213,8 +209,8 @@ class TeamView extends GetView<TeamController> {
                 ),
                 decoration: BoxDecoration(
                   color: active
-                      ? AppColors.primary50
-                      : AppColors.grey100,
+                      ? c.primarySoft
+                      : c.grey100,
                   borderRadius: BorderRadius.circular(AppRadius.xxs),
                 ),
                 child: Text(
@@ -224,7 +220,7 @@ class TeamView extends GetView<TeamController> {
                   style: AppFonts.satoshiStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.bold,
-                    color: active ? AppColors.primary500 : AppColors.grey500,
+                    color: active ? AppColors.primary500 : c.grey500,
                   ),
                 ),
               ),
@@ -283,6 +279,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
 
   // Overlapping circular member avatar stack
   Widget _buildMemberPresenceStack(List<WorkspaceMember> members) {
+    final c = AppC.of(context);
     if (members.isEmpty) return const SizedBox.shrink();
 
     final limit = members.take(3).toList();
@@ -324,7 +321,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                   decoration: BoxDecoration(
                     color: circleColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.white, width: 1.5),
+                    border: Border.all(color: c.surface, width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.black.withValues(alpha: 0.05),
@@ -354,7 +351,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
             style: AppFonts.satoshiStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: _faint,
+              color: c.grey400,
             ),
           ),
         ],
@@ -364,6 +361,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final ws = widget.ws;
     final pending = ws.totalTasks - ws.doneTasks;
     final hasUnread = ws.unreadCount > 0;
@@ -380,7 +378,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
         curve: Curves.easeOutCubic,
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: _pressed
               ? const []
@@ -454,7 +452,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                                 color: _accentDot,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: AppColors.background,
+                                  color: c.background,
                                   width: 2.0,
                                 ),
                               ),
@@ -479,7 +477,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                                     style: AppFonts.satoshiStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: _ink,
+                                      color: c.grey900,
                                     ),
                                   ),
                                 ),
@@ -490,7 +488,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.grey100,
+                                    color: c.grey100,
                                     borderRadius: BorderRadius.circular(
                                       AppRadius.xxs,
                                     ),
@@ -500,7 +498,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                                     style: AppFonts.satoshiStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w600,
-                                      color: _sub,
+                                      color: c.grey500,
                                     ),
                                   ),
                                 ),
@@ -515,7 +513,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                                   style: AppFonts.satoshiStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
-                                    color: _faint,
+                                    color: c.grey400,
                                   ),
                                 ),
                                 _buildMemberPresenceStack(ws.members),
@@ -530,7 +528,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                       Icon(
                         FluentIcons.chevron_right_24_regular,
                         size: 18,
-                        color: AppColors.textTertiary,
+                        color: c.textTertiary,
                       ),
                     ],
                   ),
@@ -546,7 +544,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                             child: LinearProgressIndicator(
                               value: progress,
                               minHeight: 3.5,
-                              backgroundColor: AppColors.grey200,
+                              backgroundColor: c.grey200,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 progress < 0.35
                                     ? AppColors
@@ -590,8 +588,8 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
                           color: hasUnread
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
+                              ? c.textPrimary
+                              : c.textSecondary,
                           fontWeight: hasUnread
                               ? FontWeight.w600
                               : FontWeight.w400,
@@ -634,7 +632,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                         ws.lastActivity,
                         style: AppFonts.satoshiStyle(
                           fontSize: 11,
-                          color: _faint,
+                          color: c.grey400,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

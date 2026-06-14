@@ -15,7 +15,7 @@ class PersonalizationView extends GetView<PersonalizationController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: AppLayeredBackground(
         child: SafeArea(
           child: Obx(() {
@@ -45,6 +45,7 @@ class _UploadState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return ListView(
       key: const ValueKey('upload'),
       padding: const EdgeInsets.fromLTRB(24, 34, 24, 24),
@@ -56,7 +57,7 @@ class _UploadState extends StatelessWidget {
           style: AppFonts.headingStyle(
             fontSize: 30,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
             height: 1.08,
           ),
         ),
@@ -65,7 +66,7 @@ class _UploadState extends StatelessWidget {
           'Pilih cara paling nyaman. Kamu bisa scan CV, isi sendiri, atau lanjut dulu dan rapikan nanti.',
           style: AppFonts.satoshiStyle(
             fontSize: 14,
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
             height: 1.55,
           ),
         ),
@@ -94,7 +95,7 @@ class _UploadState extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: c.textSecondary,
             ),
           ),
         ),
@@ -136,8 +137,9 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Material(
-      color: AppColors.white,
+      color: c.card,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
@@ -147,7 +149,7 @@ class _ActionCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: c.border),
             boxShadow: AppShadows.soft,
           ),
           child: Row(
@@ -157,11 +159,11 @@ class _ActionCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
+                  color: c.primarySoft,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: c.border),
                 ),
-                child: Icon(icon, color: AppColors.textPrimary, size: 22),
+                child: Icon(icon, color: c.textPrimary, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -176,7 +178,7 @@ class _ActionCard extends StatelessWidget {
                             style: AppFonts.satoshiStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                           ),
                         ),
@@ -189,16 +191,16 @@ class _ActionCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 12.5,
                         height: 1.45,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 FluentIcons.chevron_right_24_regular,
-                color: AppColors.textTertiary,
+                color: c.textTertiary,
                 size: 18,
               ),
             ],
@@ -216,6 +218,7 @@ class _ScanningState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Obx(() {
       final progress =
           (controller.scanningStep.value + 1) /
@@ -243,7 +246,7 @@ class _ScanningState extends StatelessWidget {
               style: AppFonts.headingStyle(
                 fontSize: 23,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -252,7 +255,7 @@ class _ScanningState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppFonts.satoshiStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ),
             const SizedBox(height: 24),
@@ -261,9 +264,9 @@ class _ScanningState extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 8,
-                backgroundColor: AppColors.surfaceSecondary,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.textPrimary,
+                backgroundColor: c.grey200,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  c.textPrimary,
                 ),
               ),
             ),
@@ -274,16 +277,16 @@ class _ScanningState extends StatelessWidget {
                 vertical: AppSpacing.sm,
               ),
               decoration: BoxDecoration(
-                color: AppColors.primarySoft,
+                color: c.primarySoft,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: c.border),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     FluentIcons.sparkle_24_filled,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                     size: 16,
                   ),
                   const SizedBox(width: 8),
@@ -292,7 +295,7 @@ class _ScanningState extends StatelessWidget {
                     style: AppFonts.satoshiStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                 ],
@@ -312,268 +315,11 @@ class _ExtractionResult extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final skillInput = TextEditingController();
-
-    return Obx(() {
-      final profile = controller.extractedProfile.value;
-
-      return ListView(
-        key: const ValueKey('result'),
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
-        children: [
-          Row(
-            children: [
-              const _SuccessMark(),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Draft profil siap',
-                      style: AppFonts.headingStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'Cek sebentar. Kamu bebas hapus, tambah, atau ubah hasilnya.',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 12.5,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          _ExtractionCard(
-            title: 'Profil dari resume',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 34,
-                      backgroundColor: AppColors.primarySoft,
-                      backgroundImage: AssetImage(profile.avatarAsset),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppTextField(
-                            initialValue: profile.name,
-                            onChanged: controller.updateName,
-                            labelText: 'Nama',
-                          ),
-                          const SizedBox(height: 8),
-                          _AiBadge(
-                            label: profile.hasResumePhoto
-                                ? 'Foto CV terdeteksi'
-                                : 'Avatar default digunakan',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  initialValue: profile.bio,
-                  onChanged: controller.updateBio,
-                  maxLines: 5,
-                  labelText: 'Bio',
-                  hintText:
-                      'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          const SizedBox(height: 14),
-          _ExtractionCard(
-            title: 'Skill',
-            child: StatefulBuilder(
-              builder: (context, setStateBuilder) {
-                final query = skillInput.text.trim().toLowerCase();
-                final List<String> suggestions = _popularSkills.where((s) {
-                  final matchesQuery = s.toLowerCase().contains(query);
-                  final alreadyAdded = profile.skills.contains(s);
-                  return matchesQuery && !alreadyAdded;
-                }).toList();
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppTextField(
-                            controller: skillInput,
-                            hintText: 'Cari atau ketik skill baru...',
-                            prefixIcon: const Icon(
-                              FluentIcons.search_16_regular,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            onChanged: (_) => setStateBuilder(() {}),
-                            onFieldSubmitted: (value) {
-                              if (value.trim().isNotEmpty) {
-                                controller.addSkill(value);
-                                skillInput.clear();
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            if (skillInput.text.trim().isNotEmpty) {
-                              controller.addSkill(skillInput.text);
-                              skillInput.clear();
-                            }
-                          },
-                          child: Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary500,
-                              borderRadius: BorderRadius.circular(AppRadius.xs),
-                            ),
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              FluentIcons.add_16_regular,
-                              color: AppColors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (skillInput.text.isNotEmpty &&
-                        suggestions.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        'Rekomendasi skill:',
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: suggestions.take(6).map((s) {
-                          return GestureDetector(
-                            onTap: () {
-                              controller.addSkill(s);
-                              skillInput.clear();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.grey100,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.xxs,
-                                ),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Text(
-                                s,
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: profile.skills.map((skill) {
-                        return InputChip(
-                          label: Text(skill),
-                          onDeleted: () => controller.removeSkill(skill),
-                          backgroundColor: AppColors.primarySoft,
-                          side: const BorderSide(color: AppColors.border),
-                          labelStyle: AppFonts.satoshiStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 14),
-          _ExtractionCard(
-            title: 'Experience',
-            action: TextButton.icon(
-              onPressed: () => _showExperienceDialog(context, controller),
-              icon: const Icon(FluentIcons.add_24_regular, size: 16),
-              label: const Text('Tambah'),
-            ),
-            child: Column(
-              children: profile.experiences.asMap().entries.map((entry) {
-                final index = entry.key;
-                final experience = entry.value;
-                return _ExperiencePreview(
-                  experience: experience,
-                  onDelete: () => controller.removeExperience(experience),
-                  onEdit: () => _showExperienceDialog(
-                    context,
-                    controller,
-                    index: index,
-                    experience: experience,
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: controller.reset,
-                  child: const Text('Scan ulang'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    controller.generateProfile();
-                    Get.offAllNamed(Routes.HOME);
-                  },
-                  child: const Text('Simpan profil'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    });
+    return _PersonalizationWizard(
+      key: const ValueKey('scan-wizard'),
+      controller: controller,
+      isManual: false,
+    );
   }
 }
 
@@ -584,301 +330,397 @@ class _ManualInputState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final skillInput = TextEditingController();
+    return _PersonalizationWizard(
+      key: const ValueKey('manual-wizard'),
+      controller: controller,
+      isManual: true,
+    );
+  }
+}
 
+class _PersonalizationWizard extends StatefulWidget {
+  const _PersonalizationWizard({
+    required this.controller,
+    required this.isManual,
+    super.key,
+  });
+
+  final PersonalizationController controller;
+  final bool isManual;
+
+  @override
+  State<_PersonalizationWizard> createState() => _PersonalizationWizardState();
+}
+
+class _PersonalizationWizardState extends State<_PersonalizationWizard> {
+  final PageController _pageController = PageController();
+  final TextEditingController _skillInput = TextEditingController();
+  int _step = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _skillInput.dispose();
+    super.dispose();
+  }
+
+  void _goToStep(int step) {
+    _pageController.animateToPage(
+      step,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _addSkill(String value) {
+    if (value.trim().isEmpty) return;
+    widget.controller.addSkill(value);
+    _skillInput.clear();
+    setState(() {});
+  }
+
+  void _finish() {
+    widget.controller.generateProfile();
+    Get.offAllNamed(Routes.HOME);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Obx(() {
-      final profile = controller.extractedProfile.value;
+      final profile = widget.controller.extractedProfile.value;
 
-      return ListView(
-        key: const ValueKey('manual'),
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: controller.reset,
-                icon: const Icon(FluentIcons.chevron_left_24_regular),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Isi profil manual',
-                      style: AppFonts.headingStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'Cukup isi yang penting dulu. Nanti masih bisa diedit.',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 12.5,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          _ExtractionCard(
-            title: 'Profil',
-            child: Column(
-              children: [
-                AppTextField(
-                  initialValue: profile.name,
-                  onChanged: controller.updateName,
-                  labelText: 'Nama',
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  initialValue: profile.bio,
-                  onChanged: controller.updateBio,
-                  maxLines: 5,
-                  labelText: 'Bio',
-                  hintText:
-                      'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  initialValue: profile.major,
-                  onChanged: controller.updateMajor,
-                  labelText: 'Jurusan',
-                  hintText: 'Contoh: Teknik Informatika',
-                ),
-              ],
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+        child: Column(
+          children: [
+            _WizardHeader(
+              currentStep: _step,
+              isManual: widget.isManual,
+              onBack: widget.controller.reset,
             ),
-          ),
-          const SizedBox(height: 14),
-          _ExtractionCard(
-            title: 'Social link',
-            child: Row(
+            const SizedBox(height: 18),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (index) => setState(() => _step = index),
+                children: [
+                  _buildIdentitySlide(profile),
+                  _buildSkillSlide(profile),
+                  _buildExperienceSlide(context, profile),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _buildNavigationButtons(),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildIdentitySlide(ProfileData profile) {
+    final c = AppC.of(context);
+    return SingleChildScrollView(
+      child: _ExtractionCard(
+        title: 'Data diri',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!widget.isManual) ...[
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 34,
+                    backgroundColor: c.primarySoft,
+                    backgroundImage: AssetImage(profile.avatarAsset),
+                  ),
+                  const SizedBox(width: 12),
+                  _AiBadge(
+                    label: profile.hasResumePhoto
+                        ? 'Foto CV terdeteksi'
+                        : 'Avatar default digunakan',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+            AppTextField(
+              initialValue: profile.name,
+              onChanged: widget.controller.updateName,
+              labelText: 'Nama',
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              initialValue: profile.major,
+              onChanged: widget.controller.updateMajor,
+              labelText: 'Jurusan',
+              hintText: 'Contoh: Teknik Informatika',
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              initialValue: profile.socialLink,
+              onChanged: widget.controller.updateSocialLink,
+              labelText: 'Social link',
+              hintText: 'GitHub, portfolio, LinkedIn, atau website pribadi',
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              initialValue: profile.bio,
+              onChanged: widget.controller.updateBio,
+              maxLines: 4,
+              labelText: 'Bio',
+              hintText:
+                  'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkillSlide(ProfileData profile) {
+    final c = AppC.of(context);
+    final query = _skillInput.text.trim().toLowerCase();
+    final suggestions = _popularSkills.where((skill) {
+      final matchesQuery = skill.toLowerCase().contains(query);
+      final alreadyAdded = profile.skills.contains(skill);
+      return matchesQuery && !alreadyAdded;
+    }).toList();
+
+    return SingleChildScrollView(
+      child: _ExtractionCard(
+        title: 'Skill & minat',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: AppColors.primarySoft,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: const Icon(
-                    FluentIcons.code_24_regular,
-                    color: AppColors.textPrimary,
-                    size: 19,
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: AppTextField(
-                    initialValue: profile.socialLink,
-                    onChanged: controller.updateSocialLink,
-                    hintText:
-                        'GitHub, portfolio, LinkedIn, atau website pribadi',
+                    controller: _skillInput,
+                    hintText: 'Cari atau ketik skill baru...',
+                    prefixIcon: Icon(
+                      FluentIcons.search_16_regular,
+                      size: 16,
+                      color: c.textSecondary,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                    onFieldSubmitted: _addSkill,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _addSkill(_skillInput.text),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      FluentIcons.add_16_regular,
+                      color: AppColors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
-          const SizedBox(height: 14),
-          _ExtractionCard(
-            title: 'Skill',
-            child: StatefulBuilder(
-              builder: (context, setStateBuilder) {
-                final query = skillInput.text.trim().toLowerCase();
-                final List<String> suggestions = _popularSkills.where((s) {
-                  final matchesQuery = s.toLowerCase().contains(query);
-                  final alreadyAdded = profile.skills.contains(s);
-                  return matchesQuery && !alreadyAdded;
-                }).toList();
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppTextField(
-                            controller: skillInput,
-                            hintText: 'Cari atau ketik skill baru...',
-                            prefixIcon: const Icon(
-                              FluentIcons.search_16_regular,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            onChanged: (_) => setStateBuilder(() {}),
-                            onFieldSubmitted: (value) {
-                              if (value.trim().isNotEmpty) {
-                                controller.addSkill(value);
-                                skillInput.clear();
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            if (skillInput.text.trim().isNotEmpty) {
-                              controller.addSkill(skillInput.text);
-                              skillInput.clear();
-                            }
-                          },
-                          child: Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary500,
-                              borderRadius: BorderRadius.circular(AppRadius.xs),
-                            ),
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              FluentIcons.add_16_regular,
-                              color: AppColors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (skillInput.text.isNotEmpty &&
-                        suggestions.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        'Rekomendasi skill:',
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: suggestions.take(6).map((s) {
-                          return GestureDetector(
-                            onTap: () {
-                              controller.addSkill(s);
-                              skillInput.clear();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.grey100,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.xxs,
-                                ),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Text(
-                                s,
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    profile.skills.isEmpty
-                        ? Text(
-                            'Skill membantu sistem merekomendasikan proyek yang relevan.',
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          )
-                        : Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: profile.skills.map((skill) {
-                              return InputChip(
-                                label: Text(skill),
-                                onDeleted: () => controller.removeSkill(skill),
-                                backgroundColor: AppColors.primarySoft,
-                                side: const BorderSide(color: AppColors.border),
-                                labelStyle: AppFonts.satoshiStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 14),
-          _ExtractionCard(
-            title: 'Experience',
-            action: TextButton.icon(
-              onPressed: () => _showExperienceDialog(context, controller),
-              icon: const Icon(FluentIcons.add_24_regular, size: 16),
-              label: const Text('Tambah'),
-            ),
-            child: profile.experiences.isEmpty
+            if (_skillInput.text.isNotEmpty && suggestions.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Rekomendasi skill:',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: c.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: suggestions.take(6).map((skill) {
+                  return GestureDetector(
+                    onTap: () => _addSkill(skill),
+                    child: _CapabilityChip(label: skill),
+                  );
+                }).toList(),
+              ),
+            ],
+            const SizedBox(height: 14),
+            profile.skills.isEmpty
                 ? Text(
-                    'Tambahkan pengalaman agar profile lebih meyakinkan.',
+                    'Skill membantu sistem merekomendasikan proyek yang relevan.',
                     style: AppFonts.satoshiStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   )
-                : Column(
-                    children: profile.experiences.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final experience = entry.value;
-                      return _ExperiencePreview(
-                        experience: experience,
-                        onDelete: () => controller.removeExperience(experience),
-                        onEdit: () => _showExperienceDialog(
-                          context,
-                          controller,
-                          index: index,
-                          experience: experience,
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: profile.skills.map((skill) {
+                      return InputChip(
+                        label: Text(skill),
+                        onDeleted: () => widget.controller.removeSkill(skill),
+                        backgroundColor: c.primarySoft,
+                        side: BorderSide(color: c.border),
+                        labelStyle: AppFonts.satoshiStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
                         ),
                       );
                     }).toList(),
                   ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExperienceSlide(BuildContext context, ProfileData profile) {
+    final c = AppC.of(context);
+    return SingleChildScrollView(
+      child: _ExtractionCard(
+        title: 'Pengalaman',
+        action: TextButton.icon(
+          onPressed: () => _showExperienceDialog(context, widget.controller),
+          icon: const Icon(FluentIcons.add_24_regular, size: 16),
+          label: const Text('Tambah'),
+        ),
+        child: profile.experiences.isEmpty
+            ? Text(
+                'Tambahkan pengalaman agar profile lebih meyakinkan.',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  color: c.textSecondary,
+                ),
+              )
+            : Column(
+                children: profile.experiences.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final experience = entry.value;
+                  return _ExperiencePreview(
+                    experience: experience,
+                    onDelete: () =>
+                        widget.controller.removeExperience(experience),
+                    onEdit: () => _showExperienceDialog(
+                      context,
+                      widget.controller,
+                      index: index,
+                      experience: experience,
+                    ),
+                  );
+                }).toList(),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildNavigationButtons() {
+    final isLast = _step == 2;
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _step == 0
+                ? (widget.isManual
+                      ? () => Get.offAllNamed(Routes.HOME)
+                      : widget.controller.reset)
+                : () => _goToStep(_step - 1),
+            child: Text(
+              _step == 0
+                  ? (widget.isManual ? 'Lewati dulu' : 'Scan ulang')
+                  : 'Kembali',
+            ),
           ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Get.offAllNamed(Routes.HOME),
-                  child: const Text('Lewati dulu'),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: AppButton(
+            label: isLast ? 'Simpan profil' : 'Lanjut',
+            onTap: isLast ? _finish : () => _goToStep(_step + 1),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WizardHeader extends StatelessWidget {
+  const _WizardHeader({
+    required this.currentStep,
+    required this.isManual,
+    required this.onBack,
+  });
+
+  final int currentStep;
+  final bool isManual;
+  final VoidCallback onBack;
+
+  static const _titles = ['Data diri', 'Skill & minat', 'Pengalaman'];
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: onBack,
+              icon: const Icon(FluentIcons.chevron_left_24_regular),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isManual ? 'Isi profil manual' : 'Draft profil siap',
+                    style: AppFonts.headingStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    'Langkah ${currentStep + 1} dari 3 - ${_titles[currentStep]}',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12.5,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!isManual) const _SuccessMark(),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: List.generate(3, (index) {
+            final active = index <= currentStep;
+            return Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                height: 5,
+                margin: EdgeInsets.only(right: index == 2 ? 0 : 7),
+                decoration: BoxDecoration(
+                  color: active ? AppColors.primary500 : c.grey200,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    controller.generateProfile();
-                    Get.offAllNamed(Routes.HOME);
-                  },
-                  child: const Text('Simpan profil'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    });
+            );
+          }),
+        ),
+      ],
+    );
   }
 }
 
@@ -895,12 +737,13 @@ class _ExtractionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
         boxShadow: AppShadows.soft,
       ),
       child: Column(
@@ -914,7 +757,7 @@ class _ExtractionCard extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
               ),
@@ -942,13 +785,14 @@ class _ExperiencePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: c.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -957,8 +801,8 @@ class _ExperiencePreview extends StatelessWidget {
             width: 9,
             height: 9,
             margin: const EdgeInsets.only(top: AppSpacing.xxs),
-            decoration: const BoxDecoration(
-              color: AppColors.textPrimary,
+            decoration: BoxDecoration(
+              color: c.textPrimary,
               shape: BoxShape.circle,
             ),
           ),
@@ -972,7 +816,7 @@ class _ExperiencePreview extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -980,7 +824,7 @@ class _ExperiencePreview extends StatelessWidget {
                   '${experience.organization} - ${experience.duration}',
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -989,7 +833,7 @@ class _ExperiencePreview extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 12.5,
                     height: 1.45,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 if (experience.techStack.isNotEmpty) ...[
@@ -1042,6 +886,7 @@ class _FlowStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
@@ -1051,11 +896,11 @@ class _FlowStep extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppColors.primarySoft,
+              color: c.primarySoft,
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: c.border),
             ),
-            child: Icon(icon, size: 18, color: AppColors.textPrimary),
+            child: Icon(icon, size: 18, color: c.textPrimary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1067,7 +912,7 @@ class _FlowStep extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -1075,7 +920,7 @@ class _FlowStep extends StatelessWidget {
                   description,
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                     height: 1.45,
                   ),
                 ),
@@ -1095,22 +940,23 @@ class _CapabilityChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.card,
         borderRadius: BorderRadius.circular(AppRadius.xxs),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Text(
         label,
         style: AppFonts.satoshiStyle(
           fontSize: 10.5,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
       ),
     );
@@ -1124,22 +970,23 @@ class _AiBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: c.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             FluentIcons.sparkle_24_filled,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
             size: 14,
           ),
           const SizedBox(width: 6),
@@ -1148,7 +995,7 @@ class _AiBadge extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
             ),
           ),
         ],
@@ -1222,11 +1069,12 @@ void _showExperienceDialog(
   showDialog<void>(
     context: context,
     builder: (context) {
+      final c = AppC.of(context);
       return Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
@@ -1243,14 +1091,14 @@ void _showExperienceDialog(
                     style: AppFonts.headingStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(
+                    child: Icon(
                       FluentIcons.dismiss_24_regular,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                       size: 20,
                     ),
                   ),

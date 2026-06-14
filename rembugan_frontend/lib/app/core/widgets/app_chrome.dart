@@ -16,7 +16,9 @@ class AppLayeredBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(color: AppColors.background),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+      ),
       child: child,
     );
   }
@@ -27,8 +29,8 @@ class AppSurface extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(AppSpacing.lg),
     this.radius = AppRadius.md,
-    this.color = AppSurfaceColors.surfaceWhite,
-    this.borderColor = AppColors.border,
+    this.color,
+    this.borderColor,
     this.shadow,
     this.onTap,
     super.key,
@@ -37,21 +39,24 @@ class AppSurface extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final double radius;
-  final Color color;
-  final Color borderColor;
+  final Color? color;
+  final Color? borderColor;
   final List<BoxShadow>? shadow;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    final resolvedColor = color ?? c.card;
+    final resolvedBorder = borderColor ?? c.border;
     final content = AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       padding: padding,
       decoration: BoxDecoration(
-        color: color,
+        color: resolvedColor,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: resolvedBorder),
         boxShadow: shadow ?? const [],
       ),
       child: child,
@@ -86,9 +91,10 @@ class AppIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final background = isPrimary
         ? AppColors.primary500
-        : AppSurfaceColors.surfaceAccent;
+        : c.primarySoft;
     final foreground = isPrimary
         ? AppTextColors.textPrimaryWhite
         : AppIconColors.iconAccent;
@@ -105,7 +111,7 @@ class AppIconButton extends StatelessWidget {
             color: background,
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
-              color: isPrimary ? AppColors.primary500 : AppColors.border,
+              color: isPrimary ? AppColors.primary500 : c.border,
             ),
             boxShadow: isPrimary ? AppShadows.soft : const [],
           ),
@@ -123,7 +129,7 @@ class AppIconButton extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.danger,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.white, width: 1.5),
+                      border: Border.all(color: c.card, width: 1.5),
                     ),
                   ),
                 ),
@@ -143,6 +149,7 @@ class AppNetworkAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final size = radius * 2;
 
     return ClipOval(
@@ -153,7 +160,7 @@ class AppNetworkAvatar extends StatelessWidget {
           imageUrl,
           fit: BoxFit.cover,
           errorBuilder: (_, _, _) => ColoredBox(
-            color: AppColors.primarySoft,
+            color: c.primarySoft,
             child: Icon(
               FluentIcons.person_24_regular,
               color: AppColors.primary500,
@@ -182,6 +189,7 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -194,7 +202,7 @@ class AppSectionHeader extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppTextColors.textPrimaryBlack,
+                  color: c.textPrimary,
                 ),
               ),
               if (subtitle != null) ...[
@@ -203,7 +211,7 @@ class AppSectionHeader extends StatelessWidget {
                   subtitle!,
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
-                    color: AppTextColors.textSecondaryDarkGrey,
+                    color: c.textSecondary,
                   ),
                 ),
               ],
@@ -250,12 +258,12 @@ class AppEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: AppSurface(
           shadow: const [],
-          borderColor: AppColors.border,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -265,14 +273,14 @@ class AppEmptyState extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppSurfaceColors.surfaceAccent,
+                      c.primarySoft,
                       AppColors.primary100.withValues(alpha: 0.55),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: c.border),
                 ),
                 child: Icon(icon, color: AppIconColors.iconAccent, size: 26),
               ),
@@ -283,7 +291,7 @@ class AppEmptyState extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppTextColors.textPrimaryBlack,
+                  color: c.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
@@ -292,7 +300,7 @@ class AppEmptyState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
-                  color: AppTextColors.textSecondaryDarkGrey,
+                  color: c.textSecondary,
                   height: 1.4,
                 ),
               ),
@@ -312,11 +320,12 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final c = AppC.of(context);
 
     return Container(
       padding: EdgeInsets.fromLTRB(16, 7, 16, bottomPadding + 8),
       decoration: BoxDecoration(
-        color: AppSurfaceColors.surfaceWhite,
+        color: c.card,
         boxShadow: [
           BoxShadow(
             color: AppColors.black.withValues(alpha: 0.08),
@@ -387,7 +396,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.primary500 : AppColors.grey400;
+    final c = AppC.of(context);
+    final color = active ? AppColors.primary500 : c.grey400;
 
     return Expanded(
       child: GestureDetector(
@@ -421,6 +431,7 @@ class _NavItem extends StatelessWidget {
 class _CreateButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
       child: GestureDetector(
@@ -431,12 +442,14 @@ class _CreateButton extends StatelessWidget {
           width: 62,
           height: 46,
           decoration: BoxDecoration(
-            color: AppColors.primary200.withValues(alpha: 0.72),
+            color: isDark
+                ? AppColors.primary500.withValues(alpha: 0.2)
+                : AppColors.primary200.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          child: const Icon(
+          child: Icon(
             FluentIcons.add_24_regular,
-            color: AppColors.primary500,
+            color: isDark ? AppColors.primary300 : AppColors.primary500,
             size: 33,
           ),
         ),
@@ -467,22 +480,23 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     Color bg;
     Color fg;
     Border? border;
 
     if (onTap == null) {
-      bg = AppColors.grey300;
-      fg = AppColors.grey500;
+      bg = c.grey300;
+      fg = c.grey500;
     } else if (isOutline) {
-      bg = AppColors.white;
+      bg = c.card;
       fg = AppColors.primary500;
-      border = Border.all(color: AppColors.grey200);
+      border = Border.all(color: c.grey200);
     } else if (isPrimary) {
       bg = AppColors.primary500;
       fg = AppColors.white;
     } else {
-      bg = AppSurfaceColors.surfaceAccent;
+      bg = c.primarySoft;
       fg = AppColors.primary500;
     }
 
@@ -560,6 +574,7 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -567,7 +582,7 @@ class AppTextField extends StatelessWidget {
         if (labelText != null) ...[
           Text(
             labelText!,
-            style: AppTextStyles.button(color: AppTextColors.textPrimaryBlack),
+            style: AppTextStyles.button(color: c.textPrimary),
           ),
           const SizedBox(height: AppSpacing.xs),
         ],
@@ -586,9 +601,7 @@ class AppTextField extends StatelessWidget {
           onFieldSubmitted: onFieldSubmitted,
           enabled: enabled,
           validator: validator,
-          style: AppTextStyles.bodyMedium(
-            color: AppTextColors.textPrimaryBlack,
-          ),
+          style: AppTextStyles.bodyMedium(color: c.textPrimary),
           decoration: InputDecoration(
             hintText: hintText,
             counterText: maxLength == null ? null : '',
@@ -599,14 +612,14 @@ class AppTextField extends StatelessWidget {
               minHeight: 0,
             ),
             filled: true,
-            fillColor: AppColors.grey50,
+            fillColor: c.input,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
               vertical: 14,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: const BorderSide(color: AppColors.grey200),
+              borderSide: BorderSide(color: c.grey200),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -653,8 +666,6 @@ class AppCard extends StatelessWidget {
     return AppSurface(
       padding: padding,
       radius: AppRadius.md,
-      color: AppSurfaceColors.surfaceWhite,
-      borderColor: AppColors.border,
       shadow: AppShadows.soft,
       onTap: onTap,
       child: child,
@@ -680,11 +691,10 @@ class AppListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return AppSurface(
       padding: const EdgeInsets.all(AppSpacing.md),
       radius: AppRadius.md,
-      color: AppSurfaceColors.surfaceWhite,
-      borderColor: AppColors.border,
       onTap: onTap,
       child: Row(
         children: [
@@ -702,7 +712,7 @@ class AppListItem extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppTextColors.textPrimaryBlack,
+                    color: c.textPrimary,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -711,7 +721,7 @@ class AppListItem extends StatelessWidget {
                     subtitle!,
                     style: AppFonts.satoshiStyle(
                       fontSize: 12,
-                      color: AppTextColors.textSecondaryDarkGrey,
+                      color: c.textSecondary,
                     ),
                   ),
                 ],
@@ -742,13 +752,14 @@ class AppBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppSurfaceColors.surfaceAccent,
+        color: backgroundColor ?? c.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(

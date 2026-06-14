@@ -11,9 +11,10 @@ class RoomChatView extends GetView<RoomChatController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      backgroundColor: c.background,
+      appBar: _buildAppBar(c),
       body: AppLayeredBackground(
         child: Column(
           children: [
@@ -34,7 +35,7 @@ class RoomChatView extends GetView<RoomChatController> {
                             'Hari ini',
                             style: AppFonts.satoshiStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: c.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -46,6 +47,7 @@ class RoomChatView extends GetView<RoomChatController> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: _buildMessageBubble(
+                        c: c,
                         message: msg.text,
                         time: msg.time,
                         isMe: msg.isMe,
@@ -62,7 +64,7 @@ class RoomChatView extends GetView<RoomChatController> {
             ),
 
             // ── Input Bar ──
-            _buildInputBar(),
+            _buildInputBar(c),
           ],
         ),
       ),
@@ -70,15 +72,15 @@ class RoomChatView extends GetView<RoomChatController> {
   }
 
   // 1. AppBar Widget
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(AppC c) {
     return AppBar(
-      backgroundColor: AppColors.white.withValues(alpha: 0.96),
+      backgroundColor: c.surface.withValues(alpha: 0.96),
       elevation: 0,
       surfaceTintColor: AppColors.transparent,
       leading: IconButton(
         icon: Icon(
           FluentIcons.chevron_left_24_regular,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
         onPressed: () => Get.back(),
       ),
@@ -98,7 +100,7 @@ class RoomChatView extends GetView<RoomChatController> {
                   style: AppFonts.satoshiStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 Text(
@@ -118,7 +120,7 @@ class RoomChatView extends GetView<RoomChatController> {
         IconButton(
           icon: Icon(
             FluentIcons.more_vertical_24_regular,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
           ),
           onPressed: () {},
         ),
@@ -128,6 +130,7 @@ class RoomChatView extends GetView<RoomChatController> {
 
   // 2. Message Bubble Widget
   Widget _buildMessageBubble({
+    required AppC c,
     required String message,
     required String time,
     required bool isMe,
@@ -162,8 +165,8 @@ class RoomChatView extends GetView<RoomChatController> {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: isMe ? AppColors.textPrimary : AppColors.surface,
-                  border: isMe ? null : Border.all(color: AppColors.border),
+                  color: isMe ? AppColors.textPrimary : c.surface,
+                  border: isMe ? null : Border.all(color: c.border),
                   boxShadow: isMe ? AppShadows.soft : const [],
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(AppRadius.md),
@@ -183,7 +186,7 @@ class RoomChatView extends GetView<RoomChatController> {
                         message,
                         style: AppFonts.satoshiStyle(
                           fontSize: 14,
-                          color: isMe ? AppColors.white : AppColors.textPrimary,
+                          color: isMe ? AppColors.white : c.textPrimary,
                           height: 1.4,
                         ),
                       ),
@@ -195,9 +198,9 @@ class RoomChatView extends GetView<RoomChatController> {
                         width: 250,
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: c.surface,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: AppColors.grey200),
+                          border: Border.all(color: c.grey200),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,14 +225,14 @@ class RoomChatView extends GetView<RoomChatController> {
                                         style: AppFonts.satoshiStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.textPrimary,
+                                          color: c.textPrimary,
                                         ),
                                       ),
                                       Text(
                                         sharedPost['subtitle'] ?? '',
                                         style: AppFonts.satoshiStyle(
                                           fontSize: 9.5,
-                                          color: AppColors.textTertiary,
+                                          color: c.textTertiary,
                                         ),
                                       ),
                                     ],
@@ -245,7 +248,7 @@ class RoomChatView extends GetView<RoomChatController> {
                               overflow: TextOverflow.ellipsis,
                               style: AppFonts.satoshiStyle(
                                 fontSize: 11.5,
-                                color: AppColors.textSecondary,
+                                color: c.textSecondary,
                                 height: 1.35,
                               ),
                             ),
@@ -266,7 +269,7 @@ class RoomChatView extends GetView<RoomChatController> {
                             const SizedBox(height: 8),
                             Divider(
                               height: 1,
-                              color: AppColors.grey200.withValues(alpha: 0.4),
+                              color: c.grey200.withValues(alpha: 0.4),
                             ),
                             const SizedBox(height: 6),
                             Center(
@@ -292,13 +295,13 @@ class RoomChatView extends GetView<RoomChatController> {
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
                           color: isMe
-                              ? AppColors.white.withValues(alpha: 0.12)
-                              : AppColors.surfaceSecondary,
+                              ? c.surface.withValues(alpha: 0.12)
+                              : c.surfaceSecondary,
                           borderRadius: BorderRadius.circular(AppRadius.xs),
                           border: Border.all(
                             color: isMe
-                                ? AppColors.white.withValues(alpha: 0.2)
-                                : AppColors.border,
+                                ? c.surface.withValues(alpha: 0.2)
+                                : c.border,
                           ),
                         ),
                         child: Row(
@@ -325,7 +328,7 @@ class RoomChatView extends GetView<RoomChatController> {
                                       fontWeight: FontWeight.w600,
                                       color: isMe
                                           ? AppColors.white
-                                          : AppColors.textPrimary,
+                                          : c.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -337,7 +340,7 @@ class RoomChatView extends GetView<RoomChatController> {
                                           ? AppColors.white.withValues(
                                               alpha: 0.7,
                                             )
-                                          : AppColors.textTertiary,
+                                          : c.textTertiary,
                                     ),
                                   ),
                                 ],
@@ -346,8 +349,8 @@ class RoomChatView extends GetView<RoomChatController> {
                             Icon(
                               FluentIcons.arrow_download_24_regular,
                               color: isMe
-                                  ? AppColors.white70
-                                  : AppColors.textSecondary,
+                              ? AppColors.white70
+                              : c.textSecondary,
                               size: 18,
                             ),
                           ],
@@ -366,7 +369,7 @@ class RoomChatView extends GetView<RoomChatController> {
                       'Dibaca ',
                       style: AppFonts.satoshiStyle(
                         fontSize: 10,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                       ),
                     ),
                     Icon(
@@ -379,7 +382,7 @@ class RoomChatView extends GetView<RoomChatController> {
                       time,
                       style: AppFonts.satoshiStyle(
                         fontSize: 10,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                       ),
                     ),
                   ],
@@ -401,7 +404,7 @@ class RoomChatView extends GetView<RoomChatController> {
   }
 
   // 3. Input Bar Widget
-  Widget _buildInputBar() {
+  Widget _buildInputBar(AppC c) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -417,9 +420,9 @@ class RoomChatView extends GetView<RoomChatController> {
               vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
-              color: AppColors.grey50,
+              color: c.grey50,
               border: Border(
-                top: BorderSide(color: AppColors.border, width: 1),
+                top: BorderSide(color: c.border, width: 1),
               ),
             ),
             child: Row(
@@ -427,9 +430,9 @@ class RoomChatView extends GetView<RoomChatController> {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.xs),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(AppRadius.xs),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: c.border),
                   ),
                   child: Icon(
                     controller.attachedFileName.value!.endsWith('.png') ||
@@ -452,7 +455,7 @@ class RoomChatView extends GetView<RoomChatController> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -460,7 +463,7 @@ class RoomChatView extends GetView<RoomChatController> {
                         controller.attachedFileSize.value ?? '1.2 MB',
                         style: AppFonts.satoshiStyle(
                           fontSize: 11,
-                          color: AppColors.textTertiary,
+                          color: c.textTertiary,
                         ),
                       ),
                     ],
@@ -471,12 +474,12 @@ class RoomChatView extends GetView<RoomChatController> {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.xxs),
                     decoration: BoxDecoration(
-                      color: AppColors.border,
+                      color: c.border,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       FluentIcons.dismiss_12_filled,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                       size: 12,
                     ),
                   ),
@@ -492,7 +495,7 @@ class RoomChatView extends GetView<RoomChatController> {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          decoration: const BoxDecoration(color: AppColors.white),
+          decoration: BoxDecoration(color: c.surface),
           child: Row(
             children: [
               // Plus/Attachment Button
@@ -501,9 +504,9 @@ class RoomChatView extends GetView<RoomChatController> {
                   Get.bottomSheet(
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.lg),
-                      decoration: const BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.only(
+                      decoration: BoxDecoration(
+                        color: c.surfaceElevated,
+                        borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(AppRadius.lg),
                           topRight: Radius.circular(AppRadius.lg),
                         ),
@@ -515,7 +518,7 @@ class RoomChatView extends GetView<RoomChatController> {
                             width: 40,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: AppColors.border,
+                              color: c.border,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -525,7 +528,7 @@ class RoomChatView extends GetView<RoomChatController> {
                             style: AppFonts.satoshiStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -578,20 +581,20 @@ class RoomChatView extends GetView<RoomChatController> {
                     ),
                   );
                 },
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border.all(color: AppColors.border),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: c.surface,
+                      border: Border.all(color: c.border),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Icon(
+                      FluentIcons.add_24_regular,
+                      color: c.textSecondary,
+                      size: 24,
+                    ),
                   ),
-                  child: Icon(
-                    FluentIcons.add_24_regular,
-                    color: AppColors.textSecondary,
-                    size: 24,
-                  ),
-                ),
               ),
               const SizedBox(width: 12),
 
@@ -601,11 +604,11 @@ class RoomChatView extends GetView<RoomChatController> {
                   controller: controller.messageController,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: AppColors.surface,
+                    fillColor: c.surface,
                     hintText: 'Ketik pesan',
                     hintStyle: AppFonts.satoshiStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      color: c.textSecondary.withValues(alpha: 0.6),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
@@ -614,28 +617,28 @@ class RoomChatView extends GetView<RoomChatController> {
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       borderSide: BorderSide(
-                        color: AppColors.border.withValues(alpha: 0.8),
+                        color: c.border.withValues(alpha: 0.8),
                         width: 1.0,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       borderSide: BorderSide(
-                        color: AppColors.textPrimary.withValues(alpha: 0.4),
+                        color: c.textPrimary.withValues(alpha: 0.4),
                         width: 1.2,
                       ),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       borderSide: BorderSide(
-                        color: AppColors.border.withValues(alpha: 0.8),
+                        color: c.border.withValues(alpha: 0.8),
                         width: 1.0,
                       ),
                     ),
                   ),
                   style: AppFonts.satoshiStyle(
                     fontSize: 14,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
               ),

@@ -129,6 +129,26 @@ class AppTextStyles {
     labelSmall: button(fontSize: 11),
   );
 
+  static TextTheme get darkTextTheme => TextTheme(
+    displayLarge: displayLarge(color: DarkColors.textPrimary),
+    headlineLarge: titleLarge(color: DarkColors.textPrimary),
+    headlineMedium: titleMedium(color: DarkColors.textPrimary),
+    titleLarge: titleMedium(color: DarkColors.textPrimary),
+    titleMedium: heading(
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      color: DarkColors.textPrimary,
+    ),
+    titleSmall: label(fontSize: 14, color: DarkColors.textPrimary),
+    bodyLarge: bodyLarge(color: DarkColors.textPrimary),
+    bodyMedium: bodyMedium(color: DarkColors.textPrimary),
+    bodySmall: bodySmall(color: DarkColors.textSecondary),
+    labelLarge: button(color: DarkColors.textPrimary),
+    labelMedium: button(fontSize: 12, color: DarkColors.textPrimary),
+    labelSmall: button(fontSize: 11, color: DarkColors.textSecondary),
+  );
+
+
   static TextStyle _style({
     required double fontSize,
     required FontWeight fontWeight,

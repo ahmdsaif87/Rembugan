@@ -9,6 +9,7 @@ class LoadingStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return SocialScaffold(
       title: 'Loading',
       subtitle: 'Skeleton state',
@@ -24,7 +25,7 @@ class LoadingStateView extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: AppColors.surfaceSecondary,
+                  backgroundColor: c.surfaceSecondary,
                 ),
                 SizedBox(width: 12),
                 Expanded(

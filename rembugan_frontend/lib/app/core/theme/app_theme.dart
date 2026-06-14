@@ -134,6 +134,175 @@ class AppTheme {
     );
   }
 
+  static ThemeData get darkTheme {
+    final colorScheme = const ColorScheme.dark(
+      primary: AppColors.primary500,
+      onPrimary: AppColors.white,
+      primaryContainer: DarkColors.primary50,
+      onPrimaryContainer: AppColors.primary200,
+      secondary: DarkColors.primary50,
+      onSecondary: AppColors.primary300,
+      surface: DarkColors.surface,
+      onSurface: DarkColors.textPrimary,
+      error: AppColors.error,
+      onError: AppColors.white,
+      outline: DarkColors.border,
+      outlineVariant: DarkColors.borderStrong,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: AppTextStyles.inter,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: DarkColors.background,
+      textTheme: AppTextStyles.darkTextTheme,
+      splashColor: AppColors.primary500.withValues(alpha: 0.12),
+      highlightColor: AppColors.primary500.withValues(alpha: 0.06),
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: DarkColors.surface,
+        foregroundColor: DarkColors.textPrimary,
+        surfaceTintColor: DarkColors.surface,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: AppTextStyles.titleMedium(
+          color: DarkColors.textPrimary,
+        ),
+        iconTheme: const IconThemeData(color: DarkColors.textPrimary),
+      ),
+      cardTheme: CardThemeData(
+        color: DarkColors.card,
+        surfaceTintColor: DarkColors.card,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: const BorderSide(color: DarkColors.border),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: _primaryButtonStyle(),
+      ),
+      filledButtonTheme: FilledButtonThemeData(style: _primaryButtonStyle()),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary300,
+          textStyle: AppTextStyles.button(),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          minimumSize: const WidgetStatePropertyAll(Size(48, 54)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+          ),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: DarkColors.border),
+          ),
+          foregroundColor: const WidgetStatePropertyAll(
+            DarkColors.textPrimary,
+          ),
+          backgroundColor: const WidgetStatePropertyAll(
+            DarkColors.surfaceElevated,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: WidgetStateColor.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return DarkColors.inputFocused;
+          }
+          return DarkColors.input;
+        }),
+        hintStyle: AppTextStyles.bodyMedium(color: DarkColors.textTertiary),
+        labelStyle: AppTextStyles.bodyMedium(color: DarkColors.textPrimary),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        border: _inputBorder(DarkColors.border),
+        enabledBorder: _inputBorder(DarkColors.border),
+        focusedBorder: _inputBorder(AppColors.primary400, width: 1.2),
+        errorBorder: _inputBorder(AppColors.error, width: 1.2),
+        focusedErrorBorder: _inputBorder(AppColors.error, width: 1.2),
+        disabledBorder: _inputBorder(DarkColors.borderStrong),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: DarkColors.surface,
+        selectedItemColor: AppColors.primary400,
+        unselectedItemColor: DarkColors.textTertiary,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
+      iconTheme: const IconThemeData(color: DarkColors.textSecondary),
+      dividerColor: DarkColors.border,
+      dividerTheme: const DividerThemeData(
+        color: DarkColors.border,
+        thickness: 1,
+        space: 1,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: DarkColors.surfaceElevated,
+        surfaceTintColor: DarkColors.surfaceElevated,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: DarkColors.surface,
+        surfaceTintColor: DarkColors.surface,
+        modalBarrierColor: Color(0x80000000),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: DarkColors.surfaceElevated,
+        surfaceTintColor: DarkColors.surfaceElevated,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          side: const BorderSide(color: DarkColors.border),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.white;
+          }
+          return DarkColors.textTertiary;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.primary500;
+          }
+          return DarkColors.surfaceSecondary;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.primary500;
+          }
+          return DarkColors.borderStrong;
+        }),
+      ),
+    );
+  }
+
   static ButtonStyle _primaryButtonStyle() {
     return ButtonStyle(
       elevation: const WidgetStatePropertyAll(0),

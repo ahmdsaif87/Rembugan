@@ -425,7 +425,7 @@ class _AiPersonalizeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.textPrimary,
+      color: AppColors.grey900,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
@@ -506,19 +506,20 @@ class _EditPreviewSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.textPrimary),
+              Icon(icon, size: 18, color: c.textPrimary),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -529,7 +530,7 @@ class _EditPreviewSection extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -538,7 +539,7 @@ class _EditPreviewSection extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 12,
                         height: 1.35,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                       ),
                     ),
                   ],
@@ -575,13 +576,14 @@ class _ExperiencePreviewItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: c.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,7 +597,7 @@ class _ExperiencePreviewItem extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -603,7 +605,7 @@ class _ExperiencePreviewItem extends StatelessWidget {
                   '${experience.organization} - ${experience.duration}',
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 7),
@@ -614,7 +616,7 @@ class _ExperiencePreviewItem extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
                     height: 1.4,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
               ],
@@ -645,13 +647,14 @@ class _CollaborationVisibilityItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: c.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         children: [
@@ -660,7 +663,7 @@ class _CollaborationVisibilityItem extends StatelessWidget {
                 ? FluentIcons.eye_24_regular
                 : FluentIcons.eye_off_24_regular,
             size: 18,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -672,7 +675,7 @@ class _CollaborationVisibilityItem extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -680,7 +683,7 @@ class _CollaborationVisibilityItem extends StatelessWidget {
                   '${item.role} - ${item.members} anggota - ${item.status}',
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
               ],
@@ -711,6 +714,7 @@ class _EditBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -718,9 +722,9 @@ class _EditBottomSheet extends StatelessWidget {
         20,
         20 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      decoration: BoxDecoration(
+        color: c.surfaceElevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: SafeArea(
         top: false,
@@ -734,7 +738,7 @@ class _EditBottomSheet extends StatelessWidget {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.borderStrong,
+                    color: c.borderStrong,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -745,7 +749,7 @@ class _EditBottomSheet extends StatelessWidget {
                 style: AppFonts.headingStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
@@ -754,7 +758,7 @@ class _EditBottomSheet extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   height: 1.45,
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                 ),
               ),
               const SizedBox(height: 18),
@@ -798,11 +802,12 @@ class _ConfirmSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      decoration: BoxDecoration(
+        color: c.surfaceElevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: SafeArea(
         top: false,
@@ -815,7 +820,7 @@ class _ConfirmSheet extends StatelessWidget {
               style: AppFonts.headingStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -824,7 +829,7 @@ class _ConfirmSheet extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 13,
                 height: 1.45,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ),
             const SizedBox(height: 18),
@@ -867,6 +872,7 @@ class _SheetField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Column(
@@ -877,7 +883,7 @@ class _SheetField extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: c.textSecondary,
             ),
           ),
           if (helper != null) ...[
@@ -887,7 +893,7 @@ class _SheetField extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 12,
                 height: 1.35,
-                color: AppColors.textTertiary,
+                color: c.textTertiary,
               ),
             ),
           ],
@@ -904,17 +910,18 @@ class _LinkIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: c.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Icon(
         FluentIcons.code_24_regular,
-        color: AppColors.textPrimary,
+        color: c.textPrimary,
         size: 19,
       ),
     );
@@ -929,7 +936,7 @@ class _MiniEditButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.textPrimary,
+      color: AppColors.grey900,
       shape: const CircleBorder(),
       child: InkWell(
         onTap: onTap,

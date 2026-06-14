@@ -112,6 +112,7 @@ class _NotificationViewState extends State<NotificationView> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final collabCount = _items
         .where((item) => item.kind == _NotificationKind.collaboration)
         .length;
@@ -127,7 +128,7 @@ class _NotificationViewState extends State<NotificationView> {
             style: AppFonts.interStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
             ),
           ),
         ),
@@ -151,7 +152,7 @@ class _NotificationViewState extends State<NotificationView> {
             return Column(
               children: [
                 _NotificationTile(item: item),
-                if (!isLast) Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+                if (!isLast) Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
               ],
             );
           }),
@@ -214,6 +215,7 @@ class _TabPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -222,10 +224,10 @@ class _TabPill extends StatelessWidget {
           height: 38,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: active ? AppColors.primary500 : AppColors.white,
+            color: active ? AppColors.primary500 : c.surface,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
-              color: active ? AppColors.primary500 : AppColors.border,
+              color: active ? AppColors.primary500 : c.border,
             ),
           ),
           child: Row(
@@ -239,7 +241,7 @@ class _TabPill extends StatelessWidget {
                   style: AppFonts.satoshiStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: active ? AppColors.white : AppColors.textSecondary,
+                    color: active ? c.surface : c.textSecondary,
                   ),
                 ),
               ),
@@ -251,7 +253,7 @@ class _TabPill extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: active ? AppColors.white : AppColors.warning50,
+                    color: active ? c.surface : AppColors.warning50,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
@@ -260,7 +262,7 @@ class _TabPill extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: active
-                          ? AppColors.textPrimary
+                          ? c.textPrimary
                           : AppColors.warning700,
                     ),
                   ),
@@ -281,6 +283,7 @@ class _PriorityBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -294,7 +297,7 @@ class _PriorityBanner extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: c.surface,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: const Icon(
@@ -310,7 +313,7 @@ class _PriorityBanner extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
           ),
@@ -329,6 +332,7 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
@@ -340,7 +344,7 @@ class _NotificationTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.primarySoft,
+                  backgroundColor: c.primarySoft,
                   backgroundImage: AssetImage(
                     item.avatarAsset ?? 'lib/assets/img/avatar.png',
                   ),
@@ -350,8 +354,8 @@ class _NotificationTile extends StatelessWidget {
                   right: -2,
                   child: Container(
                     padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                      color: AppColors.white,
+                    decoration: BoxDecoration(
+                      color: c.surface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -392,34 +396,34 @@ class _NotificationTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: Text(
-                        item.title,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          height: 1.25,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      item.time,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  item.subtitle,
+                child: Text(
+                  item.title,
                   style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    height: 1.35,
-                    color: AppColors.textSecondary,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    height: 1.25,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                item.time,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: c.textTertiary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            item.subtitle,
+            style: AppFonts.satoshiStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: c.textSecondary,
                   ),
                 ),
               ],
@@ -461,16 +465,16 @@ class _NotificationTile extends StatelessWidget {
                   vertical: AppSpacing.xxs,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: c.surface,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: AppColors.borderStrong, width: 1),
+                  border: Border.all(color: c.borderStrong, width: 1),
                 ),
                 child: Text(
                   item.actionLabel!,
                   style: AppFonts.satoshiStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
               ),

@@ -12,16 +12,17 @@ class ChatView extends GetView<ChatController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: AppLayeredBackground(
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              _buildSearchBar(),
-              _buildFilters(),
+              _buildHeader(c),
+              _buildSearchBar(c),
+              _buildFilters(c),
               Expanded(
                 child: Obx(() {
                   final chats = controller.filteredChats;
@@ -41,11 +42,12 @@ class ChatView extends GetView<ChatController> {
                     separatorBuilder: (_, __) => Divider(
                       height: 1,
                       indent: 84,
-                      color: AppColors.border.withValues(alpha: 0.4),
+                      color: c.border.withValues(alpha: 0.4),
                     ),
                     itemBuilder: (context, index) {
                       final chat = chats[index];
                       return _buildChatItem(
+                        c: c,
                         name: chat.name,
                         message: chat.message,
                         time: chat.time,
@@ -64,7 +66,7 @@ class ChatView extends GetView<ChatController> {
                     'Your personal messages are end-to-end encrypted',
                     style: AppFonts.satoshiStyle(
                       fontSize: 11,
-                      color: AppColors.textTertiary,
+                      color: c.textTertiary,
                     ),
                   ),
                 ),
@@ -77,7 +79,7 @@ class ChatView extends GetView<ChatController> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppC c) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
       child: Row(
@@ -91,7 +93,7 @@ class ChatView extends GetView<ChatController> {
                   style: AppFonts.satoshiStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                     height: 1.1,
                   ),
                 ),
@@ -112,27 +114,27 @@ class ChatView extends GetView<ChatController> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(AppC c) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Cari percakapan',
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             FluentIcons.search_24_regular,
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
             size: 20,
           ),
-          suffixIcon: const Icon(
+          suffixIcon: Icon(
             FluentIcons.options_24_regular,
-            color: AppColors.textTertiary,
+            color: c.textTertiary,
             size: 20,
           ),
           filled: true,
-          fillColor: AppColors.surface,
+          fillColor: c.surface,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: c.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -143,19 +145,19 @@ class ChatView extends GetView<ChatController> {
     );
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(AppC c) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
       child: AppSurface(
         padding: const EdgeInsets.all(AppSpacing.xxs),
         radius: AppRadius.lg,
-        color: AppColors.surfaceWarm,
+        color: c.surfaceWarm,
         shadow: const [],
         child: Obx(
           () => Row(
             children: [
-              _buildFilterItem('Semua', 1),
-              _buildFilterItem('Belum dibaca', 0),
+              _buildFilterItem(c, 'Semua', 1),
+              _buildFilterItem(c, 'Belum dibaca', 0),
             ],
           ),
         ),
@@ -163,7 +165,7 @@ class ChatView extends GetView<ChatController> {
     );
   }
 
-  Widget _buildFilterItem(String label, int index) {
+  Widget _buildFilterItem(AppC c, String label, int index) {
     final isActive = controller.filterIndex.value == index;
     return Expanded(
       child: GestureDetector(
@@ -173,11 +175,11 @@ class ChatView extends GetView<ChatController> {
           height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isActive ? AppColors.white : AppColors.transparent,
+            color: isActive ? c.surface : AppColors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: isActive ? AppShadows.soft : const [],
             border: Border.all(
-              color: isActive ? AppColors.border : AppColors.transparent,
+              color: isActive ? c.border : AppColors.transparent,
             ),
           ),
           child: Text(
@@ -185,7 +187,7 @@ class ChatView extends GetView<ChatController> {
             style: AppFonts.satoshiStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isActive ? AppColors.primary500 : AppColors.textSecondary,
+              color: isActive ? AppColors.primary500 : c.textSecondary,
             ),
           ),
         ),
@@ -194,6 +196,7 @@ class ChatView extends GetView<ChatController> {
   }
 
   Widget _buildChatItem({
+    required AppC c,
     required String name,
     required String message,
     required String time,
@@ -202,7 +205,7 @@ class ChatView extends GetView<ChatController> {
     int unreadCount = 0,
   }) {
     return Material(
-      color: AppColors.background,
+      color: c.background,
       child: InkWell(
         onTap: () => Get.toNamed(Routes.ROOM_CHAT),
         child: Padding(
@@ -216,7 +219,7 @@ class ChatView extends GetView<ChatController> {
                 children: [
                   CircleAvatar(
                     radius: 26,
-                    backgroundColor: AppColors.primarySoft,
+                    backgroundColor: c.primarySoft,
                     backgroundImage: const AssetImage(
                       'lib/assets/img/avatar.png',
                     ),
@@ -230,7 +233,7 @@ class ChatView extends GetView<ChatController> {
                       decoration: BoxDecoration(
                         color: AppColors.success,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.white, width: 2),
+                        border: Border.all(color: c.surface, width: 2),
                       ),
                     ),
                   ),
@@ -253,7 +256,7 @@ class ChatView extends GetView<ChatController> {
                               fontWeight: isUnread
                                   ? FontWeight.w600
                                   : FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                           ),
                         ),
@@ -266,7 +269,7 @@ class ChatView extends GetView<ChatController> {
                                 : FontWeight.w500,
                             color: isUnread
                                 ? AppColors.primary
-                                : AppColors.textTertiary,
+                                : c.textTertiary,
                           ),
                         ),
                       ],
@@ -286,7 +289,7 @@ class ChatView extends GetView<ChatController> {
                                   : FontWeight.w400,
                               color: isUnread
                                   ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
+                                  : c.textSecondary,
                               height: 1.35,
                             ),
                           ),
@@ -307,7 +310,7 @@ class ChatView extends GetView<ChatController> {
                               unreadCount.toString(),
                               textAlign: TextAlign.center,
                               style: AppFonts.satoshiStyle(
-                                color: AppColors.white,
+                                color: c.surface,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),

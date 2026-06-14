@@ -182,3 +182,94 @@ class AppShadows {
     ),
   ];
 }
+
+/// Dark mode color palette.
+class DarkColors {
+  // Surfaces
+  static const Color background = Color(0xFF0F1119);
+  static const Color surface = Color(0xFF181B25);
+  static const Color surfaceElevated = Color(0xFF1E2130);
+  static const Color surfaceSecondary = Color(0xFF252837);
+  static const Color surfaceWarm = Color(0xFF1A1D28);
+
+  // Borders
+  static const Color border = Color(0xFF2A2E3D);
+  static const Color borderStrong = Color(0xFF3A3F52);
+
+  // Text
+  static const Color textPrimary = Color(0xFFF0F1F5);
+  static const Color textSecondary = Color(0xFF9EA2AE);
+  static const Color textTertiary = Color(0xFF6D717F);
+
+  // Input
+  static const Color input = Color(0xFF252837);
+  static const Color inputFocused = Color(0xFF1E2451);
+
+  // Card
+  static const Color card = Color(0xFF1A1D28);
+
+  // Grey scale (inverted)
+  static const Color grey50 = Color(0xFF1A1D28);
+  static const Color grey100 = Color(0xFF252837);
+  static const Color grey200 = Color(0xFF2A2E3D);
+  static const Color grey300 = Color(0xFF3A3F52);
+  static const Color grey400 = Color(0xFF6D717F);
+  static const Color grey500 = Color(0xFF9EA2AE);
+  static const Color grey600 = Color(0xFFBEC2CC);
+  static const Color grey700 = Color(0xFFD2D5DB);
+  static const Color grey800 = Color(0xFFE5E7EA);
+  static const Color grey900 = Color(0xFFF0F1F5);
+
+  // Primary remains the same for brand consistency
+  static const Color primary50 = Color(0xFF1A1E3A);
+  static const Color primary100 = Color(0xFF212750);
+}
+
+/// Context-aware color resolver for dark/light mode.
+/// Use `AppC.of(context)` to get the correct colors.
+class AppC {
+  final BuildContext _context;
+  const AppC._(this._context);
+
+  static AppC of(BuildContext context) => AppC._(context);
+
+  bool get _isDark => Theme.of(_context).brightness == Brightness.dark;
+
+  // Surfaces
+  Color get background => _isDark ? DarkColors.background : AppColors.background;
+  Color get surface => _isDark ? DarkColors.surface : AppColors.surface;
+  Color get surfaceElevated => _isDark ? DarkColors.surfaceElevated : AppColors.surfaceElevated;
+  Color get surfaceSecondary => _isDark ? DarkColors.surfaceSecondary : AppColors.surfaceSecondary;
+  Color get card => _isDark ? DarkColors.card : AppColors.white;
+  Color get white => _isDark ? DarkColors.surface : AppColors.white;
+
+  // Text
+  Color get textPrimary => _isDark ? DarkColors.textPrimary : AppColors.textPrimary;
+  Color get textSecondary => _isDark ? DarkColors.textSecondary : AppColors.textSecondary;
+  Color get textTertiary => _isDark ? DarkColors.textTertiary : AppColors.textTertiary;
+
+  // Grey scale
+  Color get grey50 => _isDark ? DarkColors.grey50 : AppColors.grey50;
+  Color get grey100 => _isDark ? DarkColors.grey100 : AppColors.grey100;
+  Color get grey200 => _isDark ? DarkColors.grey200 : AppColors.grey200;
+  Color get grey300 => _isDark ? DarkColors.grey300 : AppColors.grey300;
+  Color get grey400 => _isDark ? DarkColors.grey400 : AppColors.grey400;
+  Color get grey500 => _isDark ? DarkColors.grey500 : AppColors.grey500;
+  Color get grey600 => _isDark ? DarkColors.grey600 : AppColors.grey600;
+  Color get grey700 => _isDark ? DarkColors.grey700 : AppColors.grey700;
+  Color get grey800 => _isDark ? DarkColors.grey800 : AppColors.grey800;
+  Color get grey900 => _isDark ? DarkColors.grey900 : AppColors.grey900;
+
+  // Borders
+  Color get border => _isDark ? DarkColors.border : AppColors.border;
+  Color get borderStrong => _isDark ? DarkColors.borderStrong : AppColors.borderStrong;
+
+  // Input
+  Color get input => _isDark ? DarkColors.input : AppColors.input;
+
+  // Primary tints
+  Color get surfaceWarm => _isDark ? DarkColors.surfaceWarm : AppColors.surfaceWarm;
+  Color get primarySoft => _isDark ? DarkColors.primary50 : AppColors.primarySoft;
+  Color get primaryTint => _isDark ? DarkColors.primary100 : AppColors.primaryTint;
+}
+

@@ -9,8 +9,9 @@ class OnboardingView extends GetView<OnboardingController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: c.background,
       body: SafeArea(
         top: false,
         child: Column(
@@ -89,6 +90,7 @@ class _OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableImageHeight = (constraints.maxHeight - 110).clamp(
@@ -113,11 +115,11 @@ class _OnboardingPage extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       height: 96,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [AppColors.transparent, AppColors.white],
+                          colors: [AppColors.transparent, c.background],
                         ),
                       ),
                     ),
@@ -134,7 +136,7 @@ class _OnboardingPage extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                   height: 1.2,
                 ),
               ),
@@ -148,7 +150,7 @@ class _OnboardingPage extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                   height: 1.5,
                 ),
               ),

@@ -11,15 +11,16 @@ class WorkspaceDetailView extends GetView<TeamController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Obx(() {
       final ws = controller.selectedWorkspace.value;
       if (ws == null) return const SizedBox.shrink();
       return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: _appBar(ws),
+        backgroundColor: c.background,
+        appBar: _appBar(c, ws),
         body: Column(
           children: [
-            _tabs(),
+            _tabs(c),
             Expanded(
               child: Obx(() {
                 switch (controller.detailTabIndex.value) {
@@ -36,11 +37,11 @@ class WorkspaceDetailView extends GetView<TeamController> {
     });
   }
 
-  PreferredSizeWidget _appBar(WorkspaceModel ws) {
+  PreferredSizeWidget _appBar(AppC c, WorkspaceModel ws) {
     final online = ws.members.where((m) => m.isOnline).length;
 
     return AppBar(
-      backgroundColor: AppColors.white,
+      backgroundColor: c.surface,
       elevation: 0,
       surfaceTintColor: AppColors.transparent,
       leading: IconButton(
@@ -56,7 +57,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
             style: AppFonts.headingStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
@@ -65,7 +66,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
             style: AppFonts.satoshiStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: AppColors.textTertiary,
+              color: c.textTertiary,
             ),
           ),
         ],
@@ -79,17 +80,17 @@ class WorkspaceDetailView extends GetView<TeamController> {
     );
   }
 
-  Widget _tabs() {
+  Widget _tabs(AppC c) {
     const labels = ['Group Chat', 'Kanban'];
 
     return Container(
-      color: AppColors.white,
+      color: c.surface,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
       child: Container(
         height: 44,
         padding: const EdgeInsets.all(AppSpacing.xxs),
         decoration: BoxDecoration(
-          color: AppColors.grey100,
+          color: c.grey100,
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Obx(
@@ -104,7 +105,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
                     curve: Curves.easeOutCubic,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: active ? AppColors.white : AppColors.transparent,
+                      color: active ? c.surface : AppColors.transparent,
                       borderRadius: BorderRadius.circular(AppRadius.xs),
                       boxShadow: active
                           ? [
@@ -129,8 +130,8 @@ class WorkspaceDetailView extends GetView<TeamController> {
                                     : FluentIcons.board_24_regular),
                           size: 16,
                           color: active
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
+                              ? c.textPrimary
+                              : c.textSecondary,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -141,8 +142,8 @@ class WorkspaceDetailView extends GetView<TeamController> {
                                 ? FontWeight.w700
                                 : FontWeight.w500,
                             color: active
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
+                                ? c.textPrimary
+                                : c.textSecondary,
                           ),
                         ),
                       ],
@@ -277,6 +278,7 @@ class ApplicantSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return _SheetShell(
       child: Obx(() {
         final applicants = ctrl.applicantsFor(ws.id);
@@ -297,15 +299,15 @@ class ApplicantSheet extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceSecondary,
+                  color: c.surfaceSecondary,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: c.border),
                 ),
                 child: Text(
                   'Semua lamaran sudah ditinjau.',
                   style: AppFonts.satoshiStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
               )
@@ -356,12 +358,13 @@ class _ApplicantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,13 +373,13 @@ class _ApplicantCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.surfaceSecondary,
+                backgroundColor: c.surfaceSecondary,
                 child: Text(
                   applicant.name.substring(0, 1),
                   style: AppFonts.satoshiStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
               ),
@@ -390,7 +393,7 @@ class _ApplicantCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -398,7 +401,7 @@ class _ApplicantCard extends StatelessWidget {
                       applicant.role,
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
-                        color: AppColors.textTertiary,
+                        color: c.textTertiary,
                       ),
                     ),
                   ],
@@ -412,7 +415,7 @@ class _ApplicantCard extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 12,
               height: 1.35,
-              color: AppColors.textSecondary,
+              color: c.textSecondary,
             ),
           ),
           const SizedBox(height: 10),
@@ -427,16 +430,16 @@ class _ApplicantCard extends StatelessWidget {
                       vertical: AppSpacing.xxs,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceSecondary,
+                      color: c.surfaceSecondary,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: c.border),
                     ),
                     child: Text(
                       skill,
                       style: AppFonts.satoshiStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                       ),
                     ),
                   ),
@@ -537,14 +540,15 @@ class _SheetShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return SafeArea(
       top: false,
       child: Container(
         margin: const EdgeInsets.only(top: 80),
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: c.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
         ),
@@ -559,12 +563,13 @@ class _SheetHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Center(
       child: Container(
         width: 38,
         height: 4,
         decoration: BoxDecoration(
-          color: AppColors.grey300,
+          color: c.grey300,
           borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
       ),
@@ -580,6 +585,7 @@ class _SheetHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -588,7 +594,7 @@ class _SheetHeader extends StatelessWidget {
           style: AppFonts.headingStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
@@ -597,7 +603,7 @@ class _SheetHeader extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 12,
             height: 1.4,
-            color: AppColors.textTertiary,
+            color: c.textTertiary,
           ),
         ),
       ],
@@ -624,9 +630,10 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? AppColors.danger600 : AppColors.textPrimary;
+    final c = AppC.of(context);
+    final color = danger ? AppColors.danger600 : c.textPrimary;
     return Material(
-      color: AppColors.surfaceSecondary,
+      color: c.surfaceSecondary,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: onTap,
@@ -654,7 +661,7 @@ class _ActionTile extends StatelessWidget {
                       subtitle,
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
-                        color: AppColors.textTertiary,
+                        color: c.textTertiary,
                       ),
                     ),
                   ],
@@ -694,16 +701,17 @@ class _SheetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? AppColors.danger600 : AppColors.textPrimary;
+    final c = AppC.of(context);
+    final color = danger ? AppColors.danger600 : c.textPrimary;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 42,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: outlined ? AppColors.white : color,
+          color: outlined ? c.surface : color,
           borderRadius: BorderRadius.circular(13),
-          border: outlined ? Border.all(color: AppColors.border) : null,
+          border: outlined ? Border.all(color: c.border) : null,
         ),
         child: Text(
           label,
@@ -725,6 +733,7 @@ class _DiscussionTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       children: [
         // Messages
@@ -742,9 +751,9 @@ class _DiscussionTab extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: c.surface,
             border: Border(
-              top: BorderSide(color: AppColors.border, width: 0.5),
+              top: BorderSide(color: c.border, width: 0.5),
             ),
           ),
           child: SafeArea(
@@ -765,9 +774,9 @@ class _DiscussionTab extends StatelessWidget {
                     ),
                     margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: AppColors.grey50,
+                      color: c.grey50,
                       border: Border(
-                        bottom: BorderSide(color: AppColors.border, width: 1),
+                        bottom: BorderSide(color: c.border, width: 1),
                       ),
                     ),
                     child: Row(
@@ -775,9 +784,9 @@ class _DiscussionTab extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(AppSpacing.xs),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: c.surface,
                             borderRadius: BorderRadius.circular(AppRadius.xs),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: c.border),
                           ),
                           child: Icon(
                             ctrl.attachedGroupFileName.value!.endsWith(
@@ -804,7 +813,7 @@ class _DiscussionTab extends StatelessWidget {
                                 style: AppFonts.satoshiStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: c.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -812,7 +821,7 @@ class _DiscussionTab extends StatelessWidget {
                                 ctrl.attachedGroupFileSize.value ?? '2.4 MB',
                                 style: AppFonts.satoshiStyle(
                                   fontSize: 11,
-                                  color: AppColors.textTertiary,
+                                  color: c.textTertiary,
                                 ),
                               ),
                             ],
@@ -823,12 +832,12 @@ class _DiscussionTab extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.xxs),
                             decoration: BoxDecoration(
-                              color: AppColors.border,
+                              color: c.border,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               FluentIcons.dismiss_12_filled,
-                              color: AppColors.textSecondary,
+                              color: c.textSecondary,
                               size: 12,
                             ),
                           ),
@@ -851,9 +860,9 @@ class _DiscussionTab extends StatelessWidget {
                           Get.bottomSheet(
                             Container(
                               padding: const EdgeInsets.all(AppSpacing.lg),
-                              decoration: const BoxDecoration(
-                                color: AppColors.white,
-                                borderRadius: BorderRadius.only(
+                              decoration: BoxDecoration(
+                                color: c.surface,
+                                borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(AppRadius.lg),
                                   topRight: Radius.circular(AppRadius.lg),
                                 ),
@@ -865,7 +874,7 @@ class _DiscussionTab extends StatelessWidget {
                                     width: 40,
                                     height: 4,
                                     decoration: BoxDecoration(
-                                      color: AppColors.border,
+                                      color: c.border,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -875,7 +884,7 @@ class _DiscussionTab extends StatelessWidget {
                                     style: AppFonts.satoshiStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
+                                      color: c.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 20),
@@ -932,13 +941,13 @@ class _DiscussionTab extends StatelessWidget {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            border: Border.all(color: AppColors.border),
+                            color: c.surface,
+                            border: Border.all(color: c.border),
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Icon(
                             FluentIcons.add_24_regular,
-                            color: AppColors.textSecondary,
+                            color: c.textSecondary,
                             size: 24,
                           ),
                         ),
@@ -951,11 +960,11 @@ class _DiscussionTab extends StatelessWidget {
                           controller: _msgCtrl,
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppColors.surfaceSecondary,
+                            fillColor: c.surfaceSecondary,
                             hintText: 'Tulis pesan...',
                             hintStyle: AppFonts.satoshiStyle(
                               fontSize: 14,
-                              color: AppColors.textTertiary.withValues(
+                              color: c.textTertiary.withValues(
                                 alpha: 0.6,
                               ),
                             ),
@@ -966,14 +975,14 @@ class _DiscussionTab extends StatelessWidget {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: AppColors.border.withValues(alpha: 0.8),
+                                color: c.border.withValues(alpha: 0.8),
                                 width: 1.0,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: AppColors.textPrimary.withValues(
+                                color: c.textPrimary.withValues(
                                   alpha: 0.4,
                                 ),
                                 width: 1.2,
@@ -982,14 +991,14 @@ class _DiscussionTab extends StatelessWidget {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: AppColors.border.withValues(alpha: 0.8),
+                                color: c.border.withValues(alpha: 0.8),
                                 width: 1.0,
                               ),
                             ),
                           ),
                           style: AppFonts.satoshiStyle(
                             fontSize: 14,
-                            color: AppColors.textPrimary,
+                            color: c.textPrimary,
                           ),
                         ),
                       ),
@@ -1050,6 +1059,7 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     if (msg.isSystem) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -1058,7 +1068,7 @@ class _Bubble extends StatelessWidget {
             msg.body,
             style: AppFonts.satoshiStyle(
               fontSize: 11,
-              color: AppColors.textTertiary,
+              color: c.textTertiary,
             ),
           ),
         ),
@@ -1097,7 +1107,7 @@ class _Bubble extends StatelessWidget {
                           style: AppFonts.satoshiStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                            color: c.textSecondary,
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -1105,7 +1115,7 @@ class _Bubble extends StatelessWidget {
                           msg.time,
                           style: AppFonts.satoshiStyle(
                             fontSize: 10,
-                            color: AppColors.textTertiary,
+                            color: c.textTertiary,
                           ),
                         ),
                       ],
@@ -1118,8 +1128,8 @@ class _Bubble extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: msg.isMe
-                        ? AppColors.textPrimary.withValues(alpha: 0.88)
-                        : AppColors.surfaceSecondary,
+                        ? c.textPrimary.withValues(alpha: 0.88)
+                        : c.surfaceSecondary,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(AppRadius.md),
                       topRight: const Radius.circular(AppRadius.md),
@@ -1128,7 +1138,7 @@ class _Bubble extends StatelessWidget {
                     ),
                     border: msg.isMe
                         ? null
-                        : Border.all(color: AppColors.border),
+                        : Border.all(color: c.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1140,7 +1150,7 @@ class _Bubble extends StatelessWidget {
                           height: 1.4,
                           color: msg.isMe
                               ? AppColors.white
-                              : AppColors.textPrimary,
+                              : c.textPrimary,
                         ),
                       ),
                       if (msg.attachment != null) ...[
@@ -1151,12 +1161,12 @@ class _Bubble extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: msg.isMe
                                 ? AppColors.white.withValues(alpha: 0.12)
-                                : AppColors.surfaceWarm,
+                                : c.card,
                             borderRadius: BorderRadius.circular(AppRadius.xs),
                             border: Border.all(
                               color: msg.isMe
                                   ? AppColors.white.withValues(alpha: 0.2)
-                                  : AppColors.border,
+                                  : c.border,
                             ),
                           ),
                           child: Row(
@@ -1185,19 +1195,19 @@ class _Bubble extends StatelessWidget {
                                         fontWeight: FontWeight.w600,
                                         color: msg.isMe
                                             ? AppColors.white
-                                            : AppColors.textPrimary,
+                                            : c.textPrimary,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '2.4 MB',
-                                      style: AppFonts.satoshiStyle(
-                                        fontSize: 9,
-                                        color: msg.isMe
-                                            ? AppColors.white.withValues(
-                                                alpha: 0.7,
-                                              )
-                                            : AppColors.textTertiary,
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '2.4 MB',
+                                        style: AppFonts.satoshiStyle(
+                                          fontSize: 9,
+                                          color: msg.isMe
+                                              ? AppColors.white.withValues(
+                                                  alpha: 0.7,
+                                                )
+                                              : c.textTertiary,
                                       ),
                                     ),
                                   ],
@@ -1207,7 +1217,7 @@ class _Bubble extends StatelessWidget {
                                 FluentIcons.arrow_download_24_regular,
                                 color: msg.isMe
                                     ? AppColors.white70
-                                    : AppColors.textSecondary,
+                                    : c.textSecondary,
                                 size: 16,
                               ),
                             ],
@@ -1224,7 +1234,7 @@ class _Bubble extends StatelessWidget {
                       msg.time,
                       style: AppFonts.satoshiStyle(
                         fontSize: 10,
-                        color: AppColors.textTertiary,
+                        color: c.textTertiary,
                       ),
                     ),
                   ),
@@ -1237,7 +1247,7 @@ class _Bubble extends StatelessWidget {
   }
 }
 
-// â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  TASK TAB
 // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
 
@@ -1368,15 +1378,16 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: c.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
         ),
@@ -1389,7 +1400,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.grey300,
+                  color: c.grey300,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -1400,7 +1411,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
               style: AppFonts.headingStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 14),
@@ -1412,46 +1423,46 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   style: AppFonts.satoshiStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: suggestions.map((sug) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: AppSpacing.xxs),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                titleCtrl.text = sug;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: 5,
+                color: c.textTertiary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: suggestions.map((sug) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.xxs),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            titleCtrl.text = sug;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: c.surfaceSecondary,
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.lg,
+                            ),
+                            border: Border.all(
+                              color: c.border.withValues(
+                                alpha: 0.8,
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceSecondary,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.border.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                sug,
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
-                                ),
+                            ),
+                          ),
+                          child: Text(
+                            sug,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: c.textSecondary,
+                            ),
                               ),
                             ),
                           ),
@@ -1469,7 +1480,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
               style: AppFonts.satoshiStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textTertiary,
+                color: c.textTertiary,
                 letterSpacing: 0.5,
               ),
             ),
@@ -1479,11 +1490,11 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
               autofocus: true,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.grey50,
+                fillColor: c.grey50,
                 hintText: 'Apa yang perlu dikerjakan?',
                 hintStyle: AppFonts.satoshiStyle(
                   fontSize: 13.5,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
@@ -1491,24 +1502,24 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: AppColors.border, width: 1),
+                  borderSide: BorderSide(color: c.border, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   borderSide: BorderSide(
-                    color: AppColors.textPrimary.withValues(alpha: 0.4),
+                    color: c.textPrimary.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: AppColors.border, width: 1),
+                  borderSide: BorderSide(color: c.border, width: 1),
                 ),
               ),
               style: AppFonts.satoshiStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -1527,7 +1538,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                       Icon(
                         FluentIcons.add_circle_24_regular,
                         size: 16,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -1535,7 +1546,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                         style: AppFonts.satoshiStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                     ],
@@ -1554,30 +1565,30 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textTertiary,
-                            letterSpacing: 0.5,
-                          ),
+                          color: c.textTertiary,
+                          letterSpacing: 0.5,
                         ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.grey50,
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: selectedAssignee,
-                              isExpanded: true,
-                              icon: const Icon(Icons.arrow_drop_down, size: 18),
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: c.grey50,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(color: c.border),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedAssignee,
+                            isExpanded: true,
+                            icon: const Icon(Icons.arrow_drop_down, size: 18),
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: c.textPrimary,
+                            ),
                               items: assignees.map((name) {
                                 return DropdownMenuItem(
                                   value: name,
@@ -1607,11 +1618,11 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textTertiary,
-                            letterSpacing: 0.5,
-                          ),
+                          color: c.textTertiary,
+                          letterSpacing: 0.5,
                         ),
-                        const SizedBox(height: 6),
+                      ),
+                      const SizedBox(height: 6),
                         TextField(
                           controller: deadlineCtrl,
                           readOnly: true,
@@ -1661,16 +1672,16 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           },
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppColors.grey50,
+                            fillColor: c.grey50,
                             hintText: 'Pilih tanggal...',
                             hintStyle: AppFonts.satoshiStyle(
                               fontSize: 13,
-                              color: AppColors.textTertiary,
+                              color: c.textTertiary,
                             ),
                             suffixIcon: Icon(
                               FluentIcons.calendar_24_regular,
                               size: 16,
-                              color: AppColors.textSecondary,
+                              color: c.textSecondary,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.sm,
@@ -1679,14 +1690,14 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: AppColors.border,
+                                color: c.border,
                                 width: 1,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: AppColors.textPrimary.withValues(
+                                color: c.textPrimary.withValues(
                                   alpha: 0.4,
                                 ),
                                 width: 1.2,
@@ -1695,7 +1706,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                               borderSide: BorderSide(
-                                color: AppColors.border,
+                                color: c.border,
                                 width: 1,
                               ),
                             ),
@@ -1703,7 +1714,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: c.textPrimary,
                           ),
                         ),
                       ],
@@ -1718,7 +1729,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -1754,10 +1765,10 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: active ? activeBg : AppColors.white,
+                          color: active ? activeBg : c.surface,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
-                            color: active ? activeColor : AppColors.border,
+                            color: active ? activeColor : c.border,
                             width: active ? 1.5 : 1,
                           ),
                         ),
@@ -1768,7 +1779,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                             fontWeight: FontWeight.w700,
                             color: active
                                 ? activeColor
-                                : AppColors.textSecondary,
+                                : c.textSecondary,
                           ),
                         ),
                       ),
@@ -1783,7 +1794,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -1793,11 +1804,11 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.grey50,
+                  fillColor: c.grey50,
                   hintText: 'Deskripsi singkat (opsional)...',
                   hintStyle: AppFonts.satoshiStyle(
                     fontSize: 13,
-                    color: AppColors.textTertiary,
+                    color: c.textTertiary,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.sm,
@@ -1805,23 +1816,23 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(color: AppColors.border, width: 1),
+                    borderSide: BorderSide(color: c.border, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     borderSide: BorderSide(
-                      color: AppColors.textPrimary.withValues(alpha: 0.4),
+                      color: c.textPrimary.withValues(alpha: 0.4),
                       width: 1.2,
                     ),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(color: AppColors.border, width: 1),
+                    borderSide: BorderSide(color: c.border, width: 1),
                   ),
                 ),
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
             ],
@@ -1883,14 +1894,15 @@ class _KanbanColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       width: 180,
       margin: const EdgeInsets.only(right: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.grey50,
+        color: c.grey50,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+        border: Border.all(color: c.border.withValues(alpha: 0.6)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1909,7 +1921,7 @@ class _KanbanColumn extends StatelessWidget {
                 style: AppFonts.satoshiStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
               const SizedBox(width: 5),
@@ -1943,7 +1955,7 @@ class _KanbanColumn extends StatelessWidget {
                 'Belum ada tugas',
                 style: AppFonts.satoshiStyle(
                   fontSize: 10.5,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
               ),
             )
@@ -1972,6 +1984,7 @@ class _KanbanTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final String priority = (task.title.length % 3 == 0)
         ? 'Tinggi'
         : (task.title.length % 3 == 1 ? 'Sedang' : 'Rendah');
@@ -1992,13 +2005,13 @@ class _KanbanTaskCard extends StatelessWidget {
     } else if (task.deadline == 'Besok') {
       deadlineColor = AppColors.warning600;
     } else {
-      deadlineColor = AppColors.textSecondary;
+      deadlineColor = c.textSecondary;
     }
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: AppShadows.soft,
       ),
@@ -2032,7 +2045,7 @@ class _KanbanTaskCard extends StatelessWidget {
                             Icon(
                               FluentIcons.chat_24_regular,
                               size: 10,
-                              color: AppColors.textTertiary.withValues(
+                              color: c.textTertiary.withValues(
                                 alpha: 0.7,
                               ),
                             ),
@@ -2042,7 +2055,7 @@ class _KanbanTaskCard extends StatelessWidget {
                               style: AppFonts.satoshiStyle(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textTertiary,
+                                color: c.textTertiary,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -2050,7 +2063,7 @@ class _KanbanTaskCard extends StatelessWidget {
                           Icon(
                             Icons.drag_handle,
                             size: 12,
-                            color: AppColors.textTertiary.withValues(
+                            color: c.textTertiary.withValues(
                               alpha: 0.4,
                             ),
                           ),
@@ -2062,14 +2075,14 @@ class _KanbanTaskCard extends StatelessWidget {
                         style: AppFonts.satoshiStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                           height: 1.25,
                         ),
                       ),
                       const SizedBox(height: 10),
                       Container(
                         height: 0.5,
-                        color: AppColors.border.withValues(alpha: 0.4),
+                        color: c.border.withValues(alpha: 0.4),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -2077,8 +2090,8 @@ class _KanbanTaskCard extends StatelessWidget {
                           Container(
                             width: 16,
                             height: 16,
-                            decoration: const BoxDecoration(
-                              color: AppColors.grey100,
+                            decoration: BoxDecoration(
+                              color: c.grey100,
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
@@ -2087,7 +2100,7 @@ class _KanbanTaskCard extends StatelessWidget {
                               style: AppFonts.satoshiStyle(
                                 fontSize: 7.5,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textSecondary,
+                                color: c.textSecondary,
                               ),
                             ),
                           ),
@@ -2100,7 +2113,7 @@ class _KanbanTaskCard extends StatelessWidget {
                               style: AppFonts.satoshiStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.textSecondary,
+                                color: c.textSecondary,
                               ),
                             ),
                           ),
@@ -2149,26 +2162,27 @@ class _FileTab extends StatelessWidget {
     };
   }
 
-  Color _fileColor(String type) {
+  Color _fileColor(String type, AppC c) {
     return switch (type) {
       'pdf' => AppColors.danger500,
       'fig' => AppColors.primary400,
       'png' || 'jpg' => AppColors.info500,
-      _ => AppColors.textTertiary,
+      _ => c.textTertiary,
     };
   }
 
-  Color _fileBg(String type) {
+  Color _fileBg(String type, AppC c) {
     return switch (type) {
       'pdf' => AppColors.danger50,
       'fig' => AppColors.primary50,
       'png' || 'jpg' => AppColors.info50,
-      _ => AppColors.surfaceSecondary,
+      _ => c.surfaceSecondary,
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Stack(
       children: [
         Obx(
@@ -2188,13 +2202,13 @@ class _FileTab extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: _fileBg(f.type),
+                        color: _fileBg(f.type, c),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Icon(
                         _fileIcon(f.type),
                         size: 16,
-                        color: _fileColor(f.type),
+                        color: _fileColor(f.type, c),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2207,17 +2221,17 @@ class _FileTab extends StatelessWidget {
                             style: AppFonts.satoshiStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${f.uploader} Â· ${f.size} Â· ${f.date}',
+                            '${f.uploader} · ${f.size} · ${f.date}',
                             style: AppFonts.satoshiStyle(
                               fontSize: 11,
-                              color: AppColors.textTertiary,
+                              color: c.textTertiary,
                             ),
                           ),
                         ],
@@ -2226,7 +2240,7 @@ class _FileTab extends StatelessWidget {
                     Icon(
                       FluentIcons.more_vertical_24_regular,
                       size: 16,
-                      color: AppColors.textTertiary,
+                      color: c.textTertiary,
                     ),
                   ],
                 ),

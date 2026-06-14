@@ -13,8 +13,9 @@ class ProfileView extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: c.background,
       body: Obx(() {
         final profile = controller.profileService.profile.value;
 
@@ -38,7 +39,7 @@ class ProfileView extends GetView<ProfileController> {
                     style: AppFonts.satoshiStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.grey900,
+                      color: c.grey900,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -82,6 +83,7 @@ class _ProfileCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final topPadding = MediaQuery.of(context).padding.top;
 
     return SizedBox(
@@ -96,7 +98,7 @@ class _ProfileCover extends StatelessWidget {
             ),
           ),
           Positioned.fill(
-            child: Container(color: AppColors.white.withValues(alpha: 0.18)),
+            child: Container(color: c.surface.withValues(alpha: 0.18)),
           ),
           Positioned(
             top: topPadding + 16,
@@ -126,7 +128,7 @@ class _ProfileCover extends StatelessWidget {
               ),
               child: CircleAvatar(
                 backgroundImage: AssetImage(avatarAsset),
-                backgroundColor: AppColors.grey100,
+                backgroundColor: c.grey100,
               ),
             ),
           ),
@@ -144,16 +146,17 @@ class _ProfileCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.9),
+          color: c.surface.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        child: Icon(icon, size: 23, color: AppColors.grey900),
+        child: Icon(icon, size: 23, color: c.grey900),
       ),
     );
   }
@@ -166,6 +169,7 @@ class _ProfileIdentity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -176,7 +180,7 @@ class _ProfileIdentity extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: AppColors.grey900,
+            color: c.grey900,
             height: 1.1,
           ),
         ),
@@ -186,7 +190,7 @@ class _ProfileIdentity extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: AppColors.grey500,
+            color: c.grey500,
           ),
         ),
         const SizedBox(height: 10),
@@ -195,7 +199,7 @@ class _ProfileIdentity extends StatelessWidget {
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             height: 1.32,
-            color: AppColors.grey900,
+            color: c.grey900,
           ),
         ),
         const SizedBox(height: 8),
@@ -234,22 +238,23 @@ class _SkillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.grey200),
+        border: Border.all(color: c.grey200),
       ),
       child: Text(
         label,
         style: AppFonts.satoshiStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
       ),
     );
@@ -264,6 +269,7 @@ class _ProfileActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Row(
       children: [
         Expanded(
@@ -284,7 +290,7 @@ class _ProfileActions extends StatelessWidget {
                     style: AppFonts.satoshiStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.white,
+                      color: c.surface,
                     ),
                   ),
                 ],
@@ -299,13 +305,13 @@ class _ProfileActions extends StatelessWidget {
             width: 42,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: c.surface,
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: AppColors.borderStrong),
+              border: Border.all(color: c.borderStrong),
             ),
             child: Icon(
               FluentIcons.bookmark_24_regular,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
               size: 22,
             ),
           ),
@@ -323,11 +329,12 @@ class _ProfileTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     const tabs = ['Postingan', 'Pengalaman', 'Keahlian', 'Kolaborasi'];
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+        border: Border(bottom: BorderSide(color: c.border)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -410,13 +417,14 @@ class _ExperienceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.xs),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,33 +443,33 @@ class _ExperienceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.title,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                    height: 1.2,
+                  Text(
+                    item.title,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
+                      height: 1.2,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${item.organization} - ${item.duration}',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textTertiary,
+                  const SizedBox(height: 3),
+                  Text(
+                    '${item.organization} - ${item.duration}',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: c.textTertiary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  item.description,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 11.5,
-                    height: 1.5,
-                    color: AppColors.textSecondary,
+                  const SizedBox(height: 10),
+                  Text(
+                    item.description,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 11.5,
+                      height: 1.5,
+                      color: c.textSecondary,
+                    ),
                   ),
-                ),
                 if (item.techStack.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Wrap(
@@ -488,13 +496,14 @@ class _CollaborationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.xs),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,14 +515,14 @@ class _CollaborationCard extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppColors.grey100,
+                  color: c.grey100,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: c.border),
                 ),
                 child: Icon(
                   FluentIcons.people_team_24_regular,
                   size: 17,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -521,24 +530,24 @@ class _CollaborationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.role,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        height: 1.2,
+                      Text(
+                        item.role,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
+                          height: 1.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.workspace,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                      const SizedBox(height: 3),
+                      Text(
+                        item.workspace,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: c.textSecondary,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -551,7 +560,7 @@ class _CollaborationCard extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.textTertiary,
+              color: c.textTertiary,
             ),
           ),
           const SizedBox(height: 8),
@@ -560,7 +569,7 @@ class _CollaborationCard extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 11.5,
               height: 1.5,
-              color: AppColors.textSecondary,
+              color: c.textSecondary,
             ),
           ),
           if (item.skills.isNotEmpty) ...[
@@ -586,10 +595,11 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.grey100,
+        color: c.grey100,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
@@ -597,7 +607,7 @@ class _StatusPill extends StatelessWidget {
         style: AppFonts.satoshiStyle(
           fontSize: 9.5,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
       ),
     );
@@ -659,10 +669,11 @@ class _PostCardState extends State<_PostCard> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: AppShadows.soft,
       ),
@@ -679,7 +690,7 @@ class _PostCardState extends State<_PostCard> {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: AppColors.primarySoft,
+                    backgroundColor: c.primarySoft,
                     backgroundImage: AssetImage(widget.avatarAsset),
                   ),
                   const SizedBox(width: 10),
@@ -687,32 +698,32 @@ class _PostCardState extends State<_PostCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.name,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.grey900,
+                          Text(
+                            widget.name,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: c.grey900,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 11.5,
-                            color: AppColors.grey400,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 11.5,
+                              color: c.grey400,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     FluentIcons.more_vertical_24_regular,
-                    color: AppColors.grey400,
+                    color: c.grey400,
                     size: 20,
                   ),
                 ],
@@ -721,8 +732,8 @@ class _PostCardState extends State<_PostCard> {
               Text(
                 widget.content,
                 style: AppFonts.satoshiStyle(
-                  fontSize: 14.5,
-                  color: AppColors.grey900,
+                  fontSize: 13.5,
+                  color: c.grey900,
                   height: 1.45,
                 ),
               ),
@@ -753,21 +764,21 @@ class _PostCardState extends State<_PostCard> {
                         ? FluentIcons.heart_24_filled
                         : FluentIcons.heart_24_regular,
                     '$_likeCount',
-                    _isLiked ? AppColors.error500 : AppColors.grey500,
+                    _isLiked ? AppColors.error500 : c.grey500,
                     onTap: _toggleLike,
                   ),
                   const SizedBox(width: 22),
                   _buildInteractionItem(
                     FluentIcons.chat_24_regular,
                     widget.commentCount,
-                    AppColors.grey500,
+                    c.grey500,
                     onTap: () {},
                   ),
                   const Spacer(),
                   _buildInteractionItem(
                     FluentIcons.send_24_regular,
                     '',
-                    AppColors.grey500,
+                    c.grey500,
                     onTap: () {},
                   ),
                   const SizedBox(width: 20),
@@ -776,7 +787,7 @@ class _PostCardState extends State<_PostCard> {
                         ? FluentIcons.bookmark_24_filled
                         : FluentIcons.bookmark_24_regular,
                     '',
-                    _isBookmarked ? AppColors.warning500 : AppColors.grey500,
+                    _isBookmarked ? AppColors.warning500 : c.grey500,
                     onTap: _toggleBookmark,
                   ),
                 ],
@@ -794,6 +805,7 @@ class _PostCardState extends State<_PostCard> {
     Color activeColor, {
     required VoidCallback onTap,
   }) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -810,7 +822,7 @@ class _PostCardState extends State<_PostCard> {
                 count,
                 style: AppFonts.satoshiStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -829,22 +841,23 @@ class _MiniSkillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: 5,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.borderStrong),
+        border: Border.all(color: c.borderStrong),
       ),
       child: Text(
         label,
         style: AppFonts.satoshiStyle(
           fontSize: 9.5,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
       ),
     );
@@ -864,6 +877,7 @@ class _ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -879,7 +893,7 @@ class _ProfileTab extends StatelessWidget {
               style: AppFonts.satoshiStyle(
                 fontSize: 14,
                 fontWeight: active ? FontWeight.bold : FontWeight.w500,
-                color: active ? AppColors.primary500 : AppColors.textTertiary,
+                color: active ? AppColors.primary500 : c.textTertiary,
               ),
             ),
           ),

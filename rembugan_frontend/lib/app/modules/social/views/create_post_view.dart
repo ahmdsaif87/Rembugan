@@ -48,6 +48,7 @@ class _CreatePostViewState extends State<CreatePostView> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return SocialScaffold(
       title: _isOffer ? 'Buat Tawaran' : 'Buat Postingan',
       // subtitle: _isOffer
@@ -58,7 +59,7 @@ class _CreatePostViewState extends State<CreatePostView> {
           onPressed: Get.back,
           style: TextButton.styleFrom(
             backgroundColor: AppColors.primary500,
-            foregroundColor: AppColors.white,
+            foregroundColor: c.surface,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -69,7 +70,7 @@ class _CreatePostViewState extends State<CreatePostView> {
             style: AppFonts.satoshiStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.white,
+              color: c.surface,
             ),
           ),
         ),
@@ -98,14 +99,14 @@ class _CreatePostViewState extends State<CreatePostView> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: c.textPrimary,
                           ),
                         ),
                         Text(
                           'Publik',
                           style: AppFonts.satoshiStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary,
+                            color: c.textSecondary,
                           ),
                         ),
                       ],
@@ -199,7 +200,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                     decoration: InputDecoration(
                       hintText:
                           'Tulis update, cari anggota tim, atau bagikan progres...',
-                      fillColor: AppColors.background,
+                      fillColor: c.background,
                     ),
                   ),
                 ],
@@ -276,12 +277,13 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Text(
       label,
       style: AppFonts.satoshiStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
+        color: c.textPrimary,
       ),
     );
   }
@@ -328,6 +330,7 @@ class _LabeledPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -340,13 +343,13 @@ class _LabeledPicker extends StatelessWidget {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: c.background,
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: c.border),
             ),
             child: Row(
               children: [
-                Icon(icon, size: 18, color: AppColors.textTertiary),
+                Icon(icon, size: 18, color: c.textTertiary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -357,15 +360,15 @@ class _LabeledPicker extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: value == null
-                          ? AppColors.textTertiary
-                          : AppColors.textPrimary,
+                          ? c.textTertiary
+                          : c.textPrimary,
                     ),
                   ),
                 ),
                 Icon(
                   FluentIcons.chevron_down_24_regular,
                   size: 16,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
               ],
             ),
@@ -396,6 +399,7 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final filtered = widget.majors
         .where((major) => major.toLowerCase().contains(_query.toLowerCase()))
         .toList();
@@ -414,9 +418,9 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
           20,
           MediaQuery.of(context).padding.bottom + 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: c.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
         ),
@@ -429,7 +433,7 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderStrong,
+                  color: c.borderStrong,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -440,7 +444,7 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
               style: AppFonts.satoshiStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -452,7 +456,7 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
                 prefixIcon: Icon(
                   FluentIcons.search_24_regular,
                   size: 18,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
               ),
             ),
@@ -462,7 +466,7 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
                 shrinkWrap: true,
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+                    Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
                 itemBuilder: (context, index) {
                   final major = filtered[index];
                   final selected = major == widget.selectedMajor;
@@ -479,7 +483,7 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
                               style: AppFonts.satoshiStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: c.textPrimary,
                               ),
                             ),
                           ),
@@ -520,21 +524,22 @@ class _AppInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return TextField(
       minLines: minLines,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      style: AppFonts.satoshiStyle(fontSize: 13, color: AppColors.textPrimary),
+      style: AppFonts.satoshiStyle(fontSize: 13, color: c.textPrimary),
       decoration: InputDecoration(
         hintText: hintText,
-        fillColor: AppColors.background,
+        fillColor: c.background,
         prefixIcon: Padding(
           padding: EdgeInsets.only(
             left: AppSpacing.md,
             right: AppSpacing.sm,
             top: maxLines > 1 ? 14 : 0,
           ),
-          child: Icon(icon, size: 18, color: AppColors.textTertiary),
+          child: Icon(icon, size: 18, color: c.textTertiary),
         ),
         prefixIconConstraints: const BoxConstraints(
           minWidth: 44,
@@ -558,13 +563,14 @@ class _SkillInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: c.background,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Wrap(
         spacing: 7,
@@ -584,9 +590,9 @@ class _SkillInput extends StatelessWidget {
                 vertical: AppSpacing.xxs,
               ),
               decoration: BoxDecoration(
-                color: AppColors.grey100,
+                color: c.grey100,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: c.border),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -594,7 +600,7 @@ class _SkillInput extends StatelessWidget {
                   Icon(
                     FluentIcons.add_24_regular,
                     size: 13,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                   const SizedBox(width: 5),
                   Text(
@@ -602,7 +608,7 @@ class _SkillInput extends StatelessWidget {
                     style: AppFonts.satoshiStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                 ],
@@ -623,15 +629,16 @@ class _SkillDraftChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.borderStrong),
+        border: Border.all(color: c.borderStrong),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -641,7 +648,7 @@ class _SkillDraftChip extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
             ),
           ),
           const SizedBox(width: 6),
@@ -650,7 +657,7 @@ class _SkillDraftChip extends StatelessWidget {
             child: Icon(
               FluentIcons.dismiss_24_regular,
               size: 12,
-              color: AppColors.textTertiary,
+              color: c.textTertiary,
             ),
           ),
         ],
@@ -683,6 +690,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     final filtered = widget.options
         .where((option) => option.toLowerCase().contains(_query.toLowerCase()))
         .toList();
@@ -701,9 +709,9 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
           20,
           MediaQuery.of(context).padding.bottom + 20,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: c.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),
         ),
@@ -716,7 +724,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderStrong,
+                  color: c.borderStrong,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -727,7 +735,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
               style: AppFonts.satoshiStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -739,7 +747,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
                 prefixIcon: Icon(
                   FluentIcons.search_24_regular,
                   size: 18,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
               ),
             ),
@@ -749,7 +757,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
                 shrinkWrap: true,
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+                    Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
                 itemBuilder: (context, index) {
                   final option = filtered[index];
                   final selected = widget.selectedOptions.contains(option);
@@ -766,7 +774,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
                               style: AppFonts.satoshiStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: c.textPrimary,
                               ),
                             ),
                           ),
@@ -807,6 +815,7 @@ class _CreateTypeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -814,10 +823,10 @@ class _CreateTypeOption extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
-          color: active ? AppColors.grey100 : AppColors.background,
+          color: active ? c.grey100 : c.background,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: active ? AppColors.primary500 : AppColors.border,
+            color: active ? AppColors.primary500 : c.border,
           ),
         ),
         child: Column(
@@ -826,7 +835,7 @@ class _CreateTypeOption extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: active ? AppColors.primary500 : AppColors.textSecondary,
+              color: active ? AppColors.primary500 : c.textSecondary,
             ),
             const SizedBox(height: 10),
             Text(
@@ -834,7 +843,7 @@ class _CreateTypeOption extends StatelessWidget {
               style: AppFonts.interStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 3),
@@ -845,7 +854,7 @@ class _CreateTypeOption extends StatelessWidget {
               style: AppFonts.interStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
             ),
           ],

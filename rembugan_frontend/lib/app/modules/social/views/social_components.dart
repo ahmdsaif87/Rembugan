@@ -23,8 +23,9 @@ class SocialScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       bottomNavigationBar: bottomNavigationBar,
       body: AppLayeredBackground(
         child: SafeArea(
@@ -49,7 +50,7 @@ class SocialScaffold extends StatelessWidget {
                             style: AppFonts.headingStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                           ),
                           if (subtitle != null)
@@ -59,7 +60,7 @@ class SocialScaffold extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: AppFonts.satoshiStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: c.textSecondary,
                               ),
                             ),
                         ],
@@ -69,7 +70,10 @@ class SocialScaffold extends StatelessWidget {
                   ],
                 ),
               ),
-              Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+              Divider(
+                height: 1,
+                color: c.border.withValues(alpha: 0.4),
+              ),
               Expanded(child: child),
             ],
           ),
@@ -97,6 +101,7 @@ class SocialPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return AppSurface(
       onTap: onTap,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -124,7 +129,7 @@ class SocialPostCard extends StatelessWidget {
                         style: AppFonts.satoshiStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                         ),
                       ),
                     ),
@@ -133,7 +138,7 @@ class SocialPostCard extends StatelessWidget {
                       handle,
                       style: AppFonts.satoshiStyle(
                         fontSize: 12,
-                        color: AppColors.textTertiary,
+                        color: c.textTertiary,
                       ),
                     ),
                   ],
@@ -142,9 +147,9 @@ class SocialPostCard extends StatelessWidget {
                 Text(
                   body,
                   style: AppFonts.satoshiStyle(
-                    fontSize: 14,
+                    fontSize: 13.5,
                     height: 1.45,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -177,17 +182,18 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: AppColors.textTertiary),
+        Icon(icon, size: 18, color: c.textTertiary),
         const SizedBox(width: 5),
         Text(
           label,
           style: AppFonts.satoshiStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
           ),
         ),
       ],
@@ -209,16 +215,17 @@ class AppTextPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: c.background,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
-          color: active ? AppColors.borderStrong : AppColors.border,
+          color: active ? c.borderStrong : c.border,
         ),
       ),
       child: Row(
@@ -228,7 +235,7 @@ class AppTextPill extends StatelessWidget {
             Icon(
               icon,
               size: 14,
-              color: active ? AppColors.primary : AppColors.textSecondary,
+              color: active ? AppColors.primary : c.textSecondary,
             ),
             const SizedBox(width: 6),
           ],
@@ -237,7 +244,7 @@ class AppTextPill extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: active ? AppColors.primary : AppColors.textSecondary,
+              color: active ? AppColors.primary : c.textSecondary,
             ),
           ),
         ],
