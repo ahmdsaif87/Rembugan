@@ -23,3 +23,8 @@ firebase-admin.json
 
 # docs
 docs/
+
+.agents/
+.cursor/
+.gemini/
+.impeccable/
