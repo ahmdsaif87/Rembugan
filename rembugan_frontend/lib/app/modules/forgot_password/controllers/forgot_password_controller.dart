@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/services/auth_service.dart';
-import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_toast.dart';
 
 class ForgotPasswordController extends GetxController {
   final _auth = Get.find<AuthService>();
@@ -41,7 +41,7 @@ class ForgotPasswordController extends GetxController {
 
     final error = await _auth.forgotPasswordSendOtp(nim);
     if (error != null) {
-      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(error, title: 'Gagal');
       return;
     }
 
@@ -60,11 +60,7 @@ class ForgotPasswordController extends GetxController {
   void onVerifyOtp() {
     final code = otpControllers.map((c) => c.text).join();
     if (code.length != otpControllers.length) {
-      Get.snackbar(
-        'Kode belum lengkap',
-        'Masukkan 6 digit kode yang dikirim ke email Anda.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppToast.warning('Masukkan 6 digit kode yang dikirim ke email Anda.', title: 'Kode belum lengkap');
       return;
     }
     FocusManager.instance.primaryFocus?.unfocus();
@@ -81,7 +77,7 @@ class ForgotPasswordController extends GetxController {
 
     final error = await _auth.forgotPasswordSendOtp(nim);
     if (error != null) {
-      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(error, title: 'Gagal');
       return;
     }
 
@@ -99,13 +95,7 @@ class ForgotPasswordController extends GetxController {
   void onResetPassword() async {
     if (formKeyReset.currentState?.validate() != true) return;
     if (newPasswordController.text != confirmPasswordController.text) {
-      Get.snackbar(
-        'Kata sandi tidak cocok',
-        'Pastikan kedua kata sandi yang dimasukkan sama.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.danger50,
-        colorText: AppColors.danger700,
-      );
+      AppToast.error('Pastikan kedua kata sandi yang dimasukkan sama.', title: 'Kata sandi tidak cocok');
       return;
     }
 
@@ -119,7 +109,7 @@ class ForgotPasswordController extends GetxController {
     );
 
     if (error != null) {
-      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(error, title: 'Gagal');
       return;
     }
 

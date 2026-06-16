@@ -17,6 +17,7 @@ abstract class Routes {
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
   static const SETTINGS = _Paths.SETTINGS;
   static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
+  static const SEARCH = _Paths.SEARCH;
   static const SAVED = _Paths.SAVED;
   static const EMPTY_STATE = _Paths.EMPTY_STATE;
   static const LOADING_STATE = _Paths.LOADING_STATE;
@@ -40,6 +41,7 @@ abstract class _Paths {
   static const EDIT_PROFILE = '/edit-profile';
   static const SETTINGS = '/settings';
   static const NOTIFICATIONS = '/notifications';
+  static const SEARCH = '/search';
   static const SAVED = '/saved';
   static const EMPTY_STATE = '/empty-state';
   static const LOADING_STATE = '/loading-state';

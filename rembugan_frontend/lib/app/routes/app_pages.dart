@@ -24,6 +24,7 @@ import '../modules/social/views/loading_state_view.dart';
 import '../modules/social/views/notification_view.dart';
 import '../modules/social/views/other_profile_view.dart';
 import '../modules/social/views/saved_view.dart';
+import '../modules/social/views/search_view.dart';
 import '../modules/social/views/settings_view.dart';
 import '../modules/personalization/bindings/personalization_binding.dart';
 import '../modules/personalization/views/personalization_view.dart';
@@ -79,6 +80,7 @@ class AppPages {
       binding: ProfileBinding(),
     ),
     GetPage(name: _Paths.OTHER_PROFILE, page: () => const OtherProfileView()),
+    GetPage(name: _Paths.SEARCH, page: () => const SearchView()),
     GetPage(name: _Paths.COMMENTS, page: () => const CommentView()),
     GetPage(name: _Paths.CREATE_POST, page: () => const CreatePostView()),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfileView()),

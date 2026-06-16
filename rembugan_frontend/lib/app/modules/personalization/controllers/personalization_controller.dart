@@ -12,6 +12,7 @@ import '../../../core/config/api_config.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/profile_service.dart';
+import 'package:rembugan/app/core/widgets/app_toast.dart';
 
 class PersonalizationController extends GetxController {
   final ProfileService _profileService = Get.find<ProfileService>();
@@ -140,8 +141,7 @@ class PersonalizationController extends GetxController {
       isScanned.value = true;
     } catch (e) {
       isUploading.value = false;
-      Get.snackbar('Gagal', 'Gagal mengekstrak CV. Coba lagi.',
-          snackPosition: SnackPosition.BOTTOM);
+      AppToast.error('Gagal mengekstrak CV. Coba lagi.', title: 'Gagal');
     }
   }
 
@@ -161,8 +161,7 @@ class PersonalizationController extends GetxController {
     // Validate size (5MB)
     final sizeBytes = file.size;
     if (sizeBytes > 5 * 1024 * 1024) {
-      Get.snackbar('Ukuran terlalu besar', 'Maksimal foto 5 MB.',
-          snackPosition: SnackPosition.BOTTOM);
+      AppToast.warning('Maksimal foto 5 MB.', title: 'Ukuran terlalu besar');
       return;
     }
 
@@ -208,12 +207,10 @@ class PersonalizationController extends GetxController {
               extractedProfile.value.copyWith(hasResumePhoto: true);
         }
       } else {
-        Get.snackbar('Gagal', 'Upload foto gagal.',
-            snackPosition: SnackPosition.BOTTOM);
+        AppToast.error('Upload foto gagal.', title: 'Gagal');
       }
     } catch (e) {
-      Get.snackbar('Gagal', 'Upload foto gagal.',
-          snackPosition: SnackPosition.BOTTOM);
+      AppToast.error('Upload foto gagal.', title: 'Gagal');
     }
   }
 
@@ -307,8 +304,7 @@ class PersonalizationController extends GetxController {
   Future<void> generateProfile() async {
     final profile = extractedProfile.value;
     if (profile.name.trim().isEmpty) {
-      Get.snackbar('Nama wajib diisi', '',
-          snackPosition: SnackPosition.BOTTOM);
+      AppToast.warning('Nama wajib diisi');
       return;
     }
 
@@ -334,8 +330,7 @@ class PersonalizationController extends GetxController {
       Get.offAllNamed('/home');
     } on DioException catch (e) {
       final detail = e.response?.data['detail'];
-      Get.snackbar('Gagal', detail?.toString() ?? 'Gagal menyimpan profil.',
-          snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(detail?.toString() ?? 'Gagal menyimpan profil.', title: 'Gagal');
     }
   }
 

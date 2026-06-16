@@ -147,16 +147,20 @@ class _ProfileCircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: c.surface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: c.surface.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Icon(icon, size: 23, color: c.grey900),
         ),
-        child: Icon(icon, size: 23, color: c.grey900),
       ),
     );
   }
@@ -196,6 +200,8 @@ class _ProfileIdentity extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           profile.bio,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             height: 1.32,
@@ -205,6 +211,8 @@ class _ProfileIdentity extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           profile.socialLink,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -273,46 +281,54 @@ class _ProfileActions extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: GestureDetector(
-            onTap: onEdit,
-            child: Container(
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.primary500,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Edit profile',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: c.surface,
+          child: Material(
+            color: AppColors.transparent,
+            child: InkWell(
+              onTap: onEdit,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Container(
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primary500,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Edit profil',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: c.surface,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(width: 16),
-        GestureDetector(
-          onTap: onSaved,
-          child: Container(
-            width: 42,
-            height: 40,
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: c.borderStrong),
-            ),
-            child: Icon(
-              FluentIcons.bookmark_24_regular,
-              color: c.textPrimary,
-              size: 22,
+        Material(
+          color: AppColors.transparent,
+          child: InkWell(
+            onTap: onSaved,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Container(
+              width: 42,
+              height: 40,
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: c.borderStrong),
+              ),
+              child: Icon(
+                FluentIcons.bookmark_24_regular,
+                color: c.textPrimary,
+                size: 22,
+              ),
             ),
           ),
         ),
@@ -360,6 +376,16 @@ class _ProfileTabContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (activeIndex == 1) {
+      if (profile.experiences.isEmpty) {
+        return _EmptyTabState(
+          icon: FluentIcons.document_24_regular,
+          title: 'Belum ada pengalaman',
+          message:
+              'Tambahkan pengalaman pertamamu agar profil terlihat lebih profesional dan menarik perhatian kolaborator.',
+          actionLabel: 'Edit Profil',
+          onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
+        );
+      }
       return Column(
         children: profile.experiences
             .map((experience) => _ExperienceCard(item: experience))
@@ -368,6 +394,16 @@ class _ProfileTabContent extends StatelessWidget {
     }
 
     if (activeIndex == 2) {
+      if (profile.skills.isEmpty) {
+        return _EmptyTabState(
+          icon: FluentIcons.hat_graduation_24_regular,
+          title: 'Belum ada keahlian',
+          message:
+              'Tambahkan keahlianmu agar lebih mudah ditemukan dalam pencarian proyek dan kolaborasi.',
+          actionLabel: 'Edit Profil',
+          onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
+        );
+      }
       return _SkillWrap(skills: profile.skills);
     }
 
@@ -376,6 +412,16 @@ class _ProfileTabContent extends StatelessWidget {
           .where((item) => item.visible)
           .toList();
 
+      if (collaborations.isEmpty) {
+        return _EmptyTabState(
+          icon: FluentIcons.people_team_24_regular,
+          title: 'Belum ada kolaborasi',
+          message:
+              'Mulai berkolaborasi dengan teman atau ikut kompetisi untuk membangun portofoliomu.',
+          actionLabel: 'Jelajahi',
+          onAction: () => Get.toNamed(Routes.EXPLORE),
+        );
+      }
       return Column(
         children: collaborations
             .map((collaboration) => _CollaborationCard(item: collaboration))
@@ -406,6 +452,90 @@ class _ProfileTabContent extends StatelessWidget {
           commentCount: '12',
         ),
       ],
+    );
+  }
+}
+
+class _EmptyTabState extends StatelessWidget {
+  const _EmptyTabState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: 60,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: c.primarySoft,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: Icon(icon, size: 32, color: AppColors.primary500),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: AppFonts.satoshiStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                color: c.textSecondary,
+                height: 1.45,
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 28),
+              SizedBox(
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: onAction,
+                  icon: const Icon(FluentIcons.edit_24_regular, size: 16),
+                  label: Text(actionLabel!),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -445,6 +575,8 @@ class _ExperienceCard extends StatelessWidget {
               children: [
                   Text(
                     item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: AppFonts.satoshiStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -464,6 +596,8 @@ class _ExperienceCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     item.description,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
                     style: AppFonts.satoshiStyle(
                       fontSize: 11.5,
                       height: 1.5,
@@ -566,6 +700,8 @@ class _CollaborationCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             item.contribution,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
             style: AppFonts.satoshiStyle(
               fontSize: 11.5,
               height: 1.5,
@@ -675,7 +811,7 @@ class _PostCardState extends State<_PostCard> {
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppShadows.soft,
+        border: Border.all(color: c.border, width: 1),
       ),
       child: InkWell(
         onTap: () {},
@@ -713,7 +849,7 @@ class _PostCardState extends State<_PostCard> {
                             overflow: TextOverflow.ellipsis,
                             style: AppFonts.satoshiStyle(
                               fontSize: 11.5,
-                              color: c.grey400,
+                              color: c.textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -723,7 +859,7 @@ class _PostCardState extends State<_PostCard> {
                   const SizedBox(width: 4),
                   Icon(
                     FluentIcons.more_vertical_24_regular,
-                    color: c.grey400,
+                    color: c.textSecondary,
                     size: 20,
                   ),
                 ],
@@ -731,6 +867,8 @@ class _PostCardState extends State<_PostCard> {
               const SizedBox(height: 10),
               Text(
                 widget.content,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
                 style: AppFonts.satoshiStyle(
                   fontSize: 13.5,
                   color: c.grey900,
@@ -806,14 +944,17 @@ class _PostCardState extends State<_PostCard> {
     required VoidCallback onTap,
   }) {
     final c = AppC.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 2,
-          vertical: AppSpacing.xs,
-        ),
-        child: Row(
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 2,
+            vertical: AppSpacing.xs,
+          ),
+          child: Row(
           children: [
             Icon(icon, color: activeColor, size: 20),
             if (count.isNotEmpty) ...[
@@ -829,6 +970,7 @@ class _PostCardState extends State<_PostCard> {
             ],
           ],
         ),
+      ),
       ),
     );
   }
@@ -878,35 +1020,38 @@ class _ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.xxs,
-              vertical: AppSpacing.sm,
-            ),
-            child: Text(
-              label,
-              style: AppFonts.satoshiStyle(
-                fontSize: 14,
-                fontWeight: active ? FontWeight.bold : FontWeight.w500,
-                color: active ? AppColors.primary500 : c.textTertiary,
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xxs,
+                vertical: AppSpacing.sm,
+              ),
+              child: Text(
+                label,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 14,
+                  fontWeight: active ? FontWeight.bold : FontWeight.w500,
+                  color: active ? AppColors.primary500 : c.textSecondary,
+                ),
               ),
             ),
-          ),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            height: 2.5,
-            width: 48,
-            decoration: BoxDecoration(
-              color: active ? AppColors.primary500 : AppColors.transparent,
-              borderRadius: BorderRadius.circular(1.5),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              height: 2.0,
+              width: 48,
+              decoration: BoxDecoration(
+                color: active ? AppColors.primary500 : AppColors.transparent,
+                borderRadius: BorderRadius.circular(1.5),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

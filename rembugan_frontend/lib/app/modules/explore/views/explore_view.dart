@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/explore_controller.dart';
@@ -29,19 +30,17 @@ class ExploreView extends GetView<ExploreController> {
             Container(
               width: double.infinity,
               color: c.surface,
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Column(
                 children: [
-                  Obx(
-                    () => _SearchBar(
-                      hint: 'Cari proyek, lomba, atau orang',
-                      onFilter: () =>
-                          _showFilterSheet(context, controller.activeTab.value),
-                      onChanged: controller.search,
-                      controller: controller.searchTextController,
-                    ),
+                  _SearchBar(
+                    hint: 'Cari proyek, lomba, atau orang',
+                    onFilter: () =>
+                        _showFilterSheet(context, controller.activeTab.value),
+                    onChanged: controller.search,
+                    controller: controller.searchTextController,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Obx(
                     () => Row(
                       children: [
@@ -69,11 +68,17 @@ class ExploreView extends GetView<ExploreController> {
             ),
             Expanded(
               child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const _ExploreSkeleton();
+                }
+                if (controller.hasError.value) {
+                  return _buildErrorState(context);
+                }
                 switch (controller.activeTab.value) {
                   case ExploreTab.competition:
                     return _buildLombaTab(context);
                   case ExploreTab.people:
-                    return _buildOrangTab();
+                    return _buildOrangTab(context);
                   case ExploreTab.project:
                     return _buildProyekTab(context);
                 }
@@ -88,86 +93,263 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
+  Widget _buildErrorState(BuildContext context) {
+    final c = AppC.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 80),
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.danger50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                FluentIcons.wifi_off_24_regular,
+                size: 28,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Gagal memuat',
+              style: AppFonts.satoshiStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              controller.errorMessage.value.isNotEmpty
+                  ? controller.errorMessage.value
+                  : 'Terjadi kesalahan. Coba lagi.',
+              textAlign: TextAlign.center,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                color: c.textSecondary,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () => controller.retry(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                ),
+                child: Text(
+                  'Coba Lagi',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildProyekTab(BuildContext context) {
     return Obx(
-      () => ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-        itemCount: controller.filteredProjects.length + 1,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return const _CompleteProfileBanner();
-          }
-
-          final project = controller.filteredProjects[index - 1];
-          return _ProjectCard(
-            project: project,
-            matchLabel: index == 1
-                ? 'Paling cocok untuk kamu'
-                : 'Skill yang sama',
-            onDetail: () => ExploreView.showProjectSheet(context, project),
+      () {
+        if (controller.filteredProjects.isEmpty) {
+          return _buildEmptyState(
+            context,
+            icon: FluentIcons.search_24_regular,
+            title: 'Proyek tidak ditemukan',
+            message: 'Coba ubah kata kunci atau filter pencarian kamu. Lengkapi profil untuk rekomendasi yang lebih akurat.',
+            actionLabel: 'Lengkapi Profil',
+            onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
           );
-        },
-      ),
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+          itemCount: controller.filteredProjects.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return _CompleteProfileBanner(
+                onTap: () => Get.toNamed(Routes.EDIT_PROFILE),
+              );
+            }
+
+            final project = controller.filteredProjects[index - 1];
+            return _ProjectCard(
+              project: project,
+              matchLabel: index == 1
+                  ? 'Paling cocok untuk kamu'
+                  : 'Skill yang sama',
+              onDetail: () => ExploreView.showProjectSheet(context, project),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildLombaTab(BuildContext context) {
     return Obx(
-      () => CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
-            sliver: SliverGrid.builder(
-              itemCount: controller.filteredCompetitions.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 18,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.57,
+      () {
+        if (controller.filteredCompetitions.isEmpty) {
+          return _buildEmptyState(
+            context,
+            icon: FluentIcons.search_24_regular,
+            title: 'Lomba tidak ditemukan',
+            message: 'Belum ada lomba yang cocok dengan filter saat ini. Coba ubah kategori atau atur ulang filter.',
+          );
+        }
+        return CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
+              sliver: SliverGrid.builder(
+                itemCount: controller.filteredCompetitions.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.57,
+                ),
+                itemBuilder: (context, index) {
+                  final competition = controller.filteredCompetitions[index];
+                  return _CompetitionCard(
+                    competition: competition,
+                    index: index,
+                    onTap: () => ExploreView.showCompetitionSheet(
+                      context,
+                      competition,
+                      index,
+                    ),
+                  );
+                },
               ),
-              itemBuilder: (context, index) {
-                final competition = controller.filteredCompetitions[index];
-                return _CompetitionCard(
-                  competition: competition,
-                  index: index,
-                  onTap: () => ExploreView.showCompetitionSheet(
-                    context,
-                    competition,
-                    index,
-                  ),
-                );
-              },
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildOrangTab() {
+  Widget _buildOrangTab(BuildContext context) {
     return Obx(
-      () => ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-        itemCount: controller.filteredPeople.length + 1,
-        separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 14 : 18),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return _SectionHeader(
-              title: 'Orang Disekitar',
-              trailing: '${controller.filteredPeople.length} hasil',
-            );
-          }
-
-          final person = controller.filteredPeople[index - 1];
-          return _PersonCard(
-            name: person.name,
-            role: person.role,
-            avatarUrl: person.avatarUrl,
-            tags: person.tags,
-            matchLabel: person.matchLabel,
+      () {
+        if (controller.filteredPeople.isEmpty) {
+          return _buildEmptyState(
+            context,
+            icon: FluentIcons.person_search_24_regular,
+            title: 'Orang tidak ditemukan',
+            message: 'Coba ubah kata kunci atau filter. Lengkapi profil agar orang lain bisa menemukanmu.',
+            actionLabel: 'Lengkapi Profil',
+            onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
           );
-        },
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+          itemCount: controller.filteredPeople.length + 1,
+          separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 12 : 16),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return _SectionHeader(
+                title: 'Orang Disekitar',
+                trailing: '${controller.filteredPeople.length} hasil',
+              );
+            }
+
+            final person = controller.filteredPeople[index - 1];
+            return _PersonCard(
+              name: person.name,
+              role: person.role,
+              avatarUrl: person.avatarUrl,
+              tags: person.tags,
+              matchLabel: person.matchLabel,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    final c = AppC.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 60),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: c.primarySoft,
+                shape: BoxShape.circle,
+                border: Border.all(color: c.border, width: 1),
+              ),
+              child: Icon(icon, size: 28, color: AppColors.primary),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: AppFonts.satoshiStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                color: c.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: onAction,
+                  icon: const Icon(FluentIcons.edit_24_regular, size: 16),
+                  label: Text(actionLabel),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -217,7 +399,7 @@ class ExploreView extends GetView<ExploreController> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 Text(
                   title,
                   style: AppFonts.headingStyle(
@@ -226,7 +408,7 @@ class ExploreView extends GetView<ExploreController> {
                     color: c.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   'Persempit hasil dengan opsi yang paling relevan.',
                   style: AppFonts.interStyle(
@@ -235,10 +417,10 @@ class ExploreView extends GetView<ExploreController> {
                   ),
                 ),
                 if (tab.isPeople) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   const _ProfileFilterPreview(),
                 ],
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 _FilterSheetContent(tab: tab),
                 const SizedBox(height: 24),
                 Row(
@@ -298,7 +480,7 @@ class ExploreView extends GetView<ExploreController> {
                   _Pill('FTIK', c.grey100, c.textSecondary),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               Text(
                 project.title,
                 style: AppFonts.satoshiStyle(
@@ -308,11 +490,11 @@ class ExploreView extends GetView<ExploreController> {
                   color: c.textPrimary,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(Icons.schedule, size: 16, color: c.textSecondary),
-                  const SizedBox(width: 5),
+                  Icon(FluentIcons.clock_24_regular, size: 16, color: c.textSecondary),
+                  const SizedBox(width: 8),
                   Text(
                     'Deadline ${project.deadline}',
                     style: AppFonts.satoshiStyle(
@@ -323,7 +505,7 @@ class ExploreView extends GetView<ExploreController> {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               Text(
                 'Rembugan adalah platform kolaborasi berbasis mobile untuk ekosistem kampus. Kami butuh Flutter dev berpengalaman state management dan seorang UI/UX designer.',
                 style: AppFonts.satoshiStyle(
@@ -332,7 +514,7 @@ class ExploreView extends GetView<ExploreController> {
                   color: c.textSecondary,
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 24),
               Text(
                 'Skill Dibutuhkan',
                 style: AppFonts.satoshiStyle(
@@ -357,7 +539,7 @@ class ExploreView extends GetView<ExploreController> {
                   color: c.textPrimary,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   for (var i = 0; i < project.memberAvatars.length; i++)
@@ -386,7 +568,7 @@ class ExploreView extends GetView<ExploreController> {
                       onTap: () => Navigator.of(context).pop(),
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     flex: 2,
                     child: _PrimaryAction(
@@ -488,7 +670,7 @@ ${competition.registrationLink}
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
 
                   // 2. badge & organizer tag
                   _Pill(
@@ -566,7 +748,7 @@ ${competition.registrationLink}
                       ],
                     ],
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
                   // 5. actions
                   Row(
@@ -577,11 +759,11 @@ ${competition.registrationLink}
                           onTap: () => Navigator.of(context).pop(),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        flex: 2,
-                        child: _PrimaryAction(
-                          label: 'Daftar Lomba',
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: _PrimaryAction(
+                      label: 'Daftar Lomba',
                           onTap: () => openRegistrationLink(competition),
                         ),
                       ),
@@ -599,11 +781,40 @@ ${competition.registrationLink}
   static Future<void> openRegistrationLink(Competition competition) async {
     await Clipboard.setData(ClipboardData(text: competition.registrationLink));
     Get.back<void>();
-    Get.snackbar(
-      'Link pendaftaran siap',
-      competition.registrationLink,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
+    AppToast.success(competition.registrationLink, title: 'Link pendaftaran siap');
+  }
+}
+
+class _ExploreSkeleton extends StatelessWidget {
+  const _ExploreSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+      child: Column(
+        children: [
+          _skeletonBlock(c: c, height: 32),
+          const SizedBox(height: 16),
+          _skeletonBlock(c: c, height: 120),
+          const SizedBox(height: 12),
+          _skeletonBlock(c: c, height: 60),
+          const SizedBox(height: 12),
+          _skeletonBlock(c: c, height: 120),
+        ],
+      ),
+    );
+  }
+
+  Widget _skeletonBlock({required AppC c, required double height}) {
+    return Container(
+      width: double.infinity,
+      height: height,
+      decoration: BoxDecoration(
+        color: c.grey100,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
     );
   }
 }
@@ -651,8 +862,8 @@ class _SearchBar extends StatelessWidget {
                 filled: true,
                 fillColor: c.grey100,
                 prefixIcon: Padding(
-                  padding: const EdgeInsets.only(left: 11, right: 8),
-                  child: Icon(Icons.search, color: c.grey900, size: 19),
+                  padding: const EdgeInsets.only(left: 12, right: 8),
+                  child: Icon(FluentIcons.search_24_regular, color: c.grey900, size: 19),
                 ),
                 prefixIconConstraints: const BoxConstraints(
                   minWidth: 39,
@@ -660,7 +871,7 @@ class _SearchBar extends StatelessWidget {
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
-                  vertical: 9,
+                  vertical: 12,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -723,7 +934,7 @@ class _FilterSheetContent extends StatelessWidget {
           _FilterSelectField(
             label: 'Jurusan',
             value: controller.selectedFaculty.value,
-            icon: Icons.school_outlined,
+            icon: FluentIcons.hat_graduation_24_regular,
             options: const [
               'Semua jurusan',
               'Teknik Informatika',
@@ -739,7 +950,7 @@ class _FilterSheetContent extends StatelessWidget {
             value: isPeople
                 ? controller.selectedSkill.value
                 : controller.selectedCategory.value,
-            icon: isPeople ? Icons.code : FluentIcons.tag_24_regular,
+            icon: isPeople ? FluentIcons.code_24_regular : FluentIcons.tag_24_regular,
             options: isPeople
                 ? const ['Semua skill', 'Flutter', 'UI/UX', 'Firebase', 'React']
                 : isLomba
@@ -780,7 +991,7 @@ class _FilterSheetContent extends StatelessWidget {
             icon: isPeople
                 ? FluentIcons.people_24_regular
                 : isLomba
-                ? Icons.calendar_today_outlined
+                ? FluentIcons.calendar_24_regular
                 : FluentIcons.people_24_regular,
             options: isPeople
                 ? const [
@@ -842,14 +1053,14 @@ class _SortSelector extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: GestureDetector(
               onTap: () => onSortChanged(option2),
               child: _SortOption(
                 label: option2,
                 icon: isPeople
-                    ? Icons.trending_up
+                    ? FluentIcons.arrow_trending_24_regular
                     : FluentIcons.clock_24_regular,
                 selected: selectedSort == option2,
               ),
@@ -876,7 +1087,7 @@ class _SortOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     return Container(
-      height: 45,
+      height: 44,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       decoration: BoxDecoration(
         color: selected ? AppColors.primary500 : c.surface,
@@ -893,7 +1104,7 @@ class _SortOption extends StatelessWidget {
             size: 15,
             color: selected ? AppColors.white : c.textSecondary,
           ),
-          const SizedBox(width: 7),
+          const SizedBox(width: 8),
           Flexible(
             child: Text(
               label,
@@ -946,7 +1157,7 @@ class _FilterSelectField extends StatelessWidget {
           child: Row(
             children: [
               Icon(icon, size: 18, color: c.textTertiary),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   value,
@@ -1047,7 +1258,7 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             Text(
               widget.title,
               style: AppFonts.satoshiStyle(
@@ -1069,7 +1280,7 @@ class _SearchableFilterSheetState extends State<_SearchableFilterSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
@@ -1149,7 +1360,7 @@ class _FilterPanel extends StatelessWidget {
               color: c.textSecondary,
             ),
           ),
-          const SizedBox(height: 9),
+          const SizedBox(height: 8),
           child,
         ],
       ),
@@ -1176,7 +1387,7 @@ class _ProfileFilterPreview extends StatelessWidget {
             radius: 18,
             backgroundImage: AssetImage('lib/assets/img/avatar.png'),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1189,7 +1400,7 @@ class _ProfileFilterPreview extends StatelessWidget {
                     color: c.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
                   'Filter membantu menemukan calon kolaborator yang relevan.',
                   style: AppFonts.satoshiStyle(
@@ -1240,7 +1451,7 @@ class _SegmentButton extends StatelessWidget {
             style: AppFonts.satoshiStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: active ? c.textPrimary : c.grey400,
+              color: active ? c.textPrimary : c.grey500,
             ),
           ),
         ),
@@ -1250,76 +1461,85 @@ class _SegmentButton extends StatelessWidget {
 }
 
 class _CompleteProfileBanner extends StatelessWidget {
-  const _CompleteProfileBanner();
+  const _CompleteProfileBanner({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 15, 16, 17),
-      decoration: BoxDecoration(
-        color: AppColors.primary500,
+    return Material(
+      color: AppColors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(
-              FluentIcons.people_edit_24_regular,
-              color: AppColors.white,
-              size: 26,
-            ),
+        child: Ink(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          decoration: BoxDecoration(
+            color: AppColors.primary500,
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Lengkapi profilmu',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.white,
-                    height: 1.2,
-                  ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(
+                  FluentIcons.people_edit_24_regular,
+                  color: AppColors.white,
+                  size: 26,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Tambahkan skill dan minatmu untuk mendapatkan rekomendasi yang lebih relevan.',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.white.withValues(alpha: 0.84),
-                    height: 1.28,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Lengkapi sekarang',
+                      'Lengkapi profilmu',
                       style: AppFonts.satoshiStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.white,
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(width: 7),
-                    const Icon(
-                      FluentIcons.arrow_right_24_regular,
-                      color: AppColors.white,
-                      size: 19,
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tambahkan skill dan minatmu untuk mendapatkan rekomendasi yang lebih relevan.',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.white.withValues(alpha: 0.84),
+                        height: 1.28,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Lengkapi sekarang',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          FluentIcons.arrow_right_24_regular,
+                          color: AppColors.white,
+                          size: 19,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1342,6 +1562,8 @@ class _SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppFonts.headingStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -1380,84 +1602,80 @@ class _ProjectCard extends StatelessWidget {
     final c = AppC.of(context);
     final visibleSkills = project.skills.take(2).toList();
 
-    return GestureDetector(
-      onTap: onDetail,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: c.border, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.07),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    project.faculty.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 12,
-                      height: 1.2,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.info700,
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onDetail,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Ink(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: c.border, width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      project.faculty.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 12,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.info700,
+                      ),
                     ),
                   ),
+                  const _MatchBadge(label: 'Sesuai skill'),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                project.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 17,
+                  height: 1.15,
+                  fontWeight: FontWeight.w800,
+                  color: c.textPrimary,
                 ),
-                const _MatchBadge(label: 'Sesuai skill'),
-              ],
-            ),
-            const SizedBox(height: 15),
-            Text(
-              project.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppFonts.satoshiStyle(
-                fontSize: 17,
-                height: 1.15,
-                fontWeight: FontWeight.w800,
-                color: c.textPrimary,
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              project.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppFonts.satoshiStyle(
-                fontSize: 13,
-                height: 1.24,
-                fontWeight: FontWeight.w400,
-                color: c.grey600,
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                project.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  height: 1.24,
+                  fontWeight: FontWeight.w400,
+                  color: c.grey600,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: visibleSkills
-                  .map(
-                    (skill) =>
-                        _MiniChip(label: skill, color: c.grey100),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: visibleSkills
+                    .map(
+                      (skill) =>
+                          _MiniChip(label: skill, color: c.grey100),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 _ProjectAvatarStack(count: project.memberAvatars.length),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Text(
                   project.postedAgo,
                   style: AppFonts.satoshiStyle(
@@ -1485,6 +1703,7 @@ class _ProjectCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1566,25 +1785,20 @@ class _CompetitionCard extends StatelessWidget {
       _ => 'lib/assets/img/contoh poster4.jpeg',
     };
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: c.border),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: c.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Expanded(
               flex: 5,
               child: SizedBox(
@@ -1600,7 +1814,7 @@ class _CompetitionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _TinyTag(label: competition.category),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 8),
                     Text(
                       competition.title,
                       maxLines: 1,
@@ -1620,7 +1834,7 @@ class _CompetitionCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: c.grey400,
+                        color: c.grey500,
                       ),
                     ),
                     const Spacer(),
@@ -1667,6 +1881,7 @@ class _CompetitionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1725,7 +1940,7 @@ class _MatchBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = tone;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: style.background,
         borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -1733,6 +1948,8 @@ class _MatchBadge extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: AppFonts.satoshiStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -1764,7 +1981,7 @@ class _TinyTag extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: c.grey100,
         borderRadius: BorderRadius.circular(AppRadius.xxs),
@@ -1791,7 +2008,7 @@ class _DetailSheetFrame extends StatelessWidget {
     final c = AppC.of(context);
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(top: 42),
+      margin: const EdgeInsets.only(top: 40),
       padding: EdgeInsets.fromLTRB(
         28,
         10,
@@ -1808,7 +2025,7 @@ class _DetailSheetFrame extends StatelessWidget {
           children: [
             Container(
               width: 48,
-              height: 5,
+              height: 4,
               decoration: BoxDecoration(
                 color: c.borderStrong,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1835,7 +2052,7 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
-        vertical: 7,
+        vertical: 8,
       ),
       decoration: BoxDecoration(
         color: background,
@@ -1863,13 +2080,15 @@ class _MiniChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: AppFonts.satoshiStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
@@ -1898,6 +2117,8 @@ class _TeamMember extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppFonts.satoshiStyle(
             fontSize: 10,
             color: c.textSecondary,
@@ -1926,7 +2147,7 @@ class _EmptyMember extends StatelessWidget {
               style: BorderStyle.solid,
             ),
           ),
-          child: Icon(Icons.add, size: 18, color: c.borderStrong),
+          child: Icon(FluentIcons.add_24_regular, size: 18, color: c.borderStrong),
         ),
         const SizedBox(height: 6),
         Text(
@@ -1976,6 +2197,8 @@ class _OwnerTile extends StatelessWidget {
                 ),
                 Text(
                   project.postedBy,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppFonts.satoshiStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -2025,21 +2248,25 @@ class _PrimaryAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 42,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.primary500,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Text(
-          label,
-          style: AppFonts.satoshiStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w700,
-            color: AppColors.white,
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.primary500,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Text(
+            label,
+            style: AppFonts.satoshiStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.white,
+            ),
           ),
         ),
       ),
@@ -2056,22 +2283,26 @@ class _OutlineAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 42,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: c.border),
-        ),
-        child: Text(
-          label,
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: c.textSecondary,
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: c.border),
+          ),
+          child: Text(
+            label,
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: c.textSecondary,
+            ),
           ),
         ),
       ),
@@ -2108,13 +2339,6 @@ class _PersonCard extends StatelessWidget {
             color: c.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: c.border, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.black.withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
-              ),
-            ],
           ),
           child: Row(
             children: [
@@ -2131,6 +2355,8 @@ class _PersonCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppFonts.satoshiStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -2139,6 +2365,8 @@ class _PersonCard extends StatelessWidget {
                     ),
                     Text(
                       role,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         color: c.textSecondary,
@@ -2146,7 +2374,7 @@ class _PersonCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Wrap(
-                      spacing: 6,
+                      spacing: 8,
                       children: tags
                           .map(
                             (tag) =>
@@ -2157,10 +2385,15 @@ class _PersonCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.send_outlined,
-                size: 20,
-                color: c.textSecondary,
+              GestureDetector(
+                onTap: () {
+                  Get.toNamed(Routes.CHAT, arguments: {'name': name});
+                },
+                child: Icon(
+                  FluentIcons.send_24_regular,
+                  size: 20,
+                  color: c.textSecondary,
+                ),
               ),
             ],
           ),
@@ -2195,7 +2428,7 @@ void _showImageViewer(
               color: AppColors.white.withValues(alpha: 0.15),
               shape: const CircleBorder(),
               child: IconButton(
-                icon: const Icon(Icons.close, color: AppColors.white),
+                icon: Icon(FluentIcons.dismiss_24_regular, color: AppColors.white),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -2281,12 +2514,12 @@ class _CompetitionTimelineBox extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isUrgent ? Icons.local_fire_department : Icons.alarm_outlined,
+                  isUrgent ? FluentIcons.alert_24_regular : FluentIcons.clock_alarm_24_regular,
                   color: primaryColor,
                   size: 18,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2303,7 +2536,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
                             : AppColors.info700,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       'Batas akhir: $deadline',
                       style: AppFonts.satoshiStyle(
@@ -2319,7 +2552,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
-                  vertical: 5,
+                  vertical: 4,
                 ),
                 decoration: BoxDecoration(
                   color: primaryColor,
@@ -2346,7 +2579,7 @@ class _CompetitionTimelineBox extends StatelessWidget {
               minHeight: 5,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

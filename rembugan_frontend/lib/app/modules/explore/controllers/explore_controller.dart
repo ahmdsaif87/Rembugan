@@ -26,9 +26,13 @@ class ExploreController extends GetxController {
   ExploreController(this._repository);
 
   final searchTextController = TextEditingController();
+  final isLoading = true.obs;
+  final hasError = false.obs;
+  final errorMessage = ''.obs;
 
   @override
   void onClose() {
+    _searchDebounce.dispose();
     searchTextController.dispose();
     super.onClose();
   }
@@ -90,28 +94,51 @@ class ExploreController extends GetxController {
     'Kotlin',
   ];
 
+  late final Worker _searchDebounce;
+
   @override
   void onInit() {
     super.onInit();
+    _searchDebounce = debounce<String>(
+      searchQuery,
+      (_) => applyFilters(),
+      time: const Duration(milliseconds: 300),
+    );
     loadExploreData();
   }
 
-  void loadExploreData() {
-    final loadedProjects = _repository.getProjects();
-    projects.assignAll(loadedProjects);
-    filteredProjects.assignAll(loadedProjects);
+  void loadExploreData() async {
+    isLoading.value = true;
+    hasError.value = false;
+    errorMessage.value = '';
+    try {
+      await Future.delayed(const Duration(milliseconds: 400));
+      final loadedProjects = _repository.getProjects();
+      projects.assignAll(loadedProjects);
+      filteredProjects.assignAll(loadedProjects);
 
-    final loadedCompetitions = _repository.getCompetitions();
-    competitions.assignAll(loadedCompetitions);
-    filteredCompetitions.assignAll(loadedCompetitions);
+      final loadedCompetitions = _repository.getCompetitions();
+      competitions.assignAll(loadedCompetitions);
+      filteredCompetitions.assignAll(loadedCompetitions);
 
-    filteredPeople.assignAll(people);
+      filteredPeople.assignAll(people);
+    } catch (e) {
+      hasError.value = true;
+      errorMessage.value = 'Gagal memuat data. Periksa koneksi kamu.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void retry() {
+    loadExploreData();
   }
 
   void changeTab(ExploreTab tab) {
     activeTab.value = tab;
     searchTextController.clear();
-    search('');
+    searchQuery.value = '';
+    applyFilters();
   }
 
   int get activeFilterCount {
@@ -132,7 +159,6 @@ class ExploreController extends GetxController {
 
   void search(String query) {
     searchQuery.value = query;
-    applyFilters();
   }
 
   void applyFilters() {

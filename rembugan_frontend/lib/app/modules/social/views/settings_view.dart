@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/services/theme_service.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 
@@ -584,15 +585,7 @@ class _SettingsViewState extends State<SettingsView> {
                   onTap: () {
                     if (newPw.text == confirmPw.text && newPw.text.isNotEmpty) {
                       Get.back();
-                      Get.snackbar(
-                        'Sukses',
-                        'Password berhasil diperbarui!',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: AppColors.primary500,
-                        colorText: AppColors.white,
-                        margin: const EdgeInsets.all(AppSpacing.md),
-                        borderRadius: 12,
-                      );
+                      AppToast.success('Password berhasil diperbarui!', title: 'Sukses');
                     }
                   },
                 ),
@@ -695,11 +688,7 @@ class _SettingsViewState extends State<SettingsView> {
                           setModalState(() {
                             errorMessage = null;
                           });
-                          Get.snackbar(
-                            'OTP Dikirim Ulang',
-                            'Kode baru telah dikirim ke ${emailController.text.trim()}',
-                            snackPosition: SnackPosition.BOTTOM,
-                          );
+                          AppToast.success('Kode baru telah dikirim ke ${emailController.text.trim()}', title: 'OTP Dikirim Ulang');
                         },
                         child: const Text('Kirim ulang OTP'),
                       ),
@@ -749,15 +738,7 @@ class _SettingsViewState extends State<SettingsView> {
                           linkedEmail = email;
                         });
                         Get.back();
-                        Get.snackbar(
-                          'Email Terverifikasi',
-                          '$email berhasil ditautkan ke akun.',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.primary500,
-                          colorText: AppColors.white,
-                          margin: const EdgeInsets.all(AppSpacing.md),
-                          borderRadius: 12,
-                        );
+                        AppToast.success('$email berhasil ditautkan ke akun.', title: 'Email Terverifikasi');
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary500,
@@ -874,15 +855,7 @@ class _SettingsViewState extends State<SettingsView> {
                             const Duration(milliseconds: 600),
                           );
                           Get.offAllNamed(Routes.LOGIN);
-                          Get.snackbar(
-                            'Berhasil Keluar',
-                            'Sampai jumpa kembali di Rembugan!',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: AppColors.primary500,
-                            colorText: AppColors.white,
-                            margin: const EdgeInsets.all(AppSpacing.md),
-                            borderRadius: 12,
-                          );
+                          AppToast.success('Sampai jumpa kembali di Rembugan!', title: 'Berhasil Keluar');
                         },
                         loadingWidget: const Center(
                           child: CircularProgressIndicator(

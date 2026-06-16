@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/services/profile_service.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/theme/theme.dart';
 import '../../../routes/app_pages.dart';
 import 'social_components.dart';
@@ -26,39 +27,57 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   void persist(ProfileData value) {
     setState(() => draft = value);
-    profileService.updateProfile(value);
+    try {
+      profileService.updateProfile(value);
+      AppToast.success('Profil berhasil diperbarui.');
+    } catch (e) {
+      AppToast.error('Gagal menyimpan perubahan.', title: 'Error');
+    }
   }
 
   void showProfileSheet() {
     final nameController = TextEditingController(text: draft.name);
     final bioController = TextEditingController(text: draft.bio);
     final majorController = TextEditingController(text: draft.major);
+    final formKey = GlobalKey<FormState>();
 
-    _showEditSheet(
-      title: 'Edit profil',
-      helper: 'Bio dibuat dari resume dan masih bisa kamu edit.',
-      child: Column(
-        children: [
-          _SheetField(label: 'Nama', controller: nameController),
-          _SheetField(
-            label: 'Bio',
-            helper:
-                'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
-            controller: bioController,
-            maxLines: 5,
-          ),
-          _SheetField(label: 'Jurusan', controller: majorController),
-        ],
+    Get.bottomSheet(
+      _EditBottomSheet(
+        title: 'Edit Profil',
+        helper: 'Bio dibuat dari resume dan masih bisa kamu edit.',
+        onSave: () {
+          persist(
+            draft.copyWith(
+              name: nameController.text.trim(),
+              bio: bioController.text.trim(),
+              major: majorController.text.trim(),
+            ),
+          );
+        },
+        formKey: formKey,
+        child: Column(
+          children: [
+            _SheetField(
+              label: 'Nama',
+              controller: nameController,
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Nama wajib diisi' : null,
+            ),
+            _SheetField(
+              label: 'Bio',
+              helper:
+                  'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
+              controller: bioController,
+              maxLines: 5,
+              validator: (v) =>
+                  v != null && v.length > 500 ? 'Maksimal 500 karakter' : null,
+            ),
+            _SheetField(label: 'Jurusan', controller: majorController),
+          ],
+        ),
       ),
-      onSave: () {
-        persist(
-          draft.copyWith(
-            name: nameController.text.trim(),
-            bio: bioController.text.trim(),
-            major: majorController.text.trim(),
-          ),
-        );
-      },
+      backgroundColor: AppColors.transparent,
+      isScrollControlled: true,
     );
   }
 
@@ -66,7 +85,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     final linkController = TextEditingController(text: draft.socialLink);
 
     _showEditSheet(
-      title: 'Edit social link',
+      title: 'Edit tautan sosial',
       helper: 'Tambahkan link yang ingin kamu tampilkan.',
       child: Row(
         children: [
@@ -75,6 +94,18 @@ class _EditProfileViewState extends State<EditProfileView> {
           Expanded(
             child: TextFormField(
               controller: linkController,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) {
+                persist(draft.copyWith(socialLink: linkController.text.trim()));
+                Get.back();
+              },
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return null;
+                if (!v.trim().contains('.') && !v.trim().startsWith('http')) {
+                  return 'Masukkan URL yang valid';
+                }
+                return null;
+              },
               decoration: const InputDecoration(
                 hintText: 'GitHub, portfolio, LinkedIn, atau website pribadi',
               ),
@@ -214,6 +245,7 @@ class _EditProfileViewState extends State<EditProfileView> {
             ),
           );
           Get.back();
+          AppToast.success('Pengalaman dihapus.');
         },
       ),
       backgroundColor: AppColors.transparent,
@@ -226,15 +258,14 @@ class _EditProfileViewState extends State<EditProfileView> {
     required String helper,
     required Widget child,
     required VoidCallback onSave,
+    GlobalKey<FormState>? formKey,
   }) {
     Get.bottomSheet(
       _EditBottomSheet(
         title: title,
         helper: helper,
-        onSave: () {
-          onSave();
-          Get.back();
-        },
+        onSave: onSave,
+        formKey: formKey,
         child: child,
       ),
       backgroundColor: AppColors.transparent,
@@ -252,7 +283,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           onPressed: Get.back,
           child: Text(
             'Selesai',
-            style: AppFonts.satoshiStyle(
+            style: AppFonts.interStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
@@ -264,7 +295,7 @@ class _EditProfileViewState extends State<EditProfileView> {
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           _AiPersonalizeCard(onTap: () => Get.toNamed(Routes.PERSONALIZATION)),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _EditPreviewSection(
             title: 'Profil',
             subtitle: 'Nama, bio, dan lokasi.',
@@ -273,18 +304,9 @@ class _EditProfileViewState extends State<EditProfileView> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 34,
-                      backgroundImage: AssetImage(draft.avatarAsset),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: _MiniEditButton(onTap: showProfileSheet),
-                    ),
-                  ],
+                CircleAvatar(
+                  radius: 34,
+                  backgroundImage: AssetImage(draft.avatarAsset),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -293,7 +315,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                     children: [
                       Text(
                         draft.name,
-                        style: AppFonts.satoshiStyle(
+                        style: AppFonts.interStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -304,7 +326,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                         draft.bio,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
-                        style: AppFonts.satoshiStyle(
+                        style: AppFonts.interStyle(
                           fontSize: 12.5,
                           height: 1.45,
                           color: AppColors.textSecondary,
@@ -316,9 +338,9 @@ class _EditProfileViewState extends State<EditProfileView> {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _EditPreviewSection(
-            title: 'Social Links',
+            title: 'Tautan Sosial',
             subtitle: 'Link yang tampil di profilmu.',
             icon: FluentIcons.link_24_regular,
             onEdit: showSocialSheet,
@@ -331,7 +353,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                     draft.socialLink.isEmpty
                         ? 'Tambahkan link yang ingin kamu tampilkan.'
                         : draft.socialLink,
-                    style: AppFonts.satoshiStyle(
+                    style: AppFonts.interStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: draft.socialLink.isEmpty
@@ -343,7 +365,7 @@ class _EditProfileViewState extends State<EditProfileView> {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _EditPreviewSection(
             title: 'Skill',
             subtitle: 'Skill membantu sistem merekomendasikan proyek.',
@@ -357,7 +379,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                   .toList(),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _EditPreviewSection(
             title: 'Experience',
             subtitle: 'Pengalaman yang membentuk perjalanan dan skill kamu.',
@@ -366,8 +388,8 @@ class _EditProfileViewState extends State<EditProfileView> {
             actionLabel: 'Tambah',
             child: draft.experiences.isEmpty
                 ? Text(
-                    'Tambahkan pengalaman agar profile lebih meyakinkan.',
-                    style: AppFonts.satoshiStyle(
+                    'Tambahkan pengalaman agar profil lebih meyakinkan.',
+                    style: AppFonts.interStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
@@ -385,7 +407,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                     }).toList(),
                   ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _EditPreviewSection(
             title: 'Riwayat Kolaborasi',
             subtitle:
@@ -410,7 +432,7 @@ class _EditProfileViewState extends State<EditProfileView> {
               }).toList(),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.lg),
         ],
       ),
     );
@@ -424,60 +446,68 @@ class _AiPersonalizeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.grey900,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: onTap,
+    final c = AppC.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: c.primarySoft,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: c.border),
+                  ),
+                  child: Icon(
+                    FluentIcons.sparkle_24_filled,
+                    color: AppColors.primary500,
+                    size: 20,
+                  ),
                 ),
-                child: const Icon(
-                  FluentIcons.sparkle_24_filled,
-                  color: AppColors.white,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Personalisasi dengan AI',
+                        style: AppFonts.interStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Scan ulang resume untuk merapikan bio, skill, dan pengalaman.',
+                        style: AppFonts.interStyle(
+                          fontSize: 12,
+                          height: 1.35,
+                          color: c.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  FluentIcons.chevron_right_24_regular,
+                  color: c.textTertiary,
                   size: 20,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Personalize with AI',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Scan ulang resume untuk merapikan bio, skill, dan experience.',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 12,
-                        height: 1.35,
-                        color: AppColors.white.withValues(alpha: 0.72),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                FluentIcons.chevron_right_24_regular,
-                color: AppColors.white,
-                size: 20,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -527,7 +557,7 @@ class _EditPreviewSection extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: AppFonts.satoshiStyle(
+                      style: AppFonts.interStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -536,7 +566,7 @@ class _EditPreviewSection extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: AppFonts.satoshiStyle(
+                      style: AppFonts.interStyle(
                         fontSize: 12,
                         height: 1.35,
                         color: c.textSecondary,
@@ -555,7 +585,7 @@ class _EditPreviewSection extends StatelessWidget {
                       ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           child,
         ],
       ),
@@ -594,7 +624,7 @@ class _ExperiencePreviewItem extends StatelessWidget {
               children: [
                 Text(
                   experience.title,
-                  style: AppFonts.satoshiStyle(
+                  style: AppFonts.interStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                     color: c.textPrimary,
@@ -603,7 +633,7 @@ class _ExperiencePreviewItem extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   '${experience.organization} - ${experience.duration}',
-                  style: AppFonts.satoshiStyle(
+                  style: AppFonts.interStyle(
                     fontSize: 12,
                     color: c.textSecondary,
                   ),
@@ -613,7 +643,7 @@ class _ExperiencePreviewItem extends StatelessWidget {
                   experience.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppFonts.satoshiStyle(
+                  style: AppFonts.interStyle(
                     fontSize: 12,
                     height: 1.4,
                     color: c.textPrimary,
@@ -622,13 +652,23 @@ class _ExperiencePreviewItem extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(FluentIcons.edit_24_regular, size: 18),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: IconButton(
+              onPressed: onEdit,
+              icon: const Icon(FluentIcons.edit_24_regular, size: 16),
+              padding: EdgeInsets.zero,
+            ),
           ),
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(FluentIcons.delete_24_regular, size: 18),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: IconButton(
+              onPressed: onDelete,
+              icon: const Icon(FluentIcons.delete_24_regular, size: 16),
+              padding: EdgeInsets.zero,
+            ),
           ),
         ],
       ),
@@ -672,7 +712,7 @@ class _CollaborationVisibilityItem extends StatelessWidget {
               children: [
                 Text(
                   item.workspace,
-                  style: AppFonts.satoshiStyle(
+                  style: AppFonts.interStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                     color: c.textPrimary,
@@ -681,7 +721,7 @@ class _CollaborationVisibilityItem extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   '${item.role} - ${item.members} anggota - ${item.status}',
-                  style: AppFonts.satoshiStyle(
+                  style: AppFonts.interStyle(
                     fontSize: 12,
                     color: c.textSecondary,
                   ),
@@ -699,18 +739,27 @@ class _CollaborationVisibilityItem extends StatelessWidget {
   }
 }
 
-class _EditBottomSheet extends StatelessWidget {
+class _EditBottomSheet extends StatefulWidget {
   const _EditBottomSheet({
     required this.title,
     required this.helper,
-    required this.child,
     required this.onSave,
+    this.formKey,
+    required this.child,
   });
 
   final String title;
   final String helper;
-  final Widget child;
   final VoidCallback onSave;
+  final GlobalKey<FormState>? formKey;
+  final Widget child;
+
+  @override
+  State<_EditBottomSheet> createState() => _EditBottomSheetState();
+}
+
+class _EditBottomSheetState extends State<_EditBottomSheet> {
+  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -728,62 +777,78 @@ class _EditBottomSheet extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: c.borderStrong,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                title,
-                style: AppFonts.headingStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                helper,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 13,
-                  height: 1.45,
-                  color: c.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 18),
-              child,
-              const SizedBox(height: 18),
-              Row(
+          child: SingleChildScrollView(
+            child: Form(
+              key: widget.formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: Get.back,
-                      child: const Text('Batalkan'),
+                  Center(
+                    child: Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: c.borderStrong,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: onSave,
-                      child: const Text('Simpan'),
+                  const SizedBox(height: 18),
+                  Text(
+                    widget.title,
+                    style: AppFonts.headingStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    widget.helper,
+                    style: AppFonts.interStyle(
+                      fontSize: 13,
+                      height: 1.45,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  widget.child,
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isSaving ? null : Get.back,
+                          child: const Text('Batalkan'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isSaving
+                              ? null
+                              : () {
+                                  if (widget.formKey?.currentState?.validate() == false) return;
+                                  setState(() => _isSaving = true);
+                                  widget.onSave();
+                                  Get.back();
+                                },
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('Simpan'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
       ),
     );
   }
@@ -826,7 +891,7 @@ class _ConfirmSheet extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: AppFonts.satoshiStyle(
+              style: AppFonts.interStyle(
                 fontSize: 13,
                 height: 1.45,
                 color: c.textSecondary,
@@ -863,12 +928,14 @@ class _SheetField extends StatelessWidget {
     required this.controller,
     this.helper,
     this.maxLines = 1,
+    this.validator,
   });
 
   final String label;
   final TextEditingController controller;
   final String? helper;
   final int maxLines;
+  final FormFieldValidator<String>? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -880,7 +947,7 @@ class _SheetField extends StatelessWidget {
         children: [
           Text(
             label,
-            style: AppFonts.satoshiStyle(
+            style: AppFonts.interStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: c.textSecondary,
@@ -890,7 +957,7 @@ class _SheetField extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               helper!,
-              style: AppFonts.satoshiStyle(
+              style: AppFonts.interStyle(
                 fontSize: 12,
                 height: 1.35,
                 color: c.textTertiary,
@@ -898,7 +965,11 @@ class _SheetField extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 8),
-          TextFormField(controller: controller, maxLines: maxLines),
+          TextFormField(
+            controller: controller,
+            maxLines: maxLines,
+            validator: validator,
+          ),
         ],
       ),
     );
@@ -912,15 +983,14 @@ class _LinkIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     return Container(
-      width: 42,
-      height: 42,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: c.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: c.border),
       ),
       child: Icon(
-        FluentIcons.code_24_regular,
+        FluentIcons.link_24_regular,
         color: c.textPrimary,
         size: 19,
       ),
@@ -942,8 +1012,8 @@ class _MiniEditButton extends StatelessWidget {
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: const SizedBox(
-          width: 28,
-          height: 28,
+          width: 44,
+          height: 44,
           child: Icon(
             FluentIcons.edit_24_regular,
             color: AppColors.white,

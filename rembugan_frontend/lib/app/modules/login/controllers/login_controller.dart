@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/services/auth_service.dart';
 import '../../../routes/app_pages.dart';
+import '../../../core/widgets/app_toast.dart';
 
 class LoginController extends GetxController {
   final _auth = Get.find<AuthService>();
@@ -25,12 +26,11 @@ class LoginController extends GetxController {
     );
 
     if (error != null) {
-      Get.snackbar('Login Gagal', error,
-          snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(error, title: 'Login Gagal');
       return;
     }
 
-    Get.snackbar('Login', 'Berhasil Masuk!');
+    AppToast.success('Berhasil Masuk!', title: 'Login');
 
     final user = _auth.currentUser.value;
     if (user != null && !user.isOnboarded) {

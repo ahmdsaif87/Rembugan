@@ -119,6 +119,7 @@ class _ProfileCover extends StatelessWidget {
             child: _ProfileCircleButton(
               icon: FluentIcons.more_horizontal_24_regular,
               onTap: onMore,
+              tooltip: 'Lainnya',
             ),
           ),
           Positioned(
@@ -144,24 +145,32 @@ class _ProfileCover extends StatelessWidget {
 }
 
 class _ProfileCircleButton extends StatelessWidget {
-  const _ProfileCircleButton({required this.icon, required this.onTap});
+  const _ProfileCircleButton({required this.icon, required this.onTap, this.tooltip});
 
   final IconData icon;
   final VoidCallback onTap;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: c.surface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Icon(icon, size: 23, color: c.grey900),
+    final btn = Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: c.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Icon(icon, size: 23, color: c.grey900),
+    );
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: tooltip != null
+            ? Tooltip(message: tooltip!, child: btn)
+            : btn,
       ),
     );
   }
@@ -199,6 +208,8 @@ class _ProfileIdentity extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           'UI/UX Designer dan product thinker. Mendesain produk kolaborasi kampus dengan fokus pada clarity, flow, dan UX research.',
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             height: 1.32,
@@ -208,6 +219,8 @@ class _ProfileIdentity extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'github.com/raka-design',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -471,8 +484,6 @@ class _PostCard extends StatefulWidget {
     required this.name,
     required this.subtitle,
     required this.content,
-    this.hasImage = false,
-    this.imageUrl,
     required this.likeCount,
     required this.commentCount,
   });
@@ -481,8 +492,6 @@ class _PostCard extends StatefulWidget {
   final String name;
   final String subtitle;
   final String content;
-  final bool hasImage;
-  final String? imageUrl;
   final String likeCount;
   final String commentCount;
 
@@ -588,18 +597,6 @@ class _PostCardState extends State<_PostCard> {
                   height: 1.45,
                 ),
               ),
-              if (widget.hasImage && widget.imageUrl != null) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: Image.network(
-                    widget.imageUrl!,
-                    width: double.infinity,
-                    height: 160,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
               const SizedBox(height: 12),
               Row(
                 children: [

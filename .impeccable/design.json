@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-15T00:00:00.000Z",
+  "title": "Design System: Rembugan",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Studio Indigo",
+        "canonical": "oklch(56% 0.175 280)",
+        "tonalRamp": ["oklch(15% 0.04 280)", "oklch(26% 0.08 280)", "oklch(37% 0.12 280)", "oklch(48% 0.15 280)", "oklch(56% 0.175 280)", "oklch(68% 0.14 280)", "oklch(79% 0.10 280)", "oklch(89% 0.06 280)"]
+      },
+      "primary-soft": {
+        "role": "primary",
+        "displayName": "Indigo Soft",
+        "canonical": "oklch(94% 0.025 280)",
+        "tonalRamp": ["oklch(94% 0.025 280)"]
+      },
+      "primary-deep": {
+        "role": "primary",
+        "displayName": "Indigo Deep",
+        "canonical": "oklch(42% 0.14 280)",
+        "tonalRamp": ["oklch(42% 0.14 280)"]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(28% 0 0)", "oklch(40% 0 0)", "oklch(53% 0 0)", "oklch(66% 0 0)", "oklch(78% 0 0)", "oklch(89% 0 0)", "oklch(100% 0 0)"]
+      },
+      "neutral-text-primary": {
+        "role": "neutral",
+        "displayName": "Cool Slate 900",
+        "canonical": "oklch(15% 0.01 270)",
+        "tonalRamp": []
+      },
+      "neutral-text-secondary": {
+        "role": "neutral",
+        "displayName": "Cool Slate 500",
+        "canonical": "oklch(50% 0.015 270)",
+        "tonalRamp": []
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Success Green",
+        "canonical": "oklch(62% 0.17 150)",
+        "tonalRamp": []
+      },
+      "error": {
+        "role": "semantic",
+        "displayName": "Error Red",
+        "canonical": "oklch(58% 0.22 25)",
+        "tonalRamp": []
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "canonical": "oklch(10% 0.01 270)",
+        "tonalRamp": []
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface Elevated",
+        "canonical": "oklch(15% 0.015 270)",
+        "tonalRamp": []
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Screen-level headings, hero titles on onboarding and empty states."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings, modal titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles, sheet headers."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Primary reading text, form labels, descriptions. Max 75ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Button text, tab labels, chip labels."
+      }
+    },
+    "shadows": [
+      { "name": "ambient-soft", "value": "0 4px 10px rgba(0,0,0,0.03)", "purpose": "Optional light card lift on tinted surfaces." },
+      { "name": "ambient-medium", "value": "0 8px 16px rgba(0,0,0,0.05)", "purpose": "Dropdown menus, modals, popups." },
+      { "name": "brand-glow", "value": "0 8px 16px rgba(78,97,246,0.14)", "purpose": "Interactive feedback on primary elements." },
+      { "name": "bottom-nav-lift", "value": "0 -4px 18px rgba(0,0,0,0.08)", "purpose": "Bottom navigation bar structural shadow." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.35, 0, 0.25, 1)", "purpose": "Default easing for state transitions." },
+      { "name": "duration-instant", "value": "100ms", "purpose": "Hover, press state changes." },
+      { "name": "duration-short", "value": "180ms", "purpose": "Container transitions, focus shifts." },
+      { "name": "duration-standard", "value": "260ms", "purpose": "Page transitions." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "360px" },
+      { "name": "md", "value": "480px" },
+      { "name": "lg", "value": "768px" },
+      { "name": "xl", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Filled indigo primary action button. Used for 'Buat Proyek', 'Daftar', 'Simpan'.",
+      "html": "<button class=\"ds-btn-primary\">Buat Proyek</button>",
+      "css": ".ds-btn-primary { background: #4E61F6; color: #fff; font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 600; line-height: 1.3; padding: 16px 24px; border: none; border-radius: 12px; cursor: pointer; min-height: 54px; transition: background 0.18s cubic-bezier(0.35,0,0.25,1); } .ds-btn-primary:hover { background: #7181F8; } .ds-btn-primary:active { background: #3745AF; } .ds-btn-primary:disabled { background: #D2D5DB; cursor: not-allowed; }"
+    },
+    {
+      "name": "Outlined Button",
+      "kind": "button",
+      "refersTo": "button-outlined",
+      "description": "White outlined button for secondary actions.",
+      "html": "<button class=\"ds-btn-outlined\">Batal</button>",
+      "css": ".ds-btn-outlined { background: #fff; color: #131927; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.3; padding: 16px 20px; border: 1px solid #E5E7EA; border-radius: 12px; cursor: pointer; min-height: 48px; transition: border-color 0.18s cubic-bezier(0.35,0,0.25,1), background 0.18s; } .ds-btn-outlined:hover { border-color: #D2D5DB; background: #F9FAFB; } .ds-btn-outlined:active { border-color: #9EA2AE; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Default card container for project cards, profile cards, content items.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-body\"><h3 class=\"ds-card-title\">Nama Proyek</h3><p class=\"ds-card-desc\">Deskripsi singkat proyek dan kebutuhan tim.</p></div></div>",
+      "css": ".ds-card { background: #fff; border: 1px solid #E5E7EA; border-radius: 16px; padding: 20px; font-family: Inter, system-ui, sans-serif; } .ds-card-title { font-size: 20px; font-weight: 700; line-height: 1.25; color: #131927; margin: 0 0 6px 0; } .ds-card-desc { font-size: 14px; font-weight: 400; line-height: 1.45; color: #6D717F; margin: 0; } .ds-card-body { display: flex; flex-direction: column; gap: 4px; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Filled text input with soft background and subtle border.",
+      "html": "<div class=\"ds-input-wrap\"><input class=\"ds-input\" type=\"text\" placeholder=\"Cari proyek...\"></div>",
+      "css": ".ds-input-wrap { display: flex; flex-direction: column; gap: 4px; font-family: Inter, system-ui, sans-serif; } .ds-input { background: #F9FAFB; border: 1px solid #E5E7EA; border-radius: 12px; padding: 16px; font-size: 14px; font-weight: 400; line-height: 1.45; color: #131927; font-family: inherit; outline: none; transition: background 0.18s, border-color 0.18s; } .ds-input::placeholder { color: #9EA2AE; } .ds-input:focus { background: #EDEFFE; border-color: #4E61F6; border-width: 1.2px; } .ds-input:disabled { background: #E5E7EA; color: #9EA2AE; }"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "nav-bottom",
+      "description": "Four-tab bottom navigation bar with center create button.",
+      "html": "<nav class=\"ds-bottom-nav\"><div class=\"ds-nav-item ds-nav-active\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#4E61F6\" stroke-width=\"2\"><path d=\"M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6\"/></svg><span class=\"ds-nav-label\">Beranda</span></div><div class=\"ds-nav-item\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9EA2AE\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z\"/></svg><span class=\"ds-nav-label\">Jelajah</span></div><div class=\"ds-nav-create\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2\"><path d=\"M12 5v14m-7-7h14\"/></svg></div><div class=\"ds-nav-item\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9EA2AE\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg><span class=\"ds-nav-label\">Proyek</span></div><div class=\"ds-nav-item\"><svg width=\"23\" height=\"23\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9EA2AE\" stroke-width=\"2\"><path d=\"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/></svg><span class=\"ds-nav-label\">Profil</span></div></nav>",
+      "css": ".ds-bottom-nav { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 7px 16px; box-shadow: 0 -4px 18px rgba(0,0,0,0.08); font-family: Inter, system-ui, sans-serif; width: 100%; box-sizing: border-box; } .ds-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; padding: 8px 0; } .ds-nav-label { font-size: 11px; font-weight: 600; color: #9EA2AE; line-height: 1.3; } .ds-nav-active .ds-nav-label { color: #4E61F6; } .ds-nav-create { width: 44px; height: 44px; background: #4E61F6; border-radius: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #4E61F6; flex-shrink: 0; }"
+    },
+    {
+      "name": "Chip / Tag",
+      "kind": "chip",
+      "refersTo": "chip-default",
+      "description": "Compact skill or category tag with subtle fill.",
+      "html": "<span class=\"ds-chip\">UI/UX Design</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; background: #EDEFFE; color: #3745AF; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 600; line-height: 1.3; padding: 4px 8px; border-radius: 8px; white-space: nowrap; } .ds-chip-secondary { background: #F3F4F6; color: #6D717F; } .ds-chip-active { background: #4E61F6; color: #fff; }"
+    },
+    {
+      "name": "Section Header",
+      "kind": "custom",
+      "refersTo": "section-header",
+      "description": "Section title row with optional action link.",
+      "html": "<div class=\"ds-section-header\"><div><h3 class=\"ds-section-title\">Proyek Terbaru</h3><p class=\"ds-section-subtitle\">Temukan proyek menarik untuk kamu</p></div><button class=\"ds-section-action\">Lihat Semua</button></div>",
+      "css": ".ds-section-header { display: flex; align-items: flex-end; justify-content: space-between; font-family: Inter, system-ui, sans-serif; gap: 12px; } .ds-section-title { font-size: 18px; font-weight: 600; color: #131927; margin: 0; line-height: 1.2; } .ds-section-subtitle { font-size: 12px; color: #6D717F; margin: 3px 0 0 0; line-height: 1.4; } .ds-section-action { background: none; border: none; color: #4E61F6; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; padding: 4px 12px; white-space: nowrap; transition: opacity 0.15s; } .ds-section-action:hover { opacity: 0.8; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Campus Studio",
+    "overview": "Rembugan is a student collaboration platform that feels like a creative studio on campus — energetic but focused, collaborative without being chaotic. The design serves the primary job: finding teammates and building projects together.\n\nThe system is flat by default with tonal layering. Surfaces distinguish themselves through subtle borders and background shifts rather than shadows. Color is used with restraint: the indigo primary appears on interactive elements and key accents, never as decoration. The cool grey neutral palette keeps the interface quiet enough that content — projects, people, conversations — carries the visual energy.\n\nThis system explicitly rejects: the sterile corporate aesthetic of LinkedIn-clone dashboards, the childish gamification of badge-heavy student platforms, and the generic SaaS template of gradient heroes and identical card grids.",
+    "keyCharacteristics": [
+      "Flat surfaces with 1px borders; no shadows at rest",
+      "Cool-grey neutral palette with a single indigo accent used sparingly",
+      "Single sans-serif typeface (Inter) across all hierarchies",
+      "Rounded but not pill-shaped corners (12–16px for surfaces)",
+      "Mobile-first, action-oriented layout density",
+      "Dark mode with inverted grey scale preserving the same hierarchy"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Studio Indigo is used on ≤15% of any given screen. Its rarity is the point — color carries meaning, not decoration.", "section": "colors" },
+      { "name": "The Single Voice Rule", "body": "One typeface, weight is the only hierarchy axis. Never mix a second font for 'personality' — the personality is in the content, not the font stack.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, elevation, focus) or as the single structural exception (bottom nav).", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Studio Indigo on interactive elements only — buttons, links, active nav, selected states.",
+      "Do keep surfaces flat at rest; reserve shadows for state changes.",
+      "Do use the cool grey scale for all non-interactive surfaces and text.",
+      "Do use weight as the primary hierarchy axis (700 → 600 → 400).",
+      "Do test all text on the actual surface color: body text (#6D717F on #FFFFFF = 4.6:1, just above AA).",
+      "Do use the same 12px radius for all interactive elements (buttons, inputs) and 16px for containers (cards, sheets)."
+    ],
+    "donts": [
+      "Don't use Studio Indigo as a decorative background wash or section color. The accent earns its place through interaction.",
+      "Don't use gradient text, glassmorphism, or side-stripe borders anywhere.",
+      "Don't pair a second typeface with Inter — one family carries the full hierarchy.",
+      "Don't use repeated identical card grids with icon + heading + text as a layout default.",
+      "Don't use uppercase tracked eyebrow labels ('ABOUT', 'PROCESS') above every section.",
+      "Don't use numbered section markers (01 / 02 / 03) as default scaffolding.",
+      "Don't over-round corners: cards cap at 16px, buttons at 12px. Pill shapes (999px) only for tags and avatars.",
+      "Don't add shadows to cards and buttons that already have a 1px border — choose one strategy per element.",
+      "Don't make the app feel corporate or LinkedIn-clone sterile. Student-native means approachable, not professional-dark.",
+      "Don't gamify with excessive badges, ribbons, or achievement patterns. The platform's value is in connecting people, not collecting points."
+    ]
+  }
+}
