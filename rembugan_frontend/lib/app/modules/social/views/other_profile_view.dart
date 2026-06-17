@@ -35,12 +35,30 @@ class _OtherProfileViewState extends State<OtherProfileView> {
               children: [
                 const _ProfileIdentity(),
                 const SizedBox(height: 12),
-                Text(
-                  '1.2K pengikut  9 Kolaborasi',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: c.grey900,
+                RichText(
+                  text: TextSpan(
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: '1.2K',
+                        style: TextStyle(color: c.textPrimary),
+                      ),
+                      TextSpan(
+                        text: ' pengikut  ',
+                        style: TextStyle(color: c.textTertiary),
+                      ),
+                      TextSpan(
+                        text: '9',
+                        style: TextStyle(color: c.textPrimary),
+                      ),
+                      TextSpan(
+                        text: ' Kolaborasi',
+                        style: TextStyle(color: c.textTertiary),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 14),

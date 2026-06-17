@@ -18,6 +18,7 @@ class ForgotPasswordController extends GetxController {
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  final isLoading = false.obs;
   final isNewPasswordHidden = true.obs;
   final isConfirmPasswordHidden = true.obs;
 
@@ -39,7 +40,10 @@ class ForgotPasswordController extends GetxController {
   void onSendOtp() async {
     if (formKeyNim.currentState?.validate() != true) return;
 
+    isLoading.value = true;
     final error = await _auth.forgotPasswordSendOtp(nim);
+    isLoading.value = false;
+
     if (error != null) {
       AppToast.error(error, title: 'Gagal');
       return;
@@ -75,7 +79,10 @@ class ForgotPasswordController extends GetxController {
     }
     otpFocusNodes.first.requestFocus();
 
+    isLoading.value = true;
     final error = await _auth.forgotPasswordSendOtp(nim);
+    isLoading.value = false;
+
     if (error != null) {
       AppToast.error(error, title: 'Gagal');
       return;
@@ -94,19 +101,17 @@ class ForgotPasswordController extends GetxController {
 
   void onResetPassword() async {
     if (formKeyReset.currentState?.validate() != true) return;
-    if (newPasswordController.text != confirmPasswordController.text) {
-      AppToast.error('Pastikan kedua kata sandi yang dimasukkan sama.', title: 'Kata sandi tidak cocok');
-      return;
-    }
 
     final otp = otpControllers.map((c) => c.text).join();
     FocusManager.instance.primaryFocus?.unfocus();
 
+    isLoading.value = true;
     final error = await _auth.forgotPasswordReset(
       nim: nim,
       otp: otp,
       newPassword: newPasswordController.text,
     );
+    isLoading.value = false;
 
     if (error != null) {
       AppToast.error(error, title: 'Gagal');

@@ -128,6 +128,7 @@ class _EditProfileViewState extends State<EditProfileView> {
       helper: 'Skill membantu sistem merekomendasikan proyek yang relevan.',
       child: StatefulBuilder(
         builder: (context, setSheetState) {
+          final c = AppC.of(context);
           void addSkill(String value) {
             final skill = value.trim();
             if (skill.isEmpty || skills.contains(skill)) return;
@@ -151,8 +152,8 @@ class _EditProfileViewState extends State<EditProfileView> {
                         skills = skills.where((item) => item != skill).toList();
                       });
                     },
-                    backgroundColor: AppColors.primarySoft,
-                    side: BorderSide(color: AppColors.border),
+                    backgroundColor: c.primarySoft,
+                    side: BorderSide(color: c.border),
                   );
                 }).toList(),
               ),
@@ -275,6 +276,7 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return SocialScaffold(
       title: 'Edit Profil',
       subtitle: 'Ubah bagian yang kamu perlukan',
@@ -318,18 +320,18 @@ class _EditProfileViewState extends State<EditProfileView> {
                         style: AppFonts.interStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        draft.bio,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppFonts.interStyle(
-                          fontSize: 12.5,
-                          height: 1.45,
-                          color: AppColors.textSecondary,
+                              color: c.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            draft.bio,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.interStyle(
+                              fontSize: 12.5,
+                              height: 1.45,
+                              color: c.textSecondary,
                         ),
                       ),
                     ],
@@ -357,8 +359,8 @@ class _EditProfileViewState extends State<EditProfileView> {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: draft.socialLink.isEmpty
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
+                          ? c.textSecondary
+                          : c.textPrimary,
                     ),
                   ),
                 ),
@@ -391,7 +393,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                     'Tambahkan pengalaman agar profil lebih meyakinkan.',
                     style: AppFonts.interStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   )
                 : Column(
@@ -1005,8 +1007,10 @@ class _MiniEditButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    final bg = c.grey600;
     return Material(
-      color: AppColors.grey900,
+      color: bg,
       shape: const CircleBorder(),
       child: InkWell(
         onTap: onTap,

@@ -157,7 +157,7 @@ class RoomChatView extends GetView<RoomChatController> {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: isMe ? AppColors.textPrimary : c.surface,
+                  color: isMe ? AppColors.primary500 : c.surface,
                   border: isMe ? null : Border.all(color: c.border),
                   boxShadow: isMe ? AppShadows.soft : const [],
                   borderRadius: BorderRadius.only(

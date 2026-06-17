@@ -457,9 +457,9 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
                                 : null,
                             child: hasPhoto
                                 ? null
-                                : const Icon(
+                                : Icon(
                                     FluentIcons.camera_24_regular,
-                                    color: AppColors.textSecondary,
+                                    color: c.textSecondary,
                                     size: 28,
                                   ),
                           ),

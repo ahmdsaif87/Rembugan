@@ -288,7 +288,7 @@ class ChatView extends GetView<ChatController> {
                                   ? FontWeight.w600
                                   : FontWeight.w400,
                               color: isUnread
-                                  ? AppColors.textPrimary
+                                  ? c.textPrimary
                                   : c.textSecondary,
                               height: 1.35,
                             ),

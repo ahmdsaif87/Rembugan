@@ -26,6 +26,7 @@ class ProfileView extends GetView<ProfileController> {
               avatarAsset: profile.avatarAsset,
               onBack: Get.back,
               onSettings: () => Get.toNamed(Routes.SETTINGS),
+              onEditCover: () => Get.toNamed(Routes.EDIT_PROFILE),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
@@ -75,11 +76,13 @@ class _ProfileCover extends StatelessWidget {
     required this.avatarAsset,
     required this.onBack,
     required this.onSettings,
+    required this.onEditCover,
   });
 
   final String avatarAsset;
   final VoidCallback onBack;
   final VoidCallback onSettings;
+  final VoidCallback onEditCover;
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +117,14 @@ class _ProfileCover extends StatelessWidget {
             child: _ProfileCircleButton(
               icon: FluentIcons.settings_24_regular,
               onTap: onSettings,
+            ),
+          ),
+          Positioned(
+            top: topPadding + 64,
+            right: 16,
+            child: _ProfileCircleButton(
+              icon: FluentIcons.image_edit_24_regular,
+              onTap: onEditCover,
             ),
           ),
           Positioned(
@@ -301,7 +312,7 @@ class _ProfileActions extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: c.surface,
+                        color: AppColors.white,
                       ),
                     ),
                   ],

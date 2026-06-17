@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/team_controller.dart';
 import 'workspace_detail_view.dart';
 
@@ -34,14 +35,30 @@ class TeamView extends GetView<TeamController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Proyek Tim',
-                      style: AppFonts.headingStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w600,
-                        color: c.textPrimary,
-                        height: 1.1,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Proyek Tim',
+                            style: AppFonts.headingStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w600,
+                              color: c.textPrimary,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                        Tooltip(
+                          message: 'Scan QR Proyek',
+                          child: IconButton(
+                            icon: const Icon(
+                              FluentIcons.scan_dash_24_regular,
+                              size: 22,
+                            ),
+                            onPressed: () => Get.toNamed(Routes.SCAN),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Row(

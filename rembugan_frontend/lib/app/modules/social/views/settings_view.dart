@@ -311,16 +311,16 @@ class _SettingsViewState extends State<SettingsView> {
                                             color: isDark
                                                 ? AppColors.white
                                                 : c.textTertiary,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Gelap',
-                                            style: AppFonts.satoshiStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: isDark
-                                                  ? AppColors.white
-                                                  : c.textTertiary,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'Gelap',
+                                                style: AppFonts.satoshiStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isDark
+                                                      ? AppColors.white
+                                                      : c.textTertiary,
                                             ),
                                           ),
                                         ],
@@ -825,7 +825,7 @@ class _SettingsViewState extends State<SettingsView> {
                           fontSize: 12,
                           color: isDark
                               ? AppColors.white54
-                              : AppColors.textSecondary,
+                              : c.textSecondary,
                         ),
                       ),
                     ],
@@ -857,11 +857,11 @@ class _SettingsViewState extends State<SettingsView> {
                           Get.offAllNamed(Routes.LOGIN);
                           AppToast.success('Sampai jumpa kembali di Rembugan!', title: 'Berhasil Keluar');
                         },
-                        loadingWidget: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.white,
+                          loadingWidget: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.white,
+                            ),
                           ),
-                        ),
                       );
                     },
                     child: Container(

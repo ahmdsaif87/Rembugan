@@ -30,6 +30,7 @@ import '../modules/personalization/bindings/personalization_binding.dart';
 import '../modules/personalization/views/personalization_view.dart';
 import '../modules/forgot_password/bindings/forgot_password_binding.dart';
 import '../modules/forgot_password/views/forgot_password_view.dart';
+import '../modules/team/views/scan_view.dart';
 
 part 'app_routes.dart';
 
@@ -48,6 +49,7 @@ class AppPages {
       name: _Paths.HOME,
       page: () => const HomeView(),
       binding: HomeBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage(
       name: _Paths.LOGIN,
@@ -68,16 +70,19 @@ class AppPages {
       name: _Paths.EXPLORE,
       page: () => const ExploreView(),
       binding: ExploreBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage(
       name: _Paths.TEAM,
       page: () => const TeamView(),
       binding: TeamBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage(
       name: _Paths.PROFILE,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+      transition: Transition.noTransition,
     ),
     GetPage(name: _Paths.OTHER_PROFILE, page: () => const OtherProfileView()),
     GetPage(name: _Paths.SEARCH, page: () => const SearchView()),
@@ -99,5 +104,6 @@ class AppPages {
       page: () => const ForgotPasswordView(),
       binding: ForgotPasswordBinding(),
     ),
+    GetPage(name: _Paths.SCAN, page: () => const ScanView()),
   ];
 }

@@ -285,11 +285,12 @@ class SkeletonLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surfaceSecondary,
+        color: c.surfaceSecondary,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
     );

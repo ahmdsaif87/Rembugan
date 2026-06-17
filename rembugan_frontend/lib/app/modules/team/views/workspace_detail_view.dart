@@ -6,6 +6,7 @@ import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../controllers/team_controller.dart';
+import 'widgets/qr_code_sheet.dart';
 
 class WorkspaceDetailView extends GetView<TeamController> {
   const WorkspaceDetailView({super.key});
@@ -266,6 +267,19 @@ class _WorkspaceActionSheet extends StatelessWidget {
                 : 'Workspace ini berisi chat tim dan board tugas.',
           ),
           const SizedBox(height: 14),
+          _ActionTile(
+            icon: FluentIcons.qr_code_24_regular,
+            title: 'Bagikan QR Proyek',
+            subtitle: 'Scan untuk bergabung ke workspace ini.',
+            onTap: () {
+              Navigator.pop(context);
+              QrCodeSheet.show(
+                workspaceId: ws.id,
+                workspaceName: ws.name,
+              );
+            },
+          ),
+          const SizedBox(height: 8),
           if (ws.isOwned) ...[
             _ActionTile(
               icon: FluentIcons.person_add_24_regular,
@@ -1150,7 +1164,7 @@ class _Bubble extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: msg.isMe
-                        ? c.textPrimary.withValues(alpha: 0.88)
+                        ? AppColors.primary500
                         : c.surfaceSecondary,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(AppRadius.md),
@@ -1832,7 +1846,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                                     colorScheme: ColorScheme.light(
                                       primary: AppColors.primary500,
                                       onPrimary: AppColors.white,
-                                      onSurface: AppColors.textPrimary,
+                                      onSurface: c.textPrimary,
                                     ),
                                     textButtonTheme: TextButtonThemeData(
                                       style: TextButton.styleFrom(

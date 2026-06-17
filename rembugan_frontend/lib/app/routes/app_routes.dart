@@ -23,6 +23,7 @@ abstract class Routes {
   static const LOADING_STATE = _Paths.LOADING_STATE;
   static const PERSONALIZATION = _Paths.PERSONALIZATION;
   static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
+  static const SCAN = _Paths.SCAN;
 }
 
 abstract class _Paths {
@@ -47,4 +48,5 @@ abstract class _Paths {
   static const LOADING_STATE = '/loading-state';
   static const PERSONALIZATION = '/personalization';
   static const FORGOT_PASSWORD = '/forgot-password';
+  static const SCAN = '/scan';
 }

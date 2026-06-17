@@ -22,21 +22,27 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: controller.goBack,
-                    icon: const Icon(
-                      FluentIcons.chevron_left_24_regular,
-                      color: AppColors.primary500,
-                      size: 25,
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: controller.goBack,
+                      icon: const Icon(
+                        FluentIcons.chevron_left_24_regular,
+                        color: AppColors.primary500,
+                        size: 25,
+                      ),
                     ),
-                  ),
+                    const Spacer(),
+                    _StepIndicator(current: controller.step.value, total: 4),
+                    const Spacer(),
+                    const SizedBox(width: 40),
+                  ],
                 ),
               ),
+              const SizedBox(height: 8),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     child: _buildStep(controller.step.value),
@@ -58,6 +64,33 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
       3 => _SuccessStep(key: const ValueKey(3), controller: controller),
       _ => const SizedBox(key: ValueKey(4)),
     };
+  }
+}
+
+class _StepIndicator extends StatelessWidget {
+  final int current;
+  final int total;
+
+  const _StepIndicator({required this.current, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(total, (i) {
+        final isActive = i <= current;
+        return Container(
+          width: 8,
+          height: 8,
+          margin: EdgeInsets.only(right: i == total - 1 ? 0 : 6),
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.primary500 : c.grey300,
+            shape: BoxShape.circle,
+          ),
+        );
+      }),
+    );
   }
 }
 
@@ -99,7 +132,12 @@ class _EmailStep extends StatelessWidget {
             },
           ),
           const SizedBox(height: 20),
-          AppButton(label: 'Kirim', onTap: controller.onSendOtp),
+          Obx(
+            () => AppButton(
+              label: 'Kirim',
+              onTap: controller.isLoading.value ? null : controller.onSendOtp,
+            ),
+          ),
         ],
       ),
     );
@@ -124,12 +162,13 @@ class _OtpStep extends StatelessWidget {
           width: 170,
           height: 140,
           fit: BoxFit.contain,
-          repeat: true,
+          repeat: false,
         ),
         const SizedBox(height: 10),
         _Title(
-          title: 'Cek Email Anda',
-            subtitle: 'Kode OTP telah dikirim ke email yang terdaftar dengan NIM $displayNim',
+          title: 'Cek email kamu',
+          subtitle:
+              'Kode OTP telah dikirim ke email yang terdaftar dengan NIM $displayNim. Email biasanya tiba dalam 1-2 menit. Periksa juga folder spam.',
         ),
         const SizedBox(height: 32),
         Row(
@@ -158,17 +197,19 @@ class _OtpStep extends StatelessWidget {
                     LengthLimitingTextInputFormatter(1),
                   ],
                   onChanged: (value) => controller.onOtpChanged(index, value),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: c.grey100,
                     contentPadding: EdgeInsets.zero,
                     border: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      borderSide: BorderSide(color: c.grey200),
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      borderSide: BorderSide(color: c.grey200),
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
                     ),
-                    focusedBorder: OutlineInputBorder(
+                    focusedBorder: const OutlineInputBorder(
                       borderSide: BorderSide(
                         color: AppColors.primary500,
                         width: 1.5,
@@ -182,7 +223,12 @@ class _OtpStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 28),
-        AppButton(label: 'Kirim', onTap: controller.onVerifyOtp),
+        Obx(
+          () => AppButton(
+            label: 'Kirim',
+            onTap: controller.isLoading.value ? null : controller.onVerifyOtp,
+          ),
+        ),
         const SizedBox(height: 20),
         Obx(() {
           final seconds = controller.resendSeconds.value;
@@ -227,12 +273,12 @@ class _PasswordStep extends StatelessWidget {
       key: controller.formKeyReset,
       child: Column(
         children: [
-          const SizedBox(height: 142),
+          const SizedBox(height: 92),
           const _Title(
             title: 'Buat Kata Sandi Baru',
-            subtitle: 'Buat kata sandi baru untuk mengamankan akunmu.',
+            subtitle: 'Buat kata sandi baru untuk mengamankan akunmu. Gunakan kata sandi yang kuat dan berbeda dari akun lain.',
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Obx(
             () => AppTextField(
               controller: controller.newPasswordController,
@@ -254,7 +300,7 @@ class _PasswordStep extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Obx(
             () => AppTextField(
               controller: controller.confirmPasswordController,
@@ -269,14 +315,19 @@ class _PasswordStep extends StatelessWidget {
                 if (value == null || value.isEmpty) {
                   return 'Konfirmasi kata sandi wajib diisi';
                 }
+                if (value != controller.newPasswordController.text) {
+                  return 'Kata sandi tidak cocok';
+                }
                 return null;
               },
             ),
           ),
-          const SizedBox(height: 28),
-          AppButton(
-            label: 'Simpan Kata Sandi',
-            onTap: controller.onResetPassword,
+          const SizedBox(height: 24),
+          Obx(
+            () => AppButton(
+              label: 'Simpan Kata Sandi',
+              onTap: controller.isLoading.value ? null : controller.onResetPassword,
+            ),
           ),
         ],
       ),
@@ -359,11 +410,12 @@ class _PasswordVisibilityButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return IconButton(
       onPressed: onTap,
       icon: Icon(
         hidden ? FluentIcons.eye_off_24_regular : FluentIcons.eye_24_regular,
-        color: AppColors.grey400,
+        color: c.grey400,
         size: 22,
       ),
     );
