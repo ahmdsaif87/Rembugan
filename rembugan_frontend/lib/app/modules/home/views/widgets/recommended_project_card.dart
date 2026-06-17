@@ -29,7 +29,6 @@ class _RecommendedProjectCardState extends State<RecommendedProjectCard> {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     final visibleSkills = widget.project.skills.take(2).toList();
-    final matchLabel = widget.index.isEven ? 'Sesuai skill' : 'Cocok jurusan';
 
     return Material(
       color: AppColors.transparent,
@@ -64,25 +63,8 @@ class _RecommendedProjectCardState extends State<RecommendedProjectCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.project.faculty.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 10.5,
-                          height: 1.2,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.info700,
-                        ),
-                      ),
-                    ),
-                    FeedMatchBadge(label: matchLabel),
-                  ],
-                ),
+                if (widget.project.matchScore > 0)
+                  FeedMatchBadge(label: 'Sesuai skill'),
                 const SizedBox(height: 10),
                 Text(
                   widget.project.title,

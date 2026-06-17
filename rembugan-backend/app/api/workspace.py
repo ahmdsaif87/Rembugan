@@ -116,7 +116,6 @@ async def _build_workspace_data(
     return {
         "id": str(project_full.id),
         "name": project_full.title,
-        "category": project_full.category or "",
         "description": project_full.description,
         "user_role": user_role or ROLE_ANGGOTA,
         "total_tasks": total_tasks,
@@ -267,7 +266,6 @@ async def _build_workspace_data_fast(
     return {
         "id": str(project.id),
         "name": project.title,
-        "category": project.category or "",
         "description": project.description,
         "user_role": user_role or ROLE_ANGGOTA,
         "total_tasks": total_tasks,

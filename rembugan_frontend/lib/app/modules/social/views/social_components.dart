@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_chrome.dart';
 
 class SocialScaffold extends StatelessWidget {
@@ -113,13 +114,7 @@ class SocialPostCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundImage: avatarUrl.isNotEmpty
-                ? NetworkImage(avatarUrl) as ImageProvider
-                : const AssetImage('lib/assets/img/avatar.png'),
-            backgroundColor: AppC.of(context).grey100,
-          ),
+          AppAvatar(photoUrl: avatarUrl, radius: 22),
 
           const SizedBox(width: 12),
           Expanded(

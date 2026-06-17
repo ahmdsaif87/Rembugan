@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+import hashlib
+import os
+from fastapi import APIRouter, Depends, HTTPException, Request
 from prisma import Prisma
 from app.core.security import verify_token
 from app.core.database import get_db
@@ -8,14 +10,30 @@ router = APIRouter(prefix="/competitions", tags=["Lomba / Competitions"])
 
 collection = get_competition_collection()
 
+POSTERS_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "posters")
+
+def _local_poster_url(poster_url: str) -> str:
+    """Return local static URL if cached, otherwise return original."""
+    if not poster_url:
+        return ""
+    url_hash = hashlib.md5(poster_url.encode()).hexdigest()
+    local_path = os.path.join(POSTERS_DIR, f"{url_hash}.jpg")
+    if os.path.exists(local_path):
+        return f"/static/posters/{url_hash}.jpg"
+    return ""
+
 @router.get("/all", summary="Lihat Semua Lomba")
-async def get_all_competitions():
+async def get_all_competitions(request: Request):
     """Ambil semua data lomba langsung dari MongoDB."""
     try:
         cursor = collection.find({}).limit(50)
         data = await cursor.to_list(length=50)
+        base = str(request.base_url).rstrip("/")
         for item in data:
             item["_id"] = str(item["_id"])
+            poster = item.get("poster", "")
+            local = _local_poster_url(poster)
+            item["poster"] = f"{base}{local}" if local else ""
         return {"status": "success", "total": len(data), "data": data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memuat data lomba: {str(e)}")

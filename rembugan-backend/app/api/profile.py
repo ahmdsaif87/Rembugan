@@ -12,9 +12,11 @@ router = APIRouter(prefix="/profile", tags=["Profil User"])
 
 class SettingsUpdateInput(BaseModel):
     """Data untuk update settings profil."""
+    full_name: Optional[str] = Field(None, description="Nama lengkap")
     handle: Optional[str] = Field(None, description="@username")
     bio: Optional[str] = Field(None, description="Bio singkat")
     photo_url: Optional[str] = Field(None, description="URL foto profil")
+    cover_url: Optional[str] = Field(None, description="URL foto sampul")
     social_links: Optional[dict] = Field(None, description="Link sosial media")
     major: Optional[str] = Field(None, description="Program studi / jurusan")
 
@@ -29,6 +31,8 @@ async def update_settings(
     uid = user_token.get("uid")
 
     update_data = {}
+    if data.full_name is not None:
+        update_data["full_name"] = data.full_name
     if data.handle is not None:
         existing = await db.user.find_first(where={"handle": data.handle, "id": {"not": uid}})
         if existing:
@@ -38,6 +42,8 @@ async def update_settings(
         update_data["bio"] = data.bio
     if data.photo_url is not None:
         update_data["photo_url"] = data.photo_url
+    if data.cover_url is not None:
+        update_data["cover_url"] = data.cover_url
     if data.social_links is not None:
         update_data["social_links"] = data.social_links
     if data.major is not None:
@@ -55,9 +61,11 @@ async def update_settings(
         "status": "success",
         "message": "Settings berhasil diupdate!",
         "data": {
+            "full_name": user.full_name,
             "handle": user.handle,
             "bio": user.bio,
             "photo_url": user.photo_url,
+            "cover_url": user.cover_url,
             "social_links": user.social_links,
             "major": user.major,
         },
@@ -89,6 +97,7 @@ async def get_recommended_users(
             "major": u.major,
             "bio": u.bio,
             "photo_url": u.photo_url,
+            "cover_url": u.cover_url,
             "skills": [s.skill.name for s in u.skills] if u.skills else [],
         })
 
@@ -106,10 +115,12 @@ async def search_users(
             "OR": [
                 {"full_name": {"contains": q, "mode": "insensitive"}},
                 {"nim": {"contains": q}},
+                {"major": {"contains": q, "mode": "insensitive"}},
             ]
         },
         take=20,
         order={"full_name": "asc"},
+        include={"skills": {"include": {"skill": True}}},
     )
     
     result = []
@@ -120,7 +131,9 @@ async def search_users(
             "nim": u.nim,
             "bio": u.bio,
             "photo_url": u.photo_url,
+            "cover_url": u.cover_url,
             "major": u.major,
+            "skills": [s.skill.name for s in u.skills] if u.skills else [],
         })
     
     return {"status": "success", "total": len(result), "data": result}
@@ -190,6 +203,7 @@ async def get_profile_func(
         "major": user.major,
         "bio": user.bio,
         "photo_url": user.photo_url,
+        "cover_url": user.cover_url,
         "social_links": user.social_links,
         "skills": skills,
         "experiences": [

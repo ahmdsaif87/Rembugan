@@ -1,6 +1,7 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/app_avatar.dart';
 
 class FeedProjectAvatarStack extends StatelessWidget {
   const FeedProjectAvatarStack({required this.count, super.key});
@@ -28,10 +29,7 @@ class FeedProjectAvatarStack extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: c.surface, width: 1.4),
                 ),
-                child: CircleAvatar(
-                  radius: 10,
-                  backgroundImage: AssetImage('lib/assets/img/avatar.png'),
-                ),
+                child: const AppAvatar(radius: 10),
               ),
             ),
           Positioned(

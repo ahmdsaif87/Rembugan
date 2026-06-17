@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -14,6 +15,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload, qr, saved, posts
 from app.api.admin import router as admin_router
 
@@ -63,25 +65,21 @@ app.include_router(saved.router)
 app.include_router(posts.router)
 app.include_router(admin_router)
 
+# Serve static files (poster images, etc.)
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 # Middleware CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://0.0.0.0:3000",
-        "http://localhost:36211",
-        "https://rembugan.vercel.app",
+        "*",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=[
         "Authorization", "Content-Type", "Accept",
-        "Origin", "X-Requested-With",
+        "Origin", "X-Requested-With", "ngrok-skip-browser-warning",
     ],
     expose_headers=["X-Request-ID"],
 )

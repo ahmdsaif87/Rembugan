@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import '../../explore/domain/entities/project.dart';
 import '../../explore/domain/entities/competition.dart';
-import '../../explore/data/repositories/fake_explore_repository.dart';
+import '../../explore/domain/repositories/explore_repository.dart';
 import 'package:rembugan/app/core/widgets/app_toast.dart';
 
 class RecommendedPerson {
@@ -47,10 +47,12 @@ class HomeController extends GetxController {
     hasError.value = false;
     errorMessage.value = '';
     try {
-      final repo = FakeExploreRepository();
+      final repo = Get.find<ExploreRepository>();
 
-      recommendedProjects.assignAll(repo.getProjects());
-      recommendedCompetitions.assignAll(repo.getCompetitions());
+      final projectResult = await repo.getProjects();
+      recommendedProjects.assignAll(projectResult.projects);
+      final competitions = await repo.getCompetitions();
+      recommendedCompetitions.assignAll(competitions);
       recommendedPeople.assignAll([
         RecommendedPerson(
           name: 'Dede Fernanda',

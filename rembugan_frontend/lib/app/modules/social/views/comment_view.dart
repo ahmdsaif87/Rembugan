@@ -2,6 +2,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
 
 void showCommentsSheet(BuildContext context) {
   showModalBottomSheet<void>(
@@ -339,10 +340,7 @@ class _ReplyComposer extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 18,
-            backgroundImage: AssetImage('lib/assets/img/avatar.png'),
-          ),
+          const AppAvatar(radius: 18),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(

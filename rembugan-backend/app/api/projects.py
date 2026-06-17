@@ -40,8 +40,6 @@ async def create_project(
             }
         },
     }
-    if data.category is not None:
-        create_data["category"] = data.category
     if data.faculty is not None:
         create_data["faculty"] = data.faculty
     if data.deadline is not None:
@@ -63,7 +61,6 @@ async def create_project(
             "description": project.description,
             "required_skills": project.required_skills,
             "status": project.status,
-            "category": project.category,
             "faculty": project.faculty,
             "deadline": tz_iso(project.deadline) if project.deadline else None,
             "total_slots": project.total_slots,
@@ -78,7 +75,6 @@ async def create_project(
 async def get_all_projects(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
-    category: str = Query(None, description="Filter by category"),
     faculty: str = Query(None, description="Filter by faculty"),
     min_slots: int = Query(None, ge=1, description="Min total slots"),
     max_slots: int = Query(None, ge=1, description="Max total slots"),
@@ -90,7 +86,7 @@ async def get_all_projects(
     Ambil daftar semua proyek dengan status 'open', lengkap dengan info owner.
     Daftar diurutkan berdasarkan 'Match Score' (kecocokan skill user dengan kebutuhan proyek).
 
-    Mendukung filter: category, faculty, min_slots, max_slots, deadline_before.
+    Mendukung filter: faculty, min_slots, max_slots, deadline_before.
     """
     uid = user_token.get("uid")
     
@@ -107,8 +103,6 @@ async def get_all_projects(
 
     # Build filter conditions
     where_conditions = {"status": PJ_OPEN, "owner_id": {"not": uid}}
-    if category:
-        where_conditions["category"] = category
     if faculty:
         where_conditions["faculty"] = faculty
     if min_slots is not None:
@@ -133,7 +127,9 @@ async def get_all_projects(
         where=where_conditions,
         include={
             "owner": True,
-            "members": True,
+            "members": {
+                "include": {"user": True}
+            },
         },
         order={"created_at": "desc"},
         take=max_fetch,
@@ -142,18 +138,22 @@ async def get_all_projects(
     scored_projects = []
     for p in projects:
         score = calculate_match_score(user_skills, p.required_skills)
+        member_names = [m.user.full_name for m in p.members if m.user] if p.members else []
+        member_avatars = [m.user.photo_url for m in p.members if m.user and m.user.photo_url] if p.members else []
         scored_projects.append({
             "id": p.id,
             "title": p.title,
             "description": p.description,
             "required_skills": p.required_skills,
             "status": p.status,
-            "category": p.category,
-            "faculty": p.faculty,
             "deadline": tz_iso(p.deadline) if p.deadline else None,
             "total_slots": p.total_slots,
             "filled_slots": len(p.members) if p.members else 0,
             "owner_name": p.owner.full_name if p.owner else None,
+            "owner_photo": p.owner.photo_url if p.owner else None,
+            "owner_id": str(p.owner.id) if p.owner else None,
+            "member_names": member_names,
+            "member_avatars": member_avatars,
             "member_count": len(p.members) if p.members else 0,
             "match_score": score,
             "created_at": tz_iso(p.created_at),
@@ -197,7 +197,6 @@ async def get_my_projects(
             "description": p.description,
             "required_skills": p.required_skills,
             "status": p.status,
-            "category": p.category,
             "faculty": p.faculty,
             "deadline": tz_iso(p.deadline) if p.deadline else None,
             "total_slots": p.total_slots,
@@ -257,7 +256,6 @@ async def get_project_detail(
             "description": project.description,
             "required_skills": project.required_skills,
             "status": project.status,
-            "category": project.category,
             "faculty": project.faculty,
             "deadline": tz_iso(project.deadline) if project.deadline else None,
             "total_slots": project.total_slots,

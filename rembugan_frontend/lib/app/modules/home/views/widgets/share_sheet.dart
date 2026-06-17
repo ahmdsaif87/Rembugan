@@ -2,7 +2,8 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/theme.dart';
-import 'package:rembugan/app/core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_avatar.dart';
+import '../../../../core/widgets/app_toast.dart';
 
 class ShareSheet extends StatefulWidget {
   const ShareSheet({super.key});
@@ -97,10 +98,7 @@ class _ShareSheetState extends State<ShareSheet> {
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundImage: AssetImage(friend['avatar']),
-                      ),
+                      const AppAvatar(radius: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(

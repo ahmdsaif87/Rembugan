@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../controllers/team_controller.dart';
@@ -1120,10 +1121,7 @@ class _Bubble extends StatelessWidget {
             : MainAxisAlignment.start,
         children: [
           if (!msg.isMe) ...[
-            const CircleAvatar(
-              radius: 13,
-              backgroundImage: AssetImage('lib/assets/img/avatar.png'),
-            ),
+            const AppAvatar(radius: 13),
             const SizedBox(width: 8),
           ],
           Flexible(
