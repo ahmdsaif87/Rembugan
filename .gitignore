@@ -30,7 +30,7 @@ docs/
 .impeccable/
 
 # Static
-static/posters/
+rembugan-backend/app/static/
 
 # Build artifacts
 rembugan_frontend/android/build/
