@@ -4,32 +4,12 @@ import { useState, useMemo } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
-  MoreVerticalIcon,
   ImageOff,
-  Trash2Icon,
-  EyeIcon,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { DataTableGeneric } from "@/components/ui/data-table-generic"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { RowActions } from "@/components/ui/row-actions"
 import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchShowcases, deleteShowcase } from "@/lib/api"
 
@@ -68,7 +48,7 @@ export default function ShowcasesPage() {
     },
   })
 
-  const columns: ColumnDef<Showcase>[] = [
+  const columns = useMemo((): ColumnDef<Showcase>[] => [
     {
       accessorKey: "id",
       header: "ID",
@@ -82,7 +62,7 @@ export default function ShowcasesPage() {
       accessorKey: "author",
       header: "Author",
       cell: ({ row }) => (
-        <span className="font-medium">
+        <span className="table-primary">
           {row.original.author?.full_name || "—"}
         </span>
       ),
@@ -91,7 +71,7 @@ export default function ShowcasesPage() {
       accessorKey: "content",
       header: "Content",
       cell: ({ row }) => (
-        <span className="line-clamp-2 max-w-xs text-sm text-muted-foreground">
+        <span className="line-clamp-2 max-w-xs text-sm table-secondary">
           {row.original.content}
         </span>
       ),
@@ -152,53 +132,15 @@ export default function ShowcasesPage() {
       cell: ({ row }) => {
         const showcase = row.original
         return (
-          <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem onClick={() => { setDetailShowcase(row.original); setDetailOpen(true); }}>
-                  <EyeIcon />
-                  View Details
-                </DropdownMenuItem>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2Icon />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete this showcase.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                    onClick={() => deleteMutation.mutate(showcase.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <RowActions
+            onView={() => { setDetailShowcase(showcase); setDetailOpen(true) }}
+            onDelete={() => deleteMutation.mutate(showcase.id)}
+            deleteLabel="this showcase"
+          />
         )
       },
     },
-  ]
+  ], [deleteMutation])
 
   return (
     <div className="flex flex-col gap-4">
@@ -228,9 +170,9 @@ export default function ShowcasesPage() {
         title="Showcase Details"
         fields={[
           { label: "Author", value: detailShowcase?.author?.full_name },
-          { label: "Content", value: detailShowcase?.content },
-          { label: "Tags", value: detailShowcase?.tags?.join(", ") },
-          { label: "Media URLs", value: detailShowcase?.media_urls?.join(", ") },
+          { label: "Content", value: detailShowcase?.content, variant: "bio" },
+          { label: "Tags", value: detailShowcase?.tags?.join(", "), variant: "badge" },
+          { label: "Media", value: detailShowcase?.media_urls?.join(", "), variant: "badge" },
           { label: "Likes", value: String(detailShowcase?.likes?.length ?? 0) },
           { label: "Comments", value: String(detailShowcase?.comments?.length ?? 0) },
           { label: "Created", value: detailShowcase?.created_at ? new Date(detailShowcase.created_at).toLocaleDateString() : "—" },

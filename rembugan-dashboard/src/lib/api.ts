@@ -1,5 +1,6 @@
 // API utilities for backend integration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 function getAuthHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
@@ -165,6 +166,17 @@ export async function fetchCompetitionsStats() {
   } catch (error) {
     console.error('Error fetching competition stats:', error)
     return { status: 'error', data: { by_source: [], by_deadline: [], by_kategori: [] } }
+  }
+}
+
+export async function fetchShowcaseById(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/showcase/${id}`, { headers: getAuthHeaders() })
+    if (!response.ok) throw new Error('Failed to fetch showcase')
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching showcase:', error)
+    return { status: 'error', data: null }
   }
 }
 

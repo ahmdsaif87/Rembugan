@@ -45,15 +45,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         localStorage.setItem("sidebar_state", String(open));
       }}
     >
-      {/* Outer flex container: sidebar + main side by side */}
-      <div
-        style={{
-          display: "flex",
-          minHeight: "100svh",
-          width: "100%",
-        }}
-      >
-        {/* Sidebar — tidak fixed, ikut flow */}
+      <div className="flex min-h-screen w-full">
         <div
           style={{
             width: sidebarOpen ? "16rem" : "0px",
@@ -69,17 +61,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <AppSidebar />
         </div>
 
-        {/* Main content — melebar mengisi sisa ruang */}
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        <div className="flex flex-1 min-w-0 flex-col">
           <SiteHeader onToggleSidebar={toggleSidebar} />
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div className="flex-1 flex flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               <div className="flex flex-col gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-6">
                 {children}

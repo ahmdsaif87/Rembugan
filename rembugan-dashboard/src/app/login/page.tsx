@@ -48,10 +48,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-sm shadow-xl border-border/50">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.08),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.12),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,hsl(var(--primary)/0.06),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_bottom_right,hsl(var(--primary)/0.08),transparent_50%)]" />
+      <Card className="relative w-full max-w-sm shadow-2xl border-border/50 backdrop-blur-sm">
         <CardHeader className="space-y-2 flex flex-col items-center text-center pb-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground mb-2">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 mb-2">
             <MessageSquare className="h-7 w-7" />
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">Rembugan Dashboard</CardTitle>
@@ -62,7 +64,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive font-medium text-center">
+              <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive font-medium text-center border border-destructive/20">
                 {error}
               </div>
             )}
@@ -96,7 +98,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full shadow-lg shadow-primary/20" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

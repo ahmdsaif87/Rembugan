@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const routeLabels: Record<string, string> = {
   "/": "Overview",
@@ -33,12 +34,12 @@ export function SiteHeader({ onToggleSidebar }: SiteHeaderProps) {
   const pageLabel = routeLabels[pathname] || "Dashboard"
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-sm">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7"
+          className="h-8 w-8"
           onClick={onToggleSidebar}
           aria-label="Toggle Sidebar"
         >
@@ -65,6 +66,9 @@ export function SiteHeader({ onToggleSidebar }: SiteHeaderProps) {
             )}
           </BreadcrumbList>
         </Breadcrumb>
+        <div className="ml-auto">
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

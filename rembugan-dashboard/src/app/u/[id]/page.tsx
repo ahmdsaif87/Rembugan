@@ -21,6 +21,29 @@ interface ProfileData {
   skills: string[]
 }
 
+const lightVars = {
+  "--background": "0 0% 100%",
+  "--foreground": "222 34% 11%",
+  "--card": "0 0% 100%",
+  "--card-foreground": "222 34% 11%",
+  "--popover": "0 0% 100%",
+  "--popover-foreground": "222 34% 11%",
+  "--primary": "234 90% 63%",
+  "--primary-foreground": "0 0% 100%",
+  "--secondary": "220 3% 96%",
+  "--secondary-foreground": "222 34% 11%",
+  "--muted": "220 3% 96%",
+  "--muted-foreground": "227 8% 46%",
+  "--accent": "220 3% 96%",
+  "--accent-foreground": "222 34% 11%",
+  "--destructive": "0 84% 59%",
+  "--destructive-foreground": "0 0% 100%",
+  "--border": "216 11% 91%",
+  "--input": "216 11% 91%",
+  "--ring": "234 90% 63%",
+  "--radius": "0.75rem",
+} as React.CSSProperties
+
 export default function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
@@ -63,7 +86,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30">
+      <div style={lightVars} className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
@@ -71,7 +94,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
 
   if (error || !profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30">
+      <div style={lightVars} className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30">
         <Card className="w-full max-w-sm shadow-lg">
           <CardContent className="flex flex-col items-center gap-4 py-12">
             <User className="h-12 w-12 text-muted-foreground/50" />
@@ -88,7 +111,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
   const initials = profile.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30 p-4">
+    <div style={lightVars} className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30 p-4">
       <Card className="w-full max-w-sm shadow-xl border-border/50">
         <div className="flex flex-col items-center pt-8 pb-4 px-6">
           <Avatar className="h-24 w-24 mb-4 ring-4 ring-primary/10">
@@ -96,19 +119,26 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
             <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
           </Avatar>
           <h1 className="text-2xl font-bold tracking-tight text-center">{profile.full_name}</h1>
-          <p className="text-sm text-muted-foreground">{profile.nim} &middot; {profile.major}</p>
+          <p className="text-sm text-muted-foreground">{profile.major}</p>
         </div>
         <CardContent className="space-y-4 pb-8 px-6">
           {profile.bio && (
-            <p className="text-sm text-center text-muted-foreground leading-relaxed">{profile.bio}</p>
+            <p className="text-sm text-center text-muted-foreground leading-relaxed line-clamp-3">
+              {profile.bio}
+            </p>
           )}
           {profile.skills.length > 0 && (
             <div className="flex flex-wrap justify-center gap-1.5">
-              {profile.skills.map((skill) => (
+              {profile.skills.slice(0, 3).map((skill) => (
                 <Badge key={skill} variant="secondary" className="text-xs">
                   {skill}
                 </Badge>
               ))}
+              {profile.skills.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{profile.skills.length - 3}
+                </Badge>
+              )}
             </div>
           )}
           <div className="flex flex-col gap-2 pt-2">

@@ -4,20 +4,10 @@ import { useState, useMemo } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
-  MoreVerticalIcon,
   FileX,
-  Trash2Icon,
-  EyeIcon,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -26,17 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DataTableGeneric } from "@/components/ui/data-table-generic"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { RowActions } from "@/components/ui/row-actions"
 import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchApplications, deleteApplication } from "@/lib/api"
 
@@ -86,7 +66,7 @@ export default function ApplicationsPage() {
     return applications.filter((a) => a.status === statusFilter)
   }, [applications, statusFilter])
 
-  const columns: ColumnDef<Application>[] = [
+  const columns = useMemo((): ColumnDef<Application>[] => [
     {
       accessorKey: "id",
       header: "ID",
@@ -99,7 +79,7 @@ export default function ApplicationsPage() {
       accessorFn: (row) => row.project?.title,
       header: "Project",
       cell: ({ row }) => (
-        <span className="font-medium">
+        <span className="table-primary">
           {row.original.project?.title || `Project ${row.original.project_id}`}
         </span>
       ),
@@ -140,53 +120,15 @@ export default function ApplicationsPage() {
       cell: ({ row }) => {
         const app = row.original
         return (
-          <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem onClick={() => { setDetailApp(row.original); setDetailOpen(true); }}>
-                  <EyeIcon />
-                  View Details
-                </DropdownMenuItem>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2Icon />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete this application.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                    onClick={() => deleteMutation.mutate(String(app.id))}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <RowActions
+            onView={() => { setDetailApp(app); setDetailOpen(true) }}
+            onDelete={() => deleteMutation.mutate(String(app.id))}
+            deleteLabel="this application"
+          />
         )
       },
     },
-  ]
+  ], [deleteMutation])
 
   return (
     <div className="flex flex-col gap-4">

@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Activity, Calendar, Tag, Trash2, List, EyeIcon, MoreVerticalIcon } from "lucide-react"
+import { Activity, Calendar, Tag, List } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -37,6 +37,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 
+import { RowActions } from "@/components/ui/row-actions"
 import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchCompetitions, deleteCompetition } from "@/lib/api"
 
@@ -146,10 +147,12 @@ export default function CompetitionsPage() {
 
       <Card className="border-border/50">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-violet-50 p-2 dark:bg-violet-950/20">
+                <Activity className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              </div>
               <div>
-                <CardTitle>By Source</CardTitle>
+                <CardTitle className="text-base">By Source</CardTitle>
                 <CardDescription>Distribution by source</CardDescription>
               </div>
             </div>
@@ -159,11 +162,15 @@ export default function CompetitionsPage() {
               {sourceData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sourceData} layout="vertical" margin={{ top: 10, right: 30, left: 80, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#333" />
-                    <XAxis type="number" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis dataKey="name" type="category" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#ffffffff', borderColor: '#374151', borderRadius: '8px' }}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
                     />
                     <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Competitions" />
                   </BarChart>
@@ -180,10 +187,12 @@ export default function CompetitionsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="border-border/50">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-amber-50 p-2 dark:bg-amber-950/20">
+                <Calendar className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
               <div>
-                <CardTitle>By Deadline</CardTitle>
+                <CardTitle className="text-base">By Deadline</CardTitle>
                 <CardDescription>Competitions grouped by deadline</CardDescription>
               </div>
             </div>
@@ -193,23 +202,27 @@ export default function CompetitionsPage() {
               {deadlineData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={deadlineData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="name"
-                      stroke="#888"
+                      stroke="hsl(var(--muted-foreground))"
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
                     />
                     <YAxis
-                      stroke="#888"
+                      stroke="hsl(var(--muted-foreground))"
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
                     />
                     <Tooltip
-                      cursor={{fill: 'rgba(255, 255, 255, 0.05)'}}
-                      contentStyle={{ backgroundColor: '#ffffffff', borderColor: '#374151', borderRadius: '8px' }}
+                      cursor={{fill: 'hsl(var(--accent))'}}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
                     />
                     <Bar
                       dataKey="total"
@@ -230,10 +243,12 @@ export default function CompetitionsPage() {
 
         <Card className="border-border/50">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-emerald-50 p-2 dark:bg-emerald-950/20">
+                <Tag className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
               <div>
-                <CardTitle>By Category</CardTitle>
+                <CardTitle className="text-base">By Category</CardTitle>
                 <CardDescription>Competitions grouped by category</CardDescription>
               </div>
             </div>
@@ -243,11 +258,15 @@ export default function CompetitionsPage() {
               {kategoriData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={kategoriData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
-                    <XAxis dataKey="name" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#ffffffff', borderColor: '#374151', borderRadius: '8px' }}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
                     />
                     <Area type="monotone" dataKey="total" fill="#10b981" fillOpacity={0.3} stroke="#10b981" strokeWidth={2} name="Competitions" />
                   </AreaChart>
@@ -264,10 +283,12 @@ export default function CompetitionsPage() {
 
       <Card className="border-border/50">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <List className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <List className="h-5 w-5 text-primary" />
+            </div>
             <div>
-              <CardTitle>All Scraped Competitions</CardTitle>
+              <CardTitle className="text-base">All Scraped Competitions</CardTitle>
               <CardDescription>Manage the raw data obtained from scraping</CardDescription>
             </div>
           </div>
@@ -285,15 +306,15 @@ export default function CompetitionsPage() {
             </TableHeader>
             <TableBody>
               {competitions.length > 0 ? (
-                competitions.map((comp) => (
-                  <TableRow key={comp._id || comp.id || Math.random().toString()} className="border-border/50">
+                competitions.map((comp, idx) => (
+                  <TableRow key={comp._id || comp.id || `comp-${idx}`} className="border-border/50">
                     <TableCell>
                       <Badge variant="secondary" className="text-xs">
                         {comp.sumber || "Unknown"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium max-w-sm">
-                      <p className="line-clamp-2">{comp.judul}</p>
+                    <TableCell className="max-w-sm">
+                      <p className="line-clamp-2 table-primary">{comp.judul}</p>
                     </TableCell>
                     <TableCell>
                       {comp.kategori ? (
@@ -329,42 +350,11 @@ export default function CompetitionsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       {comp._id && (
-                        <AlertDialog>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="flex size-8 text-muted-foreground data-[state=open]:bg-muted">
-                                <MoreVerticalIcon />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-32">
-                              <DropdownMenuItem onClick={() => { setDetailComp(comp); setDetailOpen(true); }}>
-                                <EyeIcon />
-                                View Details
-                              </DropdownMenuItem>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-destructive">
-                                  <Trash2 />
-                                  Delete
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the scraped competition.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteMutation.mutate(comp._id!)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <RowActions
+                          onView={() => { setDetailComp(comp); setDetailOpen(true) }}
+                          onDelete={() => deleteMutation.mutate(comp._id!)}
+                          deleteLabel="this competition"
+                        />
                       )}
                     </TableCell>
                   </TableRow>

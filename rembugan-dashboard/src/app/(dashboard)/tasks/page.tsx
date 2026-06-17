@@ -4,20 +4,10 @@ import { useState, useMemo } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
-  MoreVerticalIcon,
   ClipboardX,
-  Trash2Icon,
-  EyeIcon,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -26,17 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DataTableGeneric } from "@/components/ui/data-table-generic"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { RowActions } from "@/components/ui/row-actions"
 import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchTasks, deleteTask } from "@/lib/api"
 
@@ -87,7 +67,7 @@ export default function TasksPage() {
     return tasks.filter((t) => t.status === statusFilter)
   }, [tasks, statusFilter])
 
-  const columns: ColumnDef<Task>[] = [
+  const columns = useMemo((): ColumnDef<Task>[] => [
     {
       accessorKey: "id",
       header: "ID",
@@ -99,7 +79,7 @@ export default function TasksPage() {
       accessorKey: "title",
       header: "Title",
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.title}</span>
+        <span className="table-primary">{row.original.title}</span>
       ),
     },
     {
@@ -164,53 +144,15 @@ export default function TasksPage() {
       cell: ({ row }) => {
         const task = row.original
         return (
-          <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem onClick={() => { setDetailTask(row.original); setDetailOpen(true); }}>
-                  <EyeIcon />
-                  View Details
-                </DropdownMenuItem>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2Icon />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete task "{task.title}".
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                    onClick={() => deleteMutation.mutate(String(task.id))}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <RowActions
+            onView={() => { setDetailTask(task); setDetailOpen(true) }}
+            onDelete={() => deleteMutation.mutate(String(task.id))}
+            deleteLabel={`task "${task.title}"`}
+          />
         )
       },
     },
-  ]
+  ], [deleteMutation])
 
   return (
     <div className="flex flex-col gap-4">

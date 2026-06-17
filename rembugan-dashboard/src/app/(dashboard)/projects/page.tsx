@@ -1,25 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ColumnDef } from "@tanstack/react-table"
 import {
-  MoreVerticalIcon,
   FolderX,
-  Trash2Icon,
-  EyeIcon,
   QrCodeIcon,
   Loader2,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -29,17 +20,7 @@ import {
 } from "@/components/ui/select"
 import { DataTableGeneric } from "@/components/ui/data-table-generic"
 import { DetailSheet } from "@/components/ui/detail-sheet"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { RowActions } from "@/components/ui/row-actions"
 import { fetchProjects, deleteProject } from "@/lib/api"
 import { QrCodeDialog } from "@/components/qr-code"
 import { toast } from "sonner"
@@ -84,7 +65,7 @@ export default function ProjectsPage() {
     },
   })
 
-  async function handleGenerateQr(project: Project) {
+  const handleGenerateQr = useCallback(async (project: Project) => {
     setQrLoading(true)
     setQrProject(project)
     setQrInviteData("")
@@ -110,7 +91,7 @@ export default function ProjectsPage() {
     } finally {
       setQrLoading(false)
     }
-  }
+  }, [])
 
   const deleteMutation = useMutation({
     mutationFn: deleteProject,
@@ -128,7 +109,7 @@ export default function ProjectsPage() {
     return projects.filter((p) => p.status === statusFilter)
   }, [projects, statusFilter])
 
-  const columns: ColumnDef<Project>[] = [
+  const columns = useMemo((): ColumnDef<Project>[] => [
     {
       id: "qr",
       header: "QR",
@@ -162,8 +143,8 @@ export default function ProjectsPage() {
       header: "Title",
       cell: ({ row }) => (
         <div>
-          <p className="font-medium">{row.original.title}</p>
-          <p className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
+          <p className="table-primary">{row.original.title}</p>
+          <p className="text-xs table-secondary line-clamp-1 max-w-xs">
             {row.original.description}
           </p>
         </div>
@@ -239,57 +220,22 @@ export default function ProjectsPage() {
       cell: ({ row }) => {
         const project = row.original
         return (
-          <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem onClick={() => { setDetailProject(project); setDetailOpen(true); }}>
-                  <EyeIcon />
-                  View Details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleGenerateQr(project)} disabled={qrLoading}>
-                  {qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCodeIcon />}
-                  {qrLoading ? "Generating..." : "QR Invite"}
-                </DropdownMenuItem>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2Icon />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete project "{project.title}" and all its data.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                    onClick={() => deleteMutation.mutate(String(project.id))}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <RowActions
+            onView={() => { setDetailProject(project); setDetailOpen(true) }}
+            onDelete={() => deleteMutation.mutate(String(project.id))}
+            deleteLabel={`project "${project.title}" and all its data`}
+            extraItems={[
+              {
+                icon: qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCodeIcon />,
+                label: qrLoading ? "Generating..." : "QR Invite",
+                onClick: () => handleGenerateQr(project),
+              },
+            ]}
+          />
         )
       },
     },
-  ]
+  ], [deleteMutation, qrLoading, handleGenerateQr])
 
   return (
     <div className="flex flex-col gap-4">
@@ -335,10 +281,10 @@ export default function ProjectsPage() {
         title={detailProject?.title || "Project Details"}
         fields={[
           { label: "Title", value: detailProject?.title },
-          { label: "Description", value: detailProject?.description },
+          { label: "Description", value: detailProject?.description, variant: "bio" },
           { label: "Status", value: detailProject?.status },
           { label: "Owner", value: detailProject?.owner?.full_name },
-          { label: "Required Skills", value: detailProject?.required_skills?.join(", ") },
+          { label: "Required Skills", value: detailProject?.required_skills?.join(", "), variant: "badge" },
           { label: "Members", value: String(detailProject?.members?.length ?? 0) },
           { label: "Tasks", value: String(detailProject?.tasks?.length ?? 0) },
           { label: "Created", value: detailProject?.created_at ? new Date(detailProject.created_at).toLocaleDateString() : "—" },
