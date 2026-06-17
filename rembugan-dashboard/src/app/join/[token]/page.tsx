@@ -15,6 +15,29 @@ interface InviteData {
   project_title: string | null
 }
 
+const lightVars = {
+  "--background": "0 0% 100%",
+  "--foreground": "222 34% 11%",
+  "--card": "0 0% 100%",
+  "--card-foreground": "222 34% 11%",
+  "--popover": "0 0% 100%",
+  "--popover-foreground": "222 34% 11%",
+  "--primary": "234 90% 63%",
+  "--primary-foreground": "0 0% 100%",
+  "--secondary": "220 3% 96%",
+  "--secondary-foreground": "222 34% 11%",
+  "--muted": "220 3% 96%",
+  "--muted-foreground": "227 8% 46%",
+  "--accent": "220 3% 96%",
+  "--accent-foreground": "222 34% 11%",
+  "--destructive": "0 84% 59%",
+  "--destructive-foreground": "0 0% 100%",
+  "--border": "216 11% 91%",
+  "--input": "216 11% 91%",
+  "--ring": "234 90% 63%",
+  "--radius": "0.75rem",
+} as React.CSSProperties
+
 export default function JoinProjectPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params)
   const router = useRouter()
@@ -57,7 +80,7 @@ export default function JoinProjectPage({ params }: { params: Promise<{ token: s
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30">
+      <div style={lightVars} className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
@@ -65,7 +88,7 @@ export default function JoinProjectPage({ params }: { params: Promise<{ token: s
 
   if (error || !invite) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30 p-4">
+      <div style={lightVars} className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30 p-4">
         <Card className="w-full max-w-sm shadow-lg">
           <CardContent className="flex flex-col items-center gap-4 py-12">
             <AlertCircle className="h-12 w-12 text-destructive/50" />
@@ -80,7 +103,7 @@ export default function JoinProjectPage({ params }: { params: Promise<{ token: s
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30 p-4">
+    <div style={lightVars} className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/30 p-4">
       <Card className="w-full max-w-sm shadow-xl border-border/50">
         <div className="flex flex-col items-center pt-8 pb-4 px-6">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">

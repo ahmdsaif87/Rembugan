@@ -6,26 +6,17 @@ import {
   ColumnDef,
 } from "@tanstack/react-table"
 import {
-  MoreVerticalIcon,
   UserX,
-  Trash2Icon,
-  EyeIcon,
   PlusIcon,
   Loader2,
   QrCodeIcon,
+  Trash2Icon,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -42,10 +33,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { DataTableGeneric } from "@/components/ui/data-table-generic"
 import { DetailSheet } from "@/components/ui/detail-sheet"
+import { RowActions } from "@/components/ui/row-actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,7 +127,7 @@ export default function UsersPage() {
     )
   }, [users, onboardFilter])
 
-  const columns: ColumnDef<User>[] = [
+  const columns = useMemo((): ColumnDef<User>[] => [
     {
       accessorKey: "full_name",
       header: "Name",
@@ -155,8 +146,8 @@ export default function UsersPage() {
               <AvatarImage src={user.photo_url || undefined} alt={user.full_name} />
               <AvatarFallback className="rounded-full text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <div>
-              <p className="font-medium">{user.full_name}</p>
+              <div>
+              <p className="table-primary">{user.full_name}</p>
               <p className="text-xs text-muted-foreground">{user.nim}</p>
             </div>
           </div>
@@ -243,57 +234,22 @@ export default function UsersPage() {
       cell: ({ row }) => {
         const user = row.original
         return (
-          <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem onClick={() => { setDetailUser(user); setDetailOpen(true); }}>
-                  <EyeIcon />
-                  View Details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setQrUser(user); setQrOpen(true); }}>
-                  <QrCodeIcon />
-                  QR Profile
-                </DropdownMenuItem>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2Icon />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete {user.full_name} and remove their data.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                    onClick={() => deleteMutation.mutate(user.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <RowActions
+            onView={() => { setDetailUser(user); setDetailOpen(true) }}
+            onDelete={() => deleteMutation.mutate(user.id)}
+            deleteLabel={`${user.full_name} and remove their data`}
+            extraItems={[
+              {
+                icon: <QrCodeIcon />,
+                label: "QR Profile",
+                onClick: () => { setQrUser(user); setQrOpen(true) },
+              },
+            ]}
+          />
         )
       },
     },
-  ]
+  ], [deleteMutation])
 
   return (
     <div className="flex flex-col gap-4">
@@ -305,12 +261,10 @@ export default function UsersPage() {
           </p>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          </DialogTrigger>
+          <Button onClick={() => setAddOpen(true)}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
           <DialogContent className="sm:max-w-md">
             <form onSubmit={handleAddUser}>
               <DialogHeader>
@@ -413,16 +367,66 @@ export default function UsersPage() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         title={detailUser?.full_name || "User Details"}
+        identity={detailUser ? {
+          name: detailUser.full_name,
+          subtitle: detailUser.major,
+          avatar: detailUser.photo_url,
+        } : undefined}
         fields={[
-          { label: "NIM", value: detailUser?.nim },
-          { label: "Full Name", value: detailUser?.full_name },
           { label: "Email", value: detailUser?.email },
-          { label: "Major", value: detailUser?.major },
-          { label: "Bio", value: detailUser?.bio },
+          { label: "NIM", value: detailUser?.nim },
           { label: "Onboarded", value: detailUser?.is_onboarded ? "Yes" : "No" },
-          { label: "Skills", value: detailUser?.skills?.map(s => s.skill.name).join(", ") },
+          { label: "Skills", value: detailUser?.skills?.map(s => s.skill.name).join(", "), variant: "badge" },
+          { label: "Bio", value: detailUser?.bio || "", variant: "bio" },
           { label: "Joined", value: detailUser?.created_at ? new Date(detailUser.created_at).toLocaleDateString() : "—" },
         ]}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={() => {
+                if (detailUser) {
+                  setQrUser(detailUser)
+                  setQrOpen(true)
+                }
+              }}
+            >
+              <QrCodeIcon className="h-4 w-4" />
+              QR Profile
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2 text-destructive hover:text-destructive"
+                >
+                  <Trash2Icon className="h-4 w-4" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete {detailUser?.full_name} and remove their data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => detailUser && deleteMutation.mutate(detailUser.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        }
       />
 
       <QrCodeDialog

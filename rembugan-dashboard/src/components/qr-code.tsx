@@ -19,13 +19,15 @@ export function QrCodeDialog({ open, onOpenChange, data, title, description }: Q
   const [qrSrc, setQrSrc] = useState<string>("")
 
   useEffect(() => {
+    let cancelled = false
     if (open && data) {
       QRCode.toDataURL(data, { width: 280, margin: 2 })
-        .then((url) => setQrSrc(url))
-        .catch(() => toast.error("Gagal generate QR"))
+        .then((url) => { if (!cancelled) setQrSrc(url) })
+        .catch(() => { if (!cancelled) toast.error("Gagal generate QR") })
     } else {
       setQrSrc("")
     }
+    return () => { cancelled = true }
   }, [open, data])
 
   async function handleDownload() {

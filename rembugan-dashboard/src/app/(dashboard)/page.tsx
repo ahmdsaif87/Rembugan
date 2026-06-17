@@ -1,14 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
-  CardDescription,
-  CardFooter,
+  CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -19,9 +19,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Trophy, TrendingUpIcon, MoreVerticalIcon, EyeIcon } from "lucide-react"
+import {
+  Users,
+  FolderKanban,
+  Trophy,
+  Sparkles,
+  Clock,
+  ListChecks,
+  MoreVerticalIcon,
+  EyeIcon,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react"
 import { DetailSheet } from "@/components/ui/detail-sheet"
-import { fetchDashboardStats, fetchCompetitions } from "@/lib/api"
+import { fetchDashboardStats, fetchCompetitions, fetchUsers } from "@/lib/api"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from "recharts"
 
 interface Stats {
   total_users: number
@@ -43,14 +65,96 @@ interface Competition {
   link_direct: string
 }
 
+interface User {
+  id: string
+  full_name: string
+  photo_url: string | null
+  created_at: string
+}
+
 const statCards = [
-  { key: "total_users" as const, label: "Total Users", desc: "Active platform users" },
-  { key: "active_projects" as const, label: "Active Projects", desc: "Ongoing collaborations" },
-  { key: "scraped_competitions" as const, label: "Competitions", desc: "Scraped competitions" },
-  { key: "total_showcases" as const, label: "Showcases", desc: "Portfolio showcases" },
-  { key: "pending_applications" as const, label: "Pending", desc: "Awaiting review" },
-  { key: "total_tasks" as const, label: "Total Tasks", desc: "Across all projects" },
+  {
+    key: "total_users" as const,
+    label: "Total Users",
+    icon: Users,
+    color: "blue",
+    desc: "Active platform users",
+  },
+  {
+    key: "active_projects" as const,
+    label: "Active Projects",
+    icon: FolderKanban,
+    color: "emerald",
+    desc: "Ongoing collaborations",
+  },
+  {
+    key: "scraped_competitions" as const,
+    label: "Competitions",
+    icon: Trophy,
+    color: "violet",
+    desc: "Scraped competitions",
+  },
+  {
+    key: "total_showcases" as const,
+    label: "Showcases",
+    icon: Sparkles,
+    color: "orange",
+    desc: "Portfolio showcases",
+  },
+  {
+    key: "pending_applications" as const,
+    label: "Pending Review",
+    icon: Clock,
+    color: "amber",
+    desc: "Awaiting review",
+  },
+  {
+    key: "total_tasks" as const,
+    label: "Total Tasks",
+    icon: ListChecks,
+    color: "rose",
+    desc: "Across all projects",
+  },
 ]
+
+const colorConfig: Record<string, { bg: string; text: string; border: string; bar: string }> = {
+  blue: {
+    bg: "bg-blue-50 dark:bg-blue-950/20",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-t-blue-500",
+    bar: "#3b82f6",
+  },
+  emerald: {
+    bg: "bg-emerald-50 dark:bg-emerald-950/20",
+    text: "text-emerald-600 dark:text-emerald-400",
+    border: "border-t-emerald-500",
+    bar: "#10b981",
+  },
+  violet: {
+    bg: "bg-violet-50 dark:bg-violet-950/20",
+    text: "text-violet-600 dark:text-violet-400",
+    border: "border-t-violet-500",
+    bar: "#8b5cf6",
+  },
+  orange: {
+    bg: "bg-orange-50 dark:bg-orange-950/20",
+    text: "text-orange-600 dark:text-orange-400",
+    border: "border-t-orange-500",
+    bar: "#f97316",
+  },
+  amber: {
+    bg: "bg-amber-50 dark:bg-amber-950/20",
+    text: "text-amber-600 dark:text-amber-400",
+    border: "border-t-amber-500",
+    bar: "#f59e0b",
+  },
+  rose: {
+    bg: "bg-rose-50 dark:bg-rose-950/20",
+    text: "text-rose-600 dark:text-rose-400",
+    border: "border-t-rose-500",
+    bar: "#f43f5e",
+  },
+}
 
 export default function Overview() {
   const [detailComp, setDetailComp] = useState<Competition | null>(null)
@@ -72,86 +176,210 @@ export default function Overview() {
     },
   })
 
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await fetchUsers(0, 200)
+      return (res.status === 'success' ? res.data : []) as User[]
+    },
+  })
+
   const loading = statsLoading || compLoading
 
+  const sourceData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    competitions.forEach((c) => {
+      const source = c.sumber || "Unknown"
+      counts[source] = (counts[source] || 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 6)
+  }, [competitions])
+
+  const userGrowthData = useMemo(() => {
+    const monthly: Record<string, number> = {}
+    users.forEach((u) => {
+      const date = new Date(u.created_at)
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+      monthly[key] = (monthly[key] || 0) + 1
+    })
+    return Object.entries(monthly)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-6)
+      .map(([name, total]) => ({ name, total }))
+  }, [users])
+
+  const latestUsers = useMemo(() => {
+    return [...users]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5)
+  }, [users])
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card">
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
+          <p className="text-sm text-muted-foreground">Platform analytics and insights</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {statCards.map((config) => {
-          const value = stats[config.key] ?? 0
+          const value = config.key === 'scraped_competitions' ? competitions.length : (stats[config.key] ?? 0)
+          const colors = colorConfig[config.color]
+          const Icon = config.icon
           return (
-            <Card key={config.key} className="@container/card">
-              <CardHeader className="relative">
-                <CardDescription>{config.label}</CardDescription>
-                <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
+            <Card
+              key={config.key}
+              className={`border-t-4 ${colors.border} shadow-sm border-x-0 border-b-0`}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardDescription className="text-xs font-medium uppercase tracking-wider">
+                    {config.label}
+                  </CardDescription>
+                  <div className={`rounded-lg p-1.5 ${colors.bg}`}>
+                    <Icon className={`h-4 w-4 ${colors.text}`} />
+                  </div>
+                </div>
+                <CardTitle className="text-3xl font-bold tabular-nums mt-1">
                   {value.toLocaleString()}
                 </CardTitle>
-                <div className="absolute right-4 top-4">
-                  <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
-                    <TrendingUpIcon className="size-3" />
-                    Live
-                  </Badge>
-                </div>
               </CardHeader>
-              <CardFooter className="flex-col items-start gap-1 text-sm">
-                <div className="line-clamp-1 flex gap-2 font-medium">
-                  Real-time data <TrendingUpIcon className="size-4" />
-                </div>
-                <div className="text-muted-foreground">{config.desc}</div>
-              </CardFooter>
             </Card>
           )
         })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div>
-              <CardTitle>Recent Scraped Competitions</CardTitle>
-              <CardDescription>
-                Latest competitions found by the scraper
-              </CardDescription>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 shadow-sm border-0">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-base">User Growth</CardTitle>
+                <CardDescription>New users per month</CardDescription>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <div className="px-4 pb-4 lg:px-6">
-          <div className="overflow-hidden rounded-lg border">
+          </CardHeader>
+          <CardContent>
+            <div className="h-72">
+              {userGrowthData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={userGrowthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="userGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      }}
+                    />
+                    <Area type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#userGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  No user growth data yet
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-0">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-violet-50 p-2 dark:bg-violet-950/20">
+                <Trophy className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <CardTitle className="text-base">By Source</CardTitle>
+                <CardDescription>Competition distribution</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72">
+              {sourceData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={sourceData} layout="vertical" margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  No source data
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 shadow-sm border-0">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-emerald-50 p-2 dark:bg-emerald-950/20">
+                <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Recent Competitions</CardTitle>
+                <CardDescription>Latest scraped competitions</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
             <Table>
-              <TableHeader className="bg-muted">
-                <TableRow>
-                  <TableHead className="text-muted-foreground">ID</TableHead>
-                  <TableHead className="text-muted-foreground">Judul</TableHead>
-                  <TableHead className="text-muted-foreground">Sumber</TableHead>
-                  <TableHead className="text-muted-foreground">Link</TableHead>
-                  <TableHead className="text-muted-foreground text-right">Actions</TableHead>
+              <TableHeader>
+                <TableRow className="border-b border-border/50 hover:bg-transparent">
+                  <TableHead className="text-xs font-medium text-muted-foreground">Source</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">Title</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {competitions.length > 0 ? (
-                  competitions.slice(0, 10).map((comp) => (
-                    <TableRow key={comp.id}>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {comp.id.substring(0, 8)}
-                      </TableCell>
+                  competitions.slice(0, 6).map((comp) => (
+                    <TableRow key={comp.id} className="border-b border-border/30">
                       <TableCell>
-                        <div className="font-medium line-clamp-1">{comp.judul}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="px-1.5 text-muted-foreground">
-                          {comp.sumber}
+                        <Badge variant="secondary" className="text-xs font-normal">
+                          {comp.sumber || "Unknown"}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <a href={comp.link_direct} target="_blank" rel="noreferrer" className="text-foreground/70 hover:underline text-sm">
-                          View
-                        </a>
+                        <span className="text-sm line-clamp-1 table-primary">{comp.judul}</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="flex size-8 text-muted-foreground data-[state=open]:bg-muted">
-                              <MoreVerticalIcon />
+                            <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground hover:bg-accent">
+                              <MoreVerticalIcon className="h-3.5 w-3.5" />
                               <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
@@ -167,20 +395,53 @@ export default function Overview() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center">
-                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <Trophy className="h-8 w-8 opacity-30" />
-                        <p className="text-sm">No competitions data available</p>
-                        <p className="text-xs">Run the scraper to fetch competition data</p>
-                      </div>
+                    <TableCell colSpan={3} className="h-24 text-center text-sm text-muted-foreground">
+                      No competitions available
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-          </div>
-        </div>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-0">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-blue-50 p-2 dark:bg-blue-950/20">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Latest Users</CardTitle>
+                <CardDescription>Recently joined</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {latestUsers.length > 0 ? (
+              <div className="divide-y divide-border/30">
+                {latestUsers.map((user) => (
+                  <div key={user.id} className="flex items-center gap-3 px-6 py-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                      {user.full_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{user.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-24 items-center justify-center text-sm text-muted-foreground px-6">
+                No users yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <DetailSheet
         open={detailOpen}

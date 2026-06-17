@@ -6,10 +6,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, MessageSquare, ExternalLink, Smartphone, Loader2, Image as ImageIcon, FileText } from "lucide-react"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+import { Heart, MessageSquare, ExternalLink, Smartphone, Loader2, FileText } from "lucide-react"
+import { API_BASE_URL, APP_URL } from "@/lib/api"
 
 interface ShowcaseData {
   id: string
@@ -29,26 +27,16 @@ export default function ShowcasePublicPage({ params }: { params: Promise<{ id: s
   const [showcase, setShowcase] = useState<ShowcaseData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-  }, [])
 
   useEffect(() => {
     async function fetchShowcase() {
       try {
-        const res = await fetch(`${API_BASE_URL}/showcase/feed?page=1&limit=50`)
+        const res = await fetch(`${API_BASE_URL}/showcase/${id}`)
         const data = await res.json()
-        if (data.status === "success") {
-          const found = data.data.find((s: ShowcaseData) => s.id === id)
-          if (found) {
-            setShowcase(found)
-          } else {
-            setError("Postingan tidak ditemukan")
-          }
+        if (data.status === "success" && data.data) {
+          setShowcase(data.data)
         } else {
-          setError("Gagal memuat data")
+          setError("Postingan tidak ditemukan")
         }
       } catch {
         setError("Gagal memuat data")
