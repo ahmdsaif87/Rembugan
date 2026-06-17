@@ -28,3 +28,9 @@ docs/
 .cursor/
 .gemini/
 .impeccable/
+
+# Static
+static/posters/
+
+# Build artifacts
+rembugan_frontend/android/build/

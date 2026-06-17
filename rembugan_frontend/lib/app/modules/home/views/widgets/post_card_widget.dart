@@ -2,7 +2,8 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/theme.dart';
-import 'package:rembugan/app/core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_avatar.dart';
+import '../../../../core/widgets/app_toast.dart';
 import '../../../../routes/app_pages.dart';
 import 'image_viewer.dart';
 
@@ -104,12 +105,9 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     child: InkWell(
                       onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
                       borderRadius: BorderRadius.circular(20),
-                      child: CircleAvatar(
+                      child: AppAvatar(
+                        photoUrl: widget.avatarUrl.startsWith('http') ? widget.avatarUrl : null,
                         radius: 20,
-                        backgroundColor: c.primarySoft,
-                        backgroundImage: widget.avatarUrl.startsWith('http')
-                            ? NetworkImage(widget.avatarUrl) as ImageProvider
-                            : AssetImage(widget.avatarUrl),
                       ),
                     ),
                   ),

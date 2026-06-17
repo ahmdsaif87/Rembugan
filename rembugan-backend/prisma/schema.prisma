@@ -26,6 +26,7 @@ model User {
   major         String
   bio           String?
   photo_url     String?   
+  cover_url     String?   
   social_links  Json?
   is_onboarded  Boolean   @default(false)
   

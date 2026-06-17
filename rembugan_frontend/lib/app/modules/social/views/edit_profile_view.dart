@@ -1,10 +1,13 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../core/services/api_client.dart';
 import '../../../core/services/profile_service.dart';
-import '../../../core/widgets/app_toast.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../routes/app_pages.dart';
 import 'social_components.dart';
 
@@ -17,106 +20,149 @@ class EditProfileView extends StatefulWidget {
 
 class _EditProfileViewState extends State<EditProfileView> {
   final ProfileService profileService = Get.find<ProfileService>();
+  final ApiClient api = Get.find<ApiClient>();
+  final _picker = ImagePicker();
+
   late ProfileData draft;
+  late TextEditingController nameController;
+  late TextEditingController bioController;
+  late TextEditingController majorController;
+  late TextEditingController socialController;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     draft = profileService.profile.value;
+    nameController = TextEditingController(text: draft.name);
+    bioController = TextEditingController(text: draft.bio);
+    majorController = TextEditingController(text: draft.major);
+    socialController = TextEditingController(text: draft.socialLink);
   }
 
-  void persist(ProfileData value) {
-    setState(() => draft = value);
-    try {
-      profileService.updateProfile(value);
-      AppToast.success('Profil berhasil diperbarui.');
-    } catch (e) {
-      AppToast.error('Gagal menyimpan perubahan.', title: 'Error');
-    }
+  @override
+  void dispose() {
+    nameController.dispose();
+    bioController.dispose();
+    majorController.dispose();
+    socialController.dispose();
+    super.dispose();
   }
 
-  void showProfileSheet() {
-    final nameController = TextEditingController(text: draft.name);
-    final bioController = TextEditingController(text: draft.bio);
-    final majorController = TextEditingController(text: draft.major);
-    final formKey = GlobalKey<FormState>();
-
-    Get.bottomSheet(
-      _EditBottomSheet(
-        title: 'Edit Profil',
-        helper: 'Bio dibuat dari resume dan masih bisa kamu edit.',
-        onSave: () {
-          persist(
-            draft.copyWith(
-              name: nameController.text.trim(),
-              bio: bioController.text.trim(),
-              major: majorController.text.trim(),
-            ),
-          );
-        },
-        formKey: formKey,
+  Future<void> _pickImage(bool isCover) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => Container(
+        padding: EdgeInsets.only(
+          top: 12,
+          bottom: MediaQuery.of(context).padding.bottom + 20,
+        ),
+        decoration: BoxDecoration(
+          color: AppC.of(context).surfaceElevated,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.lg),
+          ),
+        ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _SheetField(
-              label: 'Nama',
-              controller: nameController,
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Nama wajib diisi' : null,
+            Center(
+              child: Container(
+                width: 42, height: 4,
+                decoration: BoxDecoration(
+                  color: AppC.of(context).borderStrong,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
             ),
-            _SheetField(
-              label: 'Bio',
-              helper:
-                  'Ceritakan tentang dirimu, minat, dan hal yang sedang kamu fokuskan.',
-              controller: bioController,
-              maxLines: 5,
-              validator: (v) =>
-                  v != null && v.length > 500 ? 'Maksimal 500 karakter' : null,
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(FluentIcons.camera_24_regular),
+              title: const Text('Ambil foto'),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
-            _SheetField(label: 'Jurusan', controller: majorController),
+            ListTile(
+              leading: const Icon(FluentIcons.image_24_regular),
+              title: const Text('Pilih dari galeri'),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
           ],
         ),
       ),
-      backgroundColor: AppColors.transparent,
-      isScrollControlled: true,
     );
+    if (source == null) return;
+    final picked = await _picker.pickImage(source: source, imageQuality: 85);
+    if (picked == null) return;
+
+    AppToast.info('Mengupload gambar...');
+    try {
+      final bytes = await picked.readAsBytes();
+      final url = await api.uploadImageBytes(
+        '/upload/image',
+        bytes,
+        picked.name,
+      );
+      if (url != null && mounted) {
+        setState(() {
+          if (isCover) {
+            draft = draft.copyWith(coverUrl: url);
+          } else {
+            draft = draft.copyWith(photoUrl: url);
+          }
+        });
+        AppToast.success('Gambar berhasil diupload.');
+      } else {
+        AppToast.error('Gagal mengupload gambar.');
+      }
+    } catch (e) {
+      AppToast.error('Gagal mengupload: $e');
+    }
   }
 
-  void showSocialSheet() {
-    final linkController = TextEditingController(text: draft.socialLink);
+  Future<void> _save() async {
+    if (nameController.text.trim().isEmpty) {
+      AppToast.error('Nama wajib diisi.');
+      return;
+    }
 
-    _showEditSheet(
-      title: 'Edit tautan sosial',
-      helper: 'Tambahkan link yang ingin kamu tampilkan.',
-      child: Row(
-        children: [
-          const _LinkIcon(),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextFormField(
-              controller: linkController,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) {
-                persist(draft.copyWith(socialLink: linkController.text.trim()));
-                Get.back();
-              },
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return null;
-                if (!v.trim().contains('.') && !v.trim().startsWith('http')) {
-                  return 'Masukkan URL yang valid';
-                }
-                return null;
-              },
-              decoration: const InputDecoration(
-                hintText: 'GitHub, portfolio, LinkedIn, atau website pribadi',
-              ),
-            ),
-          ),
-        ],
-      ),
-      onSave: () {
-        persist(draft.copyWith(socialLink: linkController.text.trim()));
-      },
+    setState(() => _isSaving = true);
+
+    final old = profileService.profile.value;
+    final newDraft = draft.copyWith(
+      name: nameController.text.trim(),
+      bio: bioController.text.trim(),
+      major: majorController.text.trim(),
+      socialLink: socialController.text.trim(),
     );
+
+    profileService.updateProfile(newDraft);
+
+    final settings = <String, dynamic>{};
+    if (newDraft.name != old.name) settings['full_name'] = newDraft.name;
+    if (newDraft.bio != old.bio) settings['bio'] = newDraft.bio;
+    if (newDraft.major != old.major) settings['major'] = newDraft.major;
+    if (newDraft.photoUrl != old.photoUrl) settings['photo_url'] = newDraft.photoUrl;
+    if (newDraft.coverUrl != old.coverUrl) settings['cover_url'] = newDraft.coverUrl;
+    if (newDraft.socialLink != old.socialLink) {
+      settings['social_links'] = {'url': newDraft.socialLink};
+    }
+
+    if (settings.isNotEmpty) {
+      final err = await profileService.updateSettings(settings);
+      if (err != null) {
+        AppToast.error(err, title: 'Error');
+        setState(() => _isSaving = false);
+        return;
+      }
+    }
+
+    setState(() {
+      draft = newDraft;
+      _isSaving = false;
+    });
+    AppToast.success('Profil berhasil diperbarui.');
+    Get.offNamed(Routes.PROFILE);
   }
 
   void showSkillSheet() {
@@ -173,8 +219,18 @@ class _EditProfileViewState extends State<EditProfileView> {
           );
         },
       ),
-      onSave: () => persist(draft.copyWith(skills: skills)),
+      onSave: () {
+        setState(() => draft = draft.copyWith(skills: skills));
+        _saveSkills(skills);
+      },
     );
+  }
+
+  Future<void> _saveSkills(List<String> skills) async {
+    final err = await profileService.updateSettings({'skills': skills});
+    if (err != null) {
+      AppToast.error(err, title: 'Error');
+    }
   }
 
   void showExperienceSheet({ProfileExperience? experience, int? index}) {
@@ -226,7 +282,7 @@ class _EditProfileViewState extends State<EditProfileView> {
         } else {
           experiences[index] = updated;
         }
-        persist(draft.copyWith(experiences: experiences));
+        setState(() => draft = draft.copyWith(experiences: experiences));
       },
     );
   }
@@ -238,13 +294,13 @@ class _EditProfileViewState extends State<EditProfileView> {
         message:
             'Pengalaman ini akan hilang dari profilmu, tapi bisa kamu tambahkan lagi nanti.',
         onConfirm: () {
-          persist(
-            draft.copyWith(
+          setState(() {
+            draft = draft.copyWith(
               experiences: draft.experiences
                   .where((item) => item != experience)
                   .toList(),
-            ),
-          );
+            );
+          });
           Get.back();
           AppToast.success('Pengalaman dihapus.');
         },
@@ -277,166 +333,345 @@ class _EditProfileViewState extends State<EditProfileView> {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return SocialScaffold(
-      title: 'Edit Profil',
-      subtitle: 'Ubah bagian yang kamu perlukan',
-      actions: [
-        TextButton(
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return Scaffold(
+      backgroundColor: c.background,
+      appBar: AppBar(
+        backgroundColor: c.surface,
+        leading: IconButton(
+          icon: const Icon(FluentIcons.dismiss_24_regular),
           onPressed: Get.back,
-          child: Text(
-            'Selesai',
-            style: AppFonts.interStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
+        ),
+        title: Text(
+          'Edit profil',
+          style: AppFonts.interStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: c.textPrimary,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: SizedBox(
+              height: 34,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : Text(
+                        'Simpan',
+                        style: AppFonts.interStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Cover + Avatar header
+          SizedBox(
+            height: topPadding + 168,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Cover image
+                GestureDetector(
+                  onTap: () => _pickImage(true),
+                  child: SizedBox(
+                    height: 140,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        draft.coverUrl.isNotEmpty
+                            ? Image.network(draft.coverUrl, fit: BoxFit.cover)
+                            : Container(color: AppColors.grey200),
+                        Container(
+                          color: Colors.black26,
+                          alignment: Alignment.center,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  FluentIcons.camera_24_regular,
+                                  color: AppColors.white,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Edit cover',
+                                  style: TextStyle(
+                                    color: AppColors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Avatar
+                Positioned(
+                  left: 16,
+                  bottom: -46,
+                  child: GestureDetector(
+                    onTap: () => _pickImage(false),
+                    child: Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.white, width: 3),
+                          ),
+                          child: AppAvatar(
+                            photoUrl: draft.photoUrl,
+                            radius: 47,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              FluentIcons.camera_24_regular,
+                              size: 14,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Form fields
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                _Field(
+                  label: 'Nama',
+                  controller: nameController,
+                  hint: 'Nama lengkap',
+                ),
+                const SizedBox(height: 16),
+                _Field(
+                  label: 'Bio',
+                  controller: bioController,
+                  hint: 'Ceritakan tentang dirimu',
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 16),
+                _Field(
+                  label: 'Jurusan',
+                  controller: majorController,
+                  hint: 'Program studi atau jurusan',
+                ),
+                const SizedBox(height: 16),
+                _Field(
+                  label: 'Tautan',
+                  controller: socialController,
+                  hint: 'GitHub, portfolio, LinkedIn, atau website',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Sections
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _EditPreviewSection(
+              title: 'Skill',
+              subtitle: 'Skill membantu sistem merekomendasikan proyek.',
+              icon: FluentIcons.sparkle_24_regular,
+              onEdit: showSkillSheet,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: draft.skills
+                    .map((skill) => AppTextPill(label: skill))
+                    .toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _EditPreviewSection(
+              title: 'Experience',
+              subtitle: 'Pengalaman yang membentuk perjalanan dan skill kamu.',
+              icon: FluentIcons.briefcase_24_regular,
+              onEdit: () => showExperienceSheet(),
+              actionLabel: 'Tambah',
+              child: draft.experiences.isEmpty
+                  ? Text(
+                      'Tambahkan pengalaman agar profil lebih meyakinkan.',
+                      style: AppFonts.interStyle(
+                        fontSize: 13,
+                        color: c.textSecondary,
+                      ),
+                    )
+                  : Column(
+                      children: draft.experiences.asMap().entries.map((entry) {
+                        return _ExperiencePreviewItem(
+                          experience: entry.value,
+                          onEdit: () => showExperienceSheet(
+                            experience: entry.value,
+                            index: entry.key,
+                          ),
+                          onDelete: () => deleteExperience(entry.value),
+                        );
+                      }).toList(),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _EditPreviewSection(
+              title: 'Riwayat Kolaborasi',
+              subtitle:
+                  'Dibuat otomatis dari workspace yang selesai di REMBUGAN.',
+              icon: FluentIcons.people_24_regular,
+              onEdit: () {},
+              hideAction: true,
+              child: Column(
+                children: draft.collaborationHistory.asMap().entries.map((entry) {
+                  return _CollaborationVisibilityItem(
+                    item: entry.value,
+                    onToggle: () {
+                      final collaborations = [...draft.collaborationHistory];
+                      collaborations[entry.key] = entry.value.copyWith(
+                        visible: !entry.value.visible,
+                      );
+                      setState(() {
+                        draft = draft.copyWith(collaborationHistory: collaborations);
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _AiPersonalizeCard(
+              onTap: () => Get.toNamed(Routes.PERSONALIZATION),
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+}
+
+class _Field extends StatelessWidget {
+  const _Field({
+    required this.label,
+    required this.controller,
+    this.hint,
+    this.maxLines = 1,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final String? hint;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppFonts.interStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: c.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          style: AppFonts.interStyle(
+            fontSize: 14,
+            color: c.textPrimary,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppFonts.interStyle(
+              fontSize: 14,
+              color: c.textTertiary,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: c.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: c.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: const BorderSide(color: AppColors.primary),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
             ),
           ),
         ),
       ],
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          _AiPersonalizeCard(onTap: () => Get.toNamed(Routes.PERSONALIZATION)),
-          const SizedBox(height: AppSpacing.sm),
-          _EditPreviewSection(
-            title: 'Profil',
-            subtitle: 'Nama, bio, dan lokasi.',
-            icon: FluentIcons.person_24_regular,
-            onEdit: showProfileSheet,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 34,
-                  backgroundImage: AssetImage(draft.avatarAsset),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        draft.name,
-                        style: AppFonts.interStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                              color: c.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            draft.bio,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppFonts.interStyle(
-                              fontSize: 12.5,
-                              height: 1.45,
-                              color: c.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _EditPreviewSection(
-            title: 'Tautan Sosial',
-            subtitle: 'Link yang tampil di profilmu.',
-            icon: FluentIcons.link_24_regular,
-            onEdit: showSocialSheet,
-            child: Row(
-              children: [
-                const _LinkIcon(),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    draft.socialLink.isEmpty
-                        ? 'Tambahkan link yang ingin kamu tampilkan.'
-                        : draft.socialLink,
-                    style: AppFonts.interStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: draft.socialLink.isEmpty
-                          ? c.textSecondary
-                          : c.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _EditPreviewSection(
-            title: 'Skill',
-            subtitle: 'Skill membantu sistem merekomendasikan proyek.',
-            icon: FluentIcons.sparkle_24_regular,
-            onEdit: showSkillSheet,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: draft.skills
-                  .map((skill) => AppTextPill(label: skill))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _EditPreviewSection(
-            title: 'Experience',
-            subtitle: 'Pengalaman yang membentuk perjalanan dan skill kamu.',
-            icon: FluentIcons.briefcase_24_regular,
-            onEdit: () => showExperienceSheet(),
-            actionLabel: 'Tambah',
-            child: draft.experiences.isEmpty
-                ? Text(
-                    'Tambahkan pengalaman agar profil lebih meyakinkan.',
-                    style: AppFonts.interStyle(
-                      fontSize: 13,
-                      color: c.textSecondary,
-                    ),
-                  )
-                : Column(
-                    children: draft.experiences.asMap().entries.map((entry) {
-                      return _ExperiencePreviewItem(
-                        experience: entry.value,
-                        onEdit: () => showExperienceSheet(
-                          experience: entry.value,
-                          index: entry.key,
-                        ),
-                        onDelete: () => deleteExperience(entry.value),
-                      );
-                    }).toList(),
-                  ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _EditPreviewSection(
-            title: 'Riwayat Kolaborasi',
-            subtitle:
-                'Dibuat otomatis dari workspace yang selesai di REMBUGAN.',
-            icon: FluentIcons.people_24_regular,
-            onEdit: () {},
-            hideAction: true,
-            child: Column(
-              children: draft.collaborationHistory.asMap().entries.map((entry) {
-                return _CollaborationVisibilityItem(
-                  item: entry.value,
-                  onToggle: () {
-                    final collaborations = [...draft.collaborationHistory];
-                    collaborations[entry.key] = entry.value.copyWith(
-                      visible: !entry.value.visible,
-                    );
-                    persist(
-                      draft.copyWith(collaborationHistory: collaborations),
-                    );
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-        ],
-      ),
     );
   }
 }
@@ -978,28 +1213,6 @@ class _SheetField extends StatelessWidget {
   }
 }
 
-class _LinkIcon extends StatelessWidget {
-  const _LinkIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: c.primarySoft,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Icon(
-        FluentIcons.link_24_regular,
-        color: c.textPrimary,
-        size: 19,
-      ),
-    );
-  }
-}
-
 class _MiniEditButton extends StatelessWidget {
   const _MiniEditButton({required this.onTap});
 
@@ -1007,8 +1220,7 @@ class _MiniEditButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    final bg = c.grey600;
+    final bg = AppColors.grey600;
     return Material(
       color: bg,
       shape: const CircleBorder(),

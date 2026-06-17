@@ -1,16 +1,16 @@
 class Project {
   final String title;
   final String description;
-  final String category;
-  final String faculty;
   final String postedBy;
   final String posterRole;
   final String avatarUrl;
+  final String posterId;
   final String deadline;
   final String university;
   final String postedAgo;
   final int totalSlots;
   final int filledSlots;
+  final int matchScore;
   final List<String> skills;
   final List<String> memberAvatars;
   final List<String> memberNames;
@@ -18,16 +18,16 @@ class Project {
   const Project({
     required this.title,
     required this.description,
-    required this.category,
-    required this.faculty,
     required this.postedBy,
     required this.posterRole,
     required this.avatarUrl,
+    this.posterId = '',
     required this.deadline,
     required this.university,
     required this.postedAgo,
     required this.totalSlots,
     required this.filledSlots,
+    this.matchScore = 0,
     required this.skills,
     required this.memberAvatars,
     required this.memberNames,

@@ -2,11 +2,11 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/theme_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
-import '../../../routes/app_pages.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -16,7 +16,8 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  String? linkedEmail;
+  final authService = Get.find<AuthService>();
+  String? get linkedEmail => authService.currentUser.value?.email;
 
   @override
   Widget build(BuildContext context) {
@@ -605,6 +606,7 @@ class _SettingsViewState extends State<SettingsView> {
     final emailController = TextEditingController(text: linkedEmail);
     final otpController = TextEditingController();
     var otpSent = false;
+    var isSending = false;
     String? errorMessage;
 
     await showModalBottomSheet<void>(
@@ -662,7 +664,7 @@ class _SettingsViewState extends State<SettingsView> {
                   const SizedBox(height: 20),
                   AppTextField(
                     controller: emailController,
-                    enabled: !otpSent,
+                    enabled: !otpSent && !isSending,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
                     labelText: 'Alamat email',
@@ -683,13 +685,29 @@ class _SettingsViewState extends State<SettingsView> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          otpController.clear();
-                          setModalState(() {
-                            errorMessage = null;
-                          });
-                          AppToast.success('Kode baru telah dikirim ke ${emailController.text.trim()}', title: 'OTP Dikirim Ulang');
-                        },
+                        onPressed: isSending
+                            ? null
+                            : () async {
+                                final email = emailController.text.trim();
+                                if (!GetUtils.isEmail(email)) return;
+                                setModalState(() {
+                                  isSending = true;
+                                  errorMessage = null;
+                                });
+                                final err = await authService.sendOtp(email);
+                                setModalState(() {
+                                  isSending = false;
+                                  if (err == null) {
+                                    otpController.clear();
+                                    errorMessage = null;
+                                  } else {
+                                    errorMessage = err;
+                                  }
+                                });
+                                if (err == null) {
+                                  AppToast.success('Kode baru telah dikirim ke $email', title: 'OTP Dikirim Ulang');
+                                }
+                              },
                         child: const Text('Kirim ulang OTP'),
                       ),
                     ),
@@ -709,37 +727,57 @@ class _SettingsViewState extends State<SettingsView> {
                     width: double.infinity,
                     height: 44,
                     child: FilledButton(
-                      onPressed: () {
-                        final email = emailController.text.trim();
-                        if (!otpSent) {
-                          if (!GetUtils.isEmail(email)) {
-                            setModalState(() {
-                              errorMessage =
-                                  'Masukkan alamat email yang valid.';
-                            });
-                            return;
-                          }
-                          setModalState(() {
-                            otpSent = true;
-                            errorMessage = null;
-                          });
-                          return;
-                        }
+                      onPressed: isSending
+                          ? null
+                          : () async {
+                              final email = emailController.text.trim();
+                              if (!otpSent) {
+                                if (!GetUtils.isEmail(email)) {
+                                  setModalState(() {
+                                    errorMessage =
+                                        'Masukkan alamat email yang valid.';
+                                  });
+                                  return;
+                                }
+                                setModalState(() {
+                                  isSending = true;
+                                  errorMessage = null;
+                                });
+                                final err = await authService.sendOtp(email);
+                                setModalState(() {
+                                  isSending = false;
+                                  if (err == null) {
+                                    otpSent = true;
+                                  } else {
+                                    errorMessage = err;
+                                  }
+                                });
+                                return;
+                              }
 
-                        if (!RegExp(r'^\d{6}$').hasMatch(otpController.text)) {
-                          setModalState(() {
-                            errorMessage =
-                                'Kode OTP harus terdiri dari 6 digit.';
-                          });
-                          return;
-                        }
+                              if (!RegExp(r'^\d{6}$').hasMatch(otpController.text)) {
+                                setModalState(() {
+                                  errorMessage =
+                                      'Kode OTP harus terdiri dari 6 digit.';
+                                });
+                                return;
+                              }
 
-                        setState(() {
-                          linkedEmail = email;
-                        });
-                        Get.back();
-                        AppToast.success('$email berhasil ditautkan ke akun.', title: 'Email Terverifikasi');
-                      },
+                              setModalState(() => isSending = true);
+                              final err = await authService.verifyOtp(
+                                email,
+                                otpController.text.trim(),
+                              );
+                              setModalState(() => isSending = false);
+                              if (err != null) {
+                                setModalState(() => errorMessage = err);
+                                return;
+                              }
+
+                              setState(() {});
+                              Get.back();
+                              AppToast.success('$email berhasil ditautkan ke akun.', title: 'Email Terverifikasi');
+                            },
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary500,
                         foregroundColor: AppColors.white,
@@ -747,7 +785,16 @@ class _SettingsViewState extends State<SettingsView> {
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                       ),
-                      child: Text(otpSent ? 'Verifikasi OTP' : 'Kirim OTP'),
+                      child: isSending
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
+                            )
+                          : Text(otpSent ? 'Verifikasi OTP' : 'Kirim OTP'),
                     ),
                   ),
                 ],
@@ -849,20 +896,8 @@ class _SettingsViewState extends State<SettingsView> {
                   child: GestureDetector(
                     onTap: () {
                       Get.back();
-                      Get.showOverlay(
-                        asyncFunction: () async {
-                          await Future<void>.delayed(
-                            const Duration(milliseconds: 600),
-                          );
-                          Get.offAllNamed(Routes.LOGIN);
-                          AppToast.success('Sampai jumpa kembali di Rembugan!', title: 'Berhasil Keluar');
-                        },
-                          loadingWidget: Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.white,
-                            ),
-                          ),
-                      );
+                      authService.logout();
+                      AppToast.success('Sampai jumpa kembali di Rembugan!', title: 'Berhasil Keluar');
                     },
                     child: Container(
                       height: 42,

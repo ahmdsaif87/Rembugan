@@ -317,9 +317,20 @@ class PersonalizationController extends GetxController {
         'social_links': profile.socialLink.isNotEmpty
             ? {'website': profile.socialLink}
             : null,
+        'experiences': profile.experiences
+            .map((e) => {
+                  'title': e.title,
+                  'organization': e.organization,
+                  'duration': e.duration,
+                  'description': e.description,
+                  'tech_stack': e.techStack,
+                })
+            .toList(),
       });
 
-      _profileService.updateProfile(profile);
+      _profileService.updateProfile(
+        profile.copyWith(photoUrl: _photoUrl ?? ''),
+      );
 
       final user = _auth.currentUser.value;
       if (user != null) {

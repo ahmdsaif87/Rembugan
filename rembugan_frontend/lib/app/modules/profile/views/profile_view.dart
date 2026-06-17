@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/profile_controller.dart';
@@ -17,14 +18,42 @@ class ProfileView extends GetView<ProfileController> {
     return Scaffold(
       backgroundColor: c.background,
       body: Obx(() {
-        final profile = controller.profileService.profile.value;
+        final svc = controller.profileService;
+        if (svc.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (svc.errorMessage.value != null) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(FluentIcons.error_circle_24_regular, size: 48, color: c.textTertiary),
+                  const SizedBox(height: 16),
+                  Text(
+                    svc.errorMessage.value!,
+                    textAlign: TextAlign.center,
+                    style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: svc.fetchProfile,
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final profile = svc.profile.value;
 
         return ListView(
           padding: EdgeInsets.zero,
           children: [
             _ProfileCover(
-              avatarAsset: profile.avatarAsset,
-              onBack: Get.back,
+              photoUrl: profile.photoUrl,
+              coverUrl: profile.coverUrl,
               onSettings: () => Get.toNamed(Routes.SETTINGS),
               onEditCover: () => Get.toNamed(Routes.EDIT_PROFILE),
             ),
@@ -34,15 +63,6 @@ class ProfileView extends GetView<ProfileController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _ProfileIdentity(profile: profile),
-                  const SizedBox(height: 12),
-                  Text(
-                    '842 koneksi  7 Kolaborasi',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: c.grey900,
-                    ),
-                  ),
                   const SizedBox(height: 14),
                   _ProfileActions(
                     onEdit: () => Get.toNamed(Routes.EDIT_PROFILE),
@@ -73,14 +93,14 @@ class ProfileView extends GetView<ProfileController> {
 
 class _ProfileCover extends StatelessWidget {
   const _ProfileCover({
-    required this.avatarAsset,
-    required this.onBack,
+    required this.photoUrl,
+    this.coverUrl = '',
     required this.onSettings,
     required this.onEditCover,
   });
 
-  final String avatarAsset;
-  final VoidCallback onBack;
+  final String photoUrl;
+  final String coverUrl;
   final VoidCallback onSettings;
   final VoidCallback onEditCover;
 
@@ -95,21 +115,9 @@ class _ProfileCover extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'lib/assets/img/contoh poster4.jpeg',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(color: c.surface.withValues(alpha: 0.18)),
-          ),
-          Positioned(
-            top: topPadding + 16,
-            left: 16,
-            child: _ProfileCircleButton(
-              icon: FluentIcons.chevron_left_24_regular,
-              onTap: onBack,
-            ),
+            child: coverUrl.isNotEmpty
+                ? Image.network(coverUrl, fit: BoxFit.cover)
+                : const AppCoverPlaceholder(),
           ),
           Positioned(
             top: topPadding + 16,
@@ -131,16 +139,11 @@ class _ProfileCover extends StatelessWidget {
             left: 16,
             bottom: -46,
             child: Container(
-              width: 94,
-              height: 94,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.white, width: 3),
               ),
-              child: CircleAvatar(
-                backgroundImage: AssetImage(avatarAsset),
-                backgroundColor: c.grey100,
-              ),
+              child: AppAvatar(photoUrl: photoUrl, radius: 47),
             ),
           ),
         ],
@@ -208,28 +211,32 @@ class _ProfileIdentity extends StatelessWidget {
             color: c.grey500,
           ),
         ),
-        const SizedBox(height: 10),
-        Text(
-          profile.bio,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            height: 1.32,
-            color: c.grey900,
+        if (profile.bio.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            profile.bio,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              height: 1.32,
+              color: c.grey900,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          profile.socialLink,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.info500,
+        ],
+        if (profile.socialLink.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            profile.socialLink,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.info500,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -440,29 +447,13 @@ class _ProfileTabContent extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        _PostCard(
-          avatarAsset: profile.avatarAsset,
-          name: profile.name,
-          subtitle: 'D4 Teknik Informatika - 2 jam lalu',
-          content:
-              'Sharing sedikit tips buat temen-temen D4 Teknik Informatika yang lagi ngerjain project akhir: Coba biasain bikin design system di Figma dulu sebelum masuk ke codingan Flutter. Ini bener-bener ngehemat waktu integrasi UI nanti dan bikin komponen jadi reusable',
-          hasImage: true,
-          imageUrl: 'lib/assets/img/contoh poster2.jpeg',
-          likeCount: '120',
-          commentCount: '20',
-        ),
-        _PostCard(
-          avatarAsset: profile.avatarAsset,
-          name: profile.name,
-          subtitle: 'D4 Teknik Informatika - Kemarin',
-          content:
-              'Selesai bikin prototype dashboard tim kecil. Fokusnya biar task, file, dan diskusi tetap gampang discan.',
-          likeCount: '76',
-          commentCount: '12',
-        ),
-      ],
+      return _EmptyTabState(
+        icon: FluentIcons.document_24_regular,
+        title: 'Belum ada postingan',
+        message:
+            'Bagikan aktivitas atau proyekmu agar terlihat oleh orang lain dan membangun portofolio yang menarik.',
+        actionLabel: 'Buat Postingan',
+        onAction: () => Get.toNamed(Routes.CREATE_POST),
     );
   }
 }
@@ -756,232 +747,6 @@ class _StatusPill extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: c.textPrimary,
         ),
-      ),
-    );
-  }
-}
-
-class _PostCard extends StatefulWidget {
-  const _PostCard({
-    required this.avatarAsset,
-    required this.name,
-    required this.subtitle,
-    required this.content,
-    this.hasImage = false,
-    this.imageUrl,
-    required this.likeCount,
-    required this.commentCount,
-  });
-
-  final String avatarAsset;
-  final String name;
-  final String subtitle;
-  final String content;
-  final bool hasImage;
-  final String? imageUrl;
-  final String likeCount;
-  final String commentCount;
-
-  @override
-  State<_PostCard> createState() => _PostCardState();
-}
-
-class _PostCardState extends State<_PostCard> {
-  bool _isLiked = false;
-  bool _isBookmarked = false;
-  late int _likeCount;
-
-  @override
-  void initState() {
-    super.initState();
-    _likeCount = int.tryParse(widget.likeCount) ?? 0;
-  }
-
-  void _toggleLike() {
-    setState(() {
-      _isLiked = !_isLiked;
-      if (_isLiked) {
-        _likeCount++;
-      } else {
-        _likeCount--;
-      }
-    });
-  }
-
-  void _toggleBookmark() {
-    setState(() {
-      _isBookmarked = !_isBookmarked;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: c.border, width: 1),
-      ),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: c.primarySoft,
-                    backgroundImage: AssetImage(widget.avatarAsset),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                          Text(
-                            widget.name,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w800,
-                              color: c.grey900,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 11.5,
-                              color: c.textSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    FluentIcons.more_vertical_24_regular,
-                    color: c.textSecondary,
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                widget.content,
-                maxLines: 5,
-                overflow: TextOverflow.ellipsis,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 13.5,
-                  color: c.grey900,
-                  height: 1.45,
-                ),
-              ),
-              if (widget.hasImage && widget.imageUrl != null) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: widget.imageUrl!.startsWith('lib/assets/')
-                      ? Image.asset(
-                          widget.imageUrl!,
-                          width: double.infinity,
-                          height: 236,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.network(
-                          widget.imageUrl!,
-                          width: double.infinity,
-                          height: 236,
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildInteractionItem(
-                    _isLiked
-                        ? FluentIcons.heart_24_filled
-                        : FluentIcons.heart_24_regular,
-                    '$_likeCount',
-                    _isLiked ? AppColors.error500 : c.grey500,
-                    onTap: _toggleLike,
-                  ),
-                  const SizedBox(width: 22),
-                  _buildInteractionItem(
-                    FluentIcons.chat_24_regular,
-                    widget.commentCount,
-                    c.grey500,
-                    onTap: () {},
-                  ),
-                  const Spacer(),
-                  _buildInteractionItem(
-                    FluentIcons.send_24_regular,
-                    '',
-                    c.grey500,
-                    onTap: () {},
-                  ),
-                  const SizedBox(width: 20),
-                  _buildInteractionItem(
-                    _isBookmarked
-                        ? FluentIcons.bookmark_24_filled
-                        : FluentIcons.bookmark_24_regular,
-                    '',
-                    _isBookmarked ? AppColors.warning500 : c.grey500,
-                    onTap: _toggleBookmark,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInteractionItem(
-    IconData icon,
-    String count,
-    Color activeColor, {
-    required VoidCallback onTap,
-  }) {
-    final c = AppC.of(context);
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 2,
-            vertical: AppSpacing.xs,
-          ),
-          child: Row(
-          children: [
-            Icon(icon, color: activeColor, size: 20),
-            if (count.isNotEmpty) ...[
-              const SizedBox(width: 6),
-              Text(
-                count,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 12,
-                  color: c.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
       ),
     );
   }

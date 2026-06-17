@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
 from app.core.database import get_db
 from app.core.security import verify_token
-from app.core.constants import PJ_OPEN, APP_PENDING, APP_ACCEPTED, ROLE_ANGGOTA
+from app.core.constants import PJ_OPEN, PJ_ONGOING, APP_PENDING, APP_ACCEPTED, ROLE_ANGGOTA
 from app.schemas.collaboration import ApplyInput, ApplicationRespondInput
 
 router = APIRouter(prefix="/collaboration", tags=["3. Collaboration & Apply"])
@@ -146,6 +146,18 @@ async def respond_to_application(
                 "role": data.role,
             }
         )
+        # Auto-close jika slots sudah penuh
+        current_members = await db.projectmember.count(
+            where={"project_id": application.project_id}
+        )
+        project = await db.project.find_unique(
+            where={"id": application.project_id}
+        )
+        if project and project.total_slots is not None and current_members >= project.total_slots:
+            await db.project.update(
+                where={"id": application.project_id},
+                data={"status": PJ_ONGOING},
+            )
 
     return {
         "status": "success",

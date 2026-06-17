@@ -21,6 +21,7 @@ class ApiClient extends GetxService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
     ));
 
@@ -54,6 +55,19 @@ class ApiClient extends GetxService {
       _dio.patch(path, data: data);
 
   Future<dio.Response> delete(String path) => _dio.delete(path);
+
+  Future<String?> uploadImageBytes(
+    String path,
+    Uint8List bytes,
+    String filename,
+  ) async {
+    final formData = dio.FormData.fromMap({
+      'file': dio.MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    final res = await _dio.post(path, data: formData);
+    final data = res.data['data'] as Map<String, dynamic>?;
+    return data?['url'] as String?;
+  }
 }
 
 class _AuthInterceptor extends dio.Interceptor {

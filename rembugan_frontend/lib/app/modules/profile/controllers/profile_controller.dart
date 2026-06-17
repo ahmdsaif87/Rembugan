@@ -6,6 +6,12 @@ class ProfileController extends GetxController {
   final ProfileService profileService = Get.find<ProfileService>();
   final selectedTabIndex = 0.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    profileService.fetchProfile();
+  }
+
   void changeTab(int index) {
     selectedTabIndex.value = index;
   }
