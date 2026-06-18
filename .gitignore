@@ -29,8 +29,5 @@ docs/
 .gemini/
 .impeccable/
 
-# Static
-rembugan-backend/app/static/
-
 # Build artifacts
 rembugan_frontend/android/build/
