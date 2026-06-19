@@ -88,7 +88,7 @@ export async function fetchCompetitions() {
   }
 }
 
-export async function createUser(data: { nim: string; full_name: string; major: string; password: string }) {
+export async function createUser(data: { email: string; full_name: string; interest?: string; password: string }) {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
       method: 'POST',

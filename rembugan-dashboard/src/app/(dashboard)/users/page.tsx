@@ -53,11 +53,10 @@ import { QrCodeDialog } from "@/components/qr-code"
 
 interface User {
   id: string
-  nim: string
+  email: string
   full_name: string
-  email: string | null
   photo_url: string | null
-  major: string
+  interest: string | null
   bio: string | null
   is_onboarded: boolean
   created_at: string
@@ -75,7 +74,7 @@ export default function UsersPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [onboardFilter, setOnboardFilter] = useState<string>("all")
   const [addOpen, setAddOpen] = useState(false)
-  const [form, setForm] = useState({ nim: "", full_name: "", major: "", password: "" })
+  const [form, setForm] = useState({ email: "", full_name: "", interest: "", password: "" })
   const [qrUser, setQrUser] = useState<User | null>(null)
   const [qrOpen, setQrOpen] = useState(false)
 
@@ -93,7 +92,7 @@ export default function UsersPage() {
       if (response.status === 'success') {
         toast.success(`User ${form.full_name} berhasil dibuat`)
         setAddOpen(false)
-        setForm({ nim: "", full_name: "", major: "", password: "" })
+        setForm({ email: "", full_name: "", interest: "", password: "" })
         queryClient.invalidateQueries({ queryKey: ['users'] })
       } else {
         toast.error(response.detail || "Gagal membuat user")
@@ -148,7 +147,7 @@ export default function UsersPage() {
             </Avatar>
               <div>
               <p className="table-primary">{user.full_name}</p>
-              <p className="text-xs text-muted-foreground">{user.nim}</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
         )
@@ -162,10 +161,10 @@ export default function UsersPage() {
       ),
     },
     {
-      accessorKey: "major",
-      header: "Major",
+      accessorKey: "interest",
+      header: "Interest",
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.major || "—"}</span>
+        <span className="text-muted-foreground">{row.original.interest || "—"}</span>
       ),
     },
     {
@@ -270,17 +269,18 @@ export default function UsersPage() {
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
                 <DialogDescription>
-                  Create a new user account. They will use NIM + password to log in.
+                  Create a new user account. They will use email + password to log in.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="nim">NIM</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="nim"
-                    placeholder="12345678"
-                    value={form.nim}
-                    onChange={(e) => setForm({ ...form, nim: e.target.value })}
+                    id="email"
+                    type="email"
+                    placeholder="user@example.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                     required
                   />
                 </div>
@@ -295,13 +295,12 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="major">Major</Label>
+                  <Label htmlFor="interest">Interest</Label>
                   <Input
-                    id="major"
-                    placeholder="Informatika"
-                    value={form.major}
-                    onChange={(e) => setForm({ ...form, major: e.target.value })}
-                    required
+                    id="interest"
+                    placeholder="Tech Enthusiast"
+                    value={form.interest}
+                    onChange={(e) => setForm({ ...form, interest: e.target.value })}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -341,7 +340,7 @@ export default function UsersPage() {
         columns={columns}
         data={filteredUsers}
         searchKey="full_name"
-        searchPlaceholder="Search by name, NIM, or email..."
+        searchPlaceholder="Search by name or email..."
         loading={loading}
         totalLabel={`${filteredUsers.length} total`}
         emptyMessage="No users found"
@@ -369,12 +368,12 @@ export default function UsersPage() {
         title={detailUser?.full_name || "User Details"}
         identity={detailUser ? {
           name: detailUser.full_name,
-          subtitle: detailUser.major,
+          subtitle: detailUser.interest || detailUser.email,
           avatar: detailUser.photo_url,
         } : undefined}
         fields={[
           { label: "Email", value: detailUser?.email },
-          { label: "NIM", value: detailUser?.nim },
+          { label: "Interest", value: detailUser?.interest || "—" },
           { label: "Onboarded", value: detailUser?.is_onboarded ? "Yes" : "No" },
           { label: "Skills", value: detailUser?.skills?.map(s => s.skill.name).join(", "), variant: "badge" },
           { label: "Bio", value: detailUser?.bio || "", variant: "bio" },

@@ -87,10 +87,14 @@ class _AuthInterceptor extends dio.Interceptor {
   @override
   void onError(dio.DioException err, dio.ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      await _storage.delete(key: ApiConfig.tokenKey);
-      Get.offAllNamed('/onboarding');
-      AppToast.warning('Silakan login kembali.', title: 'Sesi Berakhir');
-      return;
+      final path = err.requestOptions.path;
+      final isAuthEndpoint = path == '/auth/login' || path == '/auth/register' || path == '/auth/register/verify-otp';
+      if (!isAuthEndpoint) {
+        await _storage.delete(key: ApiConfig.tokenKey);
+        Get.offAllNamed('/onboarding');
+        AppToast.warning('Silakan login kembali.', title: 'Sesi Berakhir');
+        return;
+      }
     }
     handler.next(err);
   }

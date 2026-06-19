@@ -1,15 +1,22 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/widgets/app_toast.dart';
+import '../data/repositories/workspace_repository.dart';
 
 class WorkspaceMember {
+  final String id;
   final String name;
   final String initials;
   final String role;
   final bool isOnline;
+  final String? photoUrl;
   const WorkspaceMember({
+    required this.id,
     required this.name,
     required this.role,
     this.initials = '',
     this.isOnline = false,
+    this.photoUrl,
   });
 }
 
@@ -28,7 +35,7 @@ class WorkspaceModel {
   final int applicants;
   final int unreadCount;
   final String? activityCue;
-  final String? urgency; // null, 'deadline', 'overdue'
+  final String? urgency;
 
   const WorkspaceModel({
     required this.id,
@@ -50,34 +57,7 @@ class WorkspaceModel {
 
   double get progress => totalTasks > 0 ? doneTasks / totalTasks : 0;
 
-  WorkspaceModel copyWith({
-    int? totalTasks,
-    int? doneTasks,
-    int? memberCount,
-    List<WorkspaceMember>? members,
-    int? applicants,
-    int? unreadCount,
-    String? activityCue,
-    String? urgency,
-  }) {
-    return WorkspaceModel(
-      id: id,
-      name: name,
-      category: category,
-      description: description,
-      userRole: userRole,
-      totalTasks: totalTasks ?? this.totalTasks,
-      doneTasks: doneTasks ?? this.doneTasks,
-      memberCount: memberCount ?? this.memberCount,
-      members: members ?? this.members,
-      lastActivity: lastActivity,
-      isOwned: isOwned,
-      applicants: applicants ?? this.applicants,
-      unreadCount: unreadCount ?? this.unreadCount,
-      activityCue: activityCue ?? this.activityCue,
-      urgency: urgency ?? this.urgency,
-    );
-  }
+  int get projectId => int.tryParse(id) ?? 0;
 }
 
 class WorkspaceApplicant {
@@ -118,7 +98,7 @@ class RecentActivity {
   final String text;
   final String time;
   final String workspace;
-  final String type; // 'message', 'file', 'task', 'member', 'mention'
+  final String type;
   const RecentActivity({
     required this.text,
     required this.time,
@@ -147,14 +127,18 @@ class DiscussionMessage {
 }
 
 class WorkspaceTask {
+  final String id;
   final String title;
   final String assignee;
+  final String assigneeId;
   final String deadline;
   final String status;
   final bool isDone;
   const WorkspaceTask({
+    this.id = '',
     required this.title,
     required this.assignee,
+    this.assigneeId = '',
     required this.deadline,
     required this.status,
     this.isDone = false,
@@ -177,11 +161,15 @@ class WorkspaceFile {
 }
 
 class TeamController extends GetxController {
+  final WorkspaceRepository _repo = WorkspaceRepository();
+
   var detailTabIndex = 0.obs;
   var workspaceTabIndex = 0.obs;
   final selectedWorkspace = Rxn<WorkspaceModel>();
 
-  // Group Chat File Attachment State
+  final isLoading = true.obs;
+  final hasError = false.obs;
+
   final attachedGroupFileName = RxnString();
   final attachedGroupFileSize = RxnString();
 
@@ -195,365 +183,191 @@ class TeamController extends GetxController {
     attachedGroupFileSize.value = null;
   }
 
-  final workspaces = <WorkspaceModel>[
-    WorkspaceModel(
-      id: '1',
-      name: 'Rembugan App',
-      category: 'Mobile Dev',
-      description:
-          'Platform kolaborasi berbasis mobile untuk ekosistem kampus.',
-      userRole: 'Pemilik',
-      totalTasks: 7,
-      doneTasks: 5,
-      applicants: 2,
-      unreadCount: 3,
-      activityCue: 'Raka mengirim 2 pesan baru',
-      urgency: 'deadline',
-      memberCount: 5,
-      members: const [
-        WorkspaceMember(
-          name: 'Dede (Kamu)',
-          initials: 'DF',
-          role: 'Owner',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Raka',
-          initials: 'RP',
-          role: 'Admin',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Cameron',
-          initials: 'CW',
-          role: 'Member',
-          isOnline: false,
-        ),
-        WorkspaceMember(
-          name: 'Marvin',
-          initials: 'MM',
-          role: 'Member',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Aisyah',
-          initials: 'AN',
-          role: 'Member',
-          isOnline: false,
-        ),
-      ],
-      lastActivity: '30 menit lalu',
-      isOwned: true,
-    ),
-    WorkspaceModel(
-      id: '2',
-      name: 'Hackathon 2026',
-      category: 'Kompetisi',
-      description: 'Persiapan hackathon nasional. Pitch deck, MVP, dan tugas.',
-      userRole: 'Pemilik',
-      totalTasks: 8,
-      doneTasks: 2,
-      activityCue: 'Deadline submission besok',
-      urgency: 'overdue',
-      memberCount: 4,
-      members: const [
-        WorkspaceMember(
-          name: 'Dede (Kamu)',
-          initials: 'DF',
-          role: 'Owner',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Cameron',
-          initials: 'CW',
-          role: 'Member',
-          isOnline: false,
-        ),
-        WorkspaceMember(
-          name: 'Marvin',
-          initials: 'MM',
-          role: 'Member',
-          isOnline: false,
-        ),
-        WorkspaceMember(
-          name: 'Raka',
-          initials: 'RP',
-          role: 'Member',
-          isOnline: true,
-        ),
-      ],
-      lastActivity: '3 jam lalu',
-      isOwned: true,
-    ),
-    WorkspaceModel(
-      id: '3',
-      name: 'GEMASTIK Data Mining',
-      category: 'ML/AI',
-      description: 'Tim untuk GEMASTIK XVII bidang Data Mining.',
-      userRole: 'Anggota',
-      totalTasks: 5,
-      doneTasks: 2,
-      activityCue: 'Raka upload dataset_v3.csv',
-      memberCount: 3,
-      members: const [
-        WorkspaceMember(
-          name: 'Raka',
-          initials: 'RP',
-          role: 'Owner',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Dede (Kamu)',
-          initials: 'DF',
-          role: 'Member',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Aisyah',
-          initials: 'AN',
-          role: 'Member',
-          isOnline: false,
-        ),
-      ],
-      lastActivity: '2 jam lalu',
-      isOwned: false,
-    ),
-  ].obs;
+  final workspaces = <WorkspaceModel>[].obs;
+  final workspaceHistory = <WorkspaceHistory>[].obs;
+  final applicants = <WorkspaceApplicant>[].obs;
+  final recentActivities = <RecentActivity>[].obs;
+  final discussions = <DiscussionMessage>[].obs;
+  final tasks = <WorkspaceTask>[].obs;
+  final files = <WorkspaceFile>[].obs;
+  final channels = <String>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadWorkspaces();
+  }
 
   List<WorkspaceModel> get ownedWorkspaces =>
       workspaces.where((w) => w.isOwned).toList();
   List<WorkspaceModel> get joinedWorkspaces =>
       workspaces.where((w) => !w.isOwned).toList();
 
-  final workspaceHistory = <WorkspaceHistory>[].obs;
-
-  final applicants = <WorkspaceApplicant>[
-    const WorkspaceApplicant(
-      id: 'app-1',
-      workspaceId: '1',
-      name: 'Nabila Putri',
-      role: 'UI/UX Designer',
-      note: 'Ingin bantu rapihin flow onboarding dan prototype testing.',
-      skills: ['Figma', 'UX Research', 'Design System'],
-    ),
-    const WorkspaceApplicant(
-      id: 'app-2',
-      workspaceId: '1',
-      name: 'Farhan Akbar',
-      role: 'Backend Developer',
-      note: 'Pernah build API FastAPI dan tertarik bantu auth service.',
-      skills: ['FastAPI', 'PostgreSQL', 'REST API'],
-    ),
-  ].obs;
-
   List<WorkspaceApplicant> applicantsFor(String workspaceId) =>
       applicants.where((a) => a.workspaceId == workspaceId).toList();
 
   void changeDetailTab(int i) => detailTabIndex.value = i;
+
+  void loadWorkspaces() async {
+    isLoading.value = true;
+    hasError.value = false;
+    try {
+      final result = await _repo.getWorkspaces();
+      workspaces.assignAll(result);
+      if (result.isNotEmpty) {
+        openWorkspace(result.first);
+      }
+    } catch (e) {
+      hasError.value = true;
+      debugPrint('loadWorkspaces error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   void openWorkspace(WorkspaceModel ws) {
     selectedWorkspace.value = ws;
     detailTabIndex.value = 0;
+    _loadWorkspaceDetail(ws.projectId);
   }
 
-  void approveApplicant(WorkspaceApplicant applicant) {
-    applicants.removeWhere((a) => a.id == applicant.id);
-    final index = workspaces.indexWhere((w) => w.id == applicant.workspaceId);
-    if (index == -1) return;
+  Future<void> _loadWorkspaceDetail(int projectId) async {
+    final results = await Future.wait([
+      _repo.getDiscussions(projectId),
+      _repo.getTasks(projectId),
+      _repo.getFiles(projectId),
+      _repo.getApplicants(projectId),
+    ]);
 
-    final ws = workspaces[index];
-    final updated = ws.copyWith(
-      applicants: applicantsFor(ws.id).length,
-      memberCount: ws.memberCount + 1,
-      members: [
-        ...ws.members,
-        WorkspaceMember(
-          name: applicant.name,
-          initials: applicant.name
-              .split(' ')
-              .where((part) => part.isNotEmpty)
-              .take(2)
-              .map((part) => part[0])
-              .join()
-              .toUpperCase(),
-          role: applicant.role,
+    discussions.assignAll(results[0] as List<DiscussionMessage>);
+    tasks.assignAll(results[1] as List<WorkspaceTask>);
+    files.assignAll(results[2] as List<WorkspaceFile>);
+    applicants.assignAll(results[3] as List<WorkspaceApplicant>);
+  }
+
+  void approveApplicant(WorkspaceApplicant applicant) async {
+    final appId = int.tryParse(applicant.id);
+    if (appId == null) return;
+    final result = await _repo.respondApplication(appId, 'accepted', role: 'Anggota');
+    if (result != null) {
+      applicants.removeWhere((a) => a.id == applicant.id);
+      // Refresh workspace list
+      loadWorkspaces();
+    }
+  }
+
+  void rejectApplicant(WorkspaceApplicant applicant) async {
+    final appId = int.tryParse(applicant.id);
+    if (appId == null) return;
+    final result = await _repo.respondApplication(appId, 'rejected');
+    if (result != null) {
+      applicants.removeWhere((a) => a.id == applicant.id);
+      final ws = selectedWorkspace.value;
+      if (ws != null) {
+        final idx = workspaces.indexWhere((w) => w.id == ws.id);
+        if (idx >= 0) {
+          workspaces[idx] = WorkspaceModel(
+            id: ws.id,
+            name: ws.name,
+            category: ws.category,
+            description: ws.description,
+            userRole: ws.userRole,
+            totalTasks: ws.totalTasks,
+            doneTasks: ws.doneTasks,
+            memberCount: ws.memberCount,
+            members: ws.members,
+            lastActivity: ws.lastActivity,
+            isOwned: ws.isOwned,
+            applicants: applicantsFor(ws.id).length,
+            unreadCount: ws.unreadCount,
+            activityCue: 'Lamaran ${applicant.name} ditolak',
+            urgency: ws.urgency,
+          );
+        }
+      }
+    }
+  }
+
+  void endCollaboration(WorkspaceModel ws) async {
+    final ok = await _repo.endCollaboration(ws.projectId);
+    if (ok) {
+      workspaceHistory.insert(
+        0,
+        WorkspaceHistory(
+          name: ws.name,
+          role: ws.userRole,
+          members: ws.memberCount,
+          finishedAt: 'Selesai hari ini',
+          summary: 'Workspace diarsipkan.',
         ),
-      ],
-      activityCue: '${applicant.name} diterima ke workspace',
-    );
-    workspaces[index] = updated;
-    selectedWorkspace.value = updated;
+      );
+      applicants.removeWhere((a) => a.workspaceId == ws.id);
+      workspaces.removeWhere((w) => w.id == ws.id);
+      tasks.clear();
+      discussions.clear();
+      files.clear();
+      selectedWorkspace.value = null;
+      detailTabIndex.value = 0;
+    }
   }
 
-  void rejectApplicant(WorkspaceApplicant applicant) {
-    applicants.removeWhere((a) => a.id == applicant.id);
-    final index = workspaces.indexWhere((w) => w.id == applicant.workspaceId);
-    if (index == -1) return;
-
-    final ws = workspaces[index];
-    final updated = ws.copyWith(
-      applicants: applicantsFor(ws.id).length,
-      activityCue: 'Lamaran ${applicant.name} ditolak',
-    );
-    workspaces[index] = updated;
-    selectedWorkspace.value = updated;
+  void addTask(String title, {String? assigneeId, String? deadline}) async {
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final result = await _repo.createTask(ws.projectId, title, assigneeId, deadline);
+    if (result != null) {
+      AppToast.success('Tugas berhasil ditambahkan!');
+      _loadWorkspaceDetail(ws.projectId);
+    } else {
+      AppToast.error('Gagal menambahkan tugas');
+    }
   }
 
-  void endCollaboration(WorkspaceModel ws) {
-    workspaceHistory.insert(
-      0,
-      WorkspaceHistory(
-        name: ws.name,
-        role: ws.userRole,
-        members: ws.memberCount,
-        finishedAt: 'Selesai hari ini',
-        summary: 'Workspace diarsipkan. Tugas dan obrolan aktif dibersihkan.',
-      ),
-    );
-    applicants.removeWhere((a) => a.workspaceId == ws.id);
-    workspaces.removeWhere((w) => w.id == ws.id);
-    tasks.clear();
-    discussions.clear();
-    selectedWorkspace.value = null;
-    detailTabIndex.value = 0;
+  void moveTask(int taskId, String newStatus) async {
+    final ok = await _repo.moveTask(taskId, newStatus);
+    if (ok) {
+      final labels = {'todo': 'To Do', 'doing': 'In Progress', 'done': 'Done'};
+      AppToast.success('Berhasil dipindah ke ${labels[newStatus] ?? newStatus}');
+      final ws = selectedWorkspace.value;
+      if (ws != null) _loadWorkspaceDetail(ws.projectId);
+    } else {
+      AppToast.error('Gagal memindahkan tugas');
+    }
   }
 
-  // Recent activity
-  final recentActivities = <RecentActivity>[
-    const RecentActivity(
-      text: 'Raka mengirim pesan di #umum',
-      time: '30m lalu',
-      workspace: 'Rembugan App',
-      type: 'message',
-    ),
-    const RecentActivity(
-      text: 'wireframe_v2.fig diunggah',
-      time: '1j lalu',
-      workspace: 'Rembugan App',
-      type: 'file',
-    ),
-    const RecentActivity(
-      text: 'Task "Setup CI/CD" selesai',
-      time: '2j lalu',
-      workspace: 'Hackathon 2026',
-      type: 'task',
-    ),
-    const RecentActivity(
-      text: 'Aisyah bergabung ke tim',
-      time: '3j lalu',
-      workspace: 'GEMASTIK',
-      type: 'member',
-    ),
-  ];
+  void updateTask(int taskId, {String? title, String? assigneeId, String? deadline}) async {
+    final result = await _repo.updateTask(taskId, title: title, assigneeId: assigneeId, deadline: deadline);
+    if (result != null) {
+      AppToast.success('Tugas berhasil diedit!');
+      final ws = selectedWorkspace.value;
+      if (ws != null) _loadWorkspaceDetail(ws.projectId);
+    } else {
+      AppToast.error('Gagal mengedit tugas');
+    }
+  }
 
-  // ── Detail dummy data ──
+  void deleteTask(int taskId) async {
+    final ok = await _repo.deleteTask(taskId);
+    if (ok) {
+      AppToast.success('Tugas berhasil dihapus!');
+      final ws = selectedWorkspace.value;
+      if (ws != null) _loadWorkspaceDetail(ws.projectId);
+    } else {
+      AppToast.error('Gagal menghapus tugas');
+    }
+  }
 
-  final discussions = <DiscussionMessage>[
-    const DiscussionMessage(
-      sender: '',
-      body: 'Raka menambahkan file wireframe_v2.fig',
-      time: '10:20',
-      isSystem: true,
-    ),
-    const DiscussionMessage(
-      sender: 'Raka',
-      body: 'Wireframe onboarding sudah selesai, bisa dicek di Figma ya!',
-      time: '10:24',
-    ),
-    const DiscussionMessage(
-      sender: 'Dede',
-      body: 'Sudah lihat, bagus! Kita lanjut ke home screen aja.',
-      time: '10:31',
-      isMe: true,
-    ),
-    const DiscussionMessage(
-      sender: '',
-      body: 'Task "Setup CI/CD" diselesaikan oleh Marvin',
-      time: '11:00',
-      isSystem: true,
-    ),
-    const DiscussionMessage(
-      sender: 'Cameron',
-      body: 'Project Flutter sudah disetup, tinggal integrasi API auth nih.',
-      time: '11:05',
-    ),
-    const DiscussionMessage(
-      sender: 'Dede',
-      body: 'Siap, nanti aku handle bagian auth-nya.',
-      time: '11:08',
-      isMe: true,
-    ),
-    const DiscussionMessage(
-      sender: 'Aisyah',
-      body: 'Mockup profile page sudah aku upload di tab File.',
-      time: '11:15',
-      attachment: 'profile_mockup_v2.fig',
-    ),
-  ].obs;
-
-  final channels = ['umum', 'design', 'aset-proyek', 'referensi'];
-
-  final tasks = <WorkspaceTask>[
-    const WorkspaceTask(
-      title: 'Slicing UI Onboarding',
-      assignee: 'Dede',
-      deadline: 'Hari ini',
-      status: 'In Progress',
-    ),
-    const WorkspaceTask(
-      title: 'Integrasi API Login',
-      assignee: 'Cameron',
-      deadline: 'Besok',
-      status: 'In Progress',
-    ),
-    const WorkspaceTask(
-      title: 'Review UX Flow Chat',
-      assignee: 'Raka',
-      deadline: '20 Mei',
-      status: 'Todo',
-    ),
-    const WorkspaceTask(
-      title: 'Setup CI/CD Pipeline',
-      assignee: 'Marvin',
-      deadline: '18 Mei',
-      status: 'Done',
-      isDone: true,
-    ),
-    const WorkspaceTask(
-      title: 'Design System Docs',
-      assignee: 'Aisyah',
-      deadline: '22 Mei',
-      status: 'Todo',
-    ),
-  ].obs;
-
-  final files = <WorkspaceFile>[
-    const WorkspaceFile(
-      name: 'profile_mockup_v2.fig',
-      uploader: 'Aisyah',
-      date: 'Hari ini',
-      size: '2.4 MB',
-      type: 'fig',
-    ),
-    const WorkspaceFile(
-      name: 'api_spec_v3.pdf',
-      uploader: 'Cameron',
-      date: 'Kemarin',
-      size: '540 KB',
-      type: 'pdf',
-    ),
-    const WorkspaceFile(
-      name: 'meeting_notes.doc',
-      uploader: 'Dede',
-      date: '15 Mei',
-      size: '128 KB',
-      type: 'doc',
-    ),
-    const WorkspaceFile(
-      name: 'wireframe_explore.png',
-      uploader: 'Raka',
-      date: '14 Mei',
-      size: '1.8 MB',
-      type: 'png',
-    ),
-  ].obs;
+  void kickMember(String userId) async {
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final name = ws.members.where((m) => m.id == userId).firstOrNull?.name ?? 'Anggota';
+    final ok = await _repo.kickMember(ws.projectId, userId);
+    if (ok) {
+      AppToast.success('$name berhasil dikeluarkan');
+      loadWorkspaces();
+      _loadWorkspaceDetail(ws.projectId);
+    } else {
+      AppToast.error('Gagal mengeluarkan anggota');
+    }
+  }
 }

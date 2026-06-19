@@ -26,7 +26,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   late ProfileData draft;
   late TextEditingController nameController;
   late TextEditingController bioController;
-  late TextEditingController majorController;
+  late TextEditingController interestController;
   late TextEditingController socialController;
   bool _isSaving = false;
 
@@ -36,7 +36,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     draft = profileService.profile.value;
     nameController = TextEditingController(text: draft.name);
     bioController = TextEditingController(text: draft.bio);
-    majorController = TextEditingController(text: draft.major);
+    interestController = TextEditingController(text: draft.interest);
     socialController = TextEditingController(text: draft.socialLink);
   }
 
@@ -44,7 +44,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   void dispose() {
     nameController.dispose();
     bioController.dispose();
-    majorController.dispose();
+    interestController.dispose();
     socialController.dispose();
     super.dispose();
   }
@@ -132,7 +132,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     final newDraft = draft.copyWith(
       name: nameController.text.trim(),
       bio: bioController.text.trim(),
-      major: majorController.text.trim(),
+      interest: interestController.text.trim(),
       socialLink: socialController.text.trim(),
     );
 
@@ -141,7 +141,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     final settings = <String, dynamic>{};
     if (newDraft.name != old.name) settings['full_name'] = newDraft.name;
     if (newDraft.bio != old.bio) settings['bio'] = newDraft.bio;
-    if (newDraft.major != old.major) settings['major'] = newDraft.major;
+    if (newDraft.interest != old.interest) settings['interest'] = newDraft.interest;
     if (newDraft.photoUrl != old.photoUrl) settings['photo_url'] = newDraft.photoUrl;
     if (newDraft.coverUrl != old.coverUrl) settings['cover_url'] = newDraft.coverUrl;
     if (newDraft.socialLink != old.socialLink) {
@@ -508,9 +508,9 @@ class _EditProfileViewState extends State<EditProfileView> {
                 ),
                 const SizedBox(height: 16),
                 _Field(
-                  label: 'Jurusan',
-                  controller: majorController,
-                  hint: 'Program studi atau jurusan',
+                  label: 'Minat/Bidang',
+                  controller: interestController,
+                  hint: 'Minat atau bidang',
                 ),
                 const SizedBox(height: 16),
                 _Field(

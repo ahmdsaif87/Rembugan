@@ -11,4 +11,4 @@ class ApplyInput(BaseModel):
 class ApplicationRespondInput(BaseModel):
     """Data untuk merespons lamaran (accept/reject)."""
     status: str = Field(..., pattern="^(accepted|rejected)$", description="Status: accepted atau rejected")
-    role: str = Field(default="Anggota", description="Role jika diterima: Ketua, Anggota, Pembimbing")
+    role: str = Field(default="Anggota", description="Role jika diterima: Anggota")

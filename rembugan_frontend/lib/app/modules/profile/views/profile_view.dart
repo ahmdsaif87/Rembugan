@@ -204,12 +204,38 @@ class _ProfileIdentity extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          profile.major,
+          profile.interest,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: c.grey500,
           ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(FluentIcons.people_24_regular, size: 14, color: c.grey500),
+            const SizedBox(width: 4),
+            Text(
+              '${profile.connectionCount} koneksi',
+              style: AppFonts.satoshiStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: c.grey500,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Icon(FluentIcons.briefcase_24_regular, size: 14, color: c.grey500),
+            const SizedBox(width: 4),
+            Text(
+              '${profile.projectCount} proyek',
+              style: AppFonts.satoshiStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: c.grey500,
+              ),
+            ),
+          ],
         ),
         if (profile.bio.isNotEmpty) ...[
           const SizedBox(height: 10),

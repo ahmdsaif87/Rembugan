@@ -14,21 +14,22 @@ datasource db {
 model User {
   id            String    @id @default(uuid())
   
-  // Kredensial (Multi-Auth)
-  nim           String    @unique // Wajib, identitas utama mahasiswa
+  // Kredensial
+  email         String    @unique // Wajib, identitas utama
   password      String    // Wajib, di-hash saat registrasi
-  email         String?   @unique
   email_verified Boolean  @default(false)
   
   // Data Profil Dasar
   full_name     String
   handle        String?   @unique // @username untuk profil
-  major         String
+  interest      String?   // Minat/bidang user (free text)
   bio           String?
   photo_url     String?   
   cover_url     String?   
   social_links  Json?
   is_onboarded  Boolean   @default(false)
+  connection_count Int    @default(0)
+  project_count    Int    @default(0)
   
   // Relasi ke Data Lain
   skills        UserSkill[]
@@ -117,9 +118,9 @@ model Project {
   required_skills String[]             // Array of String untuk memudahkan pencarian AI
   status          String               @default("open") // Status: 'open', 'ongoing', 'completed'
   
-  // Field tambahan untuk UI Flutter
+  // Field tambahan
   category        String?              // Kategori proyek (Tech, Design, Business, dll)
-  faculty         String?              // Fakultas terkait proyek
+  interest        String?              // Minat terkait proyek (untuk filtering "Untukmu")
   deadline        DateTime?            // Batas waktu pendaftaran
   total_slots     Int?                 // Total slot anggota yang dibutuhkan
   
@@ -138,7 +139,7 @@ model Project {
   @@index([status])
   @@index([owner_id])
   @@index([category])
-  @@index([faculty])
+  @@index([interest])
   @@index([deadline])
 }
 
@@ -160,7 +161,7 @@ model ProjectMember {
   id         Int      @id @default(autoincrement())
   project_id Int
   user_id    String
-  role       String   @default("Anggota") // Role: 'Ketua', 'Anggota', 'Pembimbing'
+  role       String   @default("Anggota") // Role: 'Ketua' (creator), 'Anggota'
   
   project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)

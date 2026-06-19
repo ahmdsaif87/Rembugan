@@ -7,37 +7,36 @@ from app.core.security import hash_password
 
 PASSWORD_HASH = hash_password("00000000")
 
-MAJORS = {
-    "01": "D3 Akuntansi",
-    "02": "D3 Keperawatan",
-    "03": "D3 Teknik Mesin",
-    "04": "D3 Teknik Komputer",
-    "06": "D3 DKV",
-    "07": "D3 Perhotelan",
-    "08": "D3 Farmasi",
-    "09": "D4 Teknik Informatika",
-    "10": "D4 Akuntansi Sektor Publik",
-    "11": "D4 Kebidanan",
-    "21": "S1 Teknik Mesin",
-    "22": "S1 Manajemen",
-}
+INTERESTS = [
+    "Machine Learning",
+    "Web Development",
+    "UI/UX Design",
+    "Data Science",
+    "Mobile Development",
+    "Cyber Security",
+    "Game Development",
+    "Internet of Things",
+    "Artificial Intelligence",
+    "Digital Marketing",
+]
 
-NAMA_PER_PRODI = {
-    "01": ["Ahmad Fauzi", "Siti Nurhaliza", "Bambang Supriyadi", "Dewi Sartika", "Rudi Hartono"],
-    "02": ["Ani Rahmawati", "Budi Santoso", "Citra Dewi", "Dian Puspita", "Eko Prasetyo"],
-    "03": ["Fajar Hidayat", "Gita Permata", "Hendra Gunawan", "Indah Lestari", "Joko Widodo"],
-    "04": ["Karin Kusuma", "Leo Pratama", "Mega Wati", "Nanda Firmansyah", "Oscar Tampubolon"],
-    "06": ["Umar Zulkarnain", "Vina Violita", "Wahyu Nugroho", "Xena Marisa", "Yudi Permana"],
-    "07": ["Zahra Almira", "Agus Wijaya", "Bella Octavia", "Candra Kusuma", "Dinda Kirana"],
-    "08": ["Eka Pratiwi", "Farhan Kurniawan", "Gina Sabrina", "Hafiz Ramadhan", "Intan Permata"],
-    "09": ["Jefri Kurniawan", "Kiki Amalia", "Lukman Hakim", "Mira Soraya", "Nizar Rahman"],
-    "10": ["Olivia Hernanda", "Panji Saputra", "Queen Auryn", "Raka Maulana", "Siska Melina"],
-    "11": ["Titis Widya", "Ujang Permana", "Vera Anatasha", "Winda Sari", "Xavier Tama"],
-    "21": ["Yoga Pratama", "Zidan Alfariz", "Alifia Rahman", "Bima Sakti", "Cinta Laura"],
-    "22": ["Dimas Ardianto", "Elsa Safira", "Fikri Haikal", "Geby Maharani", "Haris Munandar"],
-}
-
-NIM_YEARS = ["23", "24", "25"]
+NAMA_USER = [
+    "Ahmad Fauzi", "Siti Nurhaliza", "Bambang Supriyadi", "Dewi Sartika",
+    "Rudi Hartono", "Ani Rahmawati", "Budi Santoso", "Citra Dewi",
+    "Dian Puspita", "Eko Prasetyo", "Fajar Hidayat", "Gita Permata",
+    "Hendra Gunawan", "Indah Lestari", "Joko Widodo", "Karin Kusuma",
+    "Leo Pratama", "Mega Wati", "Nanda Firmansyah", "Oscar Tampubolon",
+    "Putri Ayu", "Qori Ramadhan", "Rina Marlina", "Sandi Firmansyah",
+    "Tari Utami", "Umar Zulkarnain", "Vina Violita", "Wahyu Nugroho",
+    "Yudi Permana", "Zahra Almira", "Agus Wijaya", "Bella Octavia",
+    "Candra Kusuma", "Dinda Kirana", "Eka Pratiwi", "Farhan Kurniawan",
+    "Gina Sabrina", "Hafiz Ramadhan", "Intan Permata", "Jefri Kurniawan",
+    "Kiki Amalia", "Lukman Hakim", "Mira Soraya", "Nizar Rahman",
+    "Olivia Hernanda", "Panji Saputra", "Raka Maulana", "Siska Melina",
+    "Titis Widya", "Ujang Permana", "Vera Anatasha", "Winda Sari",
+    "Yoga Pratama", "Zidan Alfariz", "Alifia Rahman", "Bima Sakti",
+    "Dimas Ardianto", "Elsa Safira", "Fikri Haikal", "Geby Maharani",
+]
 
 NAMA_SKILL = [
     "Python", "Java", "JavaScript", "Flutter", "React Native",
@@ -57,25 +56,107 @@ NAMA_SKILL = [
     "Public Speaking", "Leadership", "Teamwork", "Problem Solving", "Critical Thinking",
 ]
 
-SKILL_PER_PRODI = {
-    "01": ["Microsoft Excel", "Akuntansi", "MYOB", "SAP", "Accurate"],
-    "02": ["Keperawatan", "Kesehatan Masyarakat", "Gizi"],
-    "03": ["Teknik Mesin", "AutoCAD", "SolidWorks", "CNC", "PLC"],
-    "04": ["Python", "Java", "JavaScript", "PHP", "Laravel", "React JS", "Node.js", "SQL", "Git"],
-    "06": ["UI/UX Design", "Figma", "Adobe Illustrator", "Canva", "CorelDRAW"],
-    "07": ["Perhotelan", "Housekeeping", "Food & Beverage", "Front Office", "Event Management"],
-    "08": ["Farmasi", "Kesehatan Masyarakat"],
-    "09": ["Python", "JavaScript", "Flutter", "React JS", "Next.js", "Node.js",
-           "React Native", "FastAPI", "PostgreSQL", "MongoDB", "Firebase",
-           "Prisma ORM", "Docker", "Git", "Linux", "Machine Learning"],
-    "10": ["Akuntansi", "Microsoft Excel", "SAP", "MYOB", "Manajemen Keuangan"],
-    "11": ["Kebidanan", "Keperawatan", "Kesehatan Masyarakat", "Gizi"],
-    "21": ["Teknik Mesin", "AutoCAD", "SolidWorks", "PLC"],
-    "22": ["Manajemen Keuangan", "Digital Marketing", "Public Speaking",
-           "Microsoft Excel", "Leadership", "Analisis Data"],
+INTEREST_TO_SKILLS = {
+    "Machine Learning": [
+        "Python", "Machine Learning", "Deep Learning", "Computer Vision", "NLP",
+        "TensorFlow", "R Programming", "Analisis Data", "SPSS", "STATA",
+    ],
+    "Web Development": [
+        "JavaScript", "React JS", "Next.js", "Node.js", "PHP", "Laravel",
+        "FastAPI", "Flask", "Django", "PostgreSQL", "MongoDB", "Firebase",
+        "Prisma ORM", "REST API", "GraphQL", "Git", "CSS",
+    ],
+    "UI/UX Design": [
+        "UI/UX Design", "Figma", "Adobe Illustrator", "Canva", "CorelDRAW",
+        "Adobe Photoshop", "Content Writing", "Copywriting",
+    ],
+    "Data Science": [
+        "Python", "Machine Learning", "Analisis Data", "SPSS", "STATA",
+        "R Programming", "SQL", "PostgreSQL", "MongoDB", "Microsoft Excel",
+    ],
+    "Mobile Development": [
+        "Flutter", "React Native", "Dart", "JavaScript", "Firebase",
+        "REST API", "GraphQL", "Git", "Node.js",
+    ],
+    "Cyber Security": [
+        "Python", "Linux", "Docker", "Kubernetes", "Git",
+        "Network Security", "Penetration Testing", "Cryptography",
+    ],
+    "Game Development": [
+        "Python", "Java", "JavaScript", "C++", "Unity",
+        "Blender", "3D Modeling", "Game Design",
+    ],
+    "Internet of Things": [
+        "IoT", "Arduino", "Raspberry Pi", "Python", "C++",
+        "PCB Design", "Sensor Technology", "Embedded System",
+    ],
+    "Artificial Intelligence": [
+        "Python", "Machine Learning", "Deep Learning", "Computer Vision",
+        "NLP", "TensorFlow", "REST API", "Analisis Data",
+    ],
+    "Digital Marketing": [
+        "Digital Marketing", "SEO", "Social Media", "Content Writing",
+        "Copywriting", "Public Speaking", "Microsoft Excel",
+        "Manajemen Keuangan", "Analisis Data",
+    ],
 }
 
-BIO_MAHASISWA = [
+SKILLS_BY_INTEREST = {
+    "Machine Learning": [
+        ["Python", "Machine Learning", "TensorFlow"],
+        ["Python", "Analisis Data", "SPSS"],
+        ["Machine Learning", "Deep Learning", "NLP"],
+        ["Python", "Computer Vision", "TensorFlow"],
+    ],
+    "Web Development": [
+        ["JavaScript", "React JS", "Node.js"],
+        ["PHP", "Laravel", "PostgreSQL"],
+        ["Python", "FastAPI", "Next.js"],
+        ["JavaScript", "React JS", "Firebase"],
+    ],
+    "UI/UX Design": [
+        ["Figma", "Adobe Illustrator", "UI/UX Design"],
+        ["Canva", "CorelDRAW", "Branding"],
+        ["Adobe Photoshop", "UI/UX Design", "Prototyping"],
+    ],
+    "Data Science": [
+        ["Python", "Analisis Data", "Machine Learning"],
+        ["R Programming", "SPSS", "STATA"],
+        ["Python", "SQL", "Microsoft Excel"],
+    ],
+    "Mobile Development": [
+        ["Flutter", "Dart", "Firebase"],
+        ["React Native", "JavaScript", "Node.js"],
+        ["Flutter", "REST API", "Git"],
+    ],
+    "Cyber Security": [
+        ["Python", "Linux", "Network Security"],
+        ["Docker", "Kubernetes", "Penetration Testing"],
+        ["Linux", "Cryptography", "Network Security"],
+    ],
+    "Game Development": [
+        ["Python", "Game Design", "Unity"],
+        ["Java", "C++", "3D Modeling"],
+        ["JavaScript", "Game Design", "Blender"],
+    ],
+    "Internet of Things": [
+        ["IoT", "Arduino", "Python"],
+        ["Arduino", "Raspberry Pi", "Embedded System"],
+        ["IoT", "Sensor Technology", "PCB Design"],
+    ],
+    "Artificial Intelligence": [
+        ["Python", "Machine Learning", "Deep Learning"],
+        ["Python", "Computer Vision", "TensorFlow"],
+        ["NLP", "Machine Learning", "REST API"],
+    ],
+    "Digital Marketing": [
+        ["Digital Marketing", "SEO", "Social Media"],
+        ["Content Writing", "Copywriting", "Public Speaking"],
+        ["SEO", "Analisis Data", "Microsoft Excel"],
+    ],
+}
+
+BIO_USER = [
     "Mahasiswa aktif yang senang belajar hal baru.",
     "Menyukai tantangan dan selalu ingin berkembang.",
     "Aktif dalam organisasi kampus dan kepanitiaan.",
@@ -95,7 +176,7 @@ JUDUL_PENGALAMAN = [
     "Asisten Laboratorium",
     "Ketua Himpunan Mahasiswa",
     "Freelance UI/UX Designer",
-    "Anggota Tim Robotik",
+    "Anggota Tim Riset",
     "Staff Divisi Acara",
     "Praktek Kerja Lapangan",
     "Research Assistant",
@@ -110,9 +191,9 @@ PERUSAHAAN = [
     "Lab Komputer Universitas",
     "Himpunan Mahasiswa",
     "Studio Desain Kreatif",
-    "Tim Robotik Universitas",
+    "Pusat Riset Universitas",
     "BEM Universitas",
-    "Rumah Sakit Umum Daerah",
+    "Perusahaan Startup",
     "Pusat Penelitian Kampus",
     "Media Digital Kreatif",
     "Startup Lokal",
@@ -120,127 +201,38 @@ PERUSAHAAN = [
     "Universitas Negeri",
 ]
 
-# (title, major_code, description)
-PROJECT_TITLES = [
-    # D3 Akuntansi (01)
-    ("Analisis Laporan Keuangan Perusahaan Manufaktur", "01", "Menganalisis laporan keuangan tahunan perusahaan manufaktur untuk menilai profitabilitas, likuiditas, dan solvabilitas sebagai dasar pengambilan keputusan investasi."),
-    ("Audit Kepatuhan Internal Operasional Toko Retail", "01", "Melakukan audit internal terhadap prosedur operasional toko retail untuk memastikan kepatuhan terhadap standar akuntansi dan regulasi yang berlaku."),
-    ("Penyusunan Anggaran dan Evaluasi Kinerja UMKM Sektor Kuliner", "01", "Membantu UMKM sektor kuliner menyusun anggaran tahunan serta mengevaluasi kinerja keuangan melalui analisis varians dan rasio keuangan."),
-
-    # D3 Keperawatan (02)
-    ("Program Edukasi Kesehatan Reproduksi Remaja di Sekolah Menengah", "02", "Merancang dan mengimplementasikan program edukasi kesehatan reproduksi bagi remaja di sekolah menengah untuk meningkatkan pengetahuan dan perilaku sehat."),
-    ("Pencegahan Stunting melalui Program Gizi Seimbang pada Balita", "02", "Mengembangkan program intervensi gizi seimbang untuk mencegah stunting pada balita di daerah dengan prevalensi gizi buruk yang tinggi."),
-    ("Manajemen Asuhan Keperawatan pada Pasien Diabetes Melitus Tipe 2", "02", "Menyusun dan menerapkan rencana asuhan keperawatan komprehensif bagi pasien diabetes melitus tipe 2 di rumah sakit umum daerah."),
-
-    # D3 Teknik Mesin (03)
-    ("Perancangan Sistem Pendingin Ruangan Hemat Energi untuk Gedung Perkantoran", "03", "Merancang sistem HVAC hemat energi dengan memanfaatkan sirkulasi udara alami dan material insulasi termal untuk mengurangi konsumsi listrik."),
-    ("Rancang Bangun Mesin Pencacah Sampah Organik Rumah Tangga", "03", "Mendesain dan membangun mesin pencacah sampah organik skala rumah tangga yang ergonomis dan terjangkau untuk mendukung program bank sampah."),
-    ("Optimasi Proses Produksi pada Industri Manufaktur Komponen Otomotif", "03", "Mengidentifikasi dan mengoptimalkan parameter proses produksi pada lini manufaktur komponen otomotif untuk meningkatkan efisiensi dan mengurangi reject."),
-
-    # D3 Teknik Komputer (04)
-    ("Sistem Monitoring Jaringan Komputer Berbasis IoT untuk Kampus", "04", "Membangun sistem monitoring perangkat jaringan secara real-time menggunakan sensor IoT dan platform dashboard visual."),
-    ("Rancang Bangun Sistem Keamanan Rumah Pintar dengan Sensor Gerak", "04", "Merancang sistem keamanan rumah otomatis berbasis mikrokontroler yang terintegrasi dengan notifikasi smartphone dan sensor PIR."),
-
-    # D3 DKV (06)
-    ("Perancangan Identitas Visual Brand untuk Produk Kerajinan Lokal", "06", "Merancang identitas visual komprehensif berupa logo, tipografi, dan palette warna untuk brand produk kerajinan tangan lokal."),
-    ("Desain Kemasan Produk UMKM Ramah Lingkungan dan Estetis", "06", "Mendesain kemasan produk UMKM yang menarik secara visual dan ramah lingkungan menggunakan material daur ulang dan tinta nabati."),
-    ("Branding dan Promosi Destinasi Wisata Alam melalui Media Visual", "06", "Mengembangkan strategi branding visual untuk destinasi wisata alam melalui desain poster, konten media sosial, dan video promosi."),
-
-    # D3 Perhotelan (07)
-    ("Analisis Service Quality Hotel Berdasarkan Ulasan Tamu di Platform Online", "07", "Menganalisis kualitas pelayanan hotel dengan metode text mining pada ulasan tamu di platform pemesanan online untuk rekomendasi perbaikan."),
-    ("Strategi Digital Marketing untuk Meningkatkan Tingkat Hunian Hotel", "07", "Merancang strategi pemasaran digital terpadu yang mencakup SEO, social media marketing, dan email campaign untuk meningkatkan okupansi hotel."),
-
-    # D3 Farmasi (08)
-    ("Formulasi dan Uji Stabilitas Sediaan Kosmesetikal Skincare Alami", "08", "Mengembangkan formulasi sediaan kosmesetikal berbahan aktif alami serta menguji stabilitas fisik dan kimia selama penyimpanan."),
-    ("Analisis Kualitatif dan Kuantitatif Bahan Kimia Obat pada Jamu Tradisional", "08", "Mengidentifikasi dan mengukur kadar bahan kimia obat (BKO) yang sering ditambahkan pada jamu tradisional menggunakan metode kromatografi."),
-    ("Uji Efektivitas Antibakteri Ekstrak Daun Sirih terhadap Bakteri Penyebab Jerawat", "08", "Menguji daya hambat ekstrak daun sirih (Piper betle) terhadap pertumbuhan bakteri Propionibacterium acnes secara in vitro."),
-
-    # D4 Teknik Informatika (09)
-    ("Pengembangan Aplikasi Manajemen Inventaris Laboratorium Berbasis Mobile", "09", "Mengembangkan aplikasi mobile untuk mencatat, melacak, dan mengelola inventaris alat dan bahan laboratorium secara real-time."),
-    ("Dashboard Monitoring Akademik dan Kinerja Mahasiswa Berbasis Web", "09", "Membangun dashboard interaktif untuk memonitoring IPK, kehadiran, dan capaian akademik mahasiswa secara visual."),
-    ("Sistem Informasi Arsip Digital Surat Menyurat untuk Tata Usaha Kampus", "09", "Merancang sistem informasi arsip digital untuk pengelolaan surat masuk dan keluar di lingkungan tata usaha perguruan tinggi."),
-
-    # D4 Akuntansi Sektor Publik (10)
-    ("Analisis Kinerja Keuangan Pemerintah Daerah berdasarkan Rasio Fiskal", "10", "Menganalisis kinerja keuangan pemerintah daerah provinsi menggunakan rasio kemandirian, efektivitas PAD, dan rasio belanja modal."),
-    ("Audit Laporan Keuangan Sektor Publik pada Badan Layanan Umum", "10", "Melaksanakan audit atas laporan keuangan BLUD untuk menilai kewajaran penyajian dan kepatuhan terhadap standar akuntansi pemerintahan."),
-
-    # D4 Kebidanan (11)
-    ("Program ANC Terpadu untuk Pencegahan Komplikasi Kehamilan Risiko Tinggi", "11", "Mengembangkan program antenatal care terpadu yang melibatkan deteksi dini faktor risiko dan edukasi persiapan persalinan."),
-    ("Edukasi Pemberian ASI Eksklusif dan Pendampingan Ibu Menyusui di Masa Pandemi", "11", "Merancang program edukasi dan pendampingan menyusui berbasis komunitas untuk meningkatkan cakupan ASI eksklusif."),
-
-    # S1 Teknik Mesin (21)
-    ("Analisis Kekuatan Material Komposit Serat Alam untuk Rangka Kendaraan Ringan", "21", "Menguji dan menganalisis kekuatan tarik dan impak material komposit serat alam sebagai alternatif rangka kendaraan ringan yang lebih ringan dan murah."),
-    ("Perancangan Rangka Mesin Produksi Tepat Guna untuk Industri Kecil", "21", "Merancang dan menghitung kekuatan rangka mesin produksi tepat guna dengan metode elemen hingga (FEA) untuk menjamin keamanan operasional."),
-
-    # S1 Manajemen (22)
-    ("Analisis Pengaruh Brand Image dan Kualitas Produk terhadap Keputusan Pembelian", "22", "Meneliti pengaruh citra merek dan kualitas produk terhadap keputusan pembelian konsumen pada industri fashion lokal."),
-    ("Strategi Peningkatan Loyalitas Pelanggan melalui Program Reward pada E-commerce", "22", "Merancang strategi loyalitas pelanggan berbasis program reward dan personalized experience untuk meningkatkan retensi pada platform e-commerce."),
+JUDUL_PROYEK = [
+    "Aplikasi Manajemen Tugas Mahasiswa Berbasis Mobile",
+    "Sistem Informasi Perpustakaan Digital",
+    "Website Marketplace UMKM Desa",
+    "Platform E-learning Interaktif",
+    "Dashboard Analisis Data Akademik",
+    "Aplikasi Reservasi Berbasis Web",
+    "Robot Pembersih Lantai Otomatis",
+    "Sistem Kontrol Suhu Ruangan IoT",
+    "Aplikasi Pengenalan Wajah untuk Absensi",
+    "Game Edukasi Pengenalan Hewan",
+    "Aplikasi Pemesanan Makanan Online",
+    "Sistem Pakar Diagnosis Penyakit",
+    "Platform Crowdfunding Untuk Beasiswa",
+    "Aplikasi Manajemen Inventaris Laboratorium",
+    "Sistem Rekomendasi Pembelajaran",
+    "Aplikasi Pembelajaran Bahasa Isyarat",
+    "Sistem Informasi Akuntansi UMKM",
+    "Platform Telemedicine untuk Klinik",
+    "Sistem Manajemen Inventaris Apotek",
+    "Aplikasi Pemesanan Obat Online",
+    "Sistem Informasi Manajemen Rumah Sakit",
+    "Platform Pelatihan Digital Marketing",
+    "Aplikasi Manajemen Event",
+    "Sistem Informasi Geografis Pariwisata",
+    "Dashboard Monitoring Kesehatan Pasien",
+    "Aplikasi Deteksi Dini Stunting",
+    "Sistem Informasi Geografis Penyebaran Penyakit",
+    "Chatbot Layanan Akademik",
+    "Aplikasi Donasi Online Berbasis Crowdfunding",
+    "Sistem Prediksi Harga Saham Menggunakan Machine Learning",
 ]
-
-SKILLS_BY_MAJOR = {
-    "01": [
-        ["Microsoft Excel", "Akuntansi", "MYOB"],
-        ["Analisis Data", "SPSS", "STATA"],
-        ["Akuntansi", "SAP", "Manajemen Keuangan"],
-        ["Microsoft Excel", "Analisis Laporan", "Akuntansi Biaya"],
-    ],
-    "02": [
-        ["Keperawatan", "Kesehatan Masyarakat", "Gizi"],
-        ["Manajemen Pasien", "Dokumentasi Medis", "Promosi Kesehatan"],
-        ["Keperawatan Dasar", "Farmakologi", "Etika Keperawatan"],
-    ],
-    "03": [
-        ["AutoCAD", "SolidWorks", "Teknik Mesin"],
-        ["CNC", "PLC", "Material Testing"],
-        ["AutoCAD", "Mekanika Teknik", "CAD 3D"],
-    ],
-    "04": [
-        ["Python", "IoT", "Arduino"],
-        ["Jaringan Komputer", "Raspberry Pi", "Sensor"],
-        ["Python", "C++", "Embedded System"],
-    ],
-    "06": [
-        ["Figma", "Adobe Illustrator", "UI/UX Design"],
-        ["Canva", "CorelDRAW", "Branding"],
-        ["Adobe Photoshop", "Tipografi", "Desain Grafis"],
-    ],
-    "07": [
-        ["Housekeeping", "Front Office", "Hotel Management"],
-        ["Food & Beverage", "Event Management", "Pelayanan Tamu"],
-        ["Manajemen Perhotelan", "Reservasi", "Customer Service"],
-    ],
-    "08": [
-        ["Farmasi", "Kimia Analisis", "Mikrobiologi"],
-        ["Formulasi Obat", "Analisis BKO", "Kromatografi"],
-        ["Farmasetika", "Kimia Farmasi", "Farmakologi"],
-    ],
-    "09": [
-        ["Flutter", "Dart", "Firebase"],
-        ["React JS", "Node.js", "PostgreSQL"],
-        ["Python", "FastAPI", "Next.js"],
-        ["JavaScript", "Laravel", "MySQL"],
-    ],
-    "10": [
-        ["Microsoft Excel", "Akuntansi Sektor Publik", "SAP"],
-        ["Analisis Laporan", "Audit", "Manajemen Keuangan"],
-        ["SPSS", "Statistik", "Akuntansi Pemerintahan"],
-    ],
-    "11": [
-        ["Kebidanan", "Keperawatan Ibu Anak", "Gizi"],
-        ["ANC", "Persalinan", "Kesehatan Reproduksi"],
-        ["Kebidanan Komunitas", "Imunisasi", "ASI Eksklusif"],
-    ],
-    "21": [
-        ["AutoCAD", "SolidWorks", "Teknik Mesin"],
-        ["Material Komposit", "CAD 3D", "Analisis Struktur"],
-        ["Mekanika Teknik", "FEA", "Perancangan Mesin"],
-    ],
-    "22": [
-        ["Manajemen Keuangan", "Digital Marketing", "Analisis Data"],
-        ["Microsoft Excel", "Branding", "Customer Relationship"],
-        ["Manajemen SDM", "Pemasaran Digital", "E-commerce"],
-    ],
-}
 
 KONTEN_SHOWCASE = [
     "Alhamdulillah, proyek aplikasi manajemen tugas akhirnya selesai! Dibangun dengan Flutter dan FastAPI.",
@@ -248,7 +240,7 @@ KONTEN_SHOWCASE = [
     "Presentasi proyek IoT hari ini berjalan lancar. Alat monitoring suhu ruangan berhasil real-time.",
     "Bangga banget bisa berkontribusi dalam proyek sistem informasi perpustakaan digital untuk kampus.",
     "Baru aja menyelesaikan desain ulang website UKM binaan. Tampilan jadi lebih modern dan responsif!",
-    "Ikut kompetisi robotik tingkat nasional dan berhasil masuk 10 besar. Pengalaman yang luar biasa!",
+    "Ikut kompetisi machine learning tingkat nasional dan berhasil masuk 10 besar. Pengalaman yang luar biasa!",
     "Hasil penelitian tentang deteksi dini stunting menggunakan machine learning sudah dipublikasikan.",
     "Seru banget ngikutin bootcamp fullstack developer selama 3 bulan. Sekarang bisa bikin fullstack apps sendiri!",
     "Proyek analisis sentimen media sosial tentang pemilu berhasil mencapai akurasi 92%.",
@@ -266,7 +258,7 @@ TAGS_SHOWCASE = [
     ["iot", "monitoring", "suhu", "arduino"],
     ["library", "web", "information-system"],
     ["redesign", "website", "ukm", "responsive"],
-    ["robotik", "kompetisi", "nasional"],
+    ["machine-learning", "kompetisi", "nasional"],
     ["machine-learning", "stunting", "penelitian"],
     ["fullstack", "bootcamp", "webdev"],
     ["analisis", "sentimen", "nlp", "python"],
@@ -297,33 +289,38 @@ KOMENTAR = [
 ]
 
 TIPE_NOTIF = ["like", "comment", "connection_request", "connection_accepted", "chat"]
-JUDUL_NOTIF = ["Menyukai showcase Anda", "Memberi komentar pada showcase Anda", "Mengirimkan permintaan koneksi", "Menerima permintaan koneksi Anda", "Mengirimkan pesan baru"]
-ISI_NOTIF = [" menyukai postingan showcase Anda.", " berkomentar pada postingan Anda.", " ingin terhubung dengan Anda.", " telah menerima permintaan koneksi Anda.", " mengirimkan pesan baru untuk Anda."]
-
-
-
-def generate_nim(year_prefix: str, major_code: str, seq: int) -> str:
-    return f"{year_prefix}{major_code}{seq:02d}"
+JUDUL_NOTIF = [
+    "Menyukai showcase Anda",
+    "Memberi komentar pada showcase Anda",
+    "Mengirimkan permintaan koneksi",
+    "Menerima permintaan koneksi Anda",
+    "Mengirimkan pesan baru",
+]
+ISI_NOTIF = [
+    " menyukai postingan showcase Anda.",
+    " berkomentar pada postingan Anda.",
+    " ingin terhubung dengan Anda.",
+    " telah menerima permintaan koneksi Anda.",
+    " mengirimkan pesan baru untuk Anda.",
+]
 
 
 async def main():
     db = Prisma()
     await db.connect()
 
-    # ── 0. Keep Saifi & Dede ──
+    # ── 0. Keep known users by email ──
     print("0. Menyimpan user yang dipertahankan...")
-    saifi = await db.user.find_first(where={"nim": "23090112"})
-    dede = await db.user.find_first(where={"nim": "23090122"})
+    keep_emails = {"saifi@example.com", "dede@example.com"}
     keep_ids = set()
-    if saifi:
-        keep_ids.add(saifi.id)
-        print(f"   → Ahmad Saifi ({saifi.id})")
-    if dede:
-        keep_ids.add(dede.id)
-        print(f"   → Dede Fernanda ({dede.id})")
+    for e in keep_emails:
+        u = await db.user.find_first(where={"email": e})
+        if u:
+            keep_ids.add(u.id)
+            print(f"   → {u.full_name} ({u.id})")
 
     # ── 1. Hapus semua data kecuali user yang dipertahankan ──
-    print("\n1. Membersihkan database (kecuali Saifi & Dede)...")
+    print("\n1. Membersihkan database (kecuali user yang dipertahankan)...")
     tables = [
         "Notification", "Connection", "ShowcaseComment", "ShowcaseLike",
         "Showcase", "Message", "Task", "ProjectMember",
@@ -348,8 +345,8 @@ async def main():
     skill_map = {s.name: s.id for s in skill_records}
     print(f"   {len(skill_records)} skills created\n")
 
-    # ── 3. Users – 60 mahasiswa angkatan 23/24/25 ──
-    print("3. Membuat 60 Users (NIM 23/24/25, password 00000000)...")
+    # ── 3. Users – 60 user dengan email dan interest ──
+    print("3. Membuat 60 Users (email user1@example.com s/d user60@example.com)...")
     user_records = []
     photo_idx = 0
     all_cover_urls = [
@@ -376,81 +373,93 @@ async def main():
         "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200",
         "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=200",
     ]
-    nim_to_user = {}
 
-    for major_code, major_name in sorted(MAJORS.items()):
-        names = NAMA_PER_PRODI[major_code]
-        for i in range(5):
-            year_prefix = NIM_YEARS[i % 3]
-            nim = generate_nim(year_prefix, major_code, i + 1)
-            user = await db.user.create(data={
-                "nim": nim,
-                "password": PASSWORD_HASH,
-                "full_name": names[i],
-                "major": major_name,
-                "bio": random.choice(BIO_MAHASISWA),
-                "photo_url": all_photo_urls[photo_idx % len(all_photo_urls)],
-                "cover_url": random.choice(all_cover_urls),
-                "social_links": json.dumps({
-                    "instagram": f"https://instagram.com/{names[i].lower().replace(' ', '')}",
-                    "linkedin": f"https://linkedin.com/in/{names[i].lower().replace(' ', '')}",
-                    "github": f"https://github.com/{names[i].lower().replace(' ', '')}",
-                }),
-                "is_onboarded": True,
-            })
-            user_records.append(user)
-            nim_to_user[nim] = user
-            photo_idx += 1
+    for i in range(60):
+        name = NAMA_USER[i % len(NAMA_USER)]
+        email = f"user{i + 1}@example.com"
+        interest = random.choice(INTERESTS)
+        handle = name.lower().replace(" ", "") + str(i + 1)
+        user = await db.user.create(data={
+            "email": email,
+            "password": PASSWORD_HASH,
+            "full_name": name,
+            "handle": handle,
+            "interest": interest,
+            "bio": random.choice(BIO_USER),
+            "photo_url": all_photo_urls[photo_idx % len(all_photo_urls)],
+            "cover_url": random.choice(all_cover_urls),
+            "social_links": json.dumps({
+                "instagram": f"https://instagram.com/{handle}",
+                "linkedin": f"https://linkedin.com/in/{handle}",
+                "github": f"https://github.com/{handle}",
+            }),
+            "is_onboarded": True,
+            "email_verified": True,
+        })
+        user_records.append(user)
+        photo_idx += 1
 
-    # Ensure keepers get their UserSkill assigned (add to user_records for skill loop)
-    if saifi:
-        existing = await db.user.find_first(where={"nim": "23090112"})
-        if existing:
-            user_records.append(existing)
-        else:
+    # Re-add kept users if they were deleted
+    if "saifi@example.com" in keep_emails:
+        existing = await db.user.find_first(where={"email": "saifi@example.com"})
+        if not existing:
             s = await db.user.create(data={
-                "nim": "23090112",
+                "email": "saifi@example.com",
                 "password": PASSWORD_HASH,
                 "full_name": "Ahmad Saifi Khayatu Ulumuddin",
                 "handle": "ahmadsaifi",
-                "major": "D4 Teknik Informatika",
-                "bio": "Mahasiswa D4 Teknik Informatika yang suka ngoding.",
-                "photo_url": saifi.photo_url or all_photo_urls[0],
+                "interest": "Web Development",
+                "bio": "Mahasiswa yang suka ngoding.",
+                "photo_url": all_photo_urls[0],
                 "cover_url": random.choice(all_cover_urls),
-                "social_links": saifi.social_links or "{}",
+                "social_links": json.dumps({
+                    "instagram": "https://instagram.com/ahmadsaifi",
+                    "linkedin": "https://linkedin.com/in/ahmadsaifi",
+                    "github": "https://github.com/ahmadsaifi",
+                }),
                 "is_onboarded": True,
+                "email_verified": True,
             })
             user_records.append(s)
             print("   → Ahmad Saifi dibuat ulang")
-    if dede:
-        existing = await db.user.find_first(where={"nim": "23090122"})
-        if existing:
-            user_records.append(existing)
         else:
+            user_records.append(existing)
+            print("   → Ahmad Saifi dipertahankan")
+    if "dede@example.com" in keep_emails:
+        existing = await db.user.find_first(where={"email": "dede@example.com"})
+        if not existing:
             d = await db.user.create(data={
-                "nim": "23090122",
+                "email": "dede@example.com",
                 "password": PASSWORD_HASH,
                 "full_name": "Dede Fernanda",
                 "handle": "dedefernanda",
-                "major": "D4 Teknik Informatika",
-                "bio": "Mahasiswa D4 Teknik Informatika.",
-                "photo_url": dede.photo_url or all_photo_urls[1],
+                "interest": "Web Development",
+                "bio": "Mahasiswa yang suka ngoding.",
+                "photo_url": all_photo_urls[1],
                 "cover_url": random.choice(all_cover_urls),
-                "social_links": dede.social_links or "{}",
+                "social_links": json.dumps({
+                    "instagram": "https://instagram.com/dedefernanda",
+                    "linkedin": "https://linkedin.com/in/dedefernanda",
+                    "github": "https://github.com/dedefernanda",
+                }),
                 "is_onboarded": True,
+                "email_verified": True,
             })
             user_records.append(d)
             print("   → Dede Fernanda dibuat ulang")
+        else:
+            user_records.append(existing)
+            print("   → Dede Fernanda dipertahankan")
 
     print(f"   {len(user_records)} users total\n")
 
     # ── 4. UserSkill ──
     print("4. Membuat UserSkill...")
     for user in user_records:
-        kode = user.nim[2:4]
-        skills_for_prodi = SKILL_PER_PRODI.get(kode, [])
-        if skills_for_prodi:
-            selected = random.sample(skills_for_prodi, min(random.randint(3, 5), len(skills_for_prodi)))
+        interest = user.interest
+        skills_for_interest = INTEREST_TO_SKILLS.get(interest, [])
+        if skills_for_interest:
+            selected = random.sample(skills_for_interest, min(random.randint(3, 5), len(skills_for_interest)))
             for skill_name in selected:
                 skill_id = skill_map.get(skill_name)
                 if skill_id:
@@ -476,29 +485,29 @@ async def main():
     print(f"   Experience created\n")
 
     # ── 6. Projects (30) ──
-    print("6. Membuat 30 Projects dengan smart category...")
-
-    # Group users by major code from NIM
-    prodi_users: dict[str, list] = {}
-    for u in user_records:
-        kode = u.nim[2:4]
-        prodi_users.setdefault(kode, []).append(u)
+    print("6. Membuat 30 Projects...")
 
     project_records = []
-    for title, major_code, description in PROJECT_TITLES:
-        pool = prodi_users.get(major_code, user_records)
-        owner = random.choice(pool)
+    selected_titles = random.sample(JUDUL_PROYEK, min(30, len(JUDUL_PROYEK)))
+    for title in selected_titles:
+        owner = random.choice(user_records)
+        interest = random.choice(INTERESTS)
         total_slots = random.randint(3, 5)
         deadline = datetime.now() + timedelta(days=random.randint(7, 90))
 
-        major_skills = SKILLS_BY_MAJOR.get(major_code, [["Microsoft Excel", "Analisis Data", "Manajemen"]])
-        skills = random.choice(major_skills)
+        interest_skills = SKILLS_BY_INTEREST.get(interest, [["Python", "JavaScript", "Git"]])
+        skills = random.choice(interest_skills)
 
         project = await db.project.create(data={
             "owner_id": owner.id,
             "title": title,
-            "description": description,
+            "description": (
+                f"Proyek {title.lower()} bertujuan untuk mengembangkan solusi digital "
+                f"yang inovatif dan bermanfaat bagi masyarakat. "
+                f"Dibangun dengan pendekatan kolaboratif menggunakan teknologi terkini."
+            ),
             "required_skills": skills,
+            "interest": interest,
             "status": "open",
             "deadline": deadline,
             "total_slots": total_slots,

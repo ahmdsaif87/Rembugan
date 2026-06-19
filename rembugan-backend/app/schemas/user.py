@@ -20,3 +20,4 @@ class UserProfileInput(BaseModel):
     skills: List[str] = Field(default_factory=list, description="Daftar skill/keahlian")
     social_links: Optional[dict] = Field(None, description="Link sosial media: {github, linkedin, ...}")
     experiences: List[ExperienceInput] = Field(default_factory=list, description="Riwayat pengalaman dari scan CV")
+    interest: Optional[str] = Field(None, description="Minat/bidang user")

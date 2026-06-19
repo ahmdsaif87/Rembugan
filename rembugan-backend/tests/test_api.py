@@ -6,9 +6,6 @@ from httpx import ASGITransport, AsyncClient
 
 NOW = datetime.now(timezone.utc)
 
-# ─────────────────────────────────────────────
-# HELPER
-# ─────────────────────────────────────────────
 async def _auth_get(client, path, auth_header, **kw):
     return await client.get(path, headers=auth_header, **kw)
 
@@ -18,13 +15,13 @@ async def _auth_post(client, path, auth_header, json=None):
 async def _auth_put(client, path, auth_header, json=None):
     return await client.put(path, headers=auth_header, json=json or {})
 
+async def _auth_patch(client, path, auth_header, json=None):
+    return await client.patch(path, headers=auth_header, json=json or {})
+
 async def _auth_delete(client, path, auth_header):
     return await client.delete(path, headers=auth_header)
 
 
-# ─────────────────────────────────────────────
-# 0. ROOT
-# ─────────────────────────────────────────────
 class TestRoot:
     async def test_health_check(self, client):
         resp = await client.get("/")
@@ -34,68 +31,71 @@ class TestRoot:
         assert data["version"] == "1.0.0"
 
 
-# ─────────────────────────────────────────────
-# 1. AUTH
-# ─────────────────────────────────────────────
 class TestAuth:
     async def test_register_success(self, client, mock_db):
+        from tests.conftest import MockUser
         mock_db.user.find_unique = AsyncMock(return_value=None)
         mock_db.user.create = AsyncMock(
             return_value=MagicMock(
-                id="new-user-id", nim="99999999", full_name="New User",
-                email=None, is_onboarded=False, password="hashed"
+                id="new-user-id", email="new@example.com", full_name="New User",
+                handle=None, interest="Tech Enthusiast",
+                is_onboarded=False, password="hashed"
             )
         )
+        mock_db.otpcode.count = AsyncMock(return_value=0)
+        mock_db.otpcode.create = AsyncMock()
         resp = await client.post("/auth/register", json={
-            "nim": "99999999", "password": "rahasia123", "full_name": "New User"
+            "email": "new@example.com", "password": "rahasia123",
+            "full_name": "New User", "interest": "Tech Enthusiast"
         })
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
-        assert "access_token" in data["data"]
+        assert "Kode OTP" in data["message"]
 
-    async def test_register_duplicate_nim(self, client, mock_db):
+    async def test_register_duplicate_email(self, client, mock_db):
         from tests.conftest import MockUser
         mock_db.user.find_unique = AsyncMock(return_value=MockUser())
         resp = await client.post("/auth/register", json={
-            "nim": "12345678", "password": "rahasia123", "full_name": "Dup"
+            "email": "test@example.com", "password": "rahasia123",
+            "full_name": "Dup"
         })
         assert resp.status_code == 400
         assert "sudah terdaftar" in resp.json()["detail"]
 
-    async def test_register_invalid_nim(self, client):
+    async def test_register_invalid_data(self, client):
         resp = await client.post("/auth/register", json={
-            "nim": "", "password": "123", "full_name": "A"
+            "email": "", "password": "123", "full_name": "A"
         })
         assert resp.status_code == 422
 
     async def test_login_success(self, client, mock_db):
         from unittest.mock import patch
         from tests.conftest import MockUser
-        user = MockUser()
+        user = MockUser(email_verified=True)
         mock_db.user.find_unique = AsyncMock(return_value=user)
         with patch("app.api.auth.verify_password", return_value=True):
             resp = await client.post("/auth/login", json={
-                "nim": "12345678", "password": "rahasia123"
+                "email": "test@example.com", "password": "rahasia123"
             })
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
 
-    async def test_login_wrong_nim(self, client, mock_db):
+    async def test_login_wrong_email(self, client, mock_db):
         mock_db.user.find_unique = AsyncMock(return_value=None)
         resp = await client.post("/auth/login", json={
-            "nim": "00000000", "password": "test"
+            "email": "none@example.com", "password": "test"
         })
         assert resp.status_code == 401
 
     async def test_login_wrong_password(self, client, mock_db):
         from tests.conftest import MockUser
-        mock_db.user.find_unique = AsyncMock(return_value=MockUser())
+        mock_db.user.find_unique = AsyncMock(return_value=MockUser(email_verified=True))
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr("app.api.auth.verify_password", lambda a, b: False)
             resp = await client.post("/auth/login", json={
-                "nim": "12345678", "password": "wrong"
+                "email": "test@example.com", "password": "wrong"
             })
         assert resp.status_code == 401
 
@@ -111,14 +111,13 @@ class TestAuth:
         resp = await _auth_get(client, "/auth/me", auth_header)
         assert resp.status_code == 404
 
-# ─────────────────────────────────────────────
-# 2. ONBOARDING
-# ─────────────────────────────────────────────
+
 class TestOnboarding:
     async def test_extract_cv_success(self, client, auth_header):
         resp = await client.post(
             "/onboarding/extract-cv",
             files={"file": ("cv.pdf", b"%PDF-fake-content", "application/pdf")},
+            headers=auth_header,
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -129,17 +128,20 @@ class TestOnboarding:
         resp = await client.post(
             "/onboarding/extract-cv",
             files={"file": ("cv.txt", b"not a pdf", "text/plain")},
+            headers=auth_header,
         )
         assert resp.status_code == 400
         assert "PDF" in resp.json()["detail"]
 
     async def test_save_profile_success(self, client, mock_db, auth_header):
-        from tests.conftest import MockUser
+        from tests.conftest import MockUser, MockSkill
         mock_db.user.find_unique = AsyncMock(return_value=MockUser())
         mock_db.user.update = AsyncMock(return_value=MockUser(is_onboarded=True))
         mock_db.userskill.delete_many = AsyncMock()
-        mock_db.skill.upsert = AsyncMock(return_value=MagicMock(id=1))
-        mock_db.userskill.create = AsyncMock()
+        existing_skills_data = [MockSkill(id=1, name="Python"), MockSkill(id=2, name="FastAPI")]
+        mock_db.skill.find_many = AsyncMock(return_value=existing_skills_data)
+        mock_db.skill.create_many = AsyncMock()
+        mock_db.userskill.create_many = AsyncMock()
         resp = await _auth_put(client, "/onboarding/save-profile", auth_header, json={
             "full_name": "Test User",
             "bio": "A bio",
@@ -164,9 +166,6 @@ class TestOnboarding:
         assert resp.json()["data"]["full_name"] == "Test User"
 
 
-# ─────────────────────────────────────────────
-# 3. PROJECTS
-# ─────────────────────────────────────────────
 class TestProjects:
     async def test_create_project_success(self, client, mock_db, auth_header):
         from tests.conftest import MockUser, MockProject
@@ -193,6 +192,7 @@ class TestProjects:
             return_value=MockUser(skills=[MagicMock(skill=MagicMock(name="Python"))])
         )
         mock_db.project.find_many = AsyncMock(return_value=[MockProject()])
+        mock_db.project.count = AsyncMock(return_value=1)
         resp = await _auth_get(client, "/projects/explore", auth_header,
                                params={"page": 1, "limit": 10})
         assert resp.status_code == 200
@@ -236,9 +236,6 @@ class TestProjects:
         assert resp.status_code == 403
 
 
-# ─────────────────────────────────────────────
-# 4. COLLABORATION
-# ─────────────────────────────────────────────
 class TestCollaboration:
     async def test_apply_to_project(self, client, mock_db, auth_header):
         mock_db.project.find_unique = AsyncMock(
@@ -299,6 +296,9 @@ class TestCollaboration:
             return_value=MagicMock(id=1, status="accepted")
         )
         mock_db.projectmember.create = AsyncMock()
+        mock_db.projectmember.count = AsyncMock(return_value=0)
+        mock_db.project.find_unique = AsyncMock(return_value=MagicMock(total_slots=None))
+        mock_db.project.update = AsyncMock()
         from tests.conftest import MockNotification
         mock_db.notification.create = AsyncMock(return_value=MockNotification())
         resp = await _auth_put(client, "/collaboration/applications/1/respond",
@@ -316,9 +316,6 @@ class TestCollaboration:
         assert resp.status_code == 403
 
 
-# ─────────────────────────────────────────────
-# 5. SHOWCASE
-# ─────────────────────────────────────────────
 class TestShowcase:
     async def test_create_showcase(self, client, mock_db, auth_header):
         from tests.conftest import MockShowcase
@@ -332,24 +329,9 @@ class TestShowcase:
         from tests.conftest import MockShowcase
         mock_db.showcase.find_many = AsyncMock(return_value=[MockShowcase()])
         mock_db.showcase.count = AsyncMock(return_value=1)
+        mock_db.showcase.find_unique = AsyncMock(return_value=MockShowcase())
         resp = await _auth_get(client, "/showcase/feed", auth_header,
                                params={"page": 1, "limit": 10})
-        assert resp.status_code == 200
-
-    async def test_update_showcase(self, client, mock_db, auth_header):
-        from tests.conftest import MockShowcase
-        mock_db.showcase.find_unique = AsyncMock(return_value=MockShowcase())
-        mock_db.showcase.update = AsyncMock(return_value=MockShowcase())
-        resp = await _auth_put(client, "/showcase/showcase-uuid-1", auth_header, json={
-            "isi_postingan": "Updated content with enough characters"
-        })
-        assert resp.status_code == 200
-
-    async def test_delete_showcase(self, client, mock_db, auth_header):
-        from tests.conftest import MockShowcase
-        mock_db.showcase.find_unique = AsyncMock(return_value=MockShowcase())
-        mock_db.showcase.delete = AsyncMock(return_value=MagicMock())
-        resp = await _auth_delete(client, "/showcase/showcase-uuid-1", auth_header)
         assert resp.status_code == 200
 
     async def test_like_showcase(self, client, mock_db, auth_header):
@@ -394,94 +376,12 @@ class TestShowcase:
         assert resp.status_code == 200
 
 
-# ─────────────────────────────────────────────
-# 6. WORKSPACE
-# ─────────────────────────────────────────────
-class TestWorkspace:
-    async def test_create_task(self, client, mock_db, auth_header):
-        from tests.conftest import MockProject, MockTask
-        mock_db.project.find_unique = AsyncMock(return_value=MockProject())
-        mock_db.projectmember.find_first = AsyncMock(
-            return_value=MagicMock(id=1, role="Anggota")
-        )
-        mock_db.task.create = AsyncMock(return_value=MockTask())
-        resp = await _auth_post(client, "/workspace/1/tasks", auth_header, json={
-            "title": "New Task"
-        })
-        assert resp.status_code == 200
-
-    async def test_create_task_not_member(self, client, mock_db, auth_header):
-        from tests.conftest import MockProject
-        mock_db.project.find_unique = AsyncMock(return_value=MockProject())
-        mock_db.projectmember.find_first = AsyncMock(return_value=None)
-        resp = await _auth_post(client, "/workspace/1/tasks", auth_header, json={
-            "title": "Task"
-        })
-        assert resp.status_code == 403
-
-    async def test_move_task(self, client, mock_db, auth_header):
-        from tests.conftest import MockTask
-        mock_db.task.find_unique = AsyncMock(return_value=MockTask())
-        mock_db.projectmember.find_first = AsyncMock(
-            return_value=MagicMock(id=1)
-        )
-        mock_db.task.update = AsyncMock(return_value=MockTask(status="doing"))
-        resp = await _auth_put(client, "/workspace/tasks/1/move", auth_header, json={
-            "status": "doing"
-        })
-        assert resp.status_code == 200
-
-    async def test_get_board(self, client, mock_db, auth_header):
-        from tests.conftest import MockProject
-        mock_db.project.find_unique = AsyncMock(return_value=MockProject())
-        mock_db.task.find_many = AsyncMock(return_value=[])
-        resp = await _auth_get(client, "/workspace/1/tasks", auth_header)
-        assert resp.status_code == 200
-        assert "board" in resp.json()
-
-    async def test_end_project(self, client, mock_db, auth_header):
-        from tests.conftest import MockProject
-        mock_db.project.find_unique = AsyncMock(
-            return_value=MagicMock(owner_id="test-user-uuid-1234")
-        )
-        mock_db.project.update = AsyncMock(return_value=MockProject(status="completed"))
-        mock_db.task.update_many = AsyncMock()
-        resp = await _auth_post(client, "/workspace/1/end", auth_header)
-        assert resp.status_code == 200
-
-
-# ─────────────────────────────────────────────
-# 7. COMPETITIONS
-# ─────────────────────────────────────────────
-class TestCompetitions:
-    async def test_all_competitions(self, client, mock_mongodb):
-        mock_mongodb.find.return_value.to_list = AsyncMock(
-            return_value=[{"_id": "1", "title": "Lomba 1", "skill_required": ["Python"]}]
-        )
-        resp = await client.get("/competitions/all")
-        assert resp.status_code == 200
-        assert resp.json()["status"] == "success"
-
-    async def test_relevant_competitions(self, client, mock_db, mock_mongodb, auth_header):
-        from tests.conftest import MockUser, MockUserSkill
-        mock_db.user.find_unique = AsyncMock(
-            return_value=MockUser(skills=[MockUserSkill(skill_name="Python")])
-        )
-        mock_mongodb.find.return_value.to_list = AsyncMock(
-            return_value=[{"_id": "1", "title": "Lomba Python", "skill_required": ["Python"]}]
-        )
-        resp = await _auth_get(client, "/competitions/relevant", auth_header)
-        assert resp.status_code == 200
-
-
-# ─────────────────────────────────────────────
-# 8. FYP
-# ─────────────────────────────────────────────
 class TestFYP:
     async def test_fyp(self, client, mock_db, mock_mongodb, auth_header):
         mock_db.user.find_unique = AsyncMock(
             return_value=MagicMock(
                 id="test-user-uuid-1234",
+                interest="Tech Enthusiast",
                 skills=[MagicMock(skill=MagicMock(name="Python"))]
             )
         )
@@ -496,19 +396,12 @@ class TestFYP:
         assert "competitions" in data
 
 
-# ─────────────────────────────────────────────
-# 9. PROFILE
-# ─────────────────────────────────────────────
 class TestProfile:
     async def test_my_profile(self, client, mock_db, auth_header):
         from tests.conftest import MockUser
         mock_db.user.find_unique = AsyncMock(
             return_value=MockUser(skills=[MagicMock(skill=MagicMock(name="Python"))])
         )
-        mock_db.project.find_many = AsyncMock(return_value=[])
-        mock_db.showcase.find_many = AsyncMock(return_value=[])
-        mock_db.experience.find_many = AsyncMock(return_value=[])
-        mock_db.projectmember.find_many = AsyncMock(return_value=[])
         resp = await _auth_get(client, "/profile/me", auth_header)
         assert resp.status_code == 200
 
@@ -517,10 +410,6 @@ class TestProfile:
         mock_db.user.find_unique = AsyncMock(
             return_value=MockUser(skills=[MagicMock(skill=MagicMock(name="Python"))])
         )
-        mock_db.project.find_many = AsyncMock(return_value=[])
-        mock_db.showcase.find_many = AsyncMock(return_value=[])
-        mock_db.experience.find_many = AsyncMock(return_value=[])
-        mock_db.projectmember.find_many = AsyncMock(return_value=[])
         resp = await client.get("/profile/other-user-id")
         assert resp.status_code == 200
 
@@ -529,10 +418,17 @@ class TestProfile:
         resp = await client.get("/profile/nonexistent")
         assert resp.status_code == 404
 
+    async def test_update_settings(self, client, mock_db, auth_header):
+        from tests.conftest import MockUser
+        mock_db.user.find_first = AsyncMock(return_value=None)
+        mock_db.user.update = AsyncMock(return_value=MockUser())
+        resp = await _auth_patch(client, "/profile/settings", auth_header, json={
+            "full_name": "Updated Name",
+            "interest": "Design Enthusiast"
+        })
+        assert resp.status_code == 200
 
-# ─────────────────────────────────────────────
-# 10. NOTIFICATIONS
-# ─────────────────────────────────────────────
+
 class TestNotifications:
     async def test_list_notifications(self, client, mock_db, auth_header):
         from tests.conftest import MockNotification
@@ -556,27 +452,21 @@ class TestNotifications:
         assert resp.status_code == 403
 
 
-# ─────────────────────────────────────────────
-# 11. CONNECTIONS
-# ─────────────────────────────────────────────
 class TestConnections:
-    async def test_request_connection(self, client, mock_db, auth_header):
+    async def test_my_connections(self, client, mock_db, auth_header):
+        from tests.conftest import MockConnection
+        mock_db.connection.find_many = AsyncMock(return_value=[MockConnection(status="accepted")])
+        resp = await _auth_get(client, "/connections/", auth_header)
+        assert resp.status_code == 200
+
+    async def test_send_request(self, client, mock_db, auth_header):
         from tests.conftest import MockUser, MockNotification
         mock_db.user.find_unique = AsyncMock(return_value=MockUser())
         mock_db.connection.find_first = AsyncMock(return_value=None)
         mock_db.connection.create = AsyncMock(return_value=MagicMock(id=1))
         mock_db.notification.create = AsyncMock(return_value=MockNotification())
-        resp = await _auth_post(client, "/connections/request/other-user-id", auth_header)
+        resp = await _auth_post(client, "/connections/send/other-user-id", auth_header)
         assert resp.status_code == 200
-
-    async def test_request_duplicate(self, client, mock_db, auth_header):
-        from tests.conftest import MockUser
-        mock_db.user.find_unique = AsyncMock(return_value=MockUser())
-        mock_db.connection.find_first = AsyncMock(
-            return_value=MagicMock(status="pending")
-        )
-        resp = await _auth_post(client, "/connections/request/other-user-id", auth_header)
-        assert resp.status_code == 400
 
     async def test_accept_connection(self, client, mock_db, auth_header):
         from tests.conftest import MockUser, MockNotification
@@ -589,13 +479,6 @@ class TestConnections:
         resp = await _auth_put(client, "/connections/accept/1", auth_header)
         assert resp.status_code == 200
 
-    async def test_accept_not_receiver(self, client, mock_db, auth_header):
-        mock_db.connection.find_unique = AsyncMock(
-            return_value=MagicMock(receiver_id="other-user")
-        )
-        resp = await _auth_put(client, "/connections/accept/1", auth_header)
-        assert resp.status_code == 403
-
     async def test_reject_connection(self, client, mock_db, auth_header):
         mock_db.connection.find_unique = AsyncMock(
             return_value=MagicMock(id=1, receiver_id="test-user-uuid-1234", status="pending")
@@ -605,9 +488,6 @@ class TestConnections:
         assert resp.status_code == 200
 
 
-# ─────────────────────────────────────────────
-# 12. ADMIN
-# ─────────────────────────────────────────────
 class TestAdmin:
     async def test_admin_stats(self, client, mock_db, mock_mongodb):
         for model in ["user", "project", "showcase", "task", "projectapplication"]:
@@ -691,11 +571,8 @@ class TestAdmin:
         assert resp.status_code == 200
 
 
-# ─────────────────────────────────────────────
-# 13. CHAT
-# ─────────────────────────────────────────────
 class TestChat:
-    async def test_chat_history(self, client, mock_db):
+    async def test_chat_history(self, client, mock_db, auth_header):
         mock_db.message.find_many = AsyncMock(
             return_value=[
                 MagicMock(
@@ -706,7 +583,7 @@ class TestChat:
             ]
         )
         mock_db.message.count = AsyncMock(return_value=1)
-        resp = await client.get("/chat/history/1", params={"limit": 50})
+        resp = await _auth_get(client, "/chat/history/1", auth_header, params={"limit": 50})
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"

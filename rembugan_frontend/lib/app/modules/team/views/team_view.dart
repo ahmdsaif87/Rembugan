@@ -19,9 +19,6 @@ class TeamView extends GetView<TeamController> {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final owned = controller.ownedWorkspaces;
-    final joined = controller.joinedWorkspaces;
-    final total = controller.workspaces.length;
 
     return Scaffold(
       backgroundColor: c.background,
@@ -72,13 +69,13 @@ class TeamView extends GetView<TeamController> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          '$total workspace',
+                        Obx(() => Text(
+                          '${controller.workspaces.length} workspace',
                           style: AppFonts.satoshiStyle(
                             fontSize: 12,
                             color: c.textSecondary,
                           ),
-                        ),
+                        )),
                       ],
                     ),
                   ],
@@ -108,9 +105,13 @@ class TeamView extends GetView<TeamController> {
               // ── Content ──
               Expanded(
                 child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
                   final list = controller.workspaceTabIndex.value == 0
-                      ? owned
-                      : joined;
+                      ? controller.ownedWorkspaces
+                      : controller.joinedWorkspaces;
 
                   if (list.isEmpty) {
                     return Center(

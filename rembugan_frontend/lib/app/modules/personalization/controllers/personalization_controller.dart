@@ -27,7 +27,7 @@ class PersonalizationController extends GetxController {
     name: '',
     handle: '',
     bio: '',
-    major: '',
+    interest: '',
     socialLink: '',
     skills: [],
     experiences: [],
@@ -129,7 +129,7 @@ class PersonalizationController extends GetxController {
         name: nama.isNotEmpty ? nama : '',
         handle: '',
         bio: bio,
-        major: '',
+        interest: '',
         socialLink: '',
         skills: skills,
         experiences: experiences,
@@ -223,7 +223,7 @@ class PersonalizationController extends GetxController {
   }
 
   void updateMajor(String value) {
-    extractedProfile.value = extractedProfile.value.copyWith(major: value);
+    extractedProfile.value = extractedProfile.value.copyWith(interest: value);
   }
 
   void updateSocialLink(String value) {
@@ -284,7 +284,7 @@ class PersonalizationController extends GetxController {
       name: '',
       handle: '',
       bio: '',
-      major: '',
+      interest: '',
       socialLink: '',
       skills: [],
       experiences: [],
@@ -355,7 +355,7 @@ class PersonalizationController extends GetxController {
       name: '',
       handle: '',
       bio: '',
-      major: '',
+      interest: '',
       socialLink: '',
       skills: [],
       experiences: [],

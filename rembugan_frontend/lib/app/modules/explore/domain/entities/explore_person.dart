@@ -5,6 +5,8 @@ class ExplorePerson {
   final String avatarUrl;
   final List<String> tags;
   final String matchLabel;
+  final int matchScore;
+  final String matchType;
 
   const ExplorePerson({
     required this.id,
@@ -13,5 +15,7 @@ class ExplorePerson {
     required this.avatarUrl,
     required this.tags,
     required this.matchLabel,
+    this.matchScore = 0,
+    this.matchType = '',
   });
 }

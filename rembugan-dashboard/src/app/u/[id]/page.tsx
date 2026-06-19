@@ -14,8 +14,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 interface ProfileData {
   id: string
   full_name: string
-  nim: string
-  major: string
+  interest: string | null
   bio: string | null
   photo_url: string | null
   skills: string[]
@@ -119,7 +118,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
             <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
           </Avatar>
           <h1 className="text-2xl font-bold tracking-tight text-center">{profile.full_name}</h1>
-          <p className="text-sm text-muted-foreground">{profile.major}</p>
+          {profile.interest && (
+            <p className="text-sm text-muted-foreground">{profile.interest}</p>
+          )}
         </div>
         <CardContent className="space-y-4 pb-8 px-6">
           {profile.bio && (

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from app.core.security import verify_token
 from app.core.database import get_db
 from app.core.constants import APP_PENDING, TASK_TODO, TASK_DOING, TASK_DONE, PJ_COMPLETED, ROLE_ANGGOTA
-from app.schemas.workspace import TaskCreateInput, TaskMoveInput
+from app.schemas.workspace import TaskCreateInput, TaskMoveInput, TaskUpdateInput
 from app.services.storage import upload_image_to_cloudinary
 
 router = APIRouter(prefix="/workspace", tags=["6. Workspace & Kanban"])
@@ -68,6 +68,7 @@ async def _build_workspace_data(
             [w[0].upper() for w in m.user.full_name.split()[:2]]
         ) or "?"
         member_list.append({
+            "user_id": m.user_id,
             "name": m.user.full_name,
             "initials": initials,
             "role": m.role,
@@ -227,6 +228,7 @@ async def _build_workspace_data_fast(
             [w[0].upper() for w in m.user.full_name.split()[:2]]
         ) or "?"
         member_list.append({
+            "user_id": m.user_id,
             "name": m.user.full_name,
             "initials": initials,
             "role": m.role,
@@ -587,13 +589,14 @@ async def create_task(
     if not member and project.owner_id != user_id:
         raise HTTPException(status_code=403, detail="Kamu bukan member proyek ini.")
 
+    deadline_dt = datetime.fromisoformat(data.deadline) if data.deadline else None
     task = await db.task.create(
         data={
             "project_id": project_id,
             "title": data.title,
             "assignee_id": data.assignee_id,
             "status": TASK_TODO,
-            "deadline": data.deadline,
+            "deadline": deadline_dt,
         },
         include={"assignee": True},
     )
@@ -606,6 +609,7 @@ async def create_task(
             "title": task.title,
             "status": task.status,
             "assignee_name": task.assignee.full_name if task.assignee else None,
+            "assignee_id": task.assignee_id,
             "deadline": task.deadline.isoformat() if task.deadline else None,
             "created_at": tz_iso(task.created_at),
         },
@@ -658,6 +662,7 @@ async def get_project_tasks(
             "title": t.title,
             "status": t.status,
             "assignee_name": t.assignee.full_name if t.assignee else None,
+            "assignee_id": t.assignee_id,
             "deadline": t.deadline.isoformat() if t.deadline else None,
             "created_at": tz_iso(t.created_at),
         }
@@ -665,6 +670,80 @@ async def get_project_tasks(
             board[t.status].append(item)
 
     return {"status": "success", "project_id": project_id, "board": board}
+
+
+@router.put("/tasks/{task_id}", summary="Edit Tugas")
+async def update_task(
+    task_id: int,
+    data: TaskUpdateInput,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    user_id = user_token.get("uid")
+    task = await db.task.find_unique(
+        where={"id": task_id},
+        include={"project": True},
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Tugas tidak ditemukan.")
+
+    member = await db.projectmember.find_first(
+        where={"project_id": task.project_id, "user_id": user_id}
+    )
+    if not member and task.project.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Kamu bukan member proyek ini.")
+
+    update_data = {}
+    if data.title is not None:
+        update_data["title"] = data.title
+    if data.assignee_id is not None:
+        update_data["assignee_id"] = data.assignee_id
+    if data.deadline is not None:
+        update_data["deadline"] = datetime.fromisoformat(data.deadline)
+
+    updated = await db.task.update(
+        where={"id": task_id},
+        data=update_data,
+        include={"assignee": True},
+    )
+
+    return {
+        "status": "success",
+        "message": f"Tugas '{updated.title}' berhasil diupdate!",
+        "data": {
+            "id": updated.id,
+            "title": updated.title,
+            "status": updated.status,
+            "assignee_name": updated.assignee.full_name if updated.assignee else None,
+            "assignee_id": updated.assignee_id,
+            "deadline": updated.deadline.isoformat() if updated.deadline else None,
+        },
+    }
+
+
+@router.delete("/tasks/{task_id}", summary="Hapus Tugas")
+async def delete_task(
+    task_id: int,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    user_id = user_token.get("uid")
+    task = await db.task.find_unique(
+        where={"id": task_id},
+        include={"project": True},
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Tugas tidak ditemukan.")
+
+    member = await db.projectmember.find_first(
+        where={"project_id": task.project_id, "user_id": user_id}
+    )
+    if not member and task.project.owner_id != user_id:
+        raise HTTPException(status_code=403, detail="Kamu bukan member proyek ini.")
+
+    await db.task.delete(where={"id": task_id})
+
+    return {"status": "success", "message": f"Tugas '{task.title}' berhasil dihapus!"}
 
 
 @router.post("/{project_id}/end", summary="Akhiri Kolaborasi Proyek")

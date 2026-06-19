@@ -165,10 +165,11 @@ async def save_user_profile(
         "message": "Profil berhasil diupdate!",
         "data": {
             "id": user.id,
-            "nim": user.nim,
+            "email": user.email,
             "full_name": user.full_name,
             "bio": user.bio,
             "photo_url": user.photo_url,
+            "interest": user.interest,
             "skills": data.skills,
         },
     }
@@ -196,11 +197,11 @@ async def get_my_profile(
         "status": "success",
         "data": {
             "id": user.id,
-            "nim": user.nim,
+            "email": user.email,
             "full_name": user.full_name,
             "bio": user.bio,
             "photo_url": user.photo_url,
-            "email": user.email,
+            "interest": user.interest,
             "skills": skill_names,
             "social_links": user.social_links,
             "created_at": tz_iso(user.created_at),

@@ -20,8 +20,8 @@ class ProfileExperience {
   });
 
   factory ProfileExperience.fromJson(Map<String, dynamic> json) {
-    final start = json['start_date'] as String? ?? '';
-    final end = json['end_date'] as String? ?? '';
+    final start = _formatMonthYear(json['start_date'] as String?);
+    final end = _formatMonthYear(json['end_date'] as String?);
     final duration = switch ((start.isNotEmpty, end.isNotEmpty)) {
       (true, true) => '$start - $end',
       (true, false) => start,
@@ -34,6 +34,23 @@ class ProfileExperience {
       duration: duration,
       description: json['description'] as String? ?? '',
     );
+  }
+
+  static String _formatMonthYear(String? date) {
+    if (date == null || date.isEmpty) return '';
+    try {
+      final parts = date.split('-');
+      if (parts.length < 2) return date;
+      final month = int.tryParse(parts[1]);
+      if (month == null || month < 1 || month > 12) return date;
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      ];
+      return '${months[month - 1]} ${parts[0]}';
+    } catch (_) {
+      return date;
+    }
   }
 
   ProfileExperience copyWith({
@@ -95,7 +112,7 @@ class ProfileData {
   final String name;
   final String handle;
   final String bio;
-  final String major;
+  final String interest;
   final String socialLink;
   final String photoUrl;
   final String coverUrl;
@@ -103,13 +120,15 @@ class ProfileData {
   final List<ProfileExperience> experiences;
   final List<PlatformCollaboration> collaborationHistory;
   final bool hasResumePhoto;
+  final int connectionCount;
+  final int projectCount;
 
   const ProfileData({
     this.id,
     required this.name,
     required this.handle,
     required this.bio,
-    required this.major,
+    required this.interest,
     required this.socialLink,
     this.photoUrl = '',
     this.coverUrl = '',
@@ -117,6 +136,8 @@ class ProfileData {
     required this.experiences,
     required this.collaborationHistory,
     this.hasResumePhoto = false,
+    this.connectionCount = 0,
+    this.projectCount = 0,
   });
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
@@ -139,7 +160,7 @@ class ProfileData {
       name: json['full_name'] as String? ?? '',
       handle: json['handle'] as String? ?? '',
       bio: json['bio'] as String? ?? '',
-      major: json['major'] as String? ?? '',
+      interest: json['interest'] as String? ?? '',
       socialLink: socialLink,
       photoUrl: json['photo_url'] as String? ?? '',
       coverUrl: json['cover_url'] as String? ?? '',
@@ -150,6 +171,8 @@ class ProfileData {
       experiences: experiences,
       collaborationHistory: const [],
       hasResumePhoto: false,
+      connectionCount: json['connection_count'] as int? ?? 0,
+      projectCount: json['project_count'] as int? ?? 0,
     );
   }
 
@@ -158,7 +181,7 @@ class ProfileData {
     String? name,
     String? handle,
     String? bio,
-    String? major,
+    String? interest,
     String? socialLink,
     String? photoUrl,
     String? coverUrl,
@@ -166,13 +189,15 @@ class ProfileData {
     List<ProfileExperience>? experiences,
     List<PlatformCollaboration>? collaborationHistory,
     bool? hasResumePhoto,
+    int? connectionCount,
+    int? projectCount,
   }) {
     return ProfileData(
       id: id ?? this.id,
       name: name ?? this.name,
       handle: handle ?? this.handle,
       bio: bio ?? this.bio,
-      major: major ?? this.major,
+      interest: interest ?? this.interest,
       socialLink: socialLink ?? this.socialLink,
       photoUrl: photoUrl ?? this.photoUrl,
       coverUrl: coverUrl ?? this.coverUrl,
@@ -180,6 +205,8 @@ class ProfileData {
       experiences: experiences ?? this.experiences,
       collaborationHistory: collaborationHistory ?? this.collaborationHistory,
       hasResumePhoto: hasResumePhoto ?? this.hasResumePhoto,
+      connectionCount: connectionCount ?? this.connectionCount,
+      projectCount: projectCount ?? this.projectCount,
     );
   }
 }
@@ -191,7 +218,7 @@ class ProfileService extends GetxService {
     name: '',
     handle: '',
     bio: '',
-    major: '',
+    interest: '',
     socialLink: '',
     skills: [],
     experiences: [],
@@ -233,7 +260,7 @@ class ProfileService extends GetxService {
           name: resultData['full_name'] as String? ?? profile.value.name,
           handle: resultData['handle'] as String? ?? profile.value.handle,
           bio: resultData['bio'] as String? ?? profile.value.bio,
-          major: resultData['major'] as String? ?? profile.value.major,
+          interest: resultData['interest'] as String? ?? profile.value.interest,
           photoUrl: resultData['photo_url'] as String? ?? profile.value.photoUrl,
           coverUrl: resultData['cover_url'] as String? ?? profile.value.coverUrl,
           socialLink: _extractSocialLink(resultData['social_links']),

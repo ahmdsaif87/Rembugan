@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -95,9 +96,9 @@ class LoginView extends GetView<LoginController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppTextField(
-            controller: controller.emailOrNimController,
-            labelText: 'Email atau NIM',
-            hintText: 'nanda@gmail.com atau 23090122',
+            controller: controller.emailController,
+            labelText: 'Email',
+            hintText: 'nanda@gmail.com',
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 28),
@@ -152,6 +153,38 @@ class LoginView extends GetView<LoginController> {
   }
 
   Widget _buildActionButtons() {
-    return AppButton(label: 'Masuk', onTap: controller.onLogin);
+    return Column(
+      children: [
+        AppButton(label: 'Masuk', onTap: controller.onLogin),
+        const SizedBox(height: 20),
+        _buildRegisterLink(),
+      ],
+    );
+  }
+
+  Widget _buildRegisterLink() {
+    final c = AppC.of(Get.context!);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Belum punya akun? ',
+          style: AppFonts.satoshiStyle(
+            fontSize: 14,
+            color: c.grey600,
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Get.toNamed(Routes.REGISTER),
+          child: Text(
+            'Daftar',
+            style: AppTextStyles.button(
+              fontSize: 14,
+              color: AppTextColors.textLinks,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

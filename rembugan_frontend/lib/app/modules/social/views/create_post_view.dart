@@ -19,14 +19,14 @@ class CreatePostView extends StatefulWidget {
 class _CreatePostViewState extends State<CreatePostView> {
   bool _isOffer = false;
   bool _isLoading = false;
-  String? _selectedMajor;
+  String? _selectedInterest;
   String? _selectedCategory;
   final _skills = <String>[];
   final _images = <XFile>[];
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
   final _skillTextController = TextEditingController();
-  static const _majors = [
+  static const _interests = [
     'Teknik Informatika',
     'Sistem Informasi',
     'Teknik Komputer',
@@ -139,10 +139,10 @@ class _CreatePostViewState extends State<CreatePostView> {
                       padding: const EdgeInsets.all(AppSpacing.md),
                       children: [
                         _OfferFormContent(
-                          selectedMajor: _selectedMajor,
+                          selectedInterest: _selectedInterest,
                           selectedCategory: _selectedCategory,
                           skills: _skills,
-                          onMajorTap: _showMajorPicker,
+                          onInterestTap: _showInterestPicker,
                           onCategoryTap: _showCategoryPicker,
                           onSkillAdd: _showSkillPicker,
                           onSkillRemove: (s) => setState(() => _skills.remove(s)),
@@ -317,16 +317,17 @@ class _CreatePostViewState extends State<CreatePostView> {
     );
   }
 
-  void _showMajorPicker() {
+  void _showInterestPicker() {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (_) => _MajorPickerSheet(
-        majors: _majors,
-        selectedMajor: _selectedMajor,
-        onSelected: (major) {
-          setState(() => _selectedMajor = major);
+      builder: (_) => _PickerSheet(
+        title: 'Pilih minat/bidang',
+        items: _interests,
+        selectedItem: _selectedInterest,
+        onSelected: (interest) {
+          setState(() => _selectedInterest = interest);
           Navigator.of(context).pop();
         },
       ),
@@ -338,10 +339,10 @@ class _CreatePostViewState extends State<CreatePostView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (_) => _MajorPickerSheet(
+      builder: (_) => _PickerSheet(
         title: 'Pilih kategori',
-        majors: _categories,
-        selectedMajor: _selectedCategory,
+        items: _categories,
+        selectedItem: _selectedCategory,
         onSelected: (category) {
           setState(() => _selectedCategory = category);
           Navigator.of(context).pop();
@@ -536,31 +537,31 @@ class _LabeledPicker extends StatelessWidget {
   }
 }
 
-class _MajorPickerSheet extends StatefulWidget {
-  const _MajorPickerSheet({
-    this.title = 'Pilih jurusan',
-    required this.majors,
-    required this.selectedMajor,
+class _PickerSheet extends StatefulWidget {
+  const _PickerSheet({
+    this.title = 'Pilih minat/bidang',
+    required this.items,
+    required this.selectedItem,
     required this.onSelected,
   });
 
   final String title;
-  final List<String> majors;
-  final String? selectedMajor;
+  final List<String> items;
+  final String? selectedItem;
   final ValueChanged<String> onSelected;
 
   @override
-  State<_MajorPickerSheet> createState() => _MajorPickerSheetState();
+  State<_PickerSheet> createState() => _PickerSheetState();
 }
 
-class _MajorPickerSheetState extends State<_MajorPickerSheet> {
+class _PickerSheetState extends State<_PickerSheet> {
   String _query = '';
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final filtered = widget.majors
-        .where((major) => major.toLowerCase().contains(_query.toLowerCase()))
+    final filtered = widget.items
+        .where((item) => item.toLowerCase().contains(_query.toLowerCase()))
         .toList();
 
     return Padding(
@@ -627,18 +628,18 @@ class _MajorPickerSheetState extends State<_MajorPickerSheet> {
                 separatorBuilder: (_, __) =>
                     Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
                 itemBuilder: (context, index) {
-                  final major = filtered[index];
-                  final selected = major == widget.selectedMajor;
+                  final item = filtered[index];
+                  final selected = item == widget.selectedItem;
 
                   return InkWell(
-                    onTap: () => widget.onSelected(major),
+                    onTap: () => widget.onSelected(item),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
-                              major,
+                              item,
                               style: AppFonts.satoshiStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
@@ -1144,19 +1145,19 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
 
 class _OfferFormContent extends StatelessWidget {
   const _OfferFormContent({
-    required this.selectedMajor,
+    required this.selectedInterest,
     required this.selectedCategory,
     required this.skills,
-    required this.onMajorTap,
+    required this.onInterestTap,
     required this.onCategoryTap,
     required this.onSkillAdd,
     required this.onSkillRemove,
   });
 
-  final String? selectedMajor;
+  final String? selectedInterest;
   final String? selectedCategory;
   final List<String> skills;
-  final VoidCallback onMajorTap;
+  final VoidCallback onInterestTap;
   final VoidCallback onCategoryTap;
   final VoidCallback onSkillAdd;
   final ValueChanged<String> onSkillRemove;
@@ -1177,13 +1178,13 @@ class _OfferFormContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _LabeledPicker(
-                label: 'Jurusan',
-                value: selectedMajor,
-                hintText: 'Pilih jurusan',
-                icon: FluentIcons.hat_graduation_24_regular,
-                onTap: onMajorTap,
-              ),
+                child: _LabeledPicker(
+                  label: 'Minat/Bidang',
+                  value: selectedInterest,
+                  hintText: 'Pilih minat/bidang',
+                  icon: FluentIcons.hat_graduation_24_regular,
+                  onTap: onInterestTap,
+                ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(

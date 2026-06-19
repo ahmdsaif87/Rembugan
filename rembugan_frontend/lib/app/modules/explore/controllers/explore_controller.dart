@@ -14,11 +14,12 @@ class ExploreController extends GetxController {
   final projectScrollController = ScrollController();
   final isLoading = true.obs;
   final isLoadingMore = false.obs;
+  final noMoreProjects = false.obs;
   final hasError = false.obs;
   final errorMessage = ''.obs;
   var projectPage = 1;
   var projectTotalAvailable = 0;
-  bool get hasMoreProjects => projectPage * 15 < projectTotalAvailable;
+  bool get hasMoreProjects => !noMoreProjects.value;
 
   @override
   void onClose() {
@@ -114,6 +115,7 @@ class ExploreController extends GetxController {
     hasError.value = false;
     errorMessage.value = '';
     projectPage = 1;
+    noMoreProjects.value = false;
     try {
       final projectResult = await _repository.getProjects(page: 1, limit: 15);
       projects.assignAll(projectResult.projects);
@@ -123,43 +125,33 @@ class ExploreController extends GetxController {
       final results = await Future.wait([
         _repository.getCompetitions(),
         _repository.getRecommendedPeople(),
-        _repository.getMyOfferingsSkills(),
       ]);
 
       final loadedCompetitions = results[0] as List<Competition>;
       competitions.assignAll(loadedCompetitions);
       filteredCompetitions.assignAll(loadedCompetitions);
 
-      final loadedPeople = results[1] as List<ExplorePerson>;
-      final offeringSkills = results[2] as List<String>;
+      var loadedPeople = results[1] as List<ExplorePerson>;
 
-      // Set matchLabel only when offering exists with matching skills
-      List<ExplorePerson> processedPeople;
-      if (offeringSkills.isNotEmpty) {
-        final offeringLower = offeringSkills.map((s) => s.toLowerCase()).toSet();
-        processedPeople = loadedPeople.map((person) {
-          final hasMatch = person.tags.any(
-            (t) => offeringLower.contains(t.toLowerCase()),
-          );
-          return ExplorePerson(
-            id: person.id,
-            name: person.name,
-            role: person.role,
-            avatarUrl: person.avatarUrl,
-            tags: person.tags,
-            matchLabel: hasMatch ? 'Rekomendasi untukmu' : '',
-          );
-        }).toList();
-      } else {
-        processedPeople = loadedPeople.map((p) => ExplorePerson(
-          id: p.id,
-          name: p.name,
-          role: p.role,
-          avatarUrl: p.avatarUrl,
-          tags: p.tags,
-          matchLabel: '',
-        )).toList();
-      }
+      // Badge dari backend match_score
+      List<ExplorePerson> processedPeople = loadedPeople.map((person) {
+        String label;
+        if (person.matchScore <= 0) {
+          label = '';
+        } else if (person.matchType == 'project') {
+          label = 'Cocok dengan proyekmu';
+        } else {
+          label = 'Minat serupa';
+        }
+        return ExplorePerson(
+          id: person.id,
+          name: person.name,
+          role: person.role,
+          avatarUrl: person.avatarUrl,
+          tags: person.tags,
+          matchLabel: label,
+        );
+      }).toList();
 
       _savedRecommendedPeople
         ..clear()
@@ -188,9 +180,13 @@ class ExploreController extends GetxController {
     try {
       projectPage++;
       final result = await _repository.getProjects(page: projectPage, limit: 15);
-      projects.addAll(result.projects);
-      filteredProjects.addAll(result.projects);
-      applyFilters();
+      if (result.projects.isEmpty) {
+        noMoreProjects.value = true;
+      } else {
+        projects.addAll(result.projects);
+        filteredProjects.addAll(result.projects);
+        applyFilters();
+      }
     } catch (e) {
       projectPage--;
     } finally {
@@ -241,10 +237,6 @@ class ExploreController extends GetxController {
           project.skills.any((s) => s.toLowerCase().contains(query));
 
       if (!matchesQuery) return false;
-
-      if (selectedSort.value == 'Paling relevan' && project.matchScore <= 0) {
-        return false;
-      }
 
       return true;
     }).toList();

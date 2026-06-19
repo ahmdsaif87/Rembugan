@@ -26,7 +26,7 @@ class CreatePostInput(BaseModel):
     description: Optional[str] = Field(None, min_length=20, description="Deskripsi proyek")
     required_skills: Optional[List[str]] = Field(None, min_length=1, description="Skill yang dibutuhkan")
     category: Optional[str] = Field(None, description="Kategori proyek")
-    faculty: Optional[str] = Field(None, description="Jurusan/fakultas")
+    interest: Optional[str] = Field(None, description="Minat terkait proyek")
     total_slots: Optional[int] = Field(None, ge=1, description="Slot anggota tersisa")
     deadline: Optional[datetime] = Field(None, description="Batas waktu pendaftaran")
 
@@ -82,7 +82,7 @@ async def create_post(
                 "description": data.description,
                 "required_skills": data.required_skills,
                 "category": data.category,
-                "faculty": data.faculty,
+                "interest": data.interest,
                 "deadline": data.deadline,
                 "total_slots": data.total_slots,
             },
@@ -106,7 +106,7 @@ async def create_post(
                 "title": project.title,
                 "description": project.description,
                 "category": project.category,
-                "faculty": project.faculty,
+                "interest": project.interest,
                 "required_skills": project.required_skills,
                 "total_slots": project.total_slots,
                 "deadline": project.deadline.isoformat() if project.deadline else None,

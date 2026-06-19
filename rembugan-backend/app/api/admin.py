@@ -4,6 +4,7 @@ from app.core.database import get_db
 from app.core.security import verify_admin_token, hash_password
 from app.schemas.auth import AdminCreateUserInput, AdminResetPasswordInput
 from app.core.constants import PJ_COMPLETED, APP_PENDING
+from app.services.competitions import get_competition_collection
 
 router = APIRouter(prefix="/admin", tags=["Admin Dashboard"])
 
@@ -14,13 +15,9 @@ async def admin_reset_user_password(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Admin mereset password user berdasarkan NIM.
-    Berguna untuk user yang belum punya email dan lupa password.
-    """
-    user = await db.user.find_unique(where={"nim": data.nim})
+    user = await db.user.find_unique(where={"email": data.email})
     if not user:
-        raise HTTPException(status_code=404, detail="User dengan NIM tersebut tidak ditemukan.")
+        raise HTTPException(status_code=404, detail="User dengan email tersebut tidak ditemukan.")
 
     new_hashed = hash_password(data.new_password)
     await db.user.update(
@@ -30,7 +27,7 @@ async def admin_reset_user_password(
 
     return {
         "status": "success",
-        "message": f"Password user {user.full_name} (NIM: {data.nim}) berhasil direset.",
+        "message": f"Password user {user.full_name} (email: {data.email}) berhasil direset.",
     }
 
 
@@ -40,21 +37,17 @@ async def admin_create_user(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Admin membuat user baru.
-    User akan memiliki NIM + Password untuk login pertama.
-    """
-    existing = await db.user.find_unique(where={"nim": data.nim})
+    existing = await db.user.find_unique(where={"email": data.email})
     if existing:
-        raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
+        raise HTTPException(status_code=400, detail="Email sudah terdaftar.")
 
     hashed = hash_password(data.password)
     user = await db.user.create(
         data={
-            "nim": data.nim,
+            "email": data.email,
             "password": hashed,
             "full_name": data.full_name,
-            "major": data.major,
+            "interest": data.interest,
         }
     )
 
@@ -63,39 +56,25 @@ async def admin_create_user(
         "message": f"User {user.full_name} berhasil dibuat.",
         "data": {
             "id": user.id,
-            "nim": user.nim,
+            "email": user.email,
             "full_name": user.full_name,
-            "major": user.major,
+            "interest": user.interest,
             "is_onboarded": user.is_onboarded,
         },
     }
+
 
 @router.get("/stats", summary="Get Dashboard Statistics")
 async def get_dashboard_stats(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Get statistics for admin dashboard
-    """
-    # Get total users
     total_users = await db.user.count()
-
-    # Get active projects (status != 'completed')
-    active_projects = await db.project.count(        where={"status": {"not": PJ_COMPLETED}})
-
-    # Get total projects
+    active_projects = await db.project.count(where={"status": {"not": PJ_COMPLETED}})
     total_projects = await db.project.count()
-
-    # Get total showcases
     total_showcases = await db.showcase.count()
-
-    # Get pending applications
-    pending_applications = await db.projectapplication.count(        where={"status": APP_PENDING})
-
-    # Get total tasks
+    pending_applications = await db.projectapplication.count(where={"status": APP_PENDING})
     total_tasks = await db.task.count()
-
     scraped_competitions = await _count_competitions()
 
     return {
@@ -118,9 +97,6 @@ async def get_all_users(
     limit: int = 50,
     db: Prisma = Depends(get_db),
 ):
-    """
-    Get all users with pagination
-    """
     users = await db.user.find_many(
         skip=skip,
         take=limit,
@@ -153,9 +129,6 @@ async def get_all_projects(
     limit: int = 50,
     db: Prisma = Depends(get_db),
 ):
-    """
-    Get all projects with pagination
-    """
     projects = await db.project.find_many(
         skip=skip,
         take=limit,
@@ -187,9 +160,6 @@ async def get_all_showcases(
     limit: int = 50,
     db: Prisma = Depends(get_db),
 ):
-    """
-    Get all showcases with pagination
-    """
     showcases = await db.showcase.find_many(
         skip=skip,
         take=limit,
@@ -226,9 +196,6 @@ async def get_all_tasks(
     limit: int = 50,
     db: Prisma = Depends(get_db),
 ):
-    """
-    Get all tasks with pagination
-    """
     tasks = await db.task.find_many(
         skip=skip,
         take=limit,
@@ -258,9 +225,6 @@ async def get_all_applications(
     limit: int = 50,
     db: Prisma = Depends(get_db),
 ):
-    """
-    Get all applications with pagination
-    """
     applications = await db.projectapplication.find_many(
         skip=skip,
         take=limit,
@@ -288,9 +252,6 @@ async def get_recent_competitions(
     admin_token: dict = Depends(verify_admin_token),
     limit: int = 20,
 ):
-    """
-    Get recent competitions from MongoDB
-    """
     try:
         coll = get_competition_collection()
         cursor = coll.find({}).limit(limit)
@@ -316,9 +277,6 @@ async def delete_user(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Delete a user
-    """
     try:
         await db.user.delete(where={"id": user_id})
         return {"status": "success", "message": "User deleted successfully"}
@@ -331,9 +289,6 @@ async def delete_project(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Delete a project
-    """
     try:
         await db.project.delete(where={"id": project_id})
         return {"status": "success", "message": "Project deleted successfully"}
@@ -346,9 +301,6 @@ async def delete_showcase(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Delete a showcase
-    """
     try:
         await db.showcase.delete(where={"id": showcase_id})
         return {"status": "success", "message": "Showcase deleted successfully"}
@@ -361,9 +313,6 @@ async def delete_task(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Delete a task
-    """
     try:
         await db.task.delete(where={"id": task_id})
         return {"status": "success", "message": "Task deleted successfully"}
@@ -376,9 +325,6 @@ async def delete_application(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Delete a project application
-    """
     try:
         await db.projectapplication.delete(where={"id": application_id})
         return {"status": "success", "message": "Application deleted successfully"}
@@ -390,9 +336,6 @@ async def delete_competition(
     competition_id: str,
     admin_token: dict = Depends(verify_admin_token),
 ):
-    """
-    Delete a competition from MongoDB
-    """
     deleted = await _delete_competition(competition_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Competition not found")

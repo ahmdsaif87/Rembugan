@@ -10,6 +10,7 @@ import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
+import '../../team/data/repositories/workspace_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../domain/entities/competition.dart';
 import '../domain/entities/explore_tab.dart';
@@ -596,6 +597,7 @@ class ExploreView extends GetView<ExploreController> {
                       label: 'Minta Bergabung',
                       onTap: () {
                         Navigator.of(context).pop();
+                        _applyToProject(context, project);
                       },
                     ),
                   ),
@@ -606,6 +608,18 @@ class ExploreView extends GetView<ExploreController> {
         );
       },
     );
+  }
+
+  static void _applyToProject(BuildContext context, Project project) async {
+    final pid = int.tryParse(project.posterId);
+    if (pid == null) return;
+    final repo = WorkspaceRepository();
+    final result = await repo.applyToProject(pid);
+    if (result != null) {
+      AppToast.success('Lamaran berhasil dikirim!');
+    } else {
+      AppToast.error('Gagal mengirim lamaran.');
+    }
   }
 
   static void showCompetitionSheet(

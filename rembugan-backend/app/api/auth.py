@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from prisma import Prisma
 from app.core.security import hash_password, verify_password, create_jwt_token, verify_token, verify_admin_credentials
 from app.core.database import get_db
@@ -9,6 +9,7 @@ from app.schemas.auth import (
     RegisterInput, LoginInput, AdminLoginInput,
     SendOtpInput, VerifyOtpInput, ForgotPasswordSendOtpInput,
     ForgotPasswordResetInput, AdminCreateUserInput,
+    RegisterVerifyOtpInput,
 )
 from app.services.otp import send_otp_to_email, verify_otp_code
 from app.services.email import send_otp_email
@@ -16,67 +17,85 @@ from app.services.email import send_otp_email
 router = APIRouter(prefix="/auth", tags=["0. Authentication"])
 
 
-@router.post("/register", summary="Register User Baru (NIM + Password)")
+@router.post("/register", summary="Register User Baru (Email + Password)")
 @limiter.limit("5/minute")
 async def register(
     request: Request,
     data: RegisterInput,
     db: Prisma = Depends(get_db),
 ):
-    existing = await db.user.find_unique(where={"nim": data.nim})
+    existing = await db.user.find_unique(where={"email": data.email})
     if existing:
-        raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
+        raise HTTPException(status_code=400, detail="Email sudah terdaftar.")
 
     user = await db.user.create(
         data={
-            "nim": data.nim,
+            "email": data.email,
             "password": hash_password(data.password),
             "full_name": data.full_name,
-            "major": data.major,
+            "interest": data.interest,
+            "email_verified": False,
         }
     )
 
-    token = create_jwt_token(user.id, user.email)
+    await send_otp_to_email(db, user.id, user.email)
 
     return {
         "status": "success",
-        "message": f"Registrasi berhasil! Selamat datang, {user.full_name}.",
+        "message": f"Kode OTP berhasil dikirim ke {user.email}. Verifikasi untuk melanjutkan.",
         "data": {
-            "access_token": token,
-            "token_type": "bearer",
             "user_id": user.id,
-            "full_name": user.full_name,
-            "handle": user.handle,
-            "is_onboarded": user.is_onboarded,
+            "email": user.email,
         },
     }
 
 
-@router.post("/login", summary="Login via NIM atau Email + Password")
+@router.post("/register/verify-otp", summary="Verifikasi OTP Registrasi")
+@limiter.limit("5/minute")
+async def register_verify_otp(
+    request: Request,
+    data: RegisterVerifyOtpInput,
+    db: Prisma = Depends(get_db),
+):
+    user = await db.user.find_unique(where={"email": data.email})
+    if not user:
+        raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
+    if user.email_verified:
+        raise HTTPException(status_code=400, detail="Email sudah diverifikasi.")
+
+    await verify_otp_code(db, user.id, user.email, data.otp)
+
+    await db.user.update(
+        where={"id": user.id},
+        data={"email_verified": True},
+    )
+
+    return {
+        "status": "success",
+        "message": "Email berhasil diverifikasi! Silakan login.",
+    }
+
+
+@router.post("/login", summary="Login via Email + Password")
 @limiter.limit("10/minute")
 async def login(
     request: Request,
     data: LoginInput,
     db: Prisma = Depends(get_db),
 ):
-    if "@" in data.identifier:
-        user = await db.user.find_first(
-            where={"email": data.identifier, "email_verified": True}
-        )
-    else:
-        user = await db.user.find_unique(where={"nim": data.identifier})
+    user = await db.user.find_unique(where={"email": data.email})
 
     if not user:
-        raise HTTPException(status_code=401, detail="NIM/Email atau password salah.")
+        raise HTTPException(status_code=401, detail="Email atau password salah.")
 
-    if user.email and not user.email_verified:
+    if not user.email_verified:
         raise HTTPException(
             status_code=403,
             detail="Email belum diverifikasi. Silakan verifikasi email terlebih dahulu.",
         )
 
     if not verify_password(data.password, user.password):
-        raise HTTPException(status_code=401, detail="NIM/Email atau password salah.")
+        raise HTTPException(status_code=401, detail="Email atau password salah.")
 
     token = create_jwt_token(user.id, user.email)
 
@@ -90,6 +109,7 @@ async def login(
             "full_name": user.full_name,
             "handle": user.handle,
             "is_onboarded": user.is_onboarded,
+            "interest": user.interest,
         },
     }
 
@@ -165,21 +185,21 @@ async def verify_otp(
     }
 
 
-@router.post("/forgot-password/send-otp", summary="Kirim OTP Reset Password via NIM")
+@router.post("/forgot-password/send-otp", summary="Kirim OTP Reset Password via Email")
 @limiter.limit("3/minute")
 async def forgot_password_send_otp(
     request: Request,
     data: ForgotPasswordSendOtpInput,
     db: Prisma = Depends(get_db),
 ):
-    user = await db.user.find_unique(where={"nim": data.nim})
+    user = await db.user.find_unique(where={"email": data.email})
     if not user:
-        raise HTTPException(status_code=404, detail="NIM tidak ditemukan.")
+        raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
 
-    if not user.email or not user.email_verified:
+    if not user.email_verified:
         raise HTTPException(
             status_code=400,
-            detail="Akun ini belum memiliki email terverifikasi. Silakan hubungi admin untuk reset password.",
+            detail="Email belum diverifikasi. Silakan hubungi admin untuk reset password.",
         )
 
     await send_otp_to_email(db, user.id, user.email)
@@ -196,14 +216,14 @@ async def forgot_password_reset(
     data: ForgotPasswordResetInput,
     db: Prisma = Depends(get_db),
 ):
-    user = await db.user.find_unique(where={"nim": data.nim})
+    user = await db.user.find_unique(where={"email": data.email})
     if not user:
-        raise HTTPException(status_code=404, detail="NIM tidak ditemukan.")
+        raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
 
-    if not user.email or not user.email_verified:
+    if not user.email_verified:
         raise HTTPException(
             status_code=400,
-            detail="Akun ini belum memiliki email terverifikasi. Silakan hubungi admin untuk reset password.",
+            detail="Email belum diverifikasi. Silakan hubungi admin untuk reset password.",
         )
 
     await verify_otp_code(db, user.id, user.email, data.otp)
@@ -234,11 +254,41 @@ async def get_current_user(
         "status": "success",
         "data": {
             "id": user.id,
-            "nim": user.nim,
+            "email": user.email,
             "full_name": user.full_name,
             "handle": user.handle,
-            "email": user.email,
+            "interest": user.interest,
             "email_verified": user.email_verified,
             "is_onboarded": user.is_onboarded,
+            "connection_count": user.connection_count,
+            "project_count": user.project_count,
         },
+    }
+
+
+@router.get("/interests", summary="Daftar Interest untuk Autocomplete")
+@limiter.limit("30/minute")
+async def get_interests(
+    request: Request,
+    q: str = Query("", min_length=0, description="Kata kunci pencarian interest"),
+    db: Prisma = Depends(get_db),
+):
+    where = {}
+    if q:
+        where["interest"] = {"contains": q, "mode": "insensitive"}
+
+    users = await db.user.find_many(
+        where=where,
+        select={"interest": True},
+        distinct=["interest"],
+        take=20,
+    )
+
+    interests = sorted(set(
+        u.interest for u in users if u.interest
+    ))
+
+    return {
+        "status": "success",
+        "data": interests,
     }

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from prisma import Prisma
 from app.core.dates import tz_iso
 
@@ -13,17 +13,13 @@ from app.services.competitions import get_competition_collection
 
 router = APIRouter(prefix="/fyp", tags=["Halaman Beranda (FYP)"])
 
+
 @router.get("/", summary="Ambil Data Personalized FYP")
 async def get_fyp(
+    tab: str = Query("untukmu", description="Tab: 'untukmu' or 'diikuti'"),
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
-    """
-    Endpoint untuk mengambil Personalized FYP:
-    - Portofolio/Showcase (terbaru)
-    - Tawaran Proyek (diurutkan berdasarkan relevansi skill)
-    - Info Lomba (diurutkan berdasarkan relevansi skill)
-    """
     uid = user_token.get("uid")
 
     user = await db.user.find_unique(
@@ -35,8 +31,9 @@ async def get_fyp(
 
     user_skills = [s.skill.name for s in user.skills] if user.skills else []
     user_skills_lower = [s.lower() for s in user_skills]
+    user_interest = user.interest or ""
 
-    # 1. Ambil Showcase (Limit 10 terbaru)
+    # 1. Ambil Showcase
     showcases = await db.showcase.find_many(
         take=10,
         order={"created_at": "desc"},
@@ -57,22 +54,56 @@ async def get_fyp(
             "created_at": tz_iso(s.created_at),
         })
 
-    # 2. Ambil Project Offerings (Limit 10 paling relevan)
-    # Cap max 500 project di memory untuk scoring safety
+    # 2. Ambil Project Offerings
+    if tab == "diikuti":
+        # Ambil koneksi user
+        connections = await db.connection.find_many(
+            where={
+                "OR": [
+                    {"sender_id": uid, "status": "accepted"},
+                    {"receiver_id": uid, "status": "accepted"},
+                ]
+            }
+        )
+        connected_ids = set()
+        for c in connections:
+            connected_ids.add(c.sender_id)
+            connected_ids.add(c.receiver_id)
+        connected_ids.discard(uid)
+
+        # Filter project by connected users
+        project_filter = {
+            "status": PJ_OPEN,
+            "owner_id": {"in": list(connected_ids)},
+        } if connected_ids else {"status": PJ_OPEN, "owner_id": "___none___"}
+    else:
+        # "Untukmu" - filter by user interest
+        if user.interest:
+            project_filter = {
+                "status": PJ_OPEN,
+                "interest": {"contains": user.interest, "mode": "insensitive"},
+            }
+        else:
+            project_filter = {"status": PJ_OPEN}
+
+    if tab != "diikuti":
+        project_filter["owner_id"] = {"not": uid}
+
     projects = await db.project.find_many(
-        where={"status": PJ_OPEN, "owner_id": {"not": uid}},
+        where=project_filter,
         include={"owner": True},
         take=FYP_MAX_ROWS,
     )
     scored_projects = []
     for p in projects:
-        score = calculate_match_score(user_skills, p.required_skills)
+        score = calculate_match_score(user_skills, p.required_skills, user_interest, p.interest)
         scored_projects.append({
             "id": p.id,
             "type": "project",
             "title": p.title,
             "description": p.description,
             "required_skills": p.required_skills,
+            "interest": p.interest,
             "owner_name": p.owner.full_name if p.owner else None,
             "match_score": score,
             "created_at": tz_iso(p.created_at),
@@ -103,7 +134,6 @@ async def get_fyp(
         competition_data.sort(key=lambda x: x.get('match_score', 0), reverse=True)
         competition_data = competition_data[:5]
     except Exception as e:
-        # Jangan sampai gagalkan endpoint ini jika API Lomba mati
         logger.exception("Error fetching lomba")
 
     return {
@@ -111,6 +141,6 @@ async def get_fyp(
         "data": {
             "showcases": showcase_data,
             "projects": project_data,
-            "competitions": competition_data
+            "competitions": competition_data,
         }
     }

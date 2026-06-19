@@ -12,7 +12,7 @@ class ForgotPasswordController extends GetxController {
   final step = 0.obs;
   final resendSeconds = 60.obs;
 
-  final nimController = TextEditingController();
+  final emailController = TextEditingController();
   final otpControllers = List.generate(6, (_) => TextEditingController());
   final otpFocusNodes = List.generate(6, (_) => FocusNode());
   final newPasswordController = TextEditingController();
@@ -22,12 +22,12 @@ class ForgotPasswordController extends GetxController {
   final isNewPasswordHidden = true.obs;
   final isConfirmPasswordHidden = true.obs;
 
-  final formKeyNim = GlobalKey<FormState>();
+  final formKeyEmail = GlobalKey<FormState>();
   final formKeyReset = GlobalKey<FormState>();
 
   Timer? _resendTimer;
 
-  String get nim => nimController.text.trim();
+  String get email => emailController.text.trim();
 
   void goBack() {
     if (step.value == 0) {
@@ -38,10 +38,10 @@ class ForgotPasswordController extends GetxController {
   }
 
   void onSendOtp() async {
-    if (formKeyNim.currentState?.validate() != true) return;
+    if (formKeyEmail.currentState?.validate() != true) return;
 
     isLoading.value = true;
-    final error = await _auth.forgotPasswordSendOtp(nim);
+    final error = await _auth.forgotPasswordSendOtp(email);
     isLoading.value = false;
 
     if (error != null) {
@@ -80,7 +80,7 @@ class ForgotPasswordController extends GetxController {
     otpFocusNodes.first.requestFocus();
 
     isLoading.value = true;
-    final error = await _auth.forgotPasswordSendOtp(nim);
+    final error = await _auth.forgotPasswordSendOtp(email);
     isLoading.value = false;
 
     if (error != null) {
@@ -107,7 +107,7 @@ class ForgotPasswordController extends GetxController {
 
     isLoading.value = true;
     final error = await _auth.forgotPasswordReset(
-      nim: nim,
+      email: email,
       otp: otp,
       newPassword: newPasswordController.text,
     );
@@ -142,7 +142,7 @@ class ForgotPasswordController extends GetxController {
   @override
   void onClose() {
     _resendTimer?.cancel();
-    nimController.dispose();
+    emailController.dispose();
     for (final c in otpControllers) {
       c.dispose();
     }

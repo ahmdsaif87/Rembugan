@@ -77,7 +77,7 @@ class _OtherProfileViewState extends State<OtherProfileView> {
 
         setState(() {
           _name = data['full_name'] as String? ?? _name;
-          _role = data['major'] as String? ?? _role;
+          _role = data['interest'] as String? ?? _role;
           _avatarUrl = data['photo_url'] as String? ?? _avatarUrl;
           _coverUrl = data['cover_url'] as String? ?? _coverUrl;
           _bio = data['bio'] as String? ?? '';
@@ -595,7 +595,7 @@ class _ProfileTabContent extends StatelessWidget {
           return _PostCard(
             avatarUrl: avatarUrl,
             name: name,
-            subtitle: '$role - ${p['created_at'] as String? ?? ''}',
+            subtitle: '$role - ${_formatPortfolioDate(p['created_at'])}',
             content: p['content'] as String? ?? '',
             likeCount: '${p['likes_count'] ?? 0}',
             commentCount: '${p['comments_count'] ?? 0}',
@@ -931,5 +931,22 @@ class _PostCardState extends State<_PostCard> {
         ),
       ),
     );
+  }
+}
+
+String _formatPortfolioDate(dynamic date) {
+  if (date == null) return '';
+  try {
+    final dt = DateTime.parse(date.toString());
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inHours < 1) return '${diff.inMinutes}m lalu';
+    if (diff.inDays < 1) return '${diff.inHours}j lalu';
+    if (diff.inDays < 30) return '${diff.inDays}h lalu';
+    final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  } catch (_) {
+    return '';
   }
 }

@@ -8,7 +8,7 @@ import '../../../core/widgets/app_toast.dart';
 class LoginController extends GetxController {
   final _auth = Get.find<AuthService>();
 
-  final emailOrNimController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final isPasswordHidden = true.obs;
   final formKey = GlobalKey<FormState>();
@@ -21,7 +21,7 @@ class LoginController extends GetxController {
     if (!formKey.currentState!.validate()) return;
 
     final error = await _auth.login(
-      identifier: emailOrNimController.text.trim(),
+      email: emailController.text.trim(),
       password: passwordController.text,
     );
 
@@ -46,7 +46,7 @@ class LoginController extends GetxController {
 
   @override
   void onClose() {
-    emailOrNimController.dispose();
+    emailController.dispose();
     passwordController.dispose();
     super.onClose();
   }
