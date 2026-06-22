@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
-import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/profile_controller.dart';
@@ -18,44 +17,15 @@ class ProfileView extends GetView<ProfileController> {
     return Scaffold(
       backgroundColor: c.background,
       body: Obx(() {
-        final svc = controller.profileService;
-        if (svc.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (svc.errorMessage.value != null) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(FluentIcons.error_circle_24_regular, size: 48, color: c.textTertiary),
-                  const SizedBox(height: 16),
-                  Text(
-                    svc.errorMessage.value!,
-                    textAlign: TextAlign.center,
-                    style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: svc.fetchProfile,
-                    child: const Text('Coba Lagi'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        final profile = svc.profile.value;
+        final profile = controller.profileService.profile.value;
 
         return ListView(
           padding: EdgeInsets.zero,
           children: [
             _ProfileCover(
-              photoUrl: profile.photoUrl,
-              coverUrl: profile.coverUrl,
+              avatarAsset: profile.avatarAsset,
+              onBack: Get.back,
               onSettings: () => Get.toNamed(Routes.SETTINGS),
-              onEditCover: () => Get.toNamed(Routes.EDIT_PROFILE),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
@@ -63,6 +33,15 @@ class ProfileView extends GetView<ProfileController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _ProfileIdentity(profile: profile),
+                  const SizedBox(height: 12),
+                  Text(
+                    '842 koneksi  7 Kolaborasi',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: c.grey900,
+                    ),
+                  ),
                   const SizedBox(height: 14),
                   _ProfileActions(
                     onEdit: () => Get.toNamed(Routes.EDIT_PROFILE),
@@ -93,16 +72,14 @@ class ProfileView extends GetView<ProfileController> {
 
 class _ProfileCover extends StatelessWidget {
   const _ProfileCover({
-    required this.photoUrl,
-    this.coverUrl = '',
+    required this.avatarAsset,
+    required this.onBack,
     required this.onSettings,
-    required this.onEditCover,
   });
 
-  final String photoUrl;
-  final String coverUrl;
+  final String avatarAsset;
+  final VoidCallback onBack;
   final VoidCallback onSettings;
-  final VoidCallback onEditCover;
 
   @override
   Widget build(BuildContext context) {
@@ -115,9 +92,21 @@ class _ProfileCover extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
-            child: coverUrl.isNotEmpty
-                ? Image.network(coverUrl, fit: BoxFit.cover)
-                : const AppCoverPlaceholder(),
+            child: Image.asset(
+              'lib/assets/img/contoh poster4.jpeg',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(color: c.surface.withValues(alpha: 0.18)),
+          ),
+          Positioned(
+            top: topPadding + 16,
+            left: 16,
+            child: _ProfileCircleButton(
+              icon: FluentIcons.chevron_left_24_regular,
+              onTap: onBack,
+            ),
           ),
           Positioned(
             top: topPadding + 16,
@@ -128,22 +117,19 @@ class _ProfileCover extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: topPadding + 64,
-            right: 16,
-            child: _ProfileCircleButton(
-              icon: FluentIcons.image_edit_24_regular,
-              onTap: onEditCover,
-            ),
-          ),
-          Positioned(
             left: 16,
             bottom: -46,
             child: Container(
+              width: 94,
+              height: 94,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.white, width: 3),
               ),
-              child: AppAvatar(photoUrl: photoUrl, radius: 47),
+              child: CircleAvatar(
+                backgroundImage: AssetImage(avatarAsset),
+                backgroundColor: c.grey100,
+              ),
             ),
           ),
         ],
@@ -161,20 +147,16 @@ class _ProfileCircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: c.surface.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Icon(icon, size: 23, color: c.grey900),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: c.surface.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
+        child: Icon(icon, size: 23, color: c.grey900),
       ),
     );
   }
@@ -204,65 +186,90 @@ class _ProfileIdentity extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          profile.interest,
+          profile.major,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: c.grey500,
           ),
         ),
+<<<<<<< Updated upstream
+        const SizedBox(height: 10),
+        Text(
+          profile.bio,
+          style: AppFonts.satoshiStyle(
+            fontSize: 13,
+            height: 1.32,
+            color: c.grey900,
+          ),
+=======
+        if (profile.faculty != null || profile.major != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            [profile.faculty, profile.major].whereType<String>().join(' • '),
+            style: AppFonts.satoshiStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: c.grey400,
+            ),
+          ),
+        ],
         const SizedBox(height: 6),
         Row(
           children: [
-            Icon(FluentIcons.people_24_regular, size: 14, color: c.grey500),
-            const SizedBox(width: 4),
-            Text(
-              '${profile.connectionCount} koneksi',
-              style: AppFonts.satoshiStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: c.grey500,
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.CONNECTIONS_LIST, arguments: {
+                'userId': profile.id,
+                'userName': profile.name,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.people_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${profile.connectionCount} koneksi',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 16),
-            Icon(FluentIcons.briefcase_24_regular, size: 14, color: c.grey500),
-            const SizedBox(width: 4),
-            Text(
-              '${profile.projectCount} proyek',
-              style: AppFonts.satoshiStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: c.grey500,
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.PROJECT_HISTORY, arguments: {
+                'userName': profile.name,
+                'projects': profile.projectHistory,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.briefcase_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${profile.projectCount} proyek',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
+>>>>>>> Stashed changes
         ),
-        if (profile.bio.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Text(
-            profile.bio,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              height: 1.32,
-              color: c.grey900,
-            ),
+        const SizedBox(height: 8),
+        Text(
+          profile.socialLink,
+          style: AppFonts.satoshiStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.info500,
           ),
-        ],
-        if (profile.socialLink.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            profile.socialLink,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.info500,
-            ),
-          ),
-        ],
+        ),
       ],
     );
   }
@@ -325,54 +332,46 @@ class _ProfileActions extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Material(
-            color: AppColors.transparent,
-            child: InkWell(
-              onTap: onEdit,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Container(
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primary500,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Edit profil',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.white,
-                      ),
+          child: GestureDetector(
+            onTap: onEdit,
+            child: Container(
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.primary500,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Edit profile',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: c.surface,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
         const SizedBox(width: 16),
-        Material(
-          color: AppColors.transparent,
-          child: InkWell(
-            onTap: onSaved,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: Container(
-              width: 42,
-              height: 40,
-              decoration: BoxDecoration(
-                color: c.surface,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: c.borderStrong),
-              ),
-              child: Icon(
-                FluentIcons.bookmark_24_regular,
-                color: c.textPrimary,
-                size: 22,
-              ),
+        GestureDetector(
+          onTap: onSaved,
+          child: Container(
+            width: 42,
+            height: 40,
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: c.borderStrong),
+            ),
+            child: Icon(
+              FluentIcons.bookmark_24_regular,
+              color: c.textPrimary,
+              size: 22,
             ),
           ),
         ),
@@ -420,16 +419,6 @@ class _ProfileTabContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (activeIndex == 1) {
-      if (profile.experiences.isEmpty) {
-        return _EmptyTabState(
-          icon: FluentIcons.document_24_regular,
-          title: 'Belum ada pengalaman',
-          message:
-              'Tambahkan pengalaman pertamamu agar profil terlihat lebih profesional dan menarik perhatian kolaborator.',
-          actionLabel: 'Edit Profil',
-          onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
-        );
-      }
       return Column(
         children: profile.experiences
             .map((experience) => _ExperienceCard(item: experience))
@@ -438,16 +427,6 @@ class _ProfileTabContent extends StatelessWidget {
     }
 
     if (activeIndex == 2) {
-      if (profile.skills.isEmpty) {
-        return _EmptyTabState(
-          icon: FluentIcons.hat_graduation_24_regular,
-          title: 'Belum ada keahlian',
-          message:
-              'Tambahkan keahlianmu agar lebih mudah ditemukan dalam pencarian proyek dan kolaborasi.',
-          actionLabel: 'Edit Profil',
-          onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
-        );
-      }
       return _SkillWrap(skills: profile.skills);
     }
 
@@ -456,16 +435,6 @@ class _ProfileTabContent extends StatelessWidget {
           .where((item) => item.visible)
           .toList();
 
-      if (collaborations.isEmpty) {
-        return _EmptyTabState(
-          icon: FluentIcons.people_team_24_regular,
-          title: 'Belum ada kolaborasi',
-          message:
-              'Mulai berkolaborasi dengan teman atau ikut kompetisi untuk membangun portofoliomu.',
-          actionLabel: 'Jelajahi',
-          onAction: () => Get.toNamed(Routes.EXPLORE),
-        );
-      }
       return Column(
         children: collaborations
             .map((collaboration) => _CollaborationCard(item: collaboration))
@@ -473,97 +442,29 @@ class _ProfileTabContent extends StatelessWidget {
       );
     }
 
-      return _EmptyTabState(
-        icon: FluentIcons.document_24_regular,
-        title: 'Belum ada postingan',
-        message:
-            'Bagikan aktivitas atau proyekmu agar terlihat oleh orang lain dan membangun portofolio yang menarik.',
-        actionLabel: 'Buat Postingan',
-        onAction: () => Get.toNamed(Routes.CREATE_POST),
-    );
-  }
-}
-
-class _EmptyTabState extends StatelessWidget {
-  const _EmptyTabState({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xl,
-          vertical: 60,
+    return Column(
+      children: [
+        _PostCard(
+          avatarAsset: profile.avatarAsset,
+          name: profile.name,
+          subtitle: 'D4 Teknik Informatika - 2 jam lalu',
+          content:
+              'Sharing sedikit tips buat temen-temen D4 Teknik Informatika yang lagi ngerjain project akhir: Coba biasain bikin design system di Figma dulu sebelum masuk ke codingan Flutter. Ini bener-bener ngehemat waktu integrasi UI nanti dan bikin komponen jadi reusable',
+          hasImage: true,
+          imageUrl: 'lib/assets/img/contoh poster2.jpeg',
+          likeCount: '120',
+          commentCount: '20',
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: c.primarySoft,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Icon(icon, size: 32, color: AppColors.primary500),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: AppFonts.satoshiStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: c.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: AppFonts.satoshiStyle(
-                fontSize: 14,
-                color: c.textSecondary,
-                height: 1.45,
-              ),
-            ),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 28),
-              SizedBox(
-                height: 44,
-                child: ElevatedButton.icon(
-                  onPressed: onAction,
-                  icon: const Icon(FluentIcons.edit_24_regular, size: 16),
-                  label: Text(actionLabel!),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
+        _PostCard(
+          avatarAsset: profile.avatarAsset,
+          name: profile.name,
+          subtitle: 'D4 Teknik Informatika - Kemarin',
+          content:
+              'Selesai bikin prototype dashboard tim kecil. Fokusnya biar task, file, dan diskusi tetap gampang discan.',
+          likeCount: '76',
+          commentCount: '12',
         ),
-      ),
+      ],
     );
   }
 }
@@ -603,8 +504,6 @@ class _ExperienceCard extends StatelessWidget {
               children: [
                   Text(
                     item.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: AppFonts.satoshiStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -624,8 +523,6 @@ class _ExperienceCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     item.description,
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
                     style: AppFonts.satoshiStyle(
                       fontSize: 11.5,
                       height: 1.5,
@@ -728,8 +625,6 @@ class _CollaborationCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             item.contribution,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
             style: AppFonts.satoshiStyle(
               fontSize: 11.5,
               height: 1.5,
@@ -772,6 +667,226 @@ class _StatusPill extends StatelessWidget {
           fontSize: 9.5,
           fontWeight: FontWeight.w600,
           color: c.textPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+class _PostCard extends StatefulWidget {
+  const _PostCard({
+    required this.avatarAsset,
+    required this.name,
+    required this.subtitle,
+    required this.content,
+    this.hasImage = false,
+    this.imageUrl,
+    required this.likeCount,
+    required this.commentCount,
+  });
+
+  final String avatarAsset;
+  final String name;
+  final String subtitle;
+  final String content;
+  final bool hasImage;
+  final String? imageUrl;
+  final String likeCount;
+  final String commentCount;
+
+  @override
+  State<_PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<_PostCard> {
+  bool _isLiked = false;
+  bool _isBookmarked = false;
+  late int _likeCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _likeCount = int.tryParse(widget.likeCount) ?? 0;
+  }
+
+  void _toggleLike() {
+    setState(() {
+      _isLiked = !_isLiked;
+      if (_isLiked) {
+        _likeCount++;
+      } else {
+        _likeCount--;
+      }
+    });
+  }
+
+  void _toggleBookmark() {
+    setState(() {
+      _isBookmarked = !_isBookmarked;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.soft,
+      ),
+      child: InkWell(
+        onTap: () {},
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: c.primarySoft,
+                    backgroundImage: AssetImage(widget.avatarAsset),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                          Text(
+                            widget.name,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: c.grey900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 11.5,
+                              color: c.grey400,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    FluentIcons.more_vertical_24_regular,
+                    color: c.grey400,
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                widget.content,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13.5,
+                  color: c.grey900,
+                  height: 1.45,
+                ),
+              ),
+              if (widget.hasImage && widget.imageUrl != null) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: widget.imageUrl!.startsWith('lib/assets/')
+                      ? Image.asset(
+                          widget.imageUrl!,
+                          width: double.infinity,
+                          height: 236,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          widget.imageUrl!,
+                          width: double.infinity,
+                          height: 236,
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildInteractionItem(
+                    _isLiked
+                        ? FluentIcons.heart_24_filled
+                        : FluentIcons.heart_24_regular,
+                    '$_likeCount',
+                    _isLiked ? AppColors.error500 : c.grey500,
+                    onTap: _toggleLike,
+                  ),
+                  const SizedBox(width: 22),
+                  _buildInteractionItem(
+                    FluentIcons.chat_24_regular,
+                    widget.commentCount,
+                    c.grey500,
+                    onTap: () {},
+                  ),
+                  const Spacer(),
+                  _buildInteractionItem(
+                    FluentIcons.send_24_regular,
+                    '',
+                    c.grey500,
+                    onTap: () {},
+                  ),
+                  const SizedBox(width: 20),
+                  _buildInteractionItem(
+                    _isBookmarked
+                        ? FluentIcons.bookmark_24_filled
+                        : FluentIcons.bookmark_24_regular,
+                    '',
+                    _isBookmarked ? AppColors.warning500 : c.grey500,
+                    onTap: _toggleBookmark,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInteractionItem(
+    IconData icon,
+    String count,
+    Color activeColor, {
+    required VoidCallback onTap,
+  }) {
+    final c = AppC.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 2,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: activeColor, size: 20),
+            if (count.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text(
+                count,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12,
+                  color: c.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -822,38 +937,35 @@ class _ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xxs,
-                vertical: AppSpacing.sm,
-              ),
-              child: Text(
-                label,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 14,
-                  fontWeight: active ? FontWeight.bold : FontWeight.w500,
-                  color: active ? AppColors.primary500 : c.textSecondary,
-                ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xxs,
+              vertical: AppSpacing.sm,
+            ),
+            child: Text(
+              label,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                fontWeight: active ? FontWeight.bold : FontWeight.w500,
+                color: active ? AppColors.primary500 : c.textTertiary,
               ),
             ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              height: 2.0,
-              width: 48,
-              decoration: BoxDecoration(
-                color: active ? AppColors.primary500 : AppColors.transparent,
-                borderRadius: BorderRadius.circular(1.5),
-              ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 2.5,
+            width: 48,
+            decoration: BoxDecoration(
+              color: active ? AppColors.primary500 : AppColors.transparent,
+              borderRadius: BorderRadius.circular(1.5),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -27,59 +27,14 @@ class AuthService extends GetxService {
     }
   }
 
-  Future<String?> register({
-    required String email,
-    required String password,
-    required String fullName,
-    String? interest,
-  }) async {
-    isLoading.value = true;
-    try {
-      final res = await _api.post('/auth/register', data: {
-        'email': email,
-        'password': password,
-        'full_name': fullName,
-        'interest': interest,
-      });
-
-      final data = res.data['data'];
-
-      return null;
-    } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Terjadi kesalahan. Coba lagi.';
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<String?> registerVerifyOtp({
-    required String email,
-    required String otp,
-  }) async {
-    isLoading.value = true;
-    try {
-      await _api.post('/auth/register/verify-otp', data: {
-        'email': email,
-        'otp': otp,
-      });
-      return null;
-    } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Verifikasi OTP gagal.';
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
   Future<String?> login({
-    required String email,
+    required String identifier,
     required String password,
   }) async {
     isLoading.value = true;
     try {
       final res = await _api.post('/auth/login', data: {
-        'email': email,
+        'identifier': identifier,
         'password': password,
       });
 
@@ -89,11 +44,17 @@ class AuthService extends GetxService {
       await _api.saveToken(token);
       currentUser.value = UserModel(
         id: data['user_id'],
-        email: email,
+<<<<<<< Updated upstream
+        nim: '',
+=======
+        email: data['email'] ?? '',
+>>>>>>> Stashed changes
         fullName: data['full_name'],
         handle: data['handle'] ?? '',
-        interest: data['interest'],
         isOnboarded: data['is_onboarded'] ?? false,
+        nim: data['nim'],
+        faculty: data['faculty'],
+        major: data['major'],
       );
       isLoggedIn.value = true;
 
@@ -139,10 +100,10 @@ class AuthService extends GetxService {
     }
   }
 
-  Future<String?> forgotPasswordSendOtp(String email) async {
+  Future<String?> forgotPasswordSendOtp(String nim) async {
     isLoading.value = true;
     try {
-      await _api.post('/auth/forgot-password/send-otp', data: {'email': email});
+      await _api.post('/auth/forgot-password/send-otp', data: {'nim': nim});
       return null;
     } on DioException catch (e) {
       final detail = e.response?.data['detail'];
@@ -153,14 +114,14 @@ class AuthService extends GetxService {
   }
 
   Future<String?> forgotPasswordReset({
-    required String email,
+    required String nim,
     required String otp,
     required String newPassword,
   }) async {
     isLoading.value = true;
     try {
       await _api.post('/auth/forgot-password/reset', data: {
-        'email': email,
+        'nim': nim,
         'otp': otp,
         'new_password': newPassword,
       });
@@ -171,12 +132,6 @@ class AuthService extends GetxService {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  Future<void> clearSession() async {
-    await _api.clearToken();
-    currentUser.value = null;
-    isLoggedIn.value = false;
   }
 
   Future<void> logout() async {

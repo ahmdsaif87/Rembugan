@@ -1,14 +1,16 @@
 import asyncio
-from datetime import datetime
-from typing import List
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from dateutil import parser as dateparser
 from prisma import Prisma, Json
 from app.core.dates import tz_iso
 
 from app.core.security import verify_token
 from app.core.database import get_db
+<<<<<<< Updated upstream
+from app.schemas.user import UserProfileInput
+=======
 from app.schemas.user import UserProfileInput, ExperienceInput
+from app.services.embedding import reembed_user
+>>>>>>> Stashed changes
 from app.services.ai_vision import extract_photo_from_pdf
 from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_ai
 from app.services.storage import upload_image_to_cloudinary
@@ -21,25 +23,6 @@ def _format_nama(nama: str) -> str:
     if not nama or nama == "Tidak Terdeteksi":
         return nama
     return nama.title()
-
-
-def _parse_duration(duration: str) -> tuple[datetime, datetime | None]:
-    """Parse string durasi (e.g. 'Feb 2025 - Jun 2025') menjadi start/end date."""
-    if not duration:
-        now = datetime.now()
-        return now, None
-
-    parts = [p.strip() for p in duration.replace("–", "-").replace("—", "-").split("-") if p.strip()]
-
-    try:
-        start = dateparser.parse(parts[0], default=datetime(2000, 1, 1))
-        if len(parts) > 1 and parts[1].lower() not in ("present", "sekarang", "now", ""):
-            end = dateparser.parse(parts[1], default=datetime.now())
-        else:
-            end = None
-        return start, end
-    except (ValueError, TypeError):
-        return datetime.now(), None
 
 
 @router.post("/extract-cv", summary="Ekstrak Data CV (OCR + AI)")
@@ -105,16 +88,13 @@ async def save_user_profile(
     if not existing:
         raise HTTPException(status_code=404, detail="User belum terdaftar. Silakan register dulu via /auth/register.")
 
-    # 1. Update profil user (hanya field yang tidak null)
-    update_data: dict[str, str | bool | Json] = {
+    # 1. Update profil user
+    update_data = {
+        "full_name": data.full_name,
+        "bio": data.bio,
+        "photo_url": data.photo_url,
         "is_onboarded": True,
     }
-    if data.full_name is not None:
-        update_data["full_name"] = data.full_name
-    if data.bio is not None:
-        update_data["bio"] = data.bio
-    if data.photo_url is not None:
-        update_data["photo_url"] = data.photo_url
 
     if data.social_links:
         update_data["social_links"] = Json(data.social_links)
@@ -146,6 +126,10 @@ async def save_user_profile(
             data=[{"user_id": uid, "skill_id": name_to_id[n]} for n in data.skills]
         )
 
+<<<<<<< Updated upstream
+=======
+    await reembed_user(db, uid)
+
     # 3. Simpan Experiences
     await db.experience.delete_many(where={"user_id": uid})
 
@@ -160,16 +144,16 @@ async def save_user_profile(
             "end_date": end_date,
         })
 
+>>>>>>> Stashed changes
     return {
         "status": "success",
         "message": "Profil berhasil diupdate!",
         "data": {
             "id": user.id,
-            "email": user.email,
+            "nim": user.nim,
             "full_name": user.full_name,
             "bio": user.bio,
             "photo_url": user.photo_url,
-            "interest": user.interest,
             "skills": data.skills,
         },
     }
@@ -197,11 +181,11 @@ async def get_my_profile(
         "status": "success",
         "data": {
             "id": user.id,
-            "email": user.email,
+            "nim": user.nim,
             "full_name": user.full_name,
             "bio": user.bio,
             "photo_url": user.photo_url,
-            "interest": user.interest,
+            "email": user.email,
             "skills": skill_names,
             "social_links": user.social_links,
             "created_at": tz_iso(user.created_at),

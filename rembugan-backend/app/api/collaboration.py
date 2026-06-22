@@ -4,6 +4,7 @@ from app.core.database import get_db
 from app.core.security import verify_token
 from app.core.constants import PJ_OPEN, PJ_ONGOING, APP_PENDING, APP_ACCEPTED, ROLE_ANGGOTA
 from app.schemas.collaboration import ApplyInput, ApplicationRespondInput
+from app.services.notification import notify
 
 router = APIRouter(prefix="/collaboration", tags=["3. Collaboration & Apply"])
 
@@ -48,6 +49,15 @@ async def apply_to_project(
             "applicant_id": applicant_uid,
         },
         include={"project": True, "applicant": True},
+    )
+
+    # Notifikasi ke owner proyek
+    await notify(
+        db,
+        project.owner_id,
+        "application_received",
+        "Lamaran Baru",
+        f"{application.applicant.full_name if application.applicant else 'Seseorang'} ingin bergabung ke '{project.title}'",
     )
 
     return {
@@ -135,7 +145,26 @@ async def respond_to_application(
     updated = await db.projectapplication.update(
         where={"id": application_id},
         data={"status": data.status},
+        include={"project": True},
     )
+
+    # Notifikasi ke pelamar
+    if data.status == APP_ACCEPTED:
+        await notify(
+            db,
+            application.applicant_id,
+            "application_accepted",
+            "Lamaran Diterima",
+            f"Selamat! Kamu diterima di proyek '{application.project.title}'",
+        )
+    else:
+        await notify(
+            db,
+            application.applicant_id,
+            "application_rejected",
+            "Lamaran Ditolak",
+            f"Maaf, lamaranmu di proyek '{application.project.title}' ditolak.",
+        )
 
     # Jika accepted, tambahkan sebagai member
     if data.status == APP_ACCEPTED:

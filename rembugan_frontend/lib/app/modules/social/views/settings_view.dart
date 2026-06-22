@@ -41,7 +41,7 @@ class _SettingsViewState extends State<SettingsView> {
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: Get.back,
+                      onPressed: () => Navigator.of(context).pop(),
                       icon: Icon(
                         FluentIcons.chevron_left_24_regular,
                         color: textColor,
@@ -105,8 +105,8 @@ class _SettingsViewState extends State<SettingsView> {
                       icon: FluentIcons.mail_24_regular,
                       title: 'Email Tertaut',
                       subtitle: linkedEmail == null
-                          ? 'Tautkan email untuk pemulihan akun'
-                          : 'Terverifikasi: $linkedEmail',
+                          ? 'Email belum terverifikasi'
+                          : 'Email sudah terverifikasi',
                       cardColor: cardColor,
                       textColor: textColor,
                       subtitleColor: subtitleColor,
@@ -123,7 +123,7 @@ class _SettingsViewState extends State<SettingsView> {
                           borderRadius: BorderRadius.circular(AppRadius.xxs),
                         ),
                         child: Text(
-                          linkedEmail == null ? 'Belum Taut' : 'Aktif',
+                          linkedEmail == null ? 'Belum Taut' : linkedEmail!,
                           style: AppFonts.satoshiStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,

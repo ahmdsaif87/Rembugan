@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ColumnDef,
@@ -11,6 +11,7 @@ import {
   Loader2,
   QrCodeIcon,
   Trash2Icon,
+  UploadIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -48,16 +49,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { fetchUsers, deleteUser, createUser } from "@/lib/api"
+import { fetchUsers, deleteUser, createUser, importUsers } from "@/lib/api"
 import { QrCodeDialog } from "@/components/qr-code"
 
 interface User {
   id: string
+<<<<<<< Updated upstream
+  nim: string
+=======
+  nim: string | null
   email: string
+>>>>>>> Stashed changes
   full_name: string
+  email: string | null
   photo_url: string | null
-  interest: string | null
+  major: string
   bio: string | null
+  faculty: string | null
+  major: string | null
   is_onboarded: boolean
   created_at: string
   skills?: Array<{ skill: { name: string } }>
@@ -74,9 +83,17 @@ export default function UsersPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [onboardFilter, setOnboardFilter] = useState<string>("all")
   const [addOpen, setAddOpen] = useState(false)
-  const [form, setForm] = useState({ email: "", full_name: "", interest: "", password: "" })
+<<<<<<< Updated upstream
+  const [form, setForm] = useState({ nim: "", full_name: "", major: "", password: "" })
+=======
+  const [importOpen, setImportOpen] = useState(false)
+  const [form, setForm] = useState({ email: "", full_name: "", interest: "", password: "", nim: "", faculty: "", major: "" })
+>>>>>>> Stashed changes
   const [qrUser, setQrUser] = useState<User | null>(null)
   const [qrOpen, setQrOpen] = useState(false)
+  const [importPreview, setImportPreview] = useState<Array<{ nim: string; full_name: string; faculty: string; major: string }> | null>(null)
+  const [defaultPassword, setDefaultPassword] = useState("uhn2025")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: users = [], isLoading: loading } = useQuery({
     queryKey: ['users'],
@@ -92,10 +109,27 @@ export default function UsersPage() {
       if (response.status === 'success') {
         toast.success(`User ${form.full_name} berhasil dibuat`)
         setAddOpen(false)
-        setForm({ email: "", full_name: "", interest: "", password: "" })
+        setForm({ nim: "", full_name: "", major: "", password: "" })
         queryClient.invalidateQueries({ queryKey: ['users'] })
       } else {
         toast.error(response.detail || "Gagal membuat user")
+      }
+    },
+  })
+
+  const importMutation = useMutation({
+    mutationFn: importUsers,
+    onSuccess: (response) => {
+      if (response.status === 'success') {
+        toast.success(response.message || `Berhasil import ${response.data?.success_count} mahasiswa`)
+        setImportOpen(false)
+        setImportPreview(null)
+        queryClient.invalidateQueries({ queryKey: ['users'] })
+        if (response.data?.errors?.length > 0) {
+          toast.warning(`${response.data.errors.length} data gagal diimport`)
+        }
+      } else {
+        toast.error(response.detail || "Gagal import mahasiswa")
       }
     },
   })
@@ -119,6 +153,57 @@ export default function UsersPage() {
     createMutation.mutate(form)
   }
 
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      const lines = text.split('\n').filter(l => l.trim())
+      if (lines.length < 2) {
+        toast.error('CSV harus memiliki header dan minimal 1 data')
+        return
+      }
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+      const nimIdx = headers.indexOf('nim')
+      const nameIdx = headers.indexOf('full_name')
+      const facultyIdx = headers.indexOf('faculty')
+      const majorIdx = headers.indexOf('major')
+
+      if (nimIdx === -1 || nameIdx === -1 || facultyIdx === -1 || majorIdx === -1) {
+        toast.error('CSV harus memiliki kolom: nim, full_name, faculty, major')
+        return
+      }
+
+      const preview = lines.slice(1).map(line => {
+        const cols = line.split(',').map(c => c.trim())
+        return {
+          nim: cols[nimIdx] || '',
+          full_name: cols[nameIdx] || '',
+          faculty: cols[facultyIdx] || '',
+          major: cols[majorIdx] || '',
+        }
+      }).filter(row => row.nim && row.full_name)
+
+      if (preview.length === 0) {
+        toast.error('Tidak ada data valid di CSV')
+        return
+      }
+
+      setImportPreview(preview)
+      toast.success(`${preview.length} data siap diimport`)
+    }
+    reader.readAsText(file)
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function handleImport() {
+    if (!importPreview || importPreview.length === 0) return
+    importMutation.mutate({ users: importPreview, default_password: defaultPassword })
+  }
+
   const filteredUsers = useMemo(() => {
     if (onboardFilter === "all") return users
     return users.filter((u) =>
@@ -127,6 +212,13 @@ export default function UsersPage() {
   }, [users, onboardFilter])
 
   const columns = useMemo((): ColumnDef<User>[] => [
+    {
+      accessorKey: "nim",
+      header: "NIM",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs font-medium">{row.original.nim || "—"}</span>
+      ),
+    },
     {
       accessorKey: "full_name",
       header: "Name",
@@ -147,7 +239,11 @@ export default function UsersPage() {
             </Avatar>
               <div>
               <p className="table-primary">{user.full_name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+<<<<<<< Updated upstream
+              <p className="text-xs text-muted-foreground">{user.nim}</p>
+=======
+              <p className="text-xs text-muted-foreground">{user.email || user.nim}</p>
+>>>>>>> Stashed changes
             </div>
           </div>
         )
@@ -161,19 +257,29 @@ export default function UsersPage() {
       ),
     },
     {
-      accessorKey: "interest",
-      header: "Interest",
+<<<<<<< Updated upstream
+      accessorKey: "major",
+      header: "Major",
+=======
+      accessorKey: "faculty",
+      header: "Fakultas",
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.interest || "—"}</span>
+        <span className="text-sm text-muted-foreground">{row.original.faculty || "—"}</span>
       ),
     },
     {
-      accessorKey: "bio",
-      header: "Bio",
+      accessorKey: "major",
+      header: "Jurusan",
       cell: ({ row }) => (
-        <span className="line-clamp-1 max-w-[180px] text-sm text-muted-foreground">
-          {row.original.bio || "—"}
-        </span>
+        <span className="text-sm text-muted-foreground">{row.original.major || "—"}</span>
+      ),
+    },
+    {
+      accessorKey: "interest",
+      header: "Interest",
+>>>>>>> Stashed changes
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.major || "—"}</span>
       ),
     },
     {
@@ -259,28 +365,28 @@ export default function UsersPage() {
             Manage and monitor all registered users
           </p>
         </div>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <Button onClick={() => setAddOpen(true)}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add User
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <UploadIcon className="mr-2 h-4 w-4" />
+            Import CSV
           </Button>
+<<<<<<< Updated upstream
           <DialogContent className="sm:max-w-md">
             <form onSubmit={handleAddUser}>
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
                 <DialogDescription>
-                  Create a new user account. They will use email + password to log in.
+                  Create a new user account. They will use NIM + password to log in.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="nim">NIM</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="user@example.com"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    id="nim"
+                    placeholder="12345678"
+                    value={form.nim}
+                    onChange={(e) => setForm({ ...form, nim: e.target.value })}
                     required
                   />
                 </div>
@@ -295,12 +401,13 @@ export default function UsersPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="interest">Interest</Label>
+                  <Label htmlFor="major">Major</Label>
                   <Input
-                    id="interest"
-                    placeholder="Tech Enthusiast"
-                    value={form.interest}
-                    onChange={(e) => setForm({ ...form, interest: e.target.value })}
+                    id="major"
+                    placeholder="Informatika"
+                    value={form.major}
+                    onChange={(e) => setForm({ ...form, major: e.target.value })}
+                    required
                   />
                 </div>
                 <div className="grid gap-2">
@@ -314,33 +421,205 @@ export default function UsersPage() {
                     required
                     minLength={6}
                   />
+=======
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <Button onClick={() => setAddOpen(true)}>
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Add User
+            </Button>
+            <DialogContent className="sm:max-w-md">
+              <form onSubmit={handleAddUser}>
+                <DialogHeader>
+                  <DialogTitle>Add New User</DialogTitle>
+                  <DialogDescription>
+                    Create a new user account.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="nim">NIM</Label>
+                    <Input
+                      id="nim"
+                      placeholder="23090101"
+                      value={form.nim}
+                      onChange={(e) => setForm({ ...form, nim: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="full_name">Full Name</Label>
+                    <Input
+                      id="full_name"
+                      placeholder="John Doe"
+                      value={form.full_name}
+                      onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="faculty">Fakultas</Label>
+                    <Input
+                      id="faculty"
+                      placeholder="Sekolah Vokasi"
+                      value={form.faculty}
+                      onChange={(e) => setForm({ ...form, faculty: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="major">Jurusan</Label>
+                    <Input
+                      id="major"
+                      placeholder="D-4 Teknik Informatika"
+                      value={form.major}
+                      onChange={(e) => setForm({ ...form, major: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="user@example.com"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="interest">Interest</Label>
+                    <Input
+                      id="interest"
+                      placeholder="Mobile Development"
+                      value={form.interest}
+                      onChange={(e) => setForm({ ...form, interest: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Min. 6 characters"
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createMutation.isPending}>
+                    {createMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create User"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Import CSV Dialog */}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Import Mahasiswa via CSV</DialogTitle>
+            <DialogDescription>
+              Upload file CSV dengan kolom: nim, full_name, faculty, major
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Format CSV:</p>
+              <code className="text-xs">
+                nim,full_name,faculty,major{'\n'}
+                23090101,Ahmad Maulana,Sekolah Vokasi,D-4 Teknik Informatika{'\n'}
+                23090102,Siti Nurjanah,Sekolah Vokasi,D-4 Teknik Informatika
+              </code>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
+            />
+            <div className="grid gap-2">
+              <Label htmlFor="defaultPassword">Default Password</Label>
+              <Input
+                id="defaultPassword"
+                value={defaultPassword}
+                onChange={(e) => setDefaultPassword(e.target.value)}
+                placeholder="uhn2025"
+              />
+            </div>
+            {importPreview && (
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Preview: {importPreview.length} data</p>
+                <div className="max-h-40 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="pb-1 pr-2">NIM</th>
+                        <th className="pb-1 pr-2">Nama</th>
+                        <th className="pb-1">Fakultas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importPreview.slice(0, 5).map((row, i) => (
+                        <tr key={i} className="border-t border-border/50">
+                          <td className="py-1 pr-2 font-mono">{row.nim}</td>
+                          <td className="py-1 pr-2">{row.full_name}</td>
+                          <td className="py-1">{row.faculty}</td>
+                        </tr>
+                      ))}
+                      {importPreview.length > 5 && (
+                        <tr className="border-t border-border/50">
+                          <td colSpan={3} className="py-1 text-center text-muted-foreground">
+                            ...dan {importPreview.length - 5} lainnya
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+>>>>>>> Stashed changes
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create User"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => { setImportOpen(false); setImportPreview(null) }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!importPreview || importPreview.length === 0 || importMutation.isPending}
+            >
+              {importMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                `Import ${importPreview?.length || 0} Mahasiswa`
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <DataTableGeneric
         columns={columns}
         data={filteredUsers}
         searchKey="full_name"
-        searchPlaceholder="Search by name or email..."
+        searchPlaceholder="Search by name, NIM, or email..."
         loading={loading}
         totalLabel={`${filteredUsers.length} total`}
         emptyMessage="No users found"
@@ -368,12 +647,20 @@ export default function UsersPage() {
         title={detailUser?.full_name || "User Details"}
         identity={detailUser ? {
           name: detailUser.full_name,
-          subtitle: detailUser.interest || detailUser.email,
+          subtitle: detailUser.major,
           avatar: detailUser.photo_url,
         } : undefined}
         fields={[
+<<<<<<< Updated upstream
           { label: "Email", value: detailUser?.email },
+          { label: "NIM", value: detailUser?.nim },
+=======
+          { label: "NIM", value: detailUser?.nim || "—" },
+          { label: "Email", value: detailUser?.email || "—" },
+          { label: "Fakultas", value: detailUser?.faculty || "—" },
+          { label: "Jurusan", value: detailUser?.major || "—" },
           { label: "Interest", value: detailUser?.interest || "—" },
+>>>>>>> Stashed changes
           { label: "Onboarded", value: detailUser?.is_onboarded ? "Yes" : "No" },
           { label: "Skills", value: detailUser?.skills?.map(s => s.skill.name).join(", "), variant: "badge" },
           { label: "Bio", value: detailUser?.bio || "", variant: "bio" },

@@ -1,17 +1,7 @@
 import 'package:get/get.dart';
 
-import 'api_client.dart';
-
 class ProfileExperience {
-  final String? id;
-  final String title;
-  final String organization;
-  final String duration;
-  final String description;
-  final List<String> techStack;
-
   const ProfileExperience({
-    this.id,
     required this.title,
     required this.organization,
     required this.duration,
@@ -19,42 +9,13 @@ class ProfileExperience {
     this.techStack = const [],
   });
 
-  factory ProfileExperience.fromJson(Map<String, dynamic> json) {
-    final start = _formatMonthYear(json['start_date'] as String?);
-    final end = _formatMonthYear(json['end_date'] as String?);
-    final duration = switch ((start.isNotEmpty, end.isNotEmpty)) {
-      (true, true) => '$start - $end',
-      (true, false) => start,
-      _ => '',
-    };
-    return ProfileExperience(
-      id: json['id']?.toString(),
-      title: json['title'] as String? ?? '',
-      organization: json['company'] as String? ?? '',
-      duration: duration,
-      description: json['description'] as String? ?? '',
-    );
-  }
-
-  static String _formatMonthYear(String? date) {
-    if (date == null || date.isEmpty) return '';
-    try {
-      final parts = date.split('-');
-      if (parts.length < 2) return date;
-      final month = int.tryParse(parts[1]);
-      if (month == null || month < 1 || month > 12) return date;
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-      ];
-      return '${months[month - 1]} ${parts[0]}';
-    } catch (_) {
-      return date;
-    }
-  }
+  final String title;
+  final String organization;
+  final String duration;
+  final String description;
+  final List<String> techStack;
 
   ProfileExperience copyWith({
-    String? id,
     String? title,
     String? organization,
     String? duration,
@@ -62,7 +23,6 @@ class ProfileExperience {
     List<String>? techStack,
   }) {
     return ProfileExperience(
-      id: id ?? this.id,
       title: title ?? this.title,
       organization: organization ?? this.organization,
       duration: duration ?? this.duration,
@@ -107,21 +67,61 @@ class PlatformCollaboration {
   }
 }
 
+class ProjectHistoryItem {
+  final int id;
+  final String title;
+  final String status;
+  final String role;
+
+  const ProjectHistoryItem({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.role,
+  });
+
+  factory ProjectHistoryItem.fromJson(Map<String, dynamic> json) {
+    return ProjectHistoryItem(
+      id: json['id'] as int? ?? 0,
+      title: json['title'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      role: json['role'] as String? ?? '',
+    );
+  }
+}
+
 class ProfileData {
-  final String? id;
+  const ProfileData({
+    required this.name,
+    required this.handle,
+    required this.bio,
+    required this.major,
+    required this.socialLink,
+    required this.skills,
+    required this.experiences,
+    required this.collaborationHistory,
+    required this.hasResumePhoto,
+    this.avatarAsset = 'lib/assets/img/avatar.png',
+  });
+
   final String name;
   final String handle;
   final String bio;
-  final String interest;
+  final String major;
   final String socialLink;
-  final String photoUrl;
-  final String coverUrl;
   final List<String> skills;
   final List<ProfileExperience> experiences;
   final List<PlatformCollaboration> collaborationHistory;
   final bool hasResumePhoto;
+<<<<<<< Updated upstream
+  final String avatarAsset;
+=======
   final int connectionCount;
   final int projectCount;
+  final String? nim;
+  final String? faculty;
+  final String? major;
+  final List<ProjectHistoryItem> projectHistory;
 
   const ProfileData({
     this.id,
@@ -138,6 +138,10 @@ class ProfileData {
     this.hasResumePhoto = false,
     this.connectionCount = 0,
     this.projectCount = 0,
+    this.nim,
+    this.faculty,
+    this.major,
+    this.projectHistory = const [],
   });
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
@@ -164,6 +168,9 @@ class ProfileData {
       socialLink: socialLink,
       photoUrl: json['photo_url'] as String? ?? '',
       coverUrl: json['cover_url'] as String? ?? '',
+      nim: json['nim'] as String?,
+      faculty: json['faculty'] as String?,
+      major: json['major'] as String?,
       skills: (json['skills'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -173,114 +180,106 @@ class ProfileData {
       hasResumePhoto: false,
       connectionCount: json['connection_count'] as int? ?? 0,
       projectCount: json['project_count'] as int? ?? 0,
+      projectHistory: (json['project_history'] as List<dynamic>?)
+              ?.map((e) => ProjectHistoryItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
+>>>>>>> Stashed changes
 
   ProfileData copyWith({
-    String? id,
     String? name,
     String? handle,
     String? bio,
-    String? interest,
+    String? major,
     String? socialLink,
-    String? photoUrl,
-    String? coverUrl,
     List<String>? skills,
     List<ProfileExperience>? experiences,
     List<PlatformCollaboration>? collaborationHistory,
     bool? hasResumePhoto,
+<<<<<<< Updated upstream
+    String? avatarAsset,
+=======
     int? connectionCount,
     int? projectCount,
+    List<ProjectHistoryItem>? projectHistory,
+>>>>>>> Stashed changes
   }) {
     return ProfileData(
-      id: id ?? this.id,
       name: name ?? this.name,
       handle: handle ?? this.handle,
       bio: bio ?? this.bio,
-      interest: interest ?? this.interest,
+      major: major ?? this.major,
       socialLink: socialLink ?? this.socialLink,
-      photoUrl: photoUrl ?? this.photoUrl,
-      coverUrl: coverUrl ?? this.coverUrl,
       skills: skills ?? this.skills,
       experiences: experiences ?? this.experiences,
       collaborationHistory: collaborationHistory ?? this.collaborationHistory,
       hasResumePhoto: hasResumePhoto ?? this.hasResumePhoto,
+<<<<<<< Updated upstream
+      avatarAsset: avatarAsset ?? this.avatarAsset,
+=======
       connectionCount: connectionCount ?? this.connectionCount,
       projectCount: projectCount ?? this.projectCount,
+      projectHistory: projectHistory ?? this.projectHistory,
+>>>>>>> Stashed changes
     );
   }
 }
 
 class ProfileService extends GetxService {
-  final _api = Get.find<ApiClient>();
+  static ProfileData seedProfile = const ProfileData(
+    name: 'Dede Fernanda',
+    handle: '@dede.flutter',
+    bio:
+        'Mahasiswa Informatika yang fokus pada pengembangan mobile app dan UI/UX design dengan pengalaman membangun aplikasi berbasis Flutter, Firebase, dan proyek kolaboratif kampus.',
+    major: 'Teknik Informatika',
+    socialLink: 'github.com/dedef',
+    skills: ['Flutter', 'Dart', 'Firebase', 'Figma', 'UI/UX', 'Python'],
+    experiences: [
+      ProfileExperience(
+        title: 'Mobile App Developer',
+        organization: 'Proyek Kampus Sistem Mentoring',
+        duration: 'Feb 2025 - Jun 2025',
+        description:
+            'Membangun aplikasi mentoring mahasiswa dengan flow jadwal, chat dasar, dan dashboard peserta.',
+        techStack: ['Flutter', 'GetX', 'Firebase'],
+      ),
+      ProfileExperience(
+        title: 'UI/UX Designer',
+        organization: 'Komunitas Informatika',
+        duration: 'Agu 2025 - Des 2025',
+        description:
+            'Mendesain prototype mobile untuk program mentoring dan validasi kebutuhan pengguna.',
+        techStack: ['Figma', 'Design System'],
+      ),
+    ],
+    collaborationHistory: [
+      PlatformCollaboration(
+        role: 'Frontend Lead',
+        workspace: 'Hackathon EduCollab',
+        members: 5,
+        duration: '12 hari',
+        contribution:
+            'Merapikan onboarding, dashboard tim, dan integrasi API submission.',
+        status: 'Selesai',
+        skills: ['Flutter', 'REST API', 'UI Polish'],
+      ),
+      PlatformCollaboration(
+        role: 'Product Collaborator',
+        workspace: 'Mentoring Kampus MVP',
+        members: 4,
+        duration: '3 minggu',
+        contribution:
+            'Ikut sprint riset pengguna, prioritas fitur, dan testing prototype.',
+        status: 'Archived',
+        skills: ['Research', 'Prototype'],
+      ),
+    ],
+    hasResumePhoto: false,
+  );
 
-  final profile = ProfileData(
-    name: '',
-    handle: '',
-    bio: '',
-    interest: '',
-    socialLink: '',
-    skills: [],
-    experiences: [],
-    collaborationHistory: [],
-  ).obs;
-
-  final isLoading = true.obs;
-  final errorMessage = Rxn<String>();
-
-  Future<void> fetchProfile() async {
-    isLoading.value = true;
-    errorMessage.value = null;
-    try {
-      final res = await _api.get('/profile/me');
-      final body = res.data;
-      if (body is! Map) {
-        errorMessage.value = 'Response bukan object: ${body.runtimeType}';
-        return;
-      }
-      final data = body['data'];
-      if (data is! Map) {
-        errorMessage.value = 'Field "data" bukan object: ${data.runtimeType}';
-        return;
-      }
-      profile.value = ProfileData.fromJson(data as Map<String, dynamic>);
-    } catch (e) {
-      errorMessage.value = 'Gagal memuat profil: $e';
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<String?> updateSettings(Map<String, dynamic> data) async {
-    try {
-      final res = await _api.patch('/profile/settings', data: data);
-      final resultData = res.data['data'] as Map<String, dynamic>?;
-      if (resultData != null) {
-        profile.value = profile.value.copyWith(
-          name: resultData['full_name'] as String? ?? profile.value.name,
-          handle: resultData['handle'] as String? ?? profile.value.handle,
-          bio: resultData['bio'] as String? ?? profile.value.bio,
-          interest: resultData['interest'] as String? ?? profile.value.interest,
-          photoUrl: resultData['photo_url'] as String? ?? profile.value.photoUrl,
-          coverUrl: resultData['cover_url'] as String? ?? profile.value.coverUrl,
-          socialLink: _extractSocialLink(resultData['social_links']),
-        );
-      }
-      return null;
-    } catch (e) {
-      return 'Gagal menyimpan pengaturan';
-    }
-  }
-
-  String _extractSocialLink(dynamic socialLinks) {
-    if (socialLinks is Map) {
-      final values = socialLinks.values.whereType<String>().toList();
-      if (values.isNotEmpty) return values.first;
-    } else if (socialLinks is String) {
-      return socialLinks;
-    }
-    return profile.value.socialLink;
-  }
+  final profile = seedProfile.obs;
 
   void updateProfile(ProfileData data) {
     profile.value = data;

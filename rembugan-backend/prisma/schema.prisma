@@ -14,22 +14,30 @@ datasource db {
 model User {
   id            String    @id @default(uuid())
   
+<<<<<<< Updated upstream
+  // Kredensial (Multi-Auth)
+  nim           String    @unique // Wajib, identitas utama mahasiswa
+=======
   // Kredensial
-  email         String    @unique // Wajib, identitas utama
+  email         String?   @unique // Wajib, identitas utama (nullable untuk imported users)
+>>>>>>> Stashed changes
   password      String    // Wajib, di-hash saat registrasi
+  email         String?   @unique
   email_verified Boolean  @default(false)
+  
+  // Data Kampus (Skala 1 Kampus)
+  nim           String?   @unique // NIM untuk login
+  faculty       String?   // Fakultas
+  major         String?   // Jurusan/Program Studi
   
   // Data Profil Dasar
   full_name     String
   handle        String?   @unique // @username untuk profil
-  interest      String?   // Minat/bidang user (free text)
+  major         String
   bio           String?
   photo_url     String?   
-  cover_url     String?   
   social_links  Json?
   is_onboarded  Boolean   @default(false)
-  connection_count Int    @default(0)
-  project_count    Int    @default(0)
   
   // Relasi ke Data Lain
   skills        UserSkill[]
@@ -58,6 +66,9 @@ model User {
   otp_codes     OtpCode[]
   savedItems    SavedItem[]
 
+  // AI Embedding untuk cosine similarity (JSON array of floats)
+  embedding     Json?
+  
   // Timestamps
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
@@ -118,9 +129,9 @@ model Project {
   required_skills String[]             // Array of String untuk memudahkan pencarian AI
   status          String               @default("open") // Status: 'open', 'ongoing', 'completed'
   
-  // Field tambahan
+  // Field tambahan untuk UI Flutter
   category        String?              // Kategori proyek (Tech, Design, Business, dll)
-  interest        String?              // Minat terkait proyek (untuk filtering "Untukmu")
+  faculty         String?              // Fakultas terkait proyek
   deadline        DateTime?            // Batas waktu pendaftaran
   total_slots     Int?                 // Total slot anggota yang dibutuhkan
   
@@ -134,12 +145,14 @@ model Project {
   savedBy         SavedItem[]
   files           ProjectFile[]
 
+  embedding         Json?
+
   created_at      DateTime             @default(now())
 
   @@index([status])
   @@index([owner_id])
   @@index([category])
-  @@index([interest])
+  @@index([faculty])
   @@index([deadline])
 }
 
@@ -161,7 +174,7 @@ model ProjectMember {
   id         Int      @id @default(autoincrement())
   project_id Int
   user_id    String
-  role       String   @default("Anggota") // Role: 'Ketua' (creator), 'Anggota'
+  role       String   @default("Anggota") // Role: 'Ketua', 'Anggota', 'Pembimbing'
   
   project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -244,6 +257,8 @@ model Showcase {
   media_urls        String[]
   tags              String[]
   linked_project_id Int?     // Relasi ke Project (jika showcase ini hasil dari proyek Rembugan)
+  embedding         Json?
+
   created_at        DateTime @default(now())
 
   // Relasi

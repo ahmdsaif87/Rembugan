@@ -3,12 +3,11 @@ import 'package:get/get.dart';
 
 import '../../../core/services/auth_service.dart';
 import '../../../routes/app_pages.dart';
-import '../../../core/widgets/app_toast.dart';
 
 class LoginController extends GetxController {
   final _auth = Get.find<AuthService>();
 
-  final emailController = TextEditingController();
+  final emailOrNimController = TextEditingController();
   final passwordController = TextEditingController();
   final isPasswordHidden = true.obs;
   final formKey = GlobalKey<FormState>();
@@ -21,16 +20,21 @@ class LoginController extends GetxController {
     if (!formKey.currentState!.validate()) return;
 
     final error = await _auth.login(
-      email: emailController.text.trim(),
+<<<<<<< Updated upstream
+      identifier: emailOrNimController.text.trim(),
+=======
+      identifier: emailController.text.trim(),
+>>>>>>> Stashed changes
       password: passwordController.text,
     );
 
     if (error != null) {
-      AppToast.error(error, title: 'Login Gagal');
+      Get.snackbar('Login Gagal', error,
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
 
-    AppToast.success('Berhasil Masuk!', title: 'Login');
+    Get.snackbar('Login', 'Berhasil Masuk!');
 
     final user = _auth.currentUser.value;
     if (user != null && !user.isOnboarded) {
@@ -46,7 +50,7 @@ class LoginController extends GetxController {
 
   @override
   void onClose() {
-    emailController.dispose();
+    emailOrNimController.dispose();
     passwordController.dispose();
     super.onClose();
   }

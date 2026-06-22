@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
-import '../../../routes/app_pages.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -96,10 +95,16 @@ class LoginView extends GetView<LoginController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppTextField(
-            controller: controller.emailController,
-            labelText: 'Email',
-            hintText: 'nanda@gmail.com',
+<<<<<<< Updated upstream
+            controller: controller.emailOrNimController,
+            labelText: 'Email atau NIM',
+            hintText: 'nanda@gmail.com atau 23090122',
             keyboardType: TextInputType.emailAddress,
+=======
+            controller: controller.emailController,
+            labelText: 'NIM / Email',
+            hintText: 'Masukkan NIM atau email',
+>>>>>>> Stashed changes
           ),
           const SizedBox(height: 28),
           _buildPasswordField(c),
@@ -153,38 +158,30 @@ class LoginView extends GetView<LoginController> {
   }
 
   Widget _buildActionButtons() {
+<<<<<<< Updated upstream
+    return AppButton(label: 'Masuk', onTap: controller.onLogin);
+=======
     return Column(
       children: [
         AppButton(label: 'Masuk', onTap: controller.onLogin),
         const SizedBox(height: 20),
-        _buildRegisterLink(),
+        _buildCampusInfo(),
       ],
     );
   }
 
-  Widget _buildRegisterLink() {
+  Widget _buildCampusInfo() {
     final c = AppC.of(Get.context!);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Belum punya akun? ',
-          style: AppFonts.satoshiStyle(
-            fontSize: 14,
-            color: c.grey600,
-          ),
+    return Center(
+      child: Text(
+        'Akun disediakan oleh kampus.\nHubungi admin jika belum punya akun.',
+        textAlign: TextAlign.center,
+        style: AppFonts.satoshiStyle(
+          fontSize: 13,
+          color: c.grey400,
         ),
-        GestureDetector(
-          onTap: () => Get.toNamed(Routes.REGISTER),
-          child: Text(
-            'Daftar',
-            style: AppTextStyles.button(
-              fontSize: 14,
-              color: AppTextColors.textLinks,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
+>>>>>>> Stashed changes
   }
 }

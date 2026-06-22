@@ -5,20 +5,23 @@ from app.core.dates import tz_iso
 from pydantic import BaseModel, Field
 from app.core.database import get_db
 from app.core.security import verify_token, verify_token_optional
+<<<<<<< Updated upstream
+from app.core.constants import ROLE_KETUA, ROLE_ADMIN
+=======
 from app.core.constants import PJ_OPEN, ROLE_KETUA, ROLE_ADMIN
+from app.services.embedding import cosine_similarity, reembed_user
+>>>>>>> Stashed changes
 
 router = APIRouter(prefix="/profile", tags=["Profil User"])
 
 
 class SettingsUpdateInput(BaseModel):
     """Data untuk update settings profil."""
-    full_name: Optional[str] = Field(None, description="Nama lengkap")
     handle: Optional[str] = Field(None, description="@username")
     bio: Optional[str] = Field(None, description="Bio singkat")
     photo_url: Optional[str] = Field(None, description="URL foto profil")
-    cover_url: Optional[str] = Field(None, description="URL foto sampul")
     social_links: Optional[dict] = Field(None, description="Link sosial media")
-    interest: Optional[str] = Field(None, description="Minat/bidang user")
+    major: Optional[str] = Field(None, description="Program studi / jurusan")
 
 
 @router.patch("/settings", summary="Update Settings Profil")
@@ -27,11 +30,10 @@ async def update_settings(
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
+    """Update profil user (settings page)."""
     uid = user_token.get("uid")
 
     update_data = {}
-    if data.full_name is not None:
-        update_data["full_name"] = data.full_name
     if data.handle is not None:
         existing = await db.user.find_first(where={"handle": data.handle, "id": {"not": uid}})
         if existing:
@@ -41,12 +43,10 @@ async def update_settings(
         update_data["bio"] = data.bio
     if data.photo_url is not None:
         update_data["photo_url"] = data.photo_url
-    if data.cover_url is not None:
-        update_data["cover_url"] = data.cover_url
     if data.social_links is not None:
         update_data["social_links"] = data.social_links
-    if data.interest is not None:
-        update_data["interest"] = data.interest
+    if data.major is not None:
+        update_data["major"] = data.major
 
     if not update_data:
         raise HTTPException(status_code=400, detail="Tidak ada data yang diupdate")
@@ -56,20 +56,19 @@ async def update_settings(
         data=update_data,
     )
 
+    await reembed_user(db, uid)
+
     return {
         "status": "success",
         "message": "Settings berhasil diupdate!",
         "data": {
-            "full_name": user.full_name,
             "handle": user.handle,
             "bio": user.bio,
             "photo_url": user.photo_url,
-            "cover_url": user.cover_url,
             "social_links": user.social_links,
-            "interest": user.interest,
+            "major": user.major,
         },
     }
-
 
 @router.get("/recommended", summary="Rekomendasi User untuk Dikenal")
 async def get_recommended_users(
@@ -77,8 +76,18 @@ async def get_recommended_users(
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
+    """Ambil daftar user yang direkomendasikan untuk dikenal (exclude diri sendiri)."""
     uid = user_token.get("uid")
 
+<<<<<<< Updated upstream
+    users = await db.user.find_many(
+        where={"id": {"not": uid}},
+        take=limit,
+        order={"created_at": "desc"},
+        include={"skills": {"include": {"skill": True}}},
+    )
+
+=======
     current_user = await db.user.find_unique(
         where={"id": uid},
         include={
@@ -89,72 +98,56 @@ async def get_recommended_users(
     if not current_user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
-    user_skills = [s.skill.name for s in current_user.skills] if current_user.skills else []
-    user_interest = current_user.interest or ""
+    user_embedding = current_user.embedding
 
     # Cek apakah user punya open project (sebagai ketua)
     open_projects = [p for p in (current_user.ownedProjects or []) if p.status == PJ_OPEN]
     has_open_offerings = len(open_projects) > 0
 
-    # Kumpulkan required_skills dari semua open project
     project_required_skills: set[str] = set()
     if has_open_offerings:
         for p in open_projects:
             project_required_skills.update(p.required_skills or [])
 
-    # Ambil semua user lain
+    matched_skills_len = len(user_embedding) if user_embedding else 0
+    match_type = "project" if has_open_offerings and project_required_skills else "interest"
+
     others = await db.user.find_many(
         where={"id": {"not": uid}},
-        include={"skills": {"include": {"skill": True}}},
         take=100,
     )
 
-    match_type = "project" if has_open_offerings and project_required_skills else "interest"
-
     scored = []
     for u in others:
-        u_skills = [s.skill.name for s in u.skills] if u.skills else []
-        u_skill_set = set(s.lower() for s in u_skills)
-
-        if match_type == "project":
-            # Skor berdasarkan cocok dengan required_skills proyek user
-            req_lower = set(s.lower() for s in project_required_skills)
-            matches = u_skill_set & req_lower
-            score = int((len(matches) / max(len(req_lower), 1)) * 100)
-        else:
-            # Skor berdasarkan interest + skill overlap dengan user
-            interest_score = 100 if u.interest and user_interest and u.interest.lower() == user_interest.lower() else 0
-            user_skill_lower = set(s.lower() for s in user_skills)
-            skill_matches = u_skill_set & user_skill_lower
-            skill_score = int((len(skill_matches) / max(len(user_skill_lower), 1)) * 100) if user_skills else 0
-            score = int(interest_score * 0.5 + skill_score * 0.5) if user_interest or user_skills else 0
-
+        u_emb = u.embedding
+        score = 0
+        if user_embedding and u_emb:
+            score = int(cosine_similarity(user_embedding, u_emb) * 100)
         scored.append((score, u))
 
     scored.sort(key=lambda x: x[0], reverse=True)
     scored = scored[:limit]
 
+>>>>>>> Stashed changes
     result = []
-    for score, u in scored:
+    for u in users:
         result.append({
             "id": u.id,
             "full_name": u.full_name,
             "handle": u.handle,
-            "interest": u.interest,
+            "nim": u.nim,
+            "major": u.major,
             "bio": u.bio,
             "photo_url": u.photo_url,
-            "cover_url": u.cover_url,
             "skills": [s.skill.name for s in u.skills] if u.skills else [],
-            "match_score": score,
-            "match_type": match_type,
         })
 
     return {"status": "success", "data": result}
 
 
-@router.get("/search", summary="Cari User Berdasarkan Nama")
+@router.get("/search", summary="Cari User Berdasarkan Nama atau NIM")
 async def search_users(
-    q: str = Query(..., min_length=1, description="Kata kunci pencarian"),
+    q: str = Query(..., min_length=1, description="Kata kunci pencarian (nama atau NIM)"),
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
@@ -162,12 +155,11 @@ async def search_users(
         where={
             "OR": [
                 {"full_name": {"contains": q, "mode": "insensitive"}},
-                {"interest": {"contains": q, "mode": "insensitive"}},
+                {"nim": {"contains": q}},
             ]
         },
         take=20,
         order={"full_name": "asc"},
-        include={"skills": {"include": {"skill": True}}},
     )
     
     result = []
@@ -175,15 +167,13 @@ async def search_users(
         result.append({
             "id": u.id,
             "full_name": u.full_name,
+            "nim": u.nim,
             "bio": u.bio,
             "photo_url": u.photo_url,
-            "cover_url": u.cover_url,
-            "interest": u.interest,
-            "skills": [s.skill.name for s in u.skills] if u.skills else [],
+            "major": u.major,
         })
     
     return {"status": "success", "total": len(result), "data": result}
-
 
 @router.get("/me", summary="Lihat Profil Saya Sendiri")
 async def get_my_profile(
@@ -192,7 +182,6 @@ async def get_my_profile(
 ):
     uid = user_token.get("uid")
     return await get_profile_func(uid, db, user_token)
-
 
 async def get_profile_func(
     user_id: str,
@@ -247,14 +236,18 @@ async def get_profile_func(
         "id": user.id,
         "full_name": user.full_name,
         "handle": user.handle,
+<<<<<<< Updated upstream
+        "nim": user.nim,
+=======
         "interest": user.interest,
+        "nim": user.nim,
+        "faculty": user.faculty,
+>>>>>>> Stashed changes
+        "major": user.major,
         "bio": user.bio,
         "photo_url": user.photo_url,
-        "cover_url": user.cover_url,
         "social_links": user.social_links,
         "skills": skills,
-        "connection_count": user.connection_count,
-        "project_count": user.project_count,
         "experiences": [
             {
                 "id": exp.id,

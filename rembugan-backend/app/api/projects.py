@@ -5,9 +5,9 @@ from app.core.dates import tz_iso
 
 from app.core.security import verify_token
 from app.core.database import get_db
-from app.core.constants import PJ_OPEN, PJ_ONGOING, PJ_COMPLETED, ROLE_KETUA, EXPLORE_MAX_ROWS
+from app.core.constants import PJ_OPEN, PJ_COMPLETED, ROLE_KETUA, EXPLORE_MAX_ROWS
 from app.schemas.project import ProjectCreateInput
-from app.services.matchmaking import calculate_match_score
+from app.services.embedding import cosine_similarity, reembed_project, reembed_user
 
 router = APIRouter(prefix="/projects", tags=["2. Proyek & Kolaborasi"])
 
@@ -40,8 +40,10 @@ async def create_project(
             }
         },
     }
-    if data.interest is not None:
-        create_data["interest"] = data.interest
+    if data.category is not None:
+        create_data["category"] = data.category
+    if data.faculty is not None:
+        create_data["faculty"] = data.faculty
     if data.deadline is not None:
         create_data["deadline"] = data.deadline
     if data.total_slots is not None:
@@ -52,6 +54,9 @@ async def create_project(
         include={"owner": True, "members": True},
     )
 
+    await reembed_project(db, project.id)
+    await reembed_user(db, uid)
+
     return {
         "status": "success",
         "message": f"Proyek '{project.title}' berhasil dibuat!",
@@ -61,7 +66,8 @@ async def create_project(
             "description": project.description,
             "required_skills": project.required_skills,
             "status": project.status,
-            "interest": project.interest,
+            "category": project.category,
+            "faculty": project.faculty,
             "deadline": tz_iso(project.deadline) if project.deadline else None,
             "total_slots": project.total_slots,
             "filled_slots": len(project.members) if project.members else 0,
@@ -75,7 +81,8 @@ async def create_project(
 async def get_all_projects(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
-    interest: str = Query(None, description="Filter by interest"),
+    category: str = Query(None, description="Filter by category"),
+    faculty: str = Query(None, description="Filter by faculty"),
     min_slots: int = Query(None, ge=1, description="Min total slots"),
     max_slots: int = Query(None, ge=1, description="Max total slots"),
     deadline_before: str = Query(None, description="Filter deadline before (ISO datetime)"),
@@ -86,7 +93,7 @@ async def get_all_projects(
     Ambil daftar semua proyek dengan status 'open', lengkap dengan info owner.
     Daftar diurutkan berdasarkan 'Match Score' (kecocokan skill user dengan kebutuhan proyek).
 
-    Mendukung filter: interest, min_slots, max_slots, deadline_before.
+    Mendukung filter: category, faculty, min_slots, max_slots, deadline_before.
     """
     uid = user_token.get("uid")
     
@@ -99,13 +106,18 @@ async def get_all_projects(
     if not user:
         raise HTTPException(status_code=404, detail="User belum terdaftar.")
 
+<<<<<<< Updated upstream
     user_skills = [us.skill.name for us in user.skills] if user.skills else []
-    user_interest = user.interest or ""
+=======
+    user_embedding = user.embedding
+>>>>>>> Stashed changes
 
     # Build filter conditions
     where_conditions = {"status": PJ_OPEN, "owner_id": {"not": uid}}
-    if interest:
-        where_conditions["interest"] = interest
+    if category:
+        where_conditions["category"] = category
+    if faculty:
+        where_conditions["faculty"] = faculty
     if min_slots is not None:
         where_conditions["total_slots"] = {"gte": min_slots}
     if max_slots is not None:
@@ -128,36 +140,58 @@ async def get_all_projects(
         where=where_conditions,
         include={
             "owner": True,
-            "members": {
-                "include": {"user": True}
-            },
+            "members": True,
         },
         order={"created_at": "desc"},
         take=max_fetch,
     )
 
+    user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
+    user_has_skills = bool(user_skill_names)
+
+
     scored_projects = []
+
+    # Ambil semua aplikasi user untuk cek status
+    my_apps = await db.projectapplication.find_many(
+        where={"applicant_id": uid},
+    )
+    applied_ids = {a.project_id for a in my_apps}
+
     for p in projects:
-        score = calculate_match_score(user_skills, p.required_skills, user_interest, p.interest)
+<<<<<<< Updated upstream
+        score = calculate_match_score(user_skills, p.required_skills)
+=======
+        p_emb = p.embedding
+        score = 0
+        if user_embedding and p_emb:
+            score = int(cosine_similarity(user_embedding, p_emb) * 100)
+        
+        # Zero score if no explicit skill overlap (cosine alone is too noisy).
+        if user_has_skills:
+            req_skills = {s.lower() for s in (p.required_skills or [])} - {""}
+            if req_skills and not (req_skills & user_skill_names):
+                score = 0
+        
+
         member_names = [m.user.full_name for m in p.members if m.user] if p.members else []
         member_avatars = [m.user.photo_url for m in p.members if m.user and m.user.photo_url] if p.members else []
+>>>>>>> Stashed changes
         scored_projects.append({
             "id": p.id,
             "title": p.title,
             "description": p.description,
             "required_skills": p.required_skills,
             "status": p.status,
-            "interest": p.interest,
+            "category": p.category,
+            "faculty": p.faculty,
             "deadline": tz_iso(p.deadline) if p.deadline else None,
             "total_slots": p.total_slots,
             "filled_slots": len(p.members) if p.members else 0,
             "owner_name": p.owner.full_name if p.owner else None,
-            "owner_photo": p.owner.photo_url if p.owner else None,
-            "owner_id": str(p.owner.id) if p.owner else None,
-            "member_names": member_names,
-            "member_avatars": member_avatars,
             "member_count": len(p.members) if p.members else 0,
             "match_score": score,
+            "has_applied": p.id in applied_ids,
             "created_at": tz_iso(p.created_at),
         })
         
@@ -199,7 +233,8 @@ async def get_my_projects(
             "description": p.description,
             "required_skills": p.required_skills,
             "status": p.status,
-            "interest": p.interest,
+            "category": p.category,
+            "faculty": p.faculty,
             "deadline": tz_iso(p.deadline) if p.deadline else None,
             "total_slots": p.total_slots,
             "filled_slots": len(p.members) if p.members else 0,
@@ -258,7 +293,8 @@ async def get_project_detail(
             "description": project.description,
             "required_skills": project.required_skills,
             "status": project.status,
-            "interest": project.interest,
+            "category": project.category,
+            "faculty": project.faculty,
             "deadline": tz_iso(project.deadline) if project.deadline else None,
             "total_slots": project.total_slots,
             "filled_slots": len(project.members) if project.members else 0,
@@ -268,82 +304,6 @@ async def get_project_detail(
             "created_at": tz_iso(project.created_at),
         },
     }
-
-@router.post("/{project_id}/leave", summary="Keluar dari Proyek")
-async def leave_project(
-    project_id: int,
-    user_token: dict = Depends(verify_token),
-    db: Prisma = Depends(get_db),
-):
-    """Anggota keluar dari proyek. Jika slot jadi longgar, status balik ke open."""
-    uid = user_token.get("uid")
-
-    member = await db.projectmember.find_first(
-        where={"project_id": project_id, "user_id": uid}
-    )
-    if not member:
-        raise HTTPException(status_code=404, detail="Kamu bukan member proyek ini")
-    if member.role == ROLE_KETUA:
-        raise HTTPException(status_code=400, detail="Ketua tidak bisa keluar. Transfer kepemimpinan atau arsipkan proyek.")
-
-    await db.projectmember.delete(where={"id": member.id})
-
-    current_members = await db.projectmember.count(where={"project_id": project_id})
-    project = await db.project.find_unique(where={"id": project_id})
-
-    if project and project.status == PJ_ONGOING and project.total_slots is not None and current_members < project.total_slots:
-        await db.project.update(
-            where={"id": project_id},
-            data={"status": PJ_OPEN},
-        )
-
-    return {"status": "success", "message": "Berhasil keluar dari proyek."}
-
-
-@router.post("/{project_id}/members/{user_id}/kick", summary="Keluarkan Anggota dari Proyek")
-async def kick_member(
-    project_id: int,
-    user_id: str,
-    user_token: dict = Depends(verify_token),
-    db: Prisma = Depends(get_db),
-):
-    """Ketua mengeluarkan anggota. Jika slot jadi longgar, status balik ke open."""
-    uid = user_token.get("uid")
-
-    project = await db.project.find_unique(where={"id": project_id})
-    if not project:
-        raise HTTPException(status_code=404, detail="Proyek tidak ditemukan.")
-    if project.owner_id != uid:
-        raise HTTPException(status_code=403, detail="Hanya ketua yang bisa mengeluarkan anggota.")
-
-    if user_id == uid:
-        raise HTTPException(status_code=400, detail="Ketua tidak bisa mengeluarkan diri sendiri.")
-
-    member = await db.projectmember.find_first(
-        where={"project_id": project_id, "user_id": user_id}
-    )
-    if not member:
-        raise HTTPException(status_code=404, detail="User bukan anggota proyek ini.")
-    if member.role == ROLE_KETUA:
-        raise HTTPException(status_code=400, detail="Tidak bisa mengeluarkan ketua.")
-
-    # Unassign semua tugas anggota yg dikeluarkan
-    await db.task.update_many(
-        where={"project_id": project_id, "assignee_id": user_id},
-        data={"assignee_id": None},
-    )
-
-    await db.projectmember.delete(where={"id": member.id})
-
-    current_members = await db.projectmember.count(where={"project_id": project_id})
-    if project.total_slots is not None and current_members < project.total_slots and project.status == PJ_ONGOING:
-        await db.project.update(
-            where={"id": project_id},
-            data={"status": PJ_OPEN},
-        )
-
-    return {"status": "success", "message": "Anggota berhasil dikeluarkan."}
-
 
 @router.post("/{project_id}/archive", summary="Archive a project (set status to completed)")
 async def archive_project(

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
 from app.core.dates import tz_iso
 
@@ -8,18 +8,22 @@ from app.core.constants import PJ_OPEN, FYP_MAX_ROWS
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
-from app.services.matchmaking import calculate_match_score
+from app.services.embedding import cosine_similarity
 from app.services.competitions import get_competition_collection
 
 router = APIRouter(prefix="/fyp", tags=["Halaman Beranda (FYP)"])
 
-
 @router.get("/", summary="Ambil Data Personalized FYP")
 async def get_fyp(
-    tab: str = Query("untukmu", description="Tab: 'untukmu' or 'diikuti'"),
     user_token: dict = Depends(verify_token),
     db: Prisma = Depends(get_db),
 ):
+    """
+    Endpoint untuk mengambil Personalized FYP:
+    - Portofolio/Showcase (terbaru)
+    - Tawaran Proyek (diurutkan berdasarkan relevansi skill)
+    - Info Lomba (diurutkan berdasarkan relevansi skill)
+    """
     uid = user_token.get("uid")
 
     user = await db.user.find_unique(
@@ -29,18 +33,30 @@ async def get_fyp(
     if not user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
+<<<<<<< Updated upstream
     user_skills = [s.skill.name for s in user.skills] if user.skills else []
     user_skills_lower = [s.lower() for s in user_skills]
-    user_interest = user.interest or ""
 
-    # 1. Ambil Showcase
+    # 1. Ambil Showcase (Limit 10 terbaru)
+=======
+    user_embedding = user.embedding
+
+    # 1. Ambil Showcase (cosine-scored)
+>>>>>>> Stashed changes
     showcases = await db.showcase.find_many(
-        take=10,
+        take=50,
         order={"created_at": "desc"},
         include={"author": True, "project": True, "likes": True, "comments": True}
     )
-    showcase_data = []
+    scored_showcases = []
     for s in showcases:
+        s_emb = s.embedding
+        score = cosine_similarity(user_embedding, s_emb) if user_embedding and s_emb else 0
+        scored_showcases.append((score, s))
+    scored_showcases.sort(key=lambda x: x[0], reverse=True)
+
+    showcase_data = []
+    for score, s in scored_showcases[:10]:
         showcase_data.append({
             "id": s.id,
             "type": "showcase",
@@ -51,59 +67,31 @@ async def get_fyp(
             "author_photo": s.author.photo_url if s.author else None,
             "likes_count": len(s.likes) if s.likes else 0,
             "comments_count": len(s.comments) if s.comments else 0,
+            "match_score": int(score * 100),
             "created_at": tz_iso(s.created_at),
         })
 
-    # 2. Ambil Project Offerings
-    if tab == "diikuti":
-        # Ambil koneksi user
-        connections = await db.connection.find_many(
-            where={
-                "OR": [
-                    {"sender_id": uid, "status": "accepted"},
-                    {"receiver_id": uid, "status": "accepted"},
-                ]
-            }
-        )
-        connected_ids = set()
-        for c in connections:
-            connected_ids.add(c.sender_id)
-            connected_ids.add(c.receiver_id)
-        connected_ids.discard(uid)
-
-        # Filter project by connected users
-        project_filter = {
-            "status": PJ_OPEN,
-            "owner_id": {"in": list(connected_ids)},
-        } if connected_ids else {"status": PJ_OPEN, "owner_id": "___none___"}
-    else:
-        # "Untukmu" - filter by user interest
-        if user.interest:
-            project_filter = {
-                "status": PJ_OPEN,
-                "interest": {"contains": user.interest, "mode": "insensitive"},
-            }
-        else:
-            project_filter = {"status": PJ_OPEN}
-
-    if tab != "diikuti":
-        project_filter["owner_id"] = {"not": uid}
-
+    # 2. Ambil Project Offerings (Limit 10 paling relevan)
+    # Cap max 500 project di memory untuk scoring safety
     projects = await db.project.find_many(
-        where=project_filter,
+        where={"status": PJ_OPEN, "owner_id": {"not": uid}},
         include={"owner": True},
         take=FYP_MAX_ROWS,
     )
     scored_projects = []
     for p in projects:
-        score = calculate_match_score(user_skills, p.required_skills, user_interest, p.interest)
+<<<<<<< Updated upstream
+        score = calculate_match_score(user_skills, p.required_skills)
+=======
+        p_emb = p.embedding
+        score = cosine_similarity(user_embedding, p_emb) if user_embedding and p_emb else 0
+>>>>>>> Stashed changes
         scored_projects.append({
             "id": p.id,
             "type": "project",
             "title": p.title,
             "description": p.description,
             "required_skills": p.required_skills,
-            "interest": p.interest,
             "owner_name": p.owner.full_name if p.owner else None,
             "match_score": score,
             "created_at": tz_iso(p.created_at),
@@ -134,6 +122,7 @@ async def get_fyp(
         competition_data.sort(key=lambda x: x.get('match_score', 0), reverse=True)
         competition_data = competition_data[:5]
     except Exception as e:
+        # Jangan sampai gagalkan endpoint ini jika API Lomba mati
         logger.exception("Error fetching lomba")
 
     return {
@@ -141,6 +130,6 @@ async def get_fyp(
         "data": {
             "showcases": showcase_data,
             "projects": project_data,
-            "competitions": competition_data,
+            "competitions": competition_data
         }
     }
