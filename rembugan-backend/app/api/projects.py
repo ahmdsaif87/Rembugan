@@ -7,7 +7,7 @@ from app.core.security import verify_token
 from app.core.database import get_db
 from app.core.constants import PJ_OPEN, PJ_COMPLETED, ROLE_KETUA, EXPLORE_MAX_ROWS
 from app.schemas.project import ProjectCreateInput
-from app.services.matchmaking import calculate_match_score
+from app.services.embedding import cosine_similarity, reembed_project, reembed_user
 
 router = APIRouter(prefix="/projects", tags=["2. Proyek & Kolaborasi"])
 
@@ -53,6 +53,9 @@ async def create_project(
         data=create_data,
         include={"owner": True, "members": True},
     )
+
+    await reembed_project(db, project.id)
+    await reembed_user(db, uid)
 
     return {
         "status": "success",
@@ -103,7 +106,11 @@ async def get_all_projects(
     if not user:
         raise HTTPException(status_code=404, detail="User belum terdaftar.")
 
+<<<<<<< Updated upstream
     user_skills = [us.skill.name for us in user.skills] if user.skills else []
+=======
+    user_embedding = user.embedding
+>>>>>>> Stashed changes
 
     # Build filter conditions
     where_conditions = {"status": PJ_OPEN, "owner_id": {"not": uid}}
@@ -139,9 +146,37 @@ async def get_all_projects(
         take=max_fetch,
     )
 
+    user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
+    user_has_skills = bool(user_skill_names)
+
+
     scored_projects = []
+
+    # Ambil semua aplikasi user untuk cek status
+    my_apps = await db.projectapplication.find_many(
+        where={"applicant_id": uid},
+    )
+    applied_ids = {a.project_id for a in my_apps}
+
     for p in projects:
+<<<<<<< Updated upstream
         score = calculate_match_score(user_skills, p.required_skills)
+=======
+        p_emb = p.embedding
+        score = 0
+        if user_embedding and p_emb:
+            score = int(cosine_similarity(user_embedding, p_emb) * 100)
+        
+        # Zero score if no explicit skill overlap (cosine alone is too noisy).
+        if user_has_skills:
+            req_skills = {s.lower() for s in (p.required_skills or [])} - {""}
+            if req_skills and not (req_skills & user_skill_names):
+                score = 0
+        
+
+        member_names = [m.user.full_name for m in p.members if m.user] if p.members else []
+        member_avatars = [m.user.photo_url for m in p.members if m.user and m.user.photo_url] if p.members else []
+>>>>>>> Stashed changes
         scored_projects.append({
             "id": p.id,
             "title": p.title,
@@ -156,6 +191,7 @@ async def get_all_projects(
             "owner_name": p.owner.full_name if p.owner else None,
             "member_count": len(p.members) if p.members else 0,
             "match_score": score,
+            "has_applied": p.id in applied_ids,
             "created_at": tz_iso(p.created_at),
         })
         

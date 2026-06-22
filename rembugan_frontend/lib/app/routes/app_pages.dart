@@ -21,8 +21,11 @@ import '../modules/social/views/create_post_view.dart';
 import '../modules/social/views/edit_profile_view.dart';
 import '../modules/social/views/empty_state_view.dart';
 import '../modules/social/views/loading_state_view.dart';
-import '../modules/social/views/notification_view.dart';
+import '../modules/notification/bindings/notification_binding.dart';
+import '../modules/notification/views/notification_view.dart';
 import '../modules/social/views/other_profile_view.dart';
+import '../modules/social/views/connections_list_view.dart';
+import '../modules/social/views/project_history_view.dart';
 import '../modules/social/views/saved_view.dart';
 import '../modules/social/views/settings_view.dart';
 import '../modules/personalization/bindings/personalization_binding.dart';
@@ -83,7 +86,11 @@ class AppPages {
     GetPage(name: _Paths.CREATE_POST, page: () => const CreatePostView()),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfileView()),
     GetPage(name: _Paths.SETTINGS, page: () => const SettingsView()),
-    GetPage(name: _Paths.NOTIFICATIONS, page: () => const NotificationView()),
+    GetPage(
+      name: _Paths.NOTIFICATIONS,
+      page: () => const NotificationView(),
+      binding: NotificationBinding(),
+    ),
     GetPage(name: _Paths.SAVED, page: () => const SavedView()),
     GetPage(name: _Paths.EMPTY_STATE, page: () => const EmptyStateView()),
     GetPage(name: _Paths.LOADING_STATE, page: () => const LoadingStateView()),
@@ -97,5 +104,17 @@ class AppPages {
       page: () => const ForgotPasswordView(),
       binding: ForgotPasswordBinding(),
     ),
+<<<<<<< Updated upstream
+=======
+    GetPage(name: _Paths.SCAN, page: () => const ScanView()),
+    GetPage(
+      name: _Paths.CONNECTIONS_LIST,
+      page: () => const ConnectionsListView(),
+    ),
+    GetPage(
+      name: _Paths.PROJECT_HISTORY,
+      page: () => const ProjectHistoryView(),
+    ),
+>>>>>>> Stashed changes
   ];
 }

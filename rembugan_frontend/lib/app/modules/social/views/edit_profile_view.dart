@@ -86,6 +86,81 @@ class _EditProfileViewState extends State<EditProfileView> {
         persist(draft.copyWith(socialLink: linkController.text.trim()));
       },
     );
+<<<<<<< Updated upstream
+=======
+    if (source == null) return;
+    final picked = await _picker.pickImage(source: source, imageQuality: 85);
+    if (picked == null) return;
+
+    AppToast.info('Mengupload gambar...');
+    try {
+      final bytes = await picked.readAsBytes();
+      final url = await api.uploadImageBytes(
+        '/upload/image',
+        bytes,
+        picked.name,
+      );
+      if (url != null && mounted) {
+        setState(() {
+          if (isCover) {
+            draft = draft.copyWith(coverUrl: url);
+          } else {
+            draft = draft.copyWith(photoUrl: url);
+          }
+        });
+        AppToast.success('Gambar berhasil diupload.');
+      } else {
+        AppToast.error('Gagal mengupload gambar.');
+      }
+    } catch (e) {
+      AppToast.error('Gagal mengupload: $e');
+    }
+  }
+
+  Future<void> _save() async {
+    if (nameController.text.trim().isEmpty) {
+      AppToast.error('Nama wajib diisi.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    final old = profileService.profile.value;
+    final newDraft = draft.copyWith(
+      name: nameController.text.trim(),
+      bio: bioController.text.trim(),
+      interest: interestController.text.trim(),
+      socialLink: socialController.text.trim(),
+    );
+
+    profileService.updateProfile(newDraft);
+
+    final settings = <String, dynamic>{};
+    if (newDraft.name != old.name) settings['full_name'] = newDraft.name;
+    if (newDraft.bio != old.bio) settings['bio'] = newDraft.bio;
+    if (newDraft.interest != old.interest) settings['interest'] = newDraft.interest;
+    if (newDraft.photoUrl != old.photoUrl) settings['photo_url'] = newDraft.photoUrl;
+    if (newDraft.coverUrl != old.coverUrl) settings['cover_url'] = newDraft.coverUrl;
+    if (newDraft.socialLink != old.socialLink) {
+      settings['social_links'] = {'url': newDraft.socialLink};
+    }
+
+    if (settings.isNotEmpty) {
+      final err = await profileService.updateSettings(settings);
+      if (err != null) {
+        AppToast.error(err, title: 'Error');
+        setState(() => _isSaving = false);
+        return;
+      }
+    }
+
+    setState(() {
+      draft = newDraft;
+      _isSaving = false;
+    });
+    AppToast.success('Profil berhasil diperbarui.');
+    Get.back();
+>>>>>>> Stashed changes
   }
 
   void showSkillSheet() {

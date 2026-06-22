@@ -6,6 +6,7 @@ import '../domain/entities/explore_tab.dart';
 import '../domain/entities/project.dart';
 import '../domain/repositories/explore_repository.dart';
 
+<<<<<<< Updated upstream
 class ExplorePerson {
   final String name;
   final String role;
@@ -21,6 +22,9 @@ class ExplorePerson {
     required this.matchLabel,
   });
 }
+=======
+const _matchThreshold = 40;
+>>>>>>> Stashed changes
 
 class ExploreController extends GetxController {
   ExploreController(this._repository);
@@ -140,6 +144,16 @@ class ExploreController extends GetxController {
 
     // 1. Projects
     var tempProjects = projects.where((project) {
+<<<<<<< Updated upstream
+=======
+      if (project.openSlots <= 0) return false;
+
+      if (selectedSort.value == 'Paling relevan' &&
+          project.matchScore < _matchThreshold) {
+        return false;
+      }
+
+>>>>>>> Stashed changes
       final matchesQuery =
           query.isEmpty ||
           project.title.toLowerCase().contains(query) ||
@@ -260,6 +274,8 @@ class ExploreController extends GetxController {
 
     if (selectedSort.value == 'Terbaru') {
       tempCompetitions = tempCompetitions.reversed.toList();
+    } else {
+      tempCompetitions.sort((a, b) => b.matchScore.compareTo(a.matchScore));
     }
     filteredCompetitions.assignAll(tempCompetitions);
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from prisma import Prisma
 from app.core.database import get_db
 from app.core.security import verify_admin_token, hash_password
-from app.schemas.auth import AdminCreateUserInput, AdminResetPasswordInput
+from app.schemas.auth import AdminCreateUserInput, AdminResetPasswordInput, ImportUsersInput, ImportUserItem
 from app.core.constants import PJ_COMPLETED, APP_PENDING
 
 router = APIRouter(prefix="/admin", tags=["Admin Dashboard"])
@@ -40,6 +40,7 @@ async def admin_create_user(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
+<<<<<<< Updated upstream
     """
     Admin membuat user baru.
     User akan memiliki NIM + Password untuk login pertama.
@@ -47,14 +48,36 @@ async def admin_create_user(
     existing = await db.user.find_unique(where={"nim": data.nim})
     if existing:
         raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
+=======
+    if data.email:
+        existing = await db.user.find_unique(where={"email": data.email})
+        if existing:
+            raise HTTPException(status_code=400, detail="Email sudah terdaftar.")
+
+    if data.nim:
+        existing = await db.user.find_unique(where={"nim": data.nim})
+        if existing:
+            raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
+>>>>>>> Stashed changes
 
     hashed = hash_password(data.password)
     user = await db.user.create(
         data={
+<<<<<<< Updated upstream
             "nim": data.nim,
             "password": hashed,
             "full_name": data.full_name,
             "major": data.major,
+=======
+            "email": data.email or None,
+            "nim": data.nim or None,
+            "faculty": data.faculty or None,
+            "major": data.major or None,
+            "password": hashed,
+            "full_name": data.full_name,
+            "interest": data.interest,
+            "email_verified": True if data.email else False,
+>>>>>>> Stashed changes
         }
     )
 
@@ -64,8 +87,16 @@ async def admin_create_user(
         "data": {
             "id": user.id,
             "nim": user.nim,
+<<<<<<< Updated upstream
             "full_name": user.full_name,
             "major": user.major,
+=======
+            "email": user.email,
+            "full_name": user.full_name,
+            "faculty": user.faculty,
+            "major": user.major,
+            "interest": user.interest,
+>>>>>>> Stashed changes
             "is_onboarded": user.is_onboarded,
         },
     }
@@ -309,6 +340,57 @@ async def get_recent_competitions(
             "data": [],
             "message": f"Failed to fetch competitions: {str(e)}"
         }
+
+@router.post("/users/import", summary="[Admin] Import Batch Mahasiswa via JSON")
+async def admin_import_users(
+    data: ImportUsersInput,
+    admin_token: dict = Depends(verify_admin_token),
+    db: Prisma = Depends(get_db),
+):
+    hashed = hash_password(data.default_password)
+    success_count = 0
+    errors = []
+    imported = []
+
+    for i, item in enumerate(data.users):
+        try:
+            existing_nim = await db.user.find_unique(where={"nim": item.nim})
+            if existing_nim:
+                errors.append({"row": i + 1, "nim": item.nim, "message": "NIM sudah terdaftar"})
+                continue
+
+            user = await db.user.create(
+                data={
+                    "nim": item.nim,
+                    "full_name": item.full_name,
+                    "faculty": item.faculty,
+                    "major": item.major,
+                    "interest": item.interest or None,
+                    "password": hashed,
+                    "email_verified": True,
+                }
+            )
+            success_count += 1
+            imported.append({
+                "nim": user.nim,
+                "full_name": user.full_name,
+                "faculty": user.faculty,
+                "major": user.major,
+            })
+        except Exception as e:
+            errors.append({"row": i + 1, "nim": item.nim, "message": str(e)})
+
+    return {
+        "status": "success",
+        "message": f"Berhasil import {success_count} dari {len(data.users)} mahasiswa.",
+        "data": {
+            "success_count": success_count,
+            "total": len(data.users),
+            "errors": errors,
+            "imported": imported,
+        },
+    }
+
 
 @router.delete("/users/{user_id}", summary="Delete User for Admin")
 async def delete_user(

@@ -67,6 +67,29 @@ class PlatformCollaboration {
   }
 }
 
+class ProjectHistoryItem {
+  final int id;
+  final String title;
+  final String status;
+  final String role;
+
+  const ProjectHistoryItem({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.role,
+  });
+
+  factory ProjectHistoryItem.fromJson(Map<String, dynamic> json) {
+    return ProjectHistoryItem(
+      id: json['id'] as int? ?? 0,
+      title: json['title'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      role: json['role'] as String? ?? '',
+    );
+  }
+}
+
 class ProfileData {
   const ProfileData({
     required this.name,
@@ -90,7 +113,80 @@ class ProfileData {
   final List<ProfileExperience> experiences;
   final List<PlatformCollaboration> collaborationHistory;
   final bool hasResumePhoto;
+<<<<<<< Updated upstream
   final String avatarAsset;
+=======
+  final int connectionCount;
+  final int projectCount;
+  final String? nim;
+  final String? faculty;
+  final String? major;
+  final List<ProjectHistoryItem> projectHistory;
+
+  const ProfileData({
+    this.id,
+    required this.name,
+    required this.handle,
+    required this.bio,
+    required this.interest,
+    required this.socialLink,
+    this.photoUrl = '',
+    this.coverUrl = '',
+    required this.skills,
+    required this.experiences,
+    required this.collaborationHistory,
+    this.hasResumePhoto = false,
+    this.connectionCount = 0,
+    this.projectCount = 0,
+    this.nim,
+    this.faculty,
+    this.major,
+    this.projectHistory = const [],
+  });
+
+  factory ProfileData.fromJson(Map<String, dynamic> json) {
+    final socialLinks = json['social_links'];
+    String socialLink = '';
+    if (socialLinks is Map) {
+      final values = socialLinks.values.whereType<String>().toList();
+      if (values.isNotEmpty) socialLink = values.first;
+    } else if (socialLinks is String) {
+      socialLink = socialLinks;
+    }
+
+    final experiences = (json['experiences'] as List<dynamic>?)
+            ?.map((e) => ProfileExperience.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    return ProfileData(
+      id: json['id']?.toString(),
+      name: json['full_name'] as String? ?? '',
+      handle: json['handle'] as String? ?? '',
+      bio: json['bio'] as String? ?? '',
+      interest: json['interest'] as String? ?? '',
+      socialLink: socialLink,
+      photoUrl: json['photo_url'] as String? ?? '',
+      coverUrl: json['cover_url'] as String? ?? '',
+      nim: json['nim'] as String?,
+      faculty: json['faculty'] as String?,
+      major: json['major'] as String?,
+      skills: (json['skills'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      experiences: experiences,
+      collaborationHistory: const [],
+      hasResumePhoto: false,
+      connectionCount: json['connection_count'] as int? ?? 0,
+      projectCount: json['project_count'] as int? ?? 0,
+      projectHistory: (json['project_history'] as List<dynamic>?)
+              ?.map((e) => ProjectHistoryItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+>>>>>>> Stashed changes
 
   ProfileData copyWith({
     String? name,
@@ -102,7 +198,13 @@ class ProfileData {
     List<ProfileExperience>? experiences,
     List<PlatformCollaboration>? collaborationHistory,
     bool? hasResumePhoto,
+<<<<<<< Updated upstream
     String? avatarAsset,
+=======
+    int? connectionCount,
+    int? projectCount,
+    List<ProjectHistoryItem>? projectHistory,
+>>>>>>> Stashed changes
   }) {
     return ProfileData(
       name: name ?? this.name,
@@ -114,7 +216,13 @@ class ProfileData {
       experiences: experiences ?? this.experiences,
       collaborationHistory: collaborationHistory ?? this.collaborationHistory,
       hasResumePhoto: hasResumePhoto ?? this.hasResumePhoto,
+<<<<<<< Updated upstream
       avatarAsset: avatarAsset ?? this.avatarAsset,
+=======
+      connectionCount: connectionCount ?? this.connectionCount,
+      projectCount: projectCount ?? this.projectCount,
+      projectHistory: projectHistory ?? this.projectHistory,
+>>>>>>> Stashed changes
     );
   }
 }

@@ -11,7 +11,11 @@ class RegisterInput(BaseModel):
 
 class LoginInput(BaseModel):
     """Data untuk login via NIM atau Email + Password."""
+<<<<<<< Updated upstream
     identifier: str = Field(..., description="NIM atau Email (email hanya untuk yang sudah diverifikasi)")
+=======
+    identifier: str = Field(..., description="NIM atau Email")
+>>>>>>> Stashed changes
     password: str = Field(..., description="Password")
 
 
@@ -59,3 +63,32 @@ class AdminCreateUserInput(BaseModel):
 
 
 
+<<<<<<< Updated upstream
+=======
+class RegisterVerifyOtpInput(BaseModel):
+    """Data untuk verifikasi OTP saat registrasi."""
+    email: str = Field(..., description="Alamat email")
+    otp: str = Field(..., min_length=6, max_length=6, description="Kode OTP 6 digit")
+
+
+class ImportUserItem(BaseModel):
+    """Data satu mahasiswa untuk import batch."""
+    nim: str = Field(..., description="NIM")
+    full_name: str = Field(..., min_length=2, description="Nama lengkap")
+    faculty: str = Field(..., description="Fakultas")
+    major: str = Field(..., description="Jurusan/Prodi")
+    interest: Optional[str] = Field(None, description="Minat/bidang")
+
+
+class ImportUsersInput(BaseModel):
+    """Data untuk import batch mahasiswa."""
+    users: list[ImportUserItem]
+    default_password: str = Field(..., min_length=6, description="Password default untuk semua user")
+
+
+class AdminCreateUserInputExtended(AdminCreateUserInput):
+    """Data untuk admin membuat user baru dengan field kampus."""
+    nim: Optional[str] = Field(None, description="NIM")
+    faculty: Optional[str] = Field(None, description="Fakultas")
+    major: Optional[str] = Field(None, description="Jurusan/Prodi")
+>>>>>>> Stashed changes

@@ -353,6 +353,11 @@ class TeamController extends GetxController {
   void openWorkspace(WorkspaceModel ws) {
     selectedWorkspace.value = ws;
     detailTabIndex.value = 0;
+<<<<<<< Updated upstream
+=======
+    _loadWorkspaceDetail(ws.projectId);
+    _refreshSelectedWorkspace();
+>>>>>>> Stashed changes
   }
 
   void approveApplicant(WorkspaceApplicant applicant) {
@@ -360,6 +365,7 @@ class TeamController extends GetxController {
     final index = workspaces.indexWhere((w) => w.id == applicant.workspaceId);
     if (index == -1) return;
 
+<<<<<<< Updated upstream
     final ws = workspaces[index];
     final updated = ws.copyWith(
       applicants: applicantsFor(ws.id).length,
@@ -376,6 +382,55 @@ class TeamController extends GetxController {
               .join()
               .toUpperCase(),
           role: applicant.role,
+=======
+    discussions.assignAll(results[0] as List<DiscussionMessage>);
+    tasks.assignAll(results[1] as List<WorkspaceTask>);
+    files.assignAll(results[2] as List<WorkspaceFile>);
+    applicants.assignAll(results[3] as List<WorkspaceApplicant>);
+  }
+
+  void approveApplicant(WorkspaceApplicant applicant) async {
+    final appId = int.tryParse(applicant.id);
+    if (appId == null) return;
+    final result = await _repo.respondApplication(appId, 'accepted', role: 'Anggota');
+    if (result != null) {
+      applicants.removeWhere((a) => a.id == applicant.id);
+      _refreshSelectedWorkspace();
+      loadWorkspaces();
+    }
+  }
+
+  void rejectApplicant(WorkspaceApplicant applicant) async {
+    final appId = int.tryParse(applicant.id);
+    if (appId == null) return;
+    final result = await _repo.respondApplication(appId, 'rejected');
+    if (result != null) {
+      applicants.removeWhere((a) => a.id == applicant.id);
+      _refreshSelectedWorkspace();
+    }
+  }
+
+  Future<void> _refreshSelectedWorkspace() async {
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final fresh = await _repo.getWorkspaceDetail(ws.projectId);
+    if (fresh != null) {
+      selectedWorkspace.value = fresh;
+    }
+  }
+
+  void endCollaboration(WorkspaceModel ws) async {
+    final ok = await _repo.endCollaboration(ws.projectId);
+    if (ok) {
+      workspaceHistory.insert(
+        0,
+        WorkspaceHistory(
+          name: ws.name,
+          role: ws.userRole,
+          members: ws.memberCount,
+          finishedAt: 'Selesai hari ini',
+          summary: 'Workspace diarsipkan.',
+>>>>>>> Stashed changes
         ),
       ],
       activityCue: '${applicant.name} diterima ke workspace',

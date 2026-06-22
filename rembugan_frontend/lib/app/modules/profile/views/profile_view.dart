@@ -193,6 +193,7 @@ class _ProfileIdentity extends StatelessWidget {
             color: c.grey500,
           ),
         ),
+<<<<<<< Updated upstream
         const SizedBox(height: 10),
         Text(
           profile.bio,
@@ -201,6 +202,64 @@ class _ProfileIdentity extends StatelessWidget {
             height: 1.32,
             color: c.grey900,
           ),
+=======
+        if (profile.faculty != null || profile.major != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            [profile.faculty, profile.major].whereType<String>().join(' • '),
+            style: AppFonts.satoshiStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: c.grey400,
+            ),
+          ),
+        ],
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.CONNECTIONS_LIST, arguments: {
+                'userId': profile.id,
+                'userName': profile.name,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.people_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${profile.connectionCount} koneksi',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.PROJECT_HISTORY, arguments: {
+                'userName': profile.name,
+                'projects': profile.projectHistory,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.briefcase_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${profile.projectCount} proyek',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+>>>>>>> Stashed changes
         ),
         const SizedBox(height: 8),
         Text(

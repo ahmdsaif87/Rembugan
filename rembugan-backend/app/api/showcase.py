@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.core.constants import NOTIF_LIKE, NOTIF_COMMENT, NOTIF_CHAT
 from app.schemas.showcase import ShowcaseCreateInput, CommentCreateInput
 from app.services.notification import notify
+from app.services.embedding import cosine_similarity, reembed_showcase
 
 router = APIRouter(prefix="/showcase", tags=["4. Showcase & Portofolio"])
 
@@ -29,6 +30,9 @@ async def create_showcase(
             "linked_project_id": data.linked_project_id,
         }
     )
+
+    await reembed_showcase(db, showcase.id)
+
     return {
         "status": "success",
         "message": "Showcase berhasil dibuat!",
@@ -39,7 +43,7 @@ async def create_showcase(
     }
 
 
-@router.get("/", summary="Lihat Semua Showcase (Feed)")
+@router.get("/", summary="Lihat Semua Showcase (Feed) — cosine-based")
 async def get_all_showcases(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
@@ -47,11 +51,13 @@ async def get_all_showcases(
     db: Prisma = Depends(get_db),
 ):
     uid = user_token.get("uid")
+    user = await db.user.find_unique(where={"id": uid})
+    user_emb = user.embedding if user else None
+
     total = await db.showcase.count()
     showcases = await db.showcase.find_many(
         order={"created_at": "desc"},
-        skip=(page - 1) * limit,
-        take=limit,
+        take=200,
         include={
             "author": True,
             "likes": True,
@@ -59,8 +65,21 @@ async def get_all_showcases(
         }
     )
 
-    data = []
+    scored = []
     for s in showcases:
+        s_emb = s.embedding
+        score = 0.0
+        if user_emb and s_emb:
+            score = cosine_similarity(user_emb, s_emb)
+        scored.append((score, s))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    start = (page - 1) * limit
+    page_scored = scored[start:start + limit]
+
+    data = []
+    for score, s in page_scored:
         liked = any(l.user_id == uid for l in s.likes)
         data.append({
             "id": s.id,
@@ -73,6 +92,7 @@ async def get_all_showcases(
             "likes_count": len(s.likes),
             "comments_count": len(s.comments),
             "liked_by_me": liked,
+            "match_score": int(score * 100),
             "created_at": tz_iso(s.created_at),
         })
 

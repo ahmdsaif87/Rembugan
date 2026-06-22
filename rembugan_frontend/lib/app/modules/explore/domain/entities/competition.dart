@@ -10,6 +10,11 @@ class Competition {
   final ColorSeed color;
   final String registrationLink;
   final String campusTag;
+<<<<<<< Updated upstream
+=======
+  final String posterUrl;
+  final int matchScore;
+>>>>>>> Stashed changes
 
   const Competition({
     required this.title,
@@ -21,6 +26,11 @@ class Competition {
     required this.color,
     required this.registrationLink,
     required this.campusTag,
+<<<<<<< Updated upstream
+=======
+    this.posterUrl = '',
+    this.matchScore = 0,
+>>>>>>> Stashed changes
   });
 
   int? get daysLeft {

@@ -95,10 +95,16 @@ class LoginView extends GetView<LoginController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppTextField(
+<<<<<<< Updated upstream
             controller: controller.emailOrNimController,
             labelText: 'Email atau NIM',
             hintText: 'nanda@gmail.com atau 23090122',
             keyboardType: TextInputType.emailAddress,
+=======
+            controller: controller.emailController,
+            labelText: 'NIM / Email',
+            hintText: 'Masukkan NIM atau email',
+>>>>>>> Stashed changes
           ),
           const SizedBox(height: 28),
           _buildPasswordField(c),
@@ -152,6 +158,30 @@ class LoginView extends GetView<LoginController> {
   }
 
   Widget _buildActionButtons() {
+<<<<<<< Updated upstream
     return AppButton(label: 'Masuk', onTap: controller.onLogin);
+=======
+    return Column(
+      children: [
+        AppButton(label: 'Masuk', onTap: controller.onLogin),
+        const SizedBox(height: 20),
+        _buildCampusInfo(),
+      ],
+    );
+  }
+
+  Widget _buildCampusInfo() {
+    final c = AppC.of(Get.context!);
+    return Center(
+      child: Text(
+        'Akun disediakan oleh kampus.\nHubungi admin jika belum punya akun.',
+        textAlign: TextAlign.center,
+        style: AppFonts.satoshiStyle(
+          fontSize: 13,
+          color: c.grey400,
+        ),
+      ),
+    );
+>>>>>>> Stashed changes
   }
 }

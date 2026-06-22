@@ -88,7 +88,11 @@ export async function fetchCompetitions() {
   }
 }
 
+<<<<<<< Updated upstream
 export async function createUser(data: { nim: string; full_name: string; major: string; password: string }) {
+=======
+export async function createUser(data: { email?: string; full_name: string; interest?: string; password: string; nim?: string; faculty?: string; major?: string }) {
+>>>>>>> Stashed changes
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
       method: 'POST',
@@ -98,6 +102,20 @@ export async function createUser(data: { nim: string; full_name: string; major: 
     return response.json()
   } catch (error) {
     console.error('Error creating user:', error)
+    return { status: 'error', detail: 'Network error' }
+  }
+}
+
+export async function importUsers(data: { users: Array<{ nim: string; full_name: string; faculty: string; major: string; interest?: string }>; default_password: string }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users/import`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    })
+    return response.json()
+  } catch (error) {
+    console.error('Error importing users:', error)
     return { status: 'error', detail: 'Network error' }
   }
 }

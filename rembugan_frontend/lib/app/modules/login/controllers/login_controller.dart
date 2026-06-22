@@ -20,7 +20,11 @@ class LoginController extends GetxController {
     if (!formKey.currentState!.validate()) return;
 
     final error = await _auth.login(
+<<<<<<< Updated upstream
       identifier: emailOrNimController.text.trim(),
+=======
+      identifier: emailController.text.trim(),
+>>>>>>> Stashed changes
       password: passwordController.text,
     );
 

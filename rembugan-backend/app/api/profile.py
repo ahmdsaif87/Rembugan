@@ -5,7 +5,12 @@ from app.core.dates import tz_iso
 from pydantic import BaseModel, Field
 from app.core.database import get_db
 from app.core.security import verify_token, verify_token_optional
+<<<<<<< Updated upstream
 from app.core.constants import ROLE_KETUA, ROLE_ADMIN
+=======
+from app.core.constants import PJ_OPEN, ROLE_KETUA, ROLE_ADMIN
+from app.services.embedding import cosine_similarity, reembed_user
+>>>>>>> Stashed changes
 
 router = APIRouter(prefix="/profile", tags=["Profil User"])
 
@@ -51,6 +56,8 @@ async def update_settings(
         data=update_data,
     )
 
+    await reembed_user(db, uid)
+
     return {
         "status": "success",
         "message": "Settings berhasil diupdate!",
@@ -72,6 +79,7 @@ async def get_recommended_users(
     """Ambil daftar user yang direkomendasikan untuk dikenal (exclude diri sendiri)."""
     uid = user_token.get("uid")
 
+<<<<<<< Updated upstream
     users = await db.user.find_many(
         where={"id": {"not": uid}},
         take=limit,
@@ -79,6 +87,48 @@ async def get_recommended_users(
         include={"skills": {"include": {"skill": True}}},
     )
 
+=======
+    current_user = await db.user.find_unique(
+        where={"id": uid},
+        include={
+            "skills": {"include": {"skill": True}},
+            "ownedProjects": True,
+        },
+    )
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User tidak ditemukan")
+
+    user_embedding = current_user.embedding
+
+    # Cek apakah user punya open project (sebagai ketua)
+    open_projects = [p for p in (current_user.ownedProjects or []) if p.status == PJ_OPEN]
+    has_open_offerings = len(open_projects) > 0
+
+    project_required_skills: set[str] = set()
+    if has_open_offerings:
+        for p in open_projects:
+            project_required_skills.update(p.required_skills or [])
+
+    matched_skills_len = len(user_embedding) if user_embedding else 0
+    match_type = "project" if has_open_offerings and project_required_skills else "interest"
+
+    others = await db.user.find_many(
+        where={"id": {"not": uid}},
+        take=100,
+    )
+
+    scored = []
+    for u in others:
+        u_emb = u.embedding
+        score = 0
+        if user_embedding and u_emb:
+            score = int(cosine_similarity(user_embedding, u_emb) * 100)
+        scored.append((score, u))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    scored = scored[:limit]
+
+>>>>>>> Stashed changes
     result = []
     for u in users:
         result.append({
@@ -186,7 +236,13 @@ async def get_profile_func(
         "id": user.id,
         "full_name": user.full_name,
         "handle": user.handle,
+<<<<<<< Updated upstream
         "nim": user.nim,
+=======
+        "interest": user.interest,
+        "nim": user.nim,
+        "faculty": user.faculty,
+>>>>>>> Stashed changes
         "major": user.major,
         "bio": user.bio,
         "photo_url": user.photo_url,

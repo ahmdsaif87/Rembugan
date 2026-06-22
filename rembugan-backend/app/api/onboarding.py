@@ -5,7 +5,12 @@ from app.core.dates import tz_iso
 
 from app.core.security import verify_token
 from app.core.database import get_db
+<<<<<<< Updated upstream
 from app.schemas.user import UserProfileInput
+=======
+from app.schemas.user import UserProfileInput, ExperienceInput
+from app.services.embedding import reembed_user
+>>>>>>> Stashed changes
 from app.services.ai_vision import extract_photo_from_pdf
 from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_ai
 from app.services.storage import upload_image_to_cloudinary
@@ -121,6 +126,25 @@ async def save_user_profile(
             data=[{"user_id": uid, "skill_id": name_to_id[n]} for n in data.skills]
         )
 
+<<<<<<< Updated upstream
+=======
+    await reembed_user(db, uid)
+
+    # 3. Simpan Experiences
+    await db.experience.delete_many(where={"user_id": uid})
+
+    for exp in data.experiences:
+        start_date, end_date = _parse_duration(exp.duration)
+        await db.experience.create(data={
+            "user_id": uid,
+            "title": exp.title,
+            "company": exp.organization,
+            "description": exp.description,
+            "start_date": start_date,
+            "end_date": end_date,
+        })
+
+>>>>>>> Stashed changes
     return {
         "status": "success",
         "message": "Profil berhasil diupdate!",

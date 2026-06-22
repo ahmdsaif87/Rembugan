@@ -8,7 +8,7 @@ from app.core.constants import PJ_OPEN, FYP_MAX_ROWS
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
-from app.services.matchmaking import calculate_match_score
+from app.services.embedding import cosine_similarity
 from app.services.competitions import get_competition_collection
 
 router = APIRouter(prefix="/fyp", tags=["Halaman Beranda (FYP)"])
@@ -33,17 +33,30 @@ async def get_fyp(
     if not user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
+<<<<<<< Updated upstream
     user_skills = [s.skill.name for s in user.skills] if user.skills else []
     user_skills_lower = [s.lower() for s in user_skills]
 
     # 1. Ambil Showcase (Limit 10 terbaru)
+=======
+    user_embedding = user.embedding
+
+    # 1. Ambil Showcase (cosine-scored)
+>>>>>>> Stashed changes
     showcases = await db.showcase.find_many(
-        take=10,
+        take=50,
         order={"created_at": "desc"},
         include={"author": True, "project": True, "likes": True, "comments": True}
     )
-    showcase_data = []
+    scored_showcases = []
     for s in showcases:
+        s_emb = s.embedding
+        score = cosine_similarity(user_embedding, s_emb) if user_embedding and s_emb else 0
+        scored_showcases.append((score, s))
+    scored_showcases.sort(key=lambda x: x[0], reverse=True)
+
+    showcase_data = []
+    for score, s in scored_showcases[:10]:
         showcase_data.append({
             "id": s.id,
             "type": "showcase",
@@ -54,6 +67,7 @@ async def get_fyp(
             "author_photo": s.author.photo_url if s.author else None,
             "likes_count": len(s.likes) if s.likes else 0,
             "comments_count": len(s.comments) if s.comments else 0,
+            "match_score": int(score * 100),
             "created_at": tz_iso(s.created_at),
         })
 
@@ -66,7 +80,12 @@ async def get_fyp(
     )
     scored_projects = []
     for p in projects:
+<<<<<<< Updated upstream
         score = calculate_match_score(user_skills, p.required_skills)
+=======
+        p_emb = p.embedding
+        score = cosine_similarity(user_embedding, p_emb) if user_embedding and p_emb else 0
+>>>>>>> Stashed changes
         scored_projects.append({
             "id": p.id,
             "type": "project",

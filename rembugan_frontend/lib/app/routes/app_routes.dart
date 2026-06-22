@@ -22,6 +22,12 @@ abstract class Routes {
   static const LOADING_STATE = _Paths.LOADING_STATE;
   static const PERSONALIZATION = _Paths.PERSONALIZATION;
   static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
+<<<<<<< Updated upstream
+=======
+  static const SCAN = _Paths.SCAN;
+  static const CONNECTIONS_LIST = _Paths.CONNECTIONS_LIST;
+  static const PROJECT_HISTORY = _Paths.PROJECT_HISTORY;
+>>>>>>> Stashed changes
 }
 
 abstract class _Paths {
@@ -45,4 +51,10 @@ abstract class _Paths {
   static const LOADING_STATE = '/loading-state';
   static const PERSONALIZATION = '/personalization';
   static const FORGOT_PASSWORD = '/forgot-password';
+<<<<<<< Updated upstream
+=======
+  static const SCAN = '/scan';
+  static const CONNECTIONS_LIST = '/connections-list';
+  static const PROJECT_HISTORY = '/project-history';
+>>>>>>> Stashed changes
 }
