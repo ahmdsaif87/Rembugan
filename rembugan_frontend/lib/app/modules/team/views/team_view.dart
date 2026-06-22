@@ -4,14 +4,13 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/team_controller.dart';
 import 'workspace_detail_view.dart';
 
 const _green = AppColors.success600; // online/success
 const _amber = AppColors.warning700; // pending/deadline
-const _amberBg = AppColors.warning50;
 const _blue = AppColors.info500; // mention/activity
-const _blueBg = AppColors.info50;
 const _red = AppColors.danger500; // urgent
 
 class TeamView extends GetView<TeamController> {
@@ -20,9 +19,6 @@ class TeamView extends GetView<TeamController> {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final owned = controller.ownedWorkspaces;
-    final joined = controller.joinedWorkspaces;
-    final total = controller.workspaces.length;
 
     return Scaffold(
       backgroundColor: c.background,
@@ -32,14 +28,14 @@ class TeamView extends GetView<TeamController> {
             children: [
               // ── Header ──
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 16, 0),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             'Proyek Tim',
                             style: AppFonts.headingStyle(
                               fontSize: 26,
@@ -48,34 +44,39 @@ class TeamView extends GetView<TeamController> {
                               height: 1.1,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: _green,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                '$total workspace',
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 12,
-                                  color: c.textSecondary,
-                                ),
-                              ),
-                            ],
+                        ),
+                        Tooltip(
+                          message: 'Scan QR Proyek',
+                          child: IconButton(
+                            icon: const Icon(
+                              FluentIcons.scan_dash_24_regular,
+                              size: 22,
+                            ),
+                            onPressed: () => Get.toNamed(Routes.SCAN),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    // Search
-                    AppIconButton(
-                      icon: FluentIcons.search_24_regular,
-                      onTap: () {},
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: _green,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Obx(() => Text(
+                          '${controller.workspaces.length} workspace',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 12,
+                            color: c.textSecondary,
+                          ),
+                        )),
+                      ],
                     ),
                   ],
                 ),
@@ -104,9 +105,13 @@ class TeamView extends GetView<TeamController> {
               // ── Content ──
               Expanded(
                 child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
                   final list = controller.workspaceTabIndex.value == 0
-                      ? owned
-                      : joined;
+                      ? controller.ownedWorkspaces
+                      : controller.joinedWorkspaces;
 
                   if (list.isEmpty) {
                     return Center(
@@ -115,33 +120,60 @@ class TeamView extends GetView<TeamController> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              controller.workspaceTabIndex.value == 0
-                                  ? FluentIcons.briefcase_24_regular
-                                  : FluentIcons.people_team_24_regular,
-                              size: 36,
-                              color: c.grey400,
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                color: c.primarySoft,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                controller.workspaceTabIndex.value == 0
+                                    ? FluentIcons.briefcase_24_regular
+                                    : FluentIcons.people_team_24_regular,
+                                size: 32,
+                                color: AppColors.primary500,
+                              ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             Text(
                               controller.workspaceTabIndex.value == 0
-                                  ? 'Belum ada workspace milikmu'
+                                  ? 'Belum ada workspace'
                                   : 'Belum mengikuti workspace',
                               style: AppFonts.satoshiStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              color: c.grey500,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: c.textPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            controller.workspaceTabIndex.value == 0
-                                ? 'Buat workspace baru untuk memulai kolaborasi.'
-                                : 'Gabung ke workspace tim untuk berkolaborasi.',
+                            const SizedBox(height: 8),
+                            Text(
+                              controller.workspaceTabIndex.value == 0
+                                  ? 'Buat workspace baru untuk\nmemulai kolaborasi.'
+                                  : 'Gabung ke workspace tim untuk\nberkolaborasi.',
                               textAlign: TextAlign.center,
                               style: AppFonts.satoshiStyle(
-                                fontSize: 12,
-                                color: c.grey400,
+                                fontSize: 13,
+                                color: c.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            FilledButton.icon(
+                              onPressed: () {},
+                              icon: Icon(
+                                controller.workspaceTabIndex.value == 0
+                                    ? FluentIcons.add_24_regular
+                                    : FluentIcons.link_24_regular,
+                                size: 16,
+                              ),
+                              label: Text(
+                                controller.workspaceTabIndex.value == 0
+                                    ? 'Buat Workspace'
+                                    : 'Gabung Workspace',
                               ),
                             ),
                           ],
@@ -151,7 +183,7 @@ class TeamView extends GetView<TeamController> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                    padding: const EdgeInsets.fromLTRB(0, 8, 0, AppSpacing.xl),
                     itemCount: list.length,
                     itemBuilder: (context, index) {
                       final ws = list[index];
@@ -186,7 +218,7 @@ class TeamView extends GetView<TeamController> {
             border: Border(
               bottom: BorderSide(
                 color: active ? AppColors.primary500 : AppColors.transparent,
-                width: 2.5,
+                width: 2.0,
               ),
             ),
           ),
@@ -198,7 +230,7 @@ class TeamView extends GetView<TeamController> {
                 style: AppFonts.satoshiStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
-                  color: active ? c.grey900 : c.grey400,
+                  color: active ? c.grey900 : c.grey500,
                 ),
               ),
               const SizedBox(width: 6),
@@ -246,116 +278,25 @@ class _WorkspaceRow extends StatefulWidget {
 }
 
 class _WorkspaceRowState extends State<_WorkspaceRow> {
-  bool _pressed = false;
-  bool _hovered = false;
-
   Color get _accentDot {
     if (widget.ws.urgency == 'overdue') return _red;
     if (widget.ws.urgency == 'deadline') return _amber;
     return _green;
   }
 
-  // Generates a beautiful gradient based on workspace name
-  LinearGradient _generateWorkspaceGradient(String name) {
+  LinearGradient _workspaceGradient(String name) {
     final hash = name.hashCode;
-
-    // Premium desaturated slate, navy, teal, violet gradient pairings
-    final List<List<Color>> palettes = [
-      [AppColors.grey800, AppColors.grey600], // Slate Charcoal
-      [AppColors.grey900, AppColors.grey700], // Dark Indigo Slate
-      [AppColors.primary900, AppColors.primary700], // Deep Royal Violet
-      [AppColors.success900, AppColors.success700], // Rich Emerald Teal
-      [AppColors.grey900, AppColors.grey700], // Warm Stone
-      [AppColors.primary900, AppColors.primary700], // Deep Navy
+    final palettes = [
+      [const Color(0xFF4F5B73), const Color(0xFF374151)],
+      [const Color(0xFF6C5CE7), const Color(0xFF4E61F6)],
+      [const Color(0xFF059669), const Color(0xFF10B981)],
+      [const Color(0xFF7C3AED), const Color(0xFF8B5CF6)],
     ];
-
-    final palette = palettes[hash.abs() % palettes.length];
+    final colors = palettes[hash.abs() % palettes.length];
     return LinearGradient(
-      colors: palette,
+      colors: colors,
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-    );
-  }
-
-  // Overlapping circular member avatar stack
-  Widget _buildMemberPresenceStack(List<WorkspaceMember> members) {
-    final c = AppC.of(context);
-    if (members.isEmpty) return const SizedBox.shrink();
-
-    final limit = members.take(3).toList();
-    final double stackWidth = (14.0 * (limit.length - 1)) + 20.0;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: 20,
-          width: stackWidth,
-          child: Stack(
-            children: limit.asMap().entries.map((entry) {
-              final index = entry.key;
-              final member = entry.value;
-              final initials = member.initials.isNotEmpty
-                  ? member.initials
-                  : (member.name.isNotEmpty
-                        ? member.name.substring(0, 1).toUpperCase()
-                        : '?');
-
-              final hash = member.name.hashCode;
-              final List<Color> colors = [
-                AppColors.grey600, // Slate
-                AppColors.grey500, // Light Slate
-                AppColors.info500, // Blue
-                AppColors.success500, // Emerald
-                AppColors.primary400, // Violet
-                AppColors.primary400, // Pink
-                AppColors.warning500, // Amber
-              ];
-              final circleColor = colors[hash.abs() % colors.length];
-
-              return Positioned(
-                left: index * 14.0,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: circleColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: c.surface, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.05),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        if (members.length > 3) ...[
-          const SizedBox(width: 4),
-          Text(
-            '+${members.length - 3}',
-            style: AppFonts.satoshiStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: c.grey400,
-            ),
-          ),
-        ],
-      ],
     );
   }
 
@@ -363,271 +304,162 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     final ws = widget.ws;
-    final pending = ws.totalTasks - ws.doneTasks;
-    final hasUnread = ws.unreadCount > 0;
-    final double progress = ws.totalTasks > 0
-        ? ws.doneTasks / ws.totalTasks
-        : 0.0;
 
-    return AnimatedScale(
-      duration: const Duration(milliseconds: 120),
-      curve: Curves.easeOutCubic,
-      scale: _pressed ? 0.985 : 1,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-        decoration: BoxDecoration(
-          color: c.surface,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: AppColors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: _pressed
-              ? const []
-              : (_hovered
-                    ? [
-                        BoxShadow(
-                          color: AppColors.black.withValues(alpha: 0.04),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ]
-                    : AppShadows.soft),
-        ),
-        child: Material(
-          color: AppColors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: InkWell(
-            onHighlightChanged: (value) => setState(() => _pressed = value),
-            onHover: (value) => setState(() => _hovered = value),
-            splashColor: AppColors.primary.withValues(alpha: 0.06),
-            highlightColor: AppColors.primary.withValues(alpha: 0.035),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            onTap: widget.onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.lg,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Row 1: Workspace Icon + Name/Category + Chevron ──
-                  Row(
-                    children: [
-                      // Avatar/Icon
-                      Stack(
-                        children: [
-                          Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              gradient: _generateWorkspaceGradient(ws.name),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.black.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              ws.name.substring(0, 1).toUpperCase(),
-                              style: AppFonts.headingStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.white,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 11,
-                              height: 11,
-                              decoration: BoxDecoration(
-                                color: _accentDot,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: c.background,
-                                  width: 2.0,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 14),
-
-                      // Name + Category
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    ws.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppFonts.satoshiStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: c.grey900,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: AppSpacing.xxs,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: c.grey100,
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.xxs,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    ws.category,
-                                    style: AppFonts.satoshiStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
-                                      color: c.grey500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  ws.userRole,
-                                  style: AppFonts.satoshiStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.grey400,
-                                  ),
-                                ),
-                                _buildMemberPresenceStack(ws.members),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Chevron right
-                      Icon(
-                        FluentIcons.chevron_right_24_regular,
-                        size: 18,
-                        color: c.textTertiary,
-                      ),
-                    ],
-                  ),
-
-                  // ── Row 1.5: Progress Bar Subtle ──
-                  if (ws.totalTasks > 0) ...[
-                    const SizedBox(height: 10),
-                    Row(
+          onTap: widget.onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Row 1: Icon + Name/Category + Unread + Chevron ──
+                Row(
+                  children: [
+                    Stack(
                       children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(2),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              minHeight: 3.5,
-                              backgroundColor: c.grey200,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                progress < 0.35
-                                    ? AppColors
-                                          .error500 // Merah
-                                    : (progress < 0.75
-                                          ? AppColors
-                                                .warning500 // Kuning
-                                          : AppColors.success500), // Hijau
-                              ),
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            gradient: _workspaceGradient(ws.name),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            ws.name.substring(0, 1).toUpperCase(),
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.white,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${(progress * 100).toInt()}%',
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: progress < 0.35
-                                ? AppColors.error500
-                                : (progress < 0.75
-                                      ? AppColors
-                                            .warning700 // Darker yellow for text readability
-                                      : AppColors.success500),
+                        Positioned(
+                          bottom: -1,
+                          right: -1,
+                          child: Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: _accentDot,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: c.surface,
+                                width: 2,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ],
-
-                  const SizedBox(height: 12),
-
-                  // ── Row 2: Last Activity / status singkat ──
-                  if (ws.activityCue != null || ws.lastActivity.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 2),
-                      child: Text(
-                        ws.activityCue ?? ws.lastActivity,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 13,
-                          color: hasUnread
-                              ? c.textPrimary
-                              : c.textSecondary,
-                          fontWeight: hasUnread
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          height: 1.45,
-                        ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ws.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: c.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            ws.category,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: c.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-                  ],
-
-                  // ── Row 3: Bottom badges: unread message, task count ──
-                  Row(
-                    children: [
-                      // Horizontal items stack
-                      Expanded(
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (ws.unreadCount > 0)
-                              _WorkspaceMetaPill(
-                                icon: FluentIcons.chat_24_regular,
-                                value: '${ws.unreadCount} unread',
-                                color: _blue,
-                                background: _blueBg,
-                              ),
-                            if (pending > 0)
-                              _WorkspaceMetaPill(
-                                icon: FluentIcons.task_list_ltr_24_regular,
-                                value: '$pending task',
-                                color: _amber,
-                                background: _amberBg,
-                              ),
-                          ],
+                    if (ws.unreadCount > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _blue,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text(
+                          '${ws.unreadCount}',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.white,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // Last updated metadata
+                    ],
+                    const SizedBox(width: 4),
+                    Icon(
+                      FluentIcons.chevron_right_24_regular,
+                      size: 18,
+                      color: c.textTertiary,
+                    ),
+                  ],
+                ),
+
+                // ── Row 2: Activity + Members + Timestamp ──
+                if (ws.activityCue != null || ws.lastActivity.isNotEmpty || ws.members.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          ws.activityCue ?? ws.lastActivity,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 12,
+                            color: ws.unreadCount > 0
+                                ? c.textPrimary
+                                : c.textSecondary,
+                            fontWeight: ws.unreadCount > 0
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      if (ws.members.isNotEmpty) ...[
+                        Text(
+                          '${ws.members.length} anggota',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: c.textTertiary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       Text(
                         ws.lastActivity,
                         style: AppFonts.satoshiStyle(
@@ -639,7 +471,7 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
                     ],
                   ),
                 ],
-              ),
+              ],
             ),
           ),
         ),
@@ -648,46 +480,4 @@ class _WorkspaceRowState extends State<_WorkspaceRow> {
   }
 }
 
-class _WorkspaceMetaPill extends StatelessWidget {
-  const _WorkspaceMetaPill({
-    required this.icon,
-    required this.value,
-    required this.color,
-    required this.background,
-  });
 
-  final IconData icon;
-  final String value;
-  final Color color;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs,
-        vertical: 5,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-        border: Border.all(color: color.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: AppFonts.satoshiStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

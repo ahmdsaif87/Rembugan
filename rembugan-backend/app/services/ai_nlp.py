@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from groq import Groq
 from dotenv import load_dotenv
 from mistralai.client import Mistral
@@ -40,6 +41,12 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     except Exception as e:
         logger.exception("Gagal memproses OCR")
         return ""
+
+def _clean_json_response(text: str) -> str:
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+    return text.strip()
 
 def process_resume_with_ai(raw_text: str):
     """
@@ -89,7 +96,8 @@ Format:
         
         result_text = response.choices[0].message.content.strip()
         logger.info("AI response: %s", result_text[:300])
-        
+
+        result_text = _clean_json_response(result_text)
         parsed_data = json.loads(result_text)
         return parsed_data
         
@@ -136,6 +144,7 @@ Format JSON:
         )
         
         result_text = response.choices[0].message.content.strip()
+        result_text = _clean_json_response(result_text)
         parsed_data = json.loads(result_text)
         return parsed_data
         

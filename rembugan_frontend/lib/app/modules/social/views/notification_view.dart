@@ -110,6 +110,49 @@ class _NotificationViewState extends State<NotificationView> {
     };
   }
 
+  Widget _buildEmptyState(AppC c) {
+    final icon = switch (_tab) {
+      _NotificationTab.activity => FluentIcons.heart_24_regular,
+      _NotificationTab.collaboration => FluentIcons.people_team_24_regular,
+      _NotificationTab.all => FluentIcons.alert_24_regular,
+    };
+    final title = switch (_tab) {
+      _NotificationTab.activity => 'Belum ada aktivitas',
+      _NotificationTab.collaboration => 'Belum ada kolaborasi',
+      _NotificationTab.all => 'Belum ada notifikasi',
+    };
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 64, horizontal: AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: c.grey300),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: AppFonts.satoshiStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Notifikasi akan muncul di sini saat ada yang berinteraksi denganmu.',
+              textAlign: TextAlign.center,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                color: c.textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
@@ -142,20 +185,23 @@ class _NotificationViewState extends State<NotificationView> {
             onChanged: (tab) => setState(() => _tab = tab),
           ),
           const SizedBox(height: 16),
-          if (_tab == _NotificationTab.all) ...[
+          if (_visibleItems.isNotEmpty && _tab == _NotificationTab.all) ...[
             _PriorityBanner(count: collabCount),
             const SizedBox(height: 14),
           ],
-          ...List.generate(_visibleItems.length, (index) {
-            final item = _visibleItems[index];
-            final isLast = index == _visibleItems.length - 1;
-            return Column(
-              children: [
-                _NotificationTile(item: item),
-                if (!isLast) Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
-              ],
-            );
-          }),
+          if (_visibleItems.isEmpty)
+            _buildEmptyState(c)
+          else
+            ...List.generate(_visibleItems.length, (index) {
+              final item = _visibleItems[index];
+              final isLast = index == _visibleItems.length - 1;
+              return Column(
+                children: [
+                  _NotificationTile(item: item),
+                  if (!isLast) Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
+                ],
+              );
+            }),
         ],
       ),
     );

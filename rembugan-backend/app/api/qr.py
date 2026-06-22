@@ -6,7 +6,7 @@ from prisma import Prisma
 
 from app.core.database import get_db
 from app.core.security import verify_token
-from app.core.constants import ROLE_ADMIN, ROLE_ANGGOTA
+from app.core.constants import ROLE_ADMIN, ROLE_ANGGOTA, PJ_ONGOING
 
 APP_URL = os.getenv("APP_URL", "https://rembugan.app")
 
@@ -165,6 +165,18 @@ async def join_project_via_invite(
                 "role": ROLE_ANGGOTA,
         }
     )
+
+    current_members = await db.projectmember.count(
+        where={"project_id": invite.project_id}
+    )
+    project = await db.project.find_unique(
+        where={"id": invite.project_id}
+    )
+    if project and project.total_slots is not None and current_members >= project.total_slots:
+        await db.project.update(
+            where={"id": invite.project_id},
+            data={"status": PJ_ONGOING},
+        )
 
     return {
         "status": "success",

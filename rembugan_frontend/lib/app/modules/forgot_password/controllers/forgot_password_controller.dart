@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/services/auth_service.dart';
-import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_toast.dart';
 
 class ForgotPasswordController extends GetxController {
   final _auth = Get.find<AuthService>();
@@ -12,21 +12,22 @@ class ForgotPasswordController extends GetxController {
   final step = 0.obs;
   final resendSeconds = 60.obs;
 
-  final nimController = TextEditingController();
+  final emailController = TextEditingController();
   final otpControllers = List.generate(6, (_) => TextEditingController());
   final otpFocusNodes = List.generate(6, (_) => FocusNode());
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  final isLoading = false.obs;
   final isNewPasswordHidden = true.obs;
   final isConfirmPasswordHidden = true.obs;
 
-  final formKeyNim = GlobalKey<FormState>();
+  final formKeyEmail = GlobalKey<FormState>();
   final formKeyReset = GlobalKey<FormState>();
 
   Timer? _resendTimer;
 
-  String get nim => nimController.text.trim();
+  String get email => emailController.text.trim();
 
   void goBack() {
     if (step.value == 0) {
@@ -37,11 +38,14 @@ class ForgotPasswordController extends GetxController {
   }
 
   void onSendOtp() async {
-    if (formKeyNim.currentState?.validate() != true) return;
+    if (formKeyEmail.currentState?.validate() != true) return;
 
-    final error = await _auth.forgotPasswordSendOtp(nim);
+    isLoading.value = true;
+    final error = await _auth.forgotPasswordSendOtp(email);
+    isLoading.value = false;
+
     if (error != null) {
-      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(error, title: 'Gagal');
       return;
     }
 
@@ -60,11 +64,7 @@ class ForgotPasswordController extends GetxController {
   void onVerifyOtp() {
     final code = otpControllers.map((c) => c.text).join();
     if (code.length != otpControllers.length) {
-      Get.snackbar(
-        'Kode belum lengkap',
-        'Masukkan 6 digit kode yang dikirim ke email Anda.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppToast.warning('Masukkan 6 digit kode yang dikirim ke email Anda.', title: 'Kode belum lengkap');
       return;
     }
     FocusManager.instance.primaryFocus?.unfocus();
@@ -79,9 +79,12 @@ class ForgotPasswordController extends GetxController {
     }
     otpFocusNodes.first.requestFocus();
 
-    final error = await _auth.forgotPasswordSendOtp(nim);
+    isLoading.value = true;
+    final error = await _auth.forgotPasswordSendOtp(email);
+    isLoading.value = false;
+
     if (error != null) {
-      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(error, title: 'Gagal');
       return;
     }
 
@@ -98,28 +101,20 @@ class ForgotPasswordController extends GetxController {
 
   void onResetPassword() async {
     if (formKeyReset.currentState?.validate() != true) return;
-    if (newPasswordController.text != confirmPasswordController.text) {
-      Get.snackbar(
-        'Kata sandi tidak cocok',
-        'Pastikan kedua kata sandi yang dimasukkan sama.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.danger50,
-        colorText: AppColors.danger700,
-      );
-      return;
-    }
 
     final otp = otpControllers.map((c) => c.text).join();
     FocusManager.instance.primaryFocus?.unfocus();
 
+    isLoading.value = true;
     final error = await _auth.forgotPasswordReset(
-      nim: nim,
+      email: email,
       otp: otp,
       newPassword: newPasswordController.text,
     );
+    isLoading.value = false;
 
     if (error != null) {
-      Get.snackbar('Gagal', error, snackPosition: SnackPosition.BOTTOM);
+      AppToast.error(error, title: 'Gagal');
       return;
     }
 
@@ -147,7 +142,7 @@ class ForgotPasswordController extends GetxController {
   @override
   void onClose() {
     _resendTimer?.cancel();
-    nimController.dispose();
+    emailController.dispose();
     for (final c in otpControllers) {
       c.dispose();
     }

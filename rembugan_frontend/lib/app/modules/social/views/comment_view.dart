@@ -2,7 +2,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme.dart';
-import 'social_components.dart';
+import '../../../core/widgets/app_avatar.dart';
 
 void showCommentsSheet(BuildContext context) {
   showModalBottomSheet<void>(
@@ -10,7 +10,7 @@ void showCommentsSheet(BuildContext context) {
     isScrollControlled: true,
     backgroundColor: AppColors.transparent,
     builder: (_) => const FractionallySizedBox(
-      heightFactor: 0.94,
+      heightFactor: 0.75,
       child: ClipRRect(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         child: CommentView(),
@@ -69,19 +69,8 @@ class CommentView extends StatelessWidget {
             Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 14),
-                    child: SocialPostCard(
-                      name: 'Cameron Williamson',
-                      handle: '@cameron - 2j',
-                      avatarUrl: 'https://i.pravatar.cc/100?img=33',
-                      body:
-                          'Kami sedang mencari Flutter dev untuk bantu polishing flow onboarding dan chat. Ada yang tertarik kolaborasi minggu ini?',
-                    ),
-                  ),
-                  Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
                   const _CommentTile(
                     name: 'Dede Fernanda',
                     avatarUrl: 'https://i.pravatar.cc/100?img=60',
@@ -90,11 +79,15 @@ class CommentView extends StatelessWidget {
                     replies: [
                       _ReplyTile(
                         name: 'Cameron',
+                        avatarUrl: 'https://i.pravatar.cc/100?img=15',
                         body: 'Sudah. Nanti aku share board task-nya.',
                       ),
                     ],
                   ),
-                  Divider(height: 1, indent: 64, color: c.border.withValues(alpha: 0.4)),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 72),
+                    child: Divider(height: 1, color: c.border.withValues(alpha: 0.3)),
+                  ),
                   const _CommentTile(
                     name: 'Raka Pratama',
                     avatarUrl: 'https://i.pravatar.cc/100?img=47',
@@ -133,10 +126,10 @@ class _CommentTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
-          ),
+              CircleAvatar(
+                radius: 18,
+                backgroundImage: NetworkImage(avatarUrl),
+              ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -201,42 +194,83 @@ class _CommentTile extends StatelessWidget {
 }
 
 class _ReplyTile extends StatelessWidget {
-  const _ReplyTile({required this.name, required this.body});
+  const _ReplyTile({
+    required this.name,
+    required this.body,
+    this.avatarUrl,
+  });
 
   final String name;
   final String body;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.md, top: 2),
+      padding: const EdgeInsets.only(left: AppSpacing.sm, top: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(width: 1, height: 42, color: c.border),
-          const SizedBox(width: 12),
+          Container(
+            width: 2,
+            height: 44,
+            margin: const EdgeInsets.only(top: 4),
+            decoration: BoxDecoration(
+              color: c.border,
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (avatarUrl != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: CircleAvatar(
+                radius: 10,
+                backgroundImage: NetworkImage(avatarUrl!),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: CircleAvatar(
+                radius: 10,
+                backgroundColor: c.grey100,
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(width: 6),
           Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$name ',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: c.textPrimary,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$name ',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: c.textPrimary,
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: body,
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 12,
-                      color: c.textSecondary,
-                      height: 1.4,
+                    TextSpan(
+                      text: body,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 12,
+                        color: c.textSecondary,
+                        height: 1.4,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -271,7 +305,7 @@ class _CommentAction extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: c.textTertiary),
+            Icon(icon, size: 16, color: c.textSecondary),
             const SizedBox(width: 5),
             Text(
               label,
@@ -306,10 +340,7 @@ class _ReplyComposer extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 18,
-            backgroundImage: AssetImage('lib/assets/img/avatar.png'),
-          ),
+          const AppAvatar(radius: 18),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -319,7 +350,7 @@ class _ReplyComposer extends StatelessWidget {
                 hintText: 'Tulis komentar...',
                 hintStyle: AppFonts.satoshiStyle(
                   fontSize: 13.5,
-                  color: c.textTertiary.withValues(alpha: 0.6),
+                  color: c.textTertiary,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
@@ -354,20 +385,24 @@ class _ReplyComposer extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () {},
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primary500,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Center(
-                child: Icon(
-                  FluentIcons.send_24_filled,
-                  size: 16,
-                  color: c.surface,
+          Material(
+            color: AppColors.transparent,
+            child: InkWell(
+              onTap: () {},
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary500,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Center(
+                  child: Icon(
+                    FluentIcons.send_24_filled,
+                    size: 16,
+                    color: c.surface,
+                  ),
                 ),
               ),
             ),

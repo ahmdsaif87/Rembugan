@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../controllers/room_chat_controller.dart';
 
@@ -77,12 +78,15 @@ class RoomChatView extends GetView<RoomChatController> {
       backgroundColor: c.surface.withValues(alpha: 0.96),
       elevation: 0,
       surfaceTintColor: AppColors.transparent,
-      leading: IconButton(
-        icon: Icon(
-          FluentIcons.chevron_left_24_regular,
-          color: c.textPrimary,
+      leading: Tooltip(
+        message: 'Kembali',
+        child: IconButton(
+          icon: Icon(
+            FluentIcons.chevron_left_24_regular,
+            color: c.textPrimary,
+          ),
+          onPressed: () => Get.back(),
         ),
-        onPressed: () => Get.back(),
       ),
       title: Row(
         children: [
@@ -103,28 +107,13 @@ class RoomChatView extends GetView<RoomChatController> {
                     color: c.textPrimary,
                   ),
                 ),
-                Text(
-                  'Typing...',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                const SizedBox.shrink(),
               ],
             ),
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            FluentIcons.more_vertical_24_regular,
-            color: c.textPrimary,
-          ),
-          onPressed: () {},
-        ),
-      ],
+      actions: const [],
     );
   }
 
@@ -147,7 +136,10 @@ class RoomChatView extends GetView<RoomChatController> {
         if (!isMe) ...[
           CircleAvatar(
             radius: 14,
-            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+            backgroundImage: avatarUrl.startsWith('http')
+                ? NetworkImage(avatarUrl) as ImageProvider
+                : AssetImage(avatarUrl),
+            backgroundColor: c.grey100,
           ),
           const SizedBox(width: 8),
         ],
@@ -165,7 +157,7 @@ class RoomChatView extends GetView<RoomChatController> {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: isMe ? AppColors.textPrimary : c.surface,
+                  color: isMe ? AppColors.primary500 : c.surface,
                   border: isMe ? null : Border.all(color: c.border),
                   boxShadow: isMe ? AppShadows.soft : const [],
                   borderRadius: BorderRadius.only(
@@ -195,7 +187,6 @@ class RoomChatView extends GetView<RoomChatController> {
                     if (sharedPost != null) ...[
                       if (message.isNotEmpty) const SizedBox(height: 10),
                       Container(
-                        width: 250,
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
                           color: c.surface,
@@ -396,7 +387,10 @@ class RoomChatView extends GetView<RoomChatController> {
           const SizedBox(width: 8),
           CircleAvatar(
             radius: 14,
-            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
+            backgroundImage: avatarUrl.startsWith('http')
+                ? NetworkImage(avatarUrl) as ImageProvider
+                : AssetImage(avatarUrl),
+            backgroundColor: c.grey100,
           ),
         ],
       ],
@@ -469,18 +463,22 @@ class RoomChatView extends GetView<RoomChatController> {
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => controller.removeAttachment(),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.xxs),
-                    decoration: BoxDecoration(
-                      color: c.border,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      FluentIcons.dismiss_12_filled,
-                      color: c.textSecondary,
-                      size: 12,
+                Material(
+                  color: AppColors.transparent,
+                  child: InkWell(
+                    onTap: () => controller.removeAttachment(),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSpacing.xxs),
+                      decoration: BoxDecoration(
+                        color: c.border,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        FluentIcons.dismiss_12_filled,
+                        color: c.textSecondary,
+                        size: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -499,88 +497,79 @@ class RoomChatView extends GetView<RoomChatController> {
           child: Row(
             children: [
               // Plus/Attachment Button
-              GestureDetector(
-                onTap: () {
-                  Get.bottomSheet(
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: c.surfaceElevated,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(AppRadius.lg),
-                          topRight: Radius.circular(AppRadius.lg),
+              Material(
+                color: AppColors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Get.bottomSheet(
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: c.surfaceElevated,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(AppRadius.lg),
+                            topRight: Radius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: c.border,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Lampirkan File & Dokumen',
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: c.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            AppListItem(
+                              leading: const Icon(
+                                FluentIcons.image_24_regular,
+                                color: AppColors.primary,
+                              ),
+                              title: 'Foto & Media',
+                              onTap: () {
+                                controller.attachFile(
+                                  'Design_Mockup.png',
+                                  '2.4 MB',
+                                );
+                                Get.back();
+                                AppToast.success('Design_Mockup.png berhasil dipilih', title: 'File Dilampirkan');
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            AppListItem(
+                              leading: const Icon(
+                                FluentIcons.document_24_regular,
+                                color: AppColors.primary,
+                              ),
+                              title: 'Dokumen & File PDF',
+                              onTap: () {
+                                controller.attachFile(
+                                  'Draft_Proposal_v2.pdf',
+                                  '1.8 MB',
+                                );
+                                Get.back();
+                                AppToast.success('Draft_Proposal_v2.pdf berhasil dipilih', title: 'File Dilampirkan');
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: c.border,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Lampirkan File & Dokumen',
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: c.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          AppListItem(
-                            leading: const Icon(
-                              FluentIcons.image_24_regular,
-                              color: AppColors.primary,
-                            ),
-                            title: 'Foto & Media',
-                            onTap: () {
-                              controller.attachFile(
-                                'Design_Mockup.png',
-                                '2.4 MB',
-                              );
-                              Get.back();
-                              Get.snackbar(
-                                'File Dilampirkan',
-                                'Design_Mockup.png berhasil dipilih',
-                                snackPosition: SnackPosition.TOP,
-                                backgroundColor: AppColors.primary500,
-                                colorText: AppColors.white,
-                              );
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          AppListItem(
-                            leading: const Icon(
-                              FluentIcons.document_24_regular,
-                              color: AppColors.primary,
-                            ),
-                            title: 'Dokumen & File PDF',
-                            onTap: () {
-                              controller.attachFile(
-                                'Draft_Proposal_v2.pdf',
-                                '1.8 MB',
-                              );
-                              Get.back();
-                              Get.snackbar(
-                                'File Dilampirkan',
-                                'Draft_Proposal_v2.pdf berhasil dipilih',
-                                snackPosition: SnackPosition.TOP,
-                                backgroundColor: AppColors.primary500,
-                                colorText: AppColors.white,
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Container(
                     width: 44,
                     height: 44,
@@ -595,6 +584,7 @@ class RoomChatView extends GetView<RoomChatController> {
                       size: 24,
                     ),
                   ),
+                ),
               ),
               const SizedBox(width: 12),
 
@@ -645,20 +635,24 @@ class RoomChatView extends GetView<RoomChatController> {
 
               // Send Button
               const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () => controller.sendMessage(),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary500,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      FluentIcons.send_24_filled,
-                      color: AppColors.white,
-                      size: 20,
+              Material(
+                color: AppColors.transparent,
+                child: InkWell(
+                  onTap: () => controller.sendMessage(),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary500,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        FluentIcons.send_24_filled,
+                        color: AppColors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),

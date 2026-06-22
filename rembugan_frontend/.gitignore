@@ -11,6 +11,10 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+.agents/
+.cursor/
+.gemini/
+.impeccable/
 
 # IntelliJ related
 *.iml

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../config/api_config.dart';
+import '../widgets/app_toast.dart';
 
 class ApiClient extends GetxService {
   late final dio.Dio _dio;
@@ -20,6 +21,7 @@ class ApiClient extends GetxService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
     ));
 
@@ -53,6 +55,19 @@ class ApiClient extends GetxService {
       _dio.patch(path, data: data);
 
   Future<dio.Response> delete(String path) => _dio.delete(path);
+
+  Future<String?> uploadImageBytes(
+    String path,
+    Uint8List bytes,
+    String filename,
+  ) async {
+    final formData = dio.FormData.fromMap({
+      'file': dio.MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    final res = await _dio.post(path, data: formData);
+    final data = res.data['data'] as Map<String, dynamic>?;
+    return data?['url'] as String?;
+  }
 }
 
 class _AuthInterceptor extends dio.Interceptor {
@@ -72,10 +87,14 @@ class _AuthInterceptor extends dio.Interceptor {
   @override
   void onError(dio.DioException err, dio.ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      await _storage.delete(key: ApiConfig.tokenKey);
-      Get.offAllNamed('/onboarding');
-      Get.snackbar('Sesi Berakhir', 'Silakan login kembali.');
-      return;
+      final path = err.requestOptions.path;
+      final isAuthEndpoint = path == '/auth/login' || path == '/auth/register' || path == '/auth/register/verify-otp';
+      if (!isAuthEndpoint) {
+        await _storage.delete(key: ApiConfig.tokenKey);
+        Get.offAllNamed('/onboarding');
+        AppToast.warning('Silakan login kembali.', title: 'Sesi Berakhir');
+        return;
+      }
     }
     handler.next(err);
   }
@@ -87,12 +106,12 @@ class _ErrorInterceptor extends dio.Interceptor {
     final statusCode = err.response?.statusCode;
 
     if (statusCode == 429) {
-      Get.snackbar('Terlalu Banyak Request', 'Coba lagi dalam beberapa menit.');
+      AppToast.warning('Coba lagi dalam beberapa menit.', title: 'Terlalu Banyak Request');
     } else if (err.type == dio.DioExceptionType.connectionTimeout ||
         err.type == dio.DioExceptionType.receiveTimeout) {
-      Get.snackbar('Timeout', 'Koneksi lambat. Coba lagi.');
+      AppToast.warning('Koneksi lambat. Coba lagi.', title: 'Timeout');
     } else if (err.type == dio.DioExceptionType.connectionError) {
-      Get.snackbar('Tidak Ada Koneksi', 'Periksa koneksi internet kamu.');
+      AppToast.warning('Periksa koneksi internet kamu.', title: 'Tidak Ada Koneksi');
     }
 
     handler.next(err);

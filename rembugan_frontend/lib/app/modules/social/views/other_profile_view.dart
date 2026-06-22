@@ -2,7 +2,10 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/api_client.dart';
+import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
 
 class OtherProfileView extends StatefulWidget {
   const OtherProfileView({super.key});
@@ -14,17 +17,101 @@ class OtherProfileView extends StatefulWidget {
 class _OtherProfileViewState extends State<OtherProfileView> {
   int selectedTabIndex = 0;
   bool isFollowing = false;
+  bool _isLoading = true;
+
+  final _api = Get.find<ApiClient>();
+
+  String _id = '';
+  String _name = '';
+  String _role = '';
+  String _avatarUrl = '';
+  String _coverUrl = '';
+  String _bio = '';
+  List<String> _tags = [];
+  List<ProfileExperience> _experiences = [];
+  List<Map<String, dynamic>> _portfolios = [];
+  List<Map<String, dynamic>> _projectHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final args = Get.arguments as Map<String, dynamic>?;
+    _id = args?['id'] as String? ?? '';
+    _name = args?['name'] as String? ?? '';
+    _role = args?['role'] as String? ?? '';
+    _avatarUrl = args?['avatarUrl'] as String? ?? '';
+    _tags = (args?['tags'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+
+    if (_id.isNotEmpty) {
+      _fetchProfile();
+    } else {
+      _isLoading = false;
+    }
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final res = await _api.get('/profile/$_id');
+      final data = res.data['data'] as Map<String, dynamic>?;
+      if (data != null) {
+        final skills = (data['skills'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+        final experiences = (data['experiences'] as List<dynamic>?)
+                ?.map(
+                    (e) => ProfileExperience.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [];
+        final portfolios = (data['portfolios'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>()
+                .toList() ??
+            [];
+        final projectHistory = (data['project_history'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>()
+                .toList() ??
+            [];
+
+        setState(() {
+          _name = data['full_name'] as String? ?? _name;
+          _role = data['interest'] as String? ?? _role;
+          _avatarUrl = data['photo_url'] as String? ?? _avatarUrl;
+          _coverUrl = data['cover_url'] as String? ?? _coverUrl;
+          _bio = data['bio'] as String? ?? '';
+          _tags = skills;
+          _experiences = experiences;
+          _portfolios = portfolios;
+          _projectHistory = projectHistory;
+          _isLoading = false;
+        });
+        return;
+      }
+    } catch (_) {}
+    setState(() => _isLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: c.background,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: c.background,
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
           _ProfileCover(
-            avatarAsset: 'lib/assets/img/avatar.png',
+            avatarUrl: _avatarUrl,
+            coverUrl: _coverUrl,
             onBack: () => Get.back(),
             onMore: () {},
           ),
@@ -33,17 +120,21 @@ class _OtherProfileViewState extends State<OtherProfileView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _ProfileIdentity(),
-                const SizedBox(height: 12),
-                Text(
-                  '1.2K pengikut  9 Kolaborasi',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: c.grey900,
+                _ProfileIdentity(name: _name, role: _role),
+                if (_bio.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    _bio,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13,
+                      height: 1.32,
+                      color: c.grey900,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
+                ],
+                const SizedBox(height: 12),
                 _ProfileActions(
                   isFollowing: isFollowing,
                   onFollowToggle: () {
@@ -65,7 +156,16 @@ class _OtherProfileViewState extends State<OtherProfileView> {
                   },
                 ),
                 const SizedBox(height: 14),
-                _ProfileTabContent(activeIndex: selectedTabIndex),
+                _ProfileTabContent(
+                  activeIndex: selectedTabIndex,
+                  name: _name,
+                  role: _role,
+                  avatarUrl: _avatarUrl,
+                  tags: _tags,
+                  experiences: _experiences,
+                  portfolios: _portfolios,
+                  projectHistory: _projectHistory,
+                ),
               ],
             ),
           ),
@@ -77,12 +177,14 @@ class _OtherProfileViewState extends State<OtherProfileView> {
 
 class _ProfileCover extends StatelessWidget {
   const _ProfileCover({
-    required this.avatarAsset,
+    this.avatarUrl,
+    this.coverUrl = '',
     required this.onBack,
     required this.onMore,
   });
 
-  final String avatarAsset;
+  final String? avatarUrl;
+  final String coverUrl;
   final VoidCallback onBack;
   final VoidCallback onMore;
 
@@ -97,13 +199,9 @@ class _ProfileCover extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'lib/assets/img/contoh poster4.jpeg',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(color: c.surface.withValues(alpha: 0.18)),
+            child: coverUrl.isNotEmpty
+                ? Image.network(coverUrl, fit: BoxFit.cover)
+                : const AppCoverPlaceholder(),
           ),
           Positioned(
             top: topPadding + 16,
@@ -119,22 +217,18 @@ class _ProfileCover extends StatelessWidget {
             child: _ProfileCircleButton(
               icon: FluentIcons.more_horizontal_24_regular,
               onTap: onMore,
+              tooltip: 'Lainnya',
             ),
           ),
           Positioned(
             left: 16,
             bottom: -46,
             child: Container(
-              width: 94,
-              height: 94,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.white, width: 3),
               ),
-              child: CircleAvatar(
-                backgroundImage: AssetImage(avatarAsset),
-                backgroundColor: c.grey100,
-              ),
+              child: AppAvatar(photoUrl: avatarUrl, radius: 47),
             ),
           ),
         ],
@@ -144,31 +238,45 @@ class _ProfileCover extends StatelessWidget {
 }
 
 class _ProfileCircleButton extends StatelessWidget {
-  const _ProfileCircleButton({required this.icon, required this.onTap});
+  const _ProfileCircleButton({required this.icon, required this.onTap, this.tooltip});
 
   final IconData icon;
   final VoidCallback onTap;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: c.surface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Icon(icon, size: 23, color: c.grey900),
+    final btn = Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: c.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Icon(icon, size: 23, color: c.grey900),
+    );
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: tooltip != null
+            ? Tooltip(message: tooltip!, child: btn)
+            : btn,
       ),
     );
   }
 }
 
 class _ProfileIdentity extends StatelessWidget {
-  const _ProfileIdentity();
+  const _ProfileIdentity({
+    required this.name,
+    required this.role,
+  });
+
+  final String name;
+  final String role;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +285,7 @@ class _ProfileIdentity extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Raka Pratama',
+          name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppFonts.satoshiStyle(
@@ -189,29 +297,11 @@ class _ProfileIdentity extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          'D4 Teknik Informatika',
+          role,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: c.grey500,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'UI/UX Designer dan product thinker. Mendesain produk kolaborasi kampus dengan fokus pada clarity, flow, dan UX research.',
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            height: 1.32,
-            color: c.grey900,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'github.com/raka-design',
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.info500,
           ),
         ),
       ],
@@ -220,11 +310,12 @@ class _ProfileIdentity extends StatelessWidget {
 }
 
 class _SkillWrap extends StatelessWidget {
-  const _SkillWrap();
+  const _SkillWrap({required this.skills});
+
+  final List<String> skills;
 
   @override
   Widget build(BuildContext context) {
-    final skills = ['Figma', 'Research', 'Design System'];
     return Wrap(
       spacing: 7,
       runSpacing: 8,
@@ -407,40 +498,90 @@ class _ProfileTab extends StatelessWidget {
 }
 
 class _ProfileTabContent extends StatelessWidget {
-  const _ProfileTabContent({required this.activeIndex});
+  const _ProfileTabContent({
+    required this.activeIndex,
+    required this.name,
+    required this.role,
+    required this.avatarUrl,
+    required this.tags,
+    required this.experiences,
+    required this.portfolios,
+    required this.projectHistory,
+  });
 
   final int activeIndex;
+  final String name;
+  final String role;
+  final String avatarUrl;
+  final List<String> tags;
+  final List<ProfileExperience> experiences;
+  final List<Map<String, dynamic>> portfolios;
+  final List<Map<String, dynamic>> projectHistory;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
+
     if (activeIndex == 1) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-        alignment: Alignment.center,
-        child: Text(
-          'Belum ada riwayat pengalaman',
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            color: c.textTertiary,
+      if (experiences.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          alignment: Alignment.center,
+          child: Text(
+            'Belum ada riwayat pengalaman',
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              color: c.textTertiary,
+            ),
           ),
-        ),
-      );
+        );
+      }
+      return _ExperienceList(experiences: experiences);
     }
 
     if (activeIndex == 2) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.0),
-        child: _SkillWrap(),
+      if (tags.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          alignment: Alignment.center,
+          child: Text(
+            'Belum ada keahlian',
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              color: c.textTertiary,
+            ),
+          ),
+        );
+      }
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: _SkillWrap(skills: tags),
       );
     }
 
     if (activeIndex == 3) {
+      if (projectHistory.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+          alignment: Alignment.center,
+          child: Text(
+            'Belum ada riwayat kolaborasi',
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              color: c.textTertiary,
+            ),
+          ),
+        );
+      }
+      return _ProjectHistoryList(projects: projectHistory);
+    }
+
+    if (portfolios.isEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         alignment: Alignment.center,
         child: Text(
-          'Belum ada riwayat kolaborasi',
+          'Belum ada postingan',
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             color: c.textTertiary,
@@ -449,40 +590,171 @@ class _ProfileTabContent extends StatelessWidget {
       );
     }
 
-    return const Column(
-      children: [
-        _PostCard(
-          avatarAsset: 'lib/assets/img/avatar.png',
-          name: 'Raka Pratama',
-          subtitle: 'D4 Teknik Informatika - 1 jam lalu',
-          content:
-              'Sedang eksplorasi pattern untuk onboarding komunitas kampus. Yang paling penting: user cepat paham value tanpa kebanyakan teks.',
-          likeCount: '142',
-          commentCount: '24',
-        ),
-      ],
+      return Column(
+        children: portfolios.map((p) {
+          return _PostCard(
+            avatarUrl: avatarUrl,
+            name: name,
+            subtitle: '$role - ${_formatPortfolioDate(p['created_at'])}',
+            content: p['content'] as String? ?? '',
+            likeCount: '${p['likes_count'] ?? 0}',
+            commentCount: '${p['comments_count'] ?? 0}',
+          );
+        }).toList(),
+      );
+  }
+}
+
+class _ExperienceList extends StatelessWidget {
+  const _ExperienceList({required this.experiences});
+
+  final List<ProfileExperience> experiences;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: experiences.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final exp = experiences[index];
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: c.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                exp.title,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary,
+                ),
+              ),
+              if (exp.organization.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  exp.organization,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 12,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ],
+              if (exp.duration.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  exp.duration,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    color: c.textTertiary,
+                  ),
+                ),
+              ],
+              if (exp.description.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  exp.description,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    color: c.grey700,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ProjectHistoryList extends StatelessWidget {
+  const _ProjectHistoryList({required this.projects});
+
+  final List<Map<String, dynamic>> projects;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: projects.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final project = projects[index];
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: c.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                project['title'] as String? ?? '',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary,
+                ),
+              ),
+              if (project['role'] != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Role: ${project['role']}',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 12,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ],
+              if (project['status'] != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Status: ${project['status']}',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    color: c.textTertiary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
 class _PostCard extends StatefulWidget {
   const _PostCard({
-    required this.avatarAsset,
+    this.avatarUrl,
     required this.name,
     required this.subtitle,
     required this.content,
-    this.hasImage = false,
-    this.imageUrl,
     required this.likeCount,
     required this.commentCount,
   });
 
-  final String avatarAsset;
+  final String? avatarUrl;
   final String name;
   final String subtitle;
   final String content;
-  final bool hasImage;
-  final String? imageUrl;
   final String likeCount;
   final String commentCount;
 
@@ -539,11 +811,7 @@ class _PostCardState extends State<_PostCard> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: c.primarySoft,
-                    backgroundImage: AssetImage(widget.avatarAsset),
-                  ),
+                  AppAvatar(photoUrl: widget.avatarUrl, radius: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -588,18 +856,6 @@ class _PostCardState extends State<_PostCard> {
                   height: 1.45,
                 ),
               ),
-              if (widget.hasImage && widget.imageUrl != null) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: Image.network(
-                    widget.imageUrl!,
-                    width: double.infinity,
-                    height: 160,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -675,5 +931,22 @@ class _PostCardState extends State<_PostCard> {
         ),
       ),
     );
+  }
+}
+
+String _formatPortfolioDate(dynamic date) {
+  if (date == null) return '';
+  try {
+    final dt = DateTime.parse(date.toString());
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inHours < 1) return '${diff.inMinutes}m lalu';
+    if (diff.inDays < 1) return '${diff.inHours}j lalu';
+    if (diff.inDays < 30) return '${diff.inDays}h lalu';
+    final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  } catch (_) {
+    return '';
   }
 }

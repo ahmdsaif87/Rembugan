@@ -62,17 +62,17 @@ class TestMatchmaking:
 
 
 class TestStorage:
-    def test_upload_success(self, mock_cloudinary):
-        url = upload_image_to_cloudinary(b"test-image-bytes")
+    async def test_upload_success(self, mock_cloudinary):
+        url = await upload_image_to_cloudinary(b"test-image-bytes")
         assert url == "https://res.cloudinary.com/test/image.jpg"
 
-    def test_upload_raises_http_exception(self):
+    async def test_upload_raises_http_exception(self):
         from unittest.mock import patch
         with patch("app.services.storage.cloudinary.uploader.upload") as mock:
             mock.side_effect = Exception("Upload failed")
             from fastapi import HTTPException
             with pytest.raises(HTTPException):
-                upload_image_to_cloudinary(b"test")
+                await upload_image_to_cloudinary(b"test")
 
 
 class TestAiVision:
@@ -134,7 +134,7 @@ class TestAiNlp:
         from unittest.mock import patch
         with patch("app.services.ai_nlp.client.chat.completions.create", side_effect=Exception("API Error")):
             result = process_resume_with_ai("Some text")
-            assert result == {"nama": "Tidak Terdeteksi", "skills": [], "bio_suggestion": ""}
+            assert result == {"nama": "Tidak Terdeteksi", "skills": [], "bio_suggestion": "", "experiences": []}
 
     def test_draft_project_success(self, mock_groq):
         from unittest.mock import patch, MagicMock

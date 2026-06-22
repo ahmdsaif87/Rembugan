@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../controllers/team_controller.dart';
+import 'widgets/qr_code_sheet.dart';
 
 class WorkspaceDetailView extends GetView<TeamController> {
   const WorkspaceDetailView({super.key});
@@ -14,7 +17,32 @@ class WorkspaceDetailView extends GetView<TeamController> {
     final c = AppC.of(context);
     return Obx(() {
       final ws = controller.selectedWorkspace.value;
-      if (ws == null) return const SizedBox.shrink();
+      if (ws == null) {
+        return Scaffold(
+          backgroundColor: c.background,
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  FluentIcons.people_team_24_regular,
+                  size: 48,
+                  color: c.grey300,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Workspace tidak ditemukan',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+      ),
+    );
+      }
       return Scaffold(
         backgroundColor: c.background,
         appBar: _appBar(c, ws),
@@ -72,9 +100,12 @@ class WorkspaceDetailView extends GetView<TeamController> {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(FluentIcons.more_horizontal_24_regular, size: 20),
-          onPressed: () => _showWorkspaceActions(Get.context!, ws),
+        Tooltip(
+          message: 'Lainnya',
+          child: IconButton(
+            icon: const Icon(FluentIcons.more_horizontal_24_regular, size: 20),
+            onPressed: () => _showWorkspaceActions(Get.context!, ws),
+          ),
         ),
       ],
     );
@@ -171,11 +202,24 @@ class WorkspaceDetailView extends GetView<TeamController> {
           Navigator.pop(context);
           _showApplicantSheet(context, ws);
         },
+        onViewMembers: () {
+          Navigator.pop(context);
+          _showMemberListSheet(context, ws);
+        },
         onEndCollaboration: () {
           Navigator.pop(context);
           _showEndCollaborationSheet(context, ws);
         },
       ),
+    );
+  }
+
+  void _showMemberListSheet(BuildContext context, WorkspaceModel ws) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => _MemberListSheet(ws: ws, ctrl: controller),
     );
   }
 
@@ -198,12 +242,7 @@ class WorkspaceDetailView extends GetView<TeamController> {
           controller.endCollaboration(ws);
           Navigator.pop(context);
           Get.back<void>();
-          Get.snackbar(
-            'Kolaborasi selesai',
-            '${ws.name} dipindahkan ke History.',
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(AppSpacing.md),
-          );
+          AppToast.success('${ws.name} dipindahkan ke History.', title: 'Kolaborasi selesai');
         },
       ),
     );
@@ -219,12 +258,14 @@ class _WorkspaceActionSheet extends StatelessWidget {
     required this.ws,
     required this.pendingApplicants,
     required this.onManageApplicants,
+    required this.onViewMembers,
     required this.onEndCollaboration,
   });
 
   final WorkspaceModel ws;
   final List<WorkspaceApplicant> pendingApplicants;
   final VoidCallback onManageApplicants;
+  final VoidCallback onViewMembers;
   final VoidCallback onEndCollaboration;
 
   @override
@@ -242,6 +283,26 @@ class _WorkspaceActionSheet extends StatelessWidget {
                 : 'Workspace ini berisi chat tim dan board tugas.',
           ),
           const SizedBox(height: 14),
+          _ActionTile(
+            icon: FluentIcons.qr_code_24_regular,
+            title: 'Bagikan QR Proyek',
+            subtitle: 'Scan untuk bergabung ke workspace ini.',
+            onTap: () {
+              Navigator.pop(context);
+              QrCodeSheet.show(
+                workspaceId: ws.id,
+                workspaceName: ws.name,
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          _ActionTile(
+            icon: FluentIcons.people_team_24_regular,
+            title: 'Anggota Tim',
+            subtitle: '${ws.members.length} anggota dalam proyek ini',
+            onTap: onViewMembers,
+          ),
+          const SizedBox(height: 8),
           if (ws.isOwned) ...[
             _ActionTile(
               icon: FluentIcons.person_add_24_regular,
@@ -264,6 +325,122 @@ class _WorkspaceActionSheet extends StatelessWidget {
               title: 'Kolaborasi aktif',
               subtitle: 'Gunakan Group Chat dan Kanban untuk kerja bareng tim.',
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MemberListSheet extends StatelessWidget {
+  const _MemberListSheet({required this.ws, required this.ctrl});
+
+  final WorkspaceModel ws;
+  final TeamController ctrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return _SheetShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _SheetHandle(),
+          const SizedBox(height: 18),
+          _SheetHeader(
+            title: 'Anggota Tim',
+            subtitle: '${ws.members.length} anggota dalam proyek ini',
+          ),
+          const SizedBox(height: 14),
+          ...ws.members.map((m) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            child: Row(
+              children: [
+                AppAvatar(
+                  photoUrl: m.photoUrl,
+                  radius: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        m.name,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        m.role,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 12,
+                          color: c.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (m.isOnline)
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                if (ws.isOwned && m.role != 'Ketua')
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Keluarkan anggota?'),
+                          content: Text('Yakin ingin mengeluarkan ${m.name} dari proyek?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                Navigator.pop(context);
+                                ctrl.kickMember(m.id);
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.danger700,
+                              ),
+                              child: const Text('Keluarkan'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Icon(
+                        FluentIcons.person_delete_24_regular,
+                        size: 18,
+                        color: AppColors.danger500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          )),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: _SheetButton(
+              label: 'Tutup',
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -319,21 +496,11 @@ class ApplicantSheet extends StatelessWidget {
                     applicant: applicant,
                     onAccept: () {
                       ctrl.approveApplicant(applicant);
-                      Get.snackbar(
-                        'Pelamar diterima',
-                        '${applicant.name} masuk ke workspace.',
-                        snackPosition: SnackPosition.BOTTOM,
-                        margin: const EdgeInsets.all(AppSpacing.md),
-                      );
+                      AppToast.success('${applicant.name} masuk ke workspace.', title: 'Pelamar diterima');
                     },
                     onReject: () {
                       ctrl.rejectApplicant(applicant);
-                      Get.snackbar(
-                        'Lamaran ditolak',
-                        '${applicant.name} tidak masuk ke workspace.',
-                        snackPosition: SnackPosition.BOTTOM,
-                        margin: const EdgeInsets.all(AppSpacing.md),
-                      );
+                      AppToast.info('${applicant.name} tidak masuk ke workspace.', title: 'Lamaran ditolak');
                     },
                   ),
                 ),
@@ -383,7 +550,7 @@ class _ApplicantCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,7 +563,7 @@ class _ApplicantCard extends StatelessWidget {
                         color: c.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       applicant.role,
                       style: AppFonts.satoshiStyle(
@@ -409,7 +576,7 @@ class _ApplicantCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             applicant.note,
             style: AppFonts.satoshiStyle(
@@ -418,10 +585,10 @@ class _ApplicantCard extends StatelessWidget {
               color: c.textSecondary,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: 8,
+            runSpacing: 8,
             children: applicant.skills
                 .map(
                   (skill) => Container(
@@ -656,7 +823,7 @@ class _ActionTile extends StatelessWidget {
                         color: color,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       subtitle,
                       style: AppFonts.satoshiStyle(
@@ -702,7 +869,7 @@ class _SheetButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final color = danger ? AppColors.danger600 : c.textPrimary;
+    final color = danger ? AppColors.danger600 : AppColors.primary500;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -710,7 +877,7 @@ class _SheetButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: outlined ? c.surface : color,
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: outlined ? Border.all(color: c.border) : null,
         ),
         child: Text(
@@ -726,10 +893,30 @@ class _SheetButton extends StatelessWidget {
   }
 }
 
-class _DiscussionTab extends StatelessWidget {
-  _DiscussionTab({required this.ctrl});
+class _DiscussionTab extends StatefulWidget {
+  const _DiscussionTab({required this.ctrl});
   final TeamController ctrl;
-  final TextEditingController _msgCtrl = TextEditingController();
+
+  @override
+  State<_DiscussionTab> createState() => _DiscussionTabState();
+}
+
+class _DiscussionTabState extends State<_DiscussionTab> {
+  late final TextEditingController _msgCtrl;
+  late final TeamController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _msgCtrl = TextEditingController();
+    _ctrl = widget.ctrl;
+  }
+
+  @override
+  void dispose() {
+    _msgCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -741,8 +928,8 @@ class _DiscussionTab extends StatelessWidget {
           child: Obx(
             () => ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              itemCount: ctrl.discussions.length,
-              itemBuilder: (_, i) => _Bubble(msg: ctrl.discussions[i]),
+              itemCount: _ctrl.discussions.length,
+              itemBuilder: (_, i) => _Bubble(msg: _ctrl.discussions[i]),
             ),
           ),
         ),
@@ -763,7 +950,7 @@ class _DiscussionTab extends StatelessWidget {
               children: [
                 // Attachment Preview Chip Row
                 Obx(() {
-                  if (ctrl.attachedGroupFileName.value == null) {
+                  if (_ctrl.attachedGroupFileName.value == null) {
                     return const SizedBox.shrink();
                   }
                   return Container(
@@ -789,10 +976,10 @@ class _DiscussionTab extends StatelessWidget {
                             border: Border.all(color: c.border),
                           ),
                           child: Icon(
-                            ctrl.attachedGroupFileName.value!.endsWith(
+                            _ctrl.attachedGroupFileName.value!.endsWith(
                                       '.png',
                                     ) ||
-                                    ctrl.attachedGroupFileName.value!.endsWith(
+                                    _ctrl.attachedGroupFileName.value!.endsWith(
                                       '.jpg',
                                     )
                                 ? FluentIcons.image_24_regular
@@ -807,7 +994,7 @@ class _DiscussionTab extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                ctrl.attachedGroupFileName.value!,
+                                _ctrl.attachedGroupFileName.value!,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppFonts.satoshiStyle(
@@ -816,9 +1003,9 @@ class _DiscussionTab extends StatelessWidget {
                                   color: c.textPrimary,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 4),
                               Text(
-                                ctrl.attachedGroupFileSize.value ?? '2.4 MB',
+                                _ctrl.attachedGroupFileSize.value ?? '2.4 MB',
                                 style: AppFonts.satoshiStyle(
                                   fontSize: 11,
                                   color: c.textTertiary,
@@ -828,7 +1015,7 @@ class _DiscussionTab extends StatelessWidget {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => ctrl.removeGroupAttachment(),
+                          onTap: () => _ctrl.removeGroupAttachment(),
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.xxs),
                             decoration: BoxDecoration(
@@ -875,7 +1062,7 @@ class _DiscussionTab extends StatelessWidget {
                                     height: 4,
                                     decoration: BoxDecoration(
                                       color: c.border,
-                                      borderRadius: BorderRadius.circular(2),
+                                      borderRadius: BorderRadius.circular(AppRadius.xxs),
                                     ),
                                   ),
                                   const SizedBox(height: 20),
@@ -895,18 +1082,12 @@ class _DiscussionTab extends StatelessWidget {
                                     ),
                                     title: 'Foto & Media',
                                     onTap: () {
-                                      ctrl.attachGroupFile(
+                                      _ctrl.attachGroupFile(
                                         'GEMASTIK_PitchDeck.png',
                                         '3.2 MB',
                                       );
                                       Get.back();
-                                      Get.snackbar(
-                                        'File Dilampirkan',
-                                        'GEMASTIK_PitchDeck.png berhasil dipilih',
-                                        snackPosition: SnackPosition.TOP,
-                                        backgroundColor: AppColors.primary500,
-                                        colorText: AppColors.white,
-                                      );
+                                      AppToast.success('GEMASTIK_PitchDeck.png berhasil dipilih', title: 'File Dilampirkan');
                                     },
                                   ),
                                   const SizedBox(height: AppSpacing.sm),
@@ -917,21 +1098,15 @@ class _DiscussionTab extends StatelessWidget {
                                     ),
                                     title: 'Dokumen & File PDF',
                                     onTap: () {
-                                      ctrl.attachGroupFile(
+                                      _ctrl.attachGroupFile(
                                         'Revisi_Proposal_v3.pdf',
                                         '2.1 MB',
                                       );
                                       Get.back();
-                                      Get.snackbar(
-                                        'File Dilampirkan',
-                                        'Revisi_Proposal_v3.pdf berhasil dipilih',
-                                        snackPosition: SnackPosition.TOP,
-                                        backgroundColor: AppColors.primary500,
-                                        colorText: AppColors.white,
-                                      );
+                                      AppToast.success('Revisi_Proposal_v3.pdf berhasil dipilih', title: 'File Dilampirkan');
                                     },
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 12),
                                 ],
                               ),
                             ),
@@ -952,7 +1127,7 @@ class _DiscussionTab extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
 
                       // Text Field
                       Expanded(
@@ -970,7 +1145,7 @@ class _DiscussionTab extends StatelessWidget {
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.md,
-                              vertical: 13.5,
+                              vertical: AppSpacing.sm,
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -1002,28 +1177,28 @@ class _DiscussionTab extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
 
                       // Send Button
                       GestureDetector(
                         onTap: () {
                           final text = _msgCtrl.text.trim();
                           if (text.isEmpty &&
-                              ctrl.attachedGroupFileName.value == null)
+                              _ctrl.attachedGroupFileName.value == null)
                             return;
 
-                          ctrl.discussions.add(
+                          _ctrl.discussions.add(
                             DiscussionMessage(
                               sender: 'Dede',
                               body: text,
                               time: 'Just now',
                               isMe: true,
-                              attachment: ctrl.attachedGroupFileName.value,
+                              attachment: _ctrl.attachedGroupFileName.value,
                             ),
                           );
 
                           _msgCtrl.clear();
-                          ctrl.removeGroupAttachment();
+                          _ctrl.removeGroupAttachment();
                         },
                         child: Container(
                           width: 44,
@@ -1076,7 +1251,7 @@ class _Bubble extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: msg.isMe
@@ -1084,10 +1259,7 @@ class _Bubble extends StatelessWidget {
             : MainAxisAlignment.start,
         children: [
           if (!msg.isMe) ...[
-            const CircleAvatar(
-              radius: 13,
-              backgroundImage: AssetImage('lib/assets/img/avatar.png'),
-            ),
+            const AppAvatar(radius: 13),
             const SizedBox(width: 8),
           ],
           Flexible(
@@ -1098,8 +1270,8 @@ class _Bubble extends StatelessWidget {
               children: [
                 if (!msg.isMe)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 3),
-                    child: Row(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
@@ -1128,7 +1300,7 @@ class _Bubble extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: msg.isMe
-                        ? c.textPrimary.withValues(alpha: 0.88)
+                        ? AppColors.primary500
                         : c.surfaceSecondary,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(AppRadius.md),
@@ -1229,7 +1401,7 @@ class _Bubble extends StatelessWidget {
                 ),
                 if (msg.isMe)
                   Padding(
-                    padding: const EdgeInsets.only(top: 3),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       msg.time,
                       style: AppFonts.satoshiStyle(
@@ -1255,80 +1427,74 @@ class _TaskTab extends StatelessWidget {
   const _TaskTab({required this.ctrl});
   final TeamController ctrl;
 
+  static const _sections = [
+    _SectionConfig('To Do', AppColors.info500, 'todo', 'Belum ada tugas'),
+    _SectionConfig('In Progress', AppColors.warning700, 'doing', 'Belum ada tugas dikerjakan'),
+    _SectionConfig('Done', AppColors.success600, 'done', 'Belum ada tugas selesai'),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        Obx(
-          () => SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 88),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        Expanded(
+          child: Obx(
+            () => ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               children: [
-                _KanbanColumn(
-                  title: 'To Do',
-                  color: AppColors.info500,
-                  tasks: ctrl.tasks.where((t) => t.status == 'Todo').toList(),
-                ),
-                _KanbanColumn(
-                  title: 'In Progress',
-                  color: AppColors.warning700,
-                  tasks: ctrl.tasks
-                      .where((t) => t.status == 'In Progress')
-                      .toList(),
-                ),
-                _KanbanColumn(
-                  title: 'Done',
-                  color: AppColors.success600,
-                  tasks: ctrl.tasks.where((t) => t.status == 'Done').toList(),
-                ),
+                for (final section in _sections) ...[
+                  _KanbanSection(
+                    config: section,
+                    tasks: ctrl.tasks.where((t) => t.status == section.status).toList(),
+                    onTaskTap: (task) => _showTaskActions(task, context),
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: AppC.of(context).border.withValues(alpha: 0.3)),
+                  const SizedBox(height: 12),
+                ],
               ],
             ),
           ),
         ),
-        Positioned(
-          right: AppSpacing.md,
-          bottom: AppSpacing.md,
-          child: GestureDetector(
-            onTap: () => _showAddTaskSheet(context),
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: AppColors.primary500,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.black.withValues(alpha: 0.12),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                onPressed: () => _showAddTaskSheet(context),
+                icon: const Icon(FluentIcons.add_24_regular, size: 16),
+                label: const Text('Tambah Tugas'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary500,
+                  foregroundColor: AppColors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    FluentIcons.add_24_regular,
-                    size: 14,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Tugas',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  void _showTaskActions(WorkspaceTask task, BuildContext context) {
+    final idx = ctrl.tasks.indexWhere((t) => t == task);
+    if (idx == -1) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => _TaskActionSheet(
+        task: ctrl.tasks[idx],
+        taskIndex: idx,
+        ctrl: ctrl,
+      ),
     );
   }
 
@@ -1342,9 +1508,174 @@ class _TaskTab extends StatelessWidget {
   }
 }
 
-class _AddTaskSheet extends StatefulWidget {
-  const _AddTaskSheet({required this.ctrl});
+class _SectionConfig {
+  final String title;
+  final Color color;
+  final String status;
+  final String emptyHint;
+  const _SectionConfig(this.title, this.color, this.status, this.emptyHint);
+}
+
+class _TaskActionSheet extends StatelessWidget {
+  const _TaskActionSheet({
+    required this.task,
+    required this.taskIndex,
+    required this.ctrl,
+  });
+
+  final WorkspaceTask task;
+  final int taskIndex;
   final TeamController ctrl;
+
+  static const _allStatuses = ['todo', 'doing', 'done'];
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return _SheetShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SheetHandle(),
+          const SizedBox(height: 18),
+          Text(
+            task.title,
+            style: AppFonts.satoshiStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: c.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: _statusColor(task.status).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              _statusLabel(task.status),
+              style: AppFonts.satoshiStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _statusColor(task.status),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Pindahkan ke',
+            style: AppFonts.satoshiStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: c.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...(_allStatuses
+              .where((s) => s != task.status)
+              .map((status) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _ActionTile(
+                      icon: _statusIcon(status),
+                      title: _statusLabel(status),
+                      subtitle: '',
+                      onTap: () {
+                        final taskId = int.tryParse(task.id);
+                        if (taskId != null) {
+                          ctrl.moveTask(taskId, status);
+                        }
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ))),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SheetButton(
+                  label: 'Edit Tugas',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: AppColors.transparent,
+                      builder: (_) => _AddTaskSheet(
+                        ctrl: ctrl,
+                        existingTask: task,
+                        taskIndex: taskIndex,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SheetButton(
+                  label: 'Hapus',
+                  danger: true,
+                  onTap: () {
+                    final taskId = int.tryParse(task.id);
+                    if (taskId != null) ctrl.deleteTask(taskId);
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'todo':
+        return AppColors.info500;
+      case 'doing':
+        return AppColors.warning700;
+      default:
+        return AppColors.success600;
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case 'todo':
+        return FluentIcons.document_24_regular;
+      case 'doing':
+        return FluentIcons.clock_24_regular;
+      default:
+        return FluentIcons.checkmark_24_regular;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'todo':
+        return 'To Do';
+      case 'doing':
+        return 'In Progress';
+      case 'done':
+        return 'Done';
+      default:
+        return status;
+    }
+  }
+}
+
+class _AddTaskSheet extends StatefulWidget {
+  const _AddTaskSheet({
+    required this.ctrl,
+    this.existingTask,
+    this.taskIndex,
+  });
+
+  final TeamController ctrl;
+  final WorkspaceTask? existingTask;
+  final int? taskIndex;
 
   @override
   State<_AddTaskSheet> createState() => _AddTaskSheetState();
@@ -1356,17 +1687,32 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
   final descCtrl = TextEditingController();
 
   bool isExpanded = false;
-  String selectedAssignee = 'Saya';
+  String selectedAssignee = '__none__';
   String selectedPriority = 'Sedang';
+  DateTime? pickedDate;
 
-  final List<String> assignees = ['Saya', 'Dede', 'Raka', 'Cameron', 'Aisyah'];
   final List<String> priorities = ['Rendah', 'Sedang', 'Tinggi'];
+  late final List<WorkspaceMember> membersList;
 
-  final List<String> suggestions = [
-    'Setup API Login',
-    'Review UI Home',
-    'Testing Workspace',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    final ws = widget.ctrl.selectedWorkspace.value;
+    membersList = (ws?.members ?? []).where((m) => m.id.isNotEmpty).toList();
+    final t = widget.existingTask;
+    if (t != null) {
+      titleCtrl.text = t.title;
+      deadlineCtrl.text = t.deadline.isNotEmpty ? _formatDeadline(t.deadline) : '';
+      selectedAssignee = t.assigneeId.isNotEmpty && membersList.any((m) => m.id == t.assigneeId)
+          ? t.assigneeId
+          : '__none__';
+      if (t.deadline.isNotEmpty) {
+        pickedDate = DateTime.tryParse(t.deadline);
+      }
+    }
+  }
+
+  bool get _isEditing => widget.existingTask != null;
 
   @override
   void dispose() {
@@ -1407,71 +1753,12 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Tambah Tugas Baru',
+              _isEditing ? 'Edit Tugas' : 'Tambah Tugas Baru',
               style: AppFonts.headingStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: c.textPrimary,
               ),
-            ),
-            const SizedBox(height: 14),
-
-            Row(
-              children: [
-                Text(
-                  'Saran:',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                color: c.textTertiary,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: suggestions.map((sug) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: AppSpacing.xxs),
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            titleCtrl.text = sug;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: c.surfaceSecondary,
-                            borderRadius: BorderRadius.circular(
-                              AppRadius.lg,
-                            ),
-                            border: Border.all(
-                              color: c.border.withValues(
-                                alpha: 0.8,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            sug,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: c.textSecondary,
-                            ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-              ],
             ),
             const SizedBox(height: 14),
 
@@ -1484,7 +1771,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             TextField(
               controller: titleCtrl,
               autofocus: true,
@@ -1589,12 +1876,18 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               fontWeight: FontWeight.w600,
                               color: c.textPrimary,
                             ),
-                              items: assignees.map((name) {
-                                return DropdownMenuItem(
-                                  value: name,
-                                  child: Text(name),
-                                );
-                              }).toList(),
+                              items: [
+                                const DropdownMenuItem(
+                                  value: '__none__',
+                                  child: Text('Tidak ditugaskan'),
+                                ),
+                                ...(membersList.map((m) {
+                                  return DropdownMenuItem(
+                                    value: m.id,
+                                    child: Text(m.name),
+                                  );
+                                }).toList()),
+                              ],
                               onChanged: (val) {
                                 if (val != null) {
                                   setState(() {
@@ -1638,7 +1931,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                                     colorScheme: ColorScheme.light(
                                       primary: AppColors.primary500,
                                       onPrimary: AppColors.white,
-                                      onSurface: AppColors.textPrimary,
+                                      onSurface: c.textPrimary,
                                     ),
                                     textButtonTheme: TextButtonThemeData(
                                       style: TextButton.styleFrom(
@@ -1651,19 +1944,10 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               },
                             );
                             if (picked != null) {
+                              pickedDate = picked;
                               final months = [
-                                'Jan',
-                                'Feb',
-                                'Mar',
-                                'Apr',
-                                'Mei',
-                                'Jun',
-                                'Jul',
-                                'Agu',
-                                'Sep',
-                                'Okt',
-                                'Nov',
-                                'Des',
+                                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+                                'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
                               ];
                               final formattedDate =
                                   "${picked.day} ${months[picked.month - 1]} ${picked.year}";
@@ -1842,21 +2126,27 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
               width: double.infinity,
               height: 44,
               child: GestureDetector(
-                onTap: () {
-                  if (titleCtrl.text.trim().isNotEmpty) {
-                    widget.ctrl.tasks.add(
-                      WorkspaceTask(
-                        title: titleCtrl.text.trim(),
-                        assignee: selectedAssignee,
-                        deadline: deadlineCtrl.text.trim().isNotEmpty
-                            ? deadlineCtrl.text.trim()
-                            : '-',
-                        status: 'Todo',
-                      ),
-                    );
-                  }
-                  Navigator.pop(context);
-                },
+                  onTap: () {
+                    if (titleCtrl.text.trim().isEmpty) return;
+                    Navigator.pop(context);
+                    if (_isEditing) {
+                      final taskId = int.tryParse(widget.existingTask!.id);
+                      if (taskId != null) {
+                        widget.ctrl.updateTask(
+                          taskId,
+                          title: titleCtrl.text.trim(),
+                          assigneeId: selectedAssignee != '__none__' ? selectedAssignee : null,
+                          deadline: pickedDate?.toIso8601String(),
+                        );
+                      }
+                    } else {
+                      widget.ctrl.addTask(
+                        titleCtrl.text.trim(),
+                        assigneeId: selectedAssignee != '__none__' ? selectedAssignee : null,
+                        deadline: pickedDate?.toIso8601String(),
+                      );
+                    }
+                  },
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -1864,7 +2154,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
-                    'Tambah Tugas',
+                    _isEditing ? 'Simpan' : 'Tambah Tugas',
                     style: AppFonts.satoshiStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
@@ -1881,264 +2171,273 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
   }
 }
 
-class _KanbanColumn extends StatelessWidget {
-  const _KanbanColumn({
-    required this.title,
-    required this.color,
+class _KanbanSection extends StatelessWidget {
+  const _KanbanSection({
+    required this.config,
     required this.tasks,
+    required this.onTaskTap,
   });
 
-  final String title;
-  final Color color;
+  final _SectionConfig config;
   final List<WorkspaceTask> tasks;
+  final ValueChanged<WorkspaceTask> onTaskTap;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: c.grey50,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: c.border.withValues(alpha: 0.6)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header row
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 10),
+          child: Row(
             children: [
               Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: config.color,
+                  shape: BoxShape.circle,
+                ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 8),
               Text(
-                title,
+                config.title,
                 style: AppFonts.satoshiStyle(
-                  fontSize: 12,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: c.textPrimary,
                 ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xxs,
-                  vertical: 1.5,
-                ),
+                height: 20,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(3),
+                  color: config.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
+                alignment: Alignment.center,
                 child: Text(
                   '${tasks.length}',
                   style: AppFonts.satoshiStyle(
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: color,
+                    color: config.color,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          if (tasks.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              alignment: Alignment.center,
-              child: Text(
-                'Belum ada tugas',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 10.5,
-                  color: c.textTertiary,
-                ),
-              ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
-                  child: _KanbanTaskCard(task: tasks[index]),
-                );
-              },
+        ),
+        // Cards or empty state
+        if (tasks.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            decoration: BoxDecoration(
+              color: c.grey50,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: c.border.withValues(alpha: 0.4)),
             ),
-        ],
-      ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    config.status == 'Todo'
+                        ? FluentIcons.document_24_regular
+                        : config.status == 'In Progress'
+                            ? FluentIcons.clock_24_regular
+                            : FluentIcons.checkmark_circle_24_regular,
+                    size: 28,
+                    color: c.grey300,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    config.emptyHint,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      color: c.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Column(
+            children: tasks
+                .map(
+                  (task) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: _KanbanTaskCard(
+                      key: ObjectKey(task),
+                      task: task,
+                      color: config.color,
+                      onTap: () => onTaskTap(task),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+      ],
     );
   }
 }
 
+String _formatDeadline(String iso) {
+  try {
+    final dt = DateTime.parse(iso);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(dt.year, dt.month, dt.day);
+    if (date == today) return 'Hari ini';
+    final diff = date.difference(today).inDays;
+    if (diff == 1) return 'Besok';
+    if (diff < 0) return 'Terlewat';
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  } catch (_) {
+    return iso;
+  }
+}
+
+bool _isDeadlineToday(String iso) {
+  try {
+    final dt = DateTime.parse(iso);
+    final now = DateTime.now();
+    return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+  } catch (_) {
+    return false;
+  }
+}
+
 class _KanbanTaskCard extends StatelessWidget {
-  const _KanbanTaskCard({required this.task});
+  const _KanbanTaskCard({
+    super.key,
+    required this.task,
+    required this.color,
+    required this.onTap,
+  });
 
   final WorkspaceTask task;
+  final Color color;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final String priority = (task.title.length % 3 == 0)
-        ? 'Tinggi'
-        : (task.title.length % 3 == 1 ? 'Sedang' : 'Rendah');
-    final Color priorityColor = priority == 'Tinggi'
-        ? AppColors.danger700
-        : (priority == 'Sedang' ? AppColors.warning700 : AppColors.success700);
-
-    final String initials = task.assignee.isNotEmpty
-        ? task.assignee.split(' ').map((p) => p[0]).take(2).join().toUpperCase()
-        : 'Saya';
-
-    final hasComments = task.title.length % 2 == 0;
-    final commentsCount = task.title.length % 3 + 1;
-
-    Color deadlineColor;
-    if (task.deadline == 'Hari ini') {
-      deadlineColor = AppColors.danger500;
-    } else if (task.deadline == 'Besok') {
-      deadlineColor = AppColors.warning600;
-    } else {
-      deadlineColor = c.textSecondary;
-    }
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: c.surface,
+    final isDone = task.status == 'Done';
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: isDone ? null : onTap,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppShadows.soft,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 3.5, color: priorityColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(2, 10, 10, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            priority.toUpperCase(),
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w800,
-                              color: priorityColor,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                          const Spacer(),
-                          if (hasComments) ...[
-                            Icon(
-                              FluentIcons.chat_24_regular,
-                              size: 10,
-                              color: c.textTertiary.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                            const SizedBox(width: 1.5),
-                            Text(
-                              '$commentsCount',
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w600,
-                                color: c.textTertiary,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          Icon(
-                            Icons.drag_handle,
-                            size: 12,
-                            color: c.textTertiary.withValues(
-                              alpha: 0.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        task.title,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: c.textPrimary,
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        height: 0.5,
-                        color: c.border.withValues(alpha: 0.4),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: c.grey100,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              initials,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 7.5,
-                                fontWeight: FontWeight.w800,
-                                color: c.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              task.assignee,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w500,
-                                color: c.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            FluentIcons.calendar_24_regular,
-                            size: 10.5,
-                            color: deadlineColor,
-                          ),
-                          const SizedBox(width: 1.5),
-                          Text(
-                            task.deadline,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w600,
-                              color: deadlineColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+        child: Container(
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: c.border.withValues(alpha: 0.4)),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    color: isDone ? AppColors.success300 : color,
                   ),
-                ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            task.title,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDone ? c.textTertiary : c.textPrimary,
+                              height: 1.3,
+                            ).copyWith(
+                              decoration: isDone ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              if (task.assignee.isNotEmpty) ...[
+                                Icon(
+                                  FluentIcons.person_24_regular,
+                                  size: 12,
+                                  color: c.textTertiary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  task.assignee,
+                                  style: AppFonts.satoshiStyle(
+                                    fontSize: 11,
+                                    color: c.textTertiary,
+                                  ),
+                                ),
+                              ],
+                              if (task.deadline.isNotEmpty) ...[
+                                const SizedBox(width: 12),
+                                Icon(
+                                  FluentIcons.calendar_24_regular,
+                                  size: 12,
+                                  color: _isDeadlineToday(task.deadline)
+                                      ? AppColors.danger500
+                                      : c.textTertiary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatDeadline(task.deadline),
+                                  style: AppFonts.satoshiStyle(
+                                    fontSize: 11,
+                                    fontWeight: _isDeadlineToday(task.deadline)
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: _isDeadlineToday(task.deadline)
+                                        ? AppColors.danger500
+                                        : c.textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (!isDone)
+                    Container(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Icon(
+                        FluentIcons.chevron_right_24_regular,
+                        size: 18,
+                        color: c.textTertiary.withValues(alpha: 0.4),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Icon(
+                        FluentIcons.checkmark_24_filled,
+                        size: 16,
+                        color: AppColors.success500,
+                      ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -2149,147 +2448,4 @@ class _KanbanTaskCard extends StatelessWidget {
 //  FILE TAB
 // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
 
-class _FileTab extends StatelessWidget {
-  const _FileTab({required this.ctrl});
-  final TeamController ctrl;
 
-  IconData _fileIcon(String type) {
-    return switch (type) {
-      'pdf' => FluentIcons.document_pdf_24_regular,
-      'fig' => FluentIcons.design_ideas_24_regular,
-      'png' || 'jpg' => FluentIcons.image_24_regular,
-      _ => FluentIcons.document_24_regular,
-    };
-  }
-
-  Color _fileColor(String type, AppC c) {
-    return switch (type) {
-      'pdf' => AppColors.danger500,
-      'fig' => AppColors.primary400,
-      'png' || 'jpg' => AppColors.info500,
-      _ => c.textTertiary,
-    };
-  }
-
-  Color _fileBg(String type, AppC c) {
-    return switch (type) {
-      'pdf' => AppColors.danger50,
-      'fig' => AppColors.primary50,
-      'png' || 'jpg' => AppColors.info50,
-      _ => c.surfaceSecondary,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    return Stack(
-      children: [
-        Obx(
-          () => ListView.builder(
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 80),
-            itemCount: ctrl.files.length,
-            itemBuilder: (_, i) {
-              final f = ctrl.files[i];
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.xs,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: _fileBg(f.type, c),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(
-                        _fileIcon(f.type),
-                        size: 16,
-                        color: _fileColor(f.type, c),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            f.name,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: c.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${f.uploader} · ${f.size} · ${f.date}',
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 11,
-                              color: c.textTertiary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      FluentIcons.more_vertical_24_regular,
-                      size: 16,
-                      color: c.textTertiary,
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        Positioned(
-          right: AppSpacing.lg,
-          bottom: AppSpacing.lg,
-          child: GestureDetector(
-            onTap: () {},
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: AppColors.primary500,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.black.withValues(alpha: 0.18),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    FluentIcons.arrow_upload_24_regular,
-                    size: 16,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Unggah File',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

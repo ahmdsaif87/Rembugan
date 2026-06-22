@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_chrome.dart';
 
 class SocialScaffold extends StatelessWidget {
@@ -35,9 +36,12 @@ class SocialScaffold extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 10, 16, 10),
                 child: Row(
                   children: [
-                    IconButton(
-                      onPressed: Get.back,
-                      icon: const Icon(FluentIcons.chevron_left_24_regular),
+                    Tooltip(
+                      message: 'Kembali',
+                      child: IconButton(
+                        onPressed: Get.back,
+                        icon: const Icon(FluentIcons.chevron_left_24_regular),
+                      ),
                     ),
                     Expanded(
                       child: Column(
@@ -110,10 +114,8 @@ class SocialPostCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundImage: const AssetImage('lib/assets/img/avatar.png'),
-          ),
+          AppAvatar(photoUrl: avatarUrl, radius: 22),
+
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -146,6 +148,8 @@ class SocialPostCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   body,
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
                   style: AppFonts.satoshiStyle(
                     fontSize: 13.5,
                     height: 1.45,
@@ -206,17 +210,19 @@ class AppTextPill extends StatelessWidget {
     required this.label,
     this.active = false,
     this.icon,
+    this.onTap,
     super.key,
   });
 
   final String label;
   final bool active;
   final IconData? icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Container(
+    final child = Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xs,
@@ -250,6 +256,19 @@ class AppTextPill extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: child,
+        ),
+      );
+    }
+
+    return child;
   }
 }
 
@@ -261,11 +280,12 @@ class SkeletonLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surfaceSecondary,
+        color: c.surfaceSecondary,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
     );

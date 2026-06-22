@@ -21,8 +21,7 @@ TASK_STATUSES: Final = [TASK_TODO, TASK_DOING, TASK_DONE]
 # ── Member Role ──
 ROLE_KETUA: Final = "Ketua"
 ROLE_ANGGOTA: Final = "Anggota"
-ROLE_PEMBIMBING: Final = "Pembimbing"
-ROLES: Final = [ROLE_KETUA, ROLE_ANGGOTA, ROLE_PEMBIMBING]
+ROLES: Final = [ROLE_KETUA, ROLE_ANGGOTA]
 
 # ── Connection ──
 CON_PENDING: Final = "pending"

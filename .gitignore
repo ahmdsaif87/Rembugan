@@ -23,3 +23,11 @@ firebase-admin.json
 
 # docs
 docs/
+
+.agents/
+.cursor/
+.gemini/
+.impeccable/
+
+# Build artifacts
+rembugan_frontend/android/build/

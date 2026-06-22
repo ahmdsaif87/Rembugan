@@ -13,7 +13,7 @@ os.environ["MONGO_URI"] = "mongodb://fake:27017"
 os.environ["DATABASE_URL"] = "postgresql://fake:5432/test"
 
 TEST_USER_ID = "test-user-uuid-1234"
-TEST_USER_NIM = "12345678"
+TEST_USER_EMAIL = "test@example.com"
 TEST_USER_FULL_NAME = "Test User"
 
 NOW = datetime.now(timezone.utc)
@@ -34,18 +34,24 @@ class MockUser:
     def __init__(self, **kwargs):
         defaults = dict(
             id=TEST_USER_ID,
-            nim=TEST_USER_NIM,
+            email=TEST_USER_EMAIL,
+            email_verified=True,
             password="$2b$12$hashedpassword",
             full_name=TEST_USER_FULL_NAME,
+            handle=None,
             bio="A test bio",
+            interest="Tech Enthusiast",
             photo_url="https://example.com/photo.jpg",
-            email="test@example.com",
+            cover_url=None,
             social_links=None,
             is_onboarded=False,
+            connection_count=0,
+            project_count=0,
             skills=[],
             experiences=[],
             showcases=[],
             ownedProjects=[],
+            memberships=[],
             created_at=NOW,
         )
         defaults.update(kwargs)
@@ -62,6 +68,9 @@ class MockProject:
             description="A test project description that is long enough",
             required_skills=["Python", "FastAPI"],
             status="open",
+            interest="Tech Enthusiast",
+            deadline=None,
+            total_slots=None,
             owner=MockUser(),
             members=[],
             tasks=[],
@@ -152,6 +161,7 @@ class MockConnection:
             status="pending",
             sender=MockUser(full_name="Other User"),
             receiver=MockUser(),
+            created_at=NOW,
         )
         defaults.update(kwargs)
         for k, v in defaults.items():
@@ -194,7 +204,8 @@ class MockPrisma:
             "user", "skill", "userskill", "project", "task",
             "showcase", "showcaselike", "showcasecomment",
             "projectapplication", "projectmember", "message",
-            "notification", "connection", "experience"
+            "notification", "connection", "experience",
+            "otpcode",
         ]:
             setattr(self, model, _make_async_model())
 
@@ -211,7 +222,7 @@ class _AsyncModelMock:
         for method in [
             "find_unique", "find_first", "find_many", "create",
             "update", "delete", "upsert", "count", "delete_many",
-            "update_many", "aggregate"
+            "update_many", "aggregate", "create_many"
         ]:
             self._methods[method] = AsyncMock()
 
@@ -278,7 +289,7 @@ def mock_jwt():
     with patch("jwt.decode") as mock:
         mock.return_value = {
             "uid": TEST_USER_ID,
-            "email": "test@example.com",
+            "email": TEST_USER_EMAIL,
             "exp": NOW.timestamp() + 86400
         }
         yield mock
@@ -286,18 +297,22 @@ def mock_jwt():
 
 @pytest.fixture(autouse=True)
 def mock_mongodb():
-    with patch("app.api.competitions.collection") as mock:
-        mock.find.return_value.to_list = AsyncMock(return_value=[])
-        mock.count_documents = AsyncMock(return_value=0)
-        yield mock
+    mock_collection = MagicMock()
+    mock_collection.find.return_value.to_list = AsyncMock(return_value=[])
+    mock_collection.count_documents = AsyncMock(return_value=0)
+    with patch("app.api.competitions.collection", mock_collection):
+        with patch("app.api.admin.get_competition_collection", return_value=mock_collection):
+            yield mock_collection
 
 
 @pytest.fixture
 def app(mock_db):
     from app.main import app as fastapi_app
     from app.core.database import get_db
+    from app.core.security import verify_admin_token
 
     fastapi_app.dependency_overrides[get_db] = lambda: mock_db
+    fastapi_app.dependency_overrides[verify_admin_token] = lambda: {"admin_id": "admin-id", "role": "admin"}
 
     yield fastapi_app
 

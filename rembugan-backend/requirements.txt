@@ -10,6 +10,7 @@ uvicorn[standard]
 python-multipart
 python-dotenv
 pydantic
+tzdata
 
 # 2. DATABASE & ORM (Neon Postgres via Prisma)
 prisma

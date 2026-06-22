@@ -40,7 +40,7 @@ async def get_my_connections(
             "full_name": other.full_name,
             "handle": other.handle,
             "photo_url": other.photo_url,
-            "major": other.major,
+            "interest": other.interest,
             "created_at": conn.created_at.isoformat(),
         })
 
@@ -71,7 +71,7 @@ async def get_incoming_requests(
             "full_name": req.sender.full_name,
             "handle": req.sender.handle,
             "photo_url": req.sender.photo_url,
-            "major": req.sender.major,
+            "interest": req.sender.interest,
             "created_at": req.created_at.isoformat(),
         })
 
@@ -102,7 +102,7 @@ async def get_sent_requests(
             "full_name": req.receiver.full_name,
             "handle": req.receiver.handle,
             "photo_url": req.receiver.photo_url,
-            "major": req.receiver.major,
+            "interest": req.receiver.interest,
             "created_at": req.created_at.isoformat(),
         })
 
@@ -138,7 +138,7 @@ async def get_user_connections(
             "full_name": other.full_name,
             "handle": other.handle,
             "photo_url": other.photo_url,
-            "major": other.major,
+            "interest": other.interest,
             "created_at": conn.created_at.isoformat(),
         })
 

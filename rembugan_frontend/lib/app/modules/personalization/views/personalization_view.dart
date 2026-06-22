@@ -457,9 +457,9 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
                                 : null,
                             child: hasPhoto
                                 ? null
-                                : const Icon(
+                                : Icon(
                                     FluentIcons.camera_24_regular,
-                                    color: AppColors.textSecondary,
+                                    color: c.textSecondary,
                                     size: 28,
                                   ),
                           ),
@@ -501,9 +501,9 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
             ),
             const SizedBox(height: 12),
             AppTextField(
-              initialValue: profile.major,
+              initialValue: profile.interest,
               onChanged: widget.controller.updateMajor,
-              labelText: 'Jurusan',
+              labelText: 'Minat/Bidang',
               hintText: 'Contoh: Teknik Informatika',
             ),
             const SizedBox(height: 12),
