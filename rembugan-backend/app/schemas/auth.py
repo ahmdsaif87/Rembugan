@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -11,11 +12,8 @@ class RegisterInput(BaseModel):
 
 class LoginInput(BaseModel):
     """Data untuk login via NIM atau Email + Password."""
-<<<<<<< Updated upstream
-    identifier: str = Field(..., description="NIM atau Email (email hanya untuk yang sudah diverifikasi)")
-=======
     identifier: str = Field(..., description="NIM atau Email")
->>>>>>> Stashed changes
+
     password: str = Field(..., description="Password")
 
 
@@ -63,8 +61,6 @@ class AdminCreateUserInput(BaseModel):
 
 
 
-<<<<<<< Updated upstream
-=======
 class RegisterVerifyOtpInput(BaseModel):
     """Data untuk verifikasi OTP saat registrasi."""
     email: str = Field(..., description="Alamat email")
@@ -91,4 +87,4 @@ class AdminCreateUserInputExtended(AdminCreateUserInput):
     nim: Optional[str] = Field(None, description="NIM")
     faculty: Optional[str] = Field(None, description="Fakultas")
     major: Optional[str] = Field(None, description="Jurusan/Prodi")
->>>>>>> Stashed changes
+

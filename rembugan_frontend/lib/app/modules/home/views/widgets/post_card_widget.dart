@@ -103,7 +103,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                   Material(
                     color: AppColors.transparent,
                     child: InkWell(
-                      onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
+                      onTap: () {},
                       borderRadius: BorderRadius.circular(20),
                       child: AppAvatar(
                         photoUrl: widget.avatarUrl.startsWith('http') ? widget.avatarUrl : null,
@@ -116,7 +116,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     child: Material(
                       color: AppColors.transparent,
                       child: InkWell(
-                        onTap: () => Get.toNamed(Routes.OTHER_PROFILE),
+                        onTap: () {},
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

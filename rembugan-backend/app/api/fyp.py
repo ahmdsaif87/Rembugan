@@ -33,16 +33,10 @@ async def get_fyp(
     if not user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
-<<<<<<< Updated upstream
-    user_skills = [s.skill.name for s in user.skills] if user.skills else []
-    user_skills_lower = [s.lower() for s in user_skills]
-
-    # 1. Ambil Showcase (Limit 10 terbaru)
-=======
     user_embedding = user.embedding
 
     # 1. Ambil Showcase (cosine-scored)
->>>>>>> Stashed changes
+
     showcases = await db.showcase.find_many(
         take=50,
         order={"created_at": "desc"},
@@ -80,12 +74,9 @@ async def get_fyp(
     )
     scored_projects = []
     for p in projects:
-<<<<<<< Updated upstream
-        score = calculate_match_score(user_skills, p.required_skills)
-=======
         p_emb = p.embedding
         score = cosine_similarity(user_embedding, p_emb) if user_embedding and p_emb else 0
->>>>>>> Stashed changes
+
         scored_projects.append({
             "id": p.id,
             "type": "project",

@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import hashlib
+import asyncio
+from fastapi import APIRouter, Depends, HTTPException, Request
 from prisma import Prisma
 from app.core.security import verify_token
 from app.core.database import get_db
@@ -7,13 +10,6 @@ from app.services.embedding import generate, cosine_similarity
 
 router = APIRouter(prefix="/competitions", tags=["Lomba / Competitions"])
 
-collection = get_competition_collection()
-
-<<<<<<< Updated upstream
-@router.get("/all", summary="Lihat Semua Lomba")
-async def get_all_competitions():
-    """Ambil semua data lomba langsung dari MongoDB."""
-=======
 POSTERS_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "posters")
 
 
@@ -42,16 +38,19 @@ def _full_text(item: dict) -> str:
     return " ".join(p.lower() for p in parts if p)
 
 
-def _get_or_generate_embedding(item: dict) -> list[float]:
-    cached = item.get("embedding")
-    version = item.get("emb_v")
-    if version == _EMB_VERSION and isinstance(cached, list) and len(cached) == 384:
-        return [float(v) for v in cached]
-    txt = _full_text(item)
-    emb = generate(txt)
-    item["embedding"] = emb
-    item["emb_v"] = _EMB_VERSION
-    return emb
+async def _cache_missing_embeddings(collection, items: list[dict]):
+    """Generate and cache embeddings for uncached competition items."""
+    try:
+        for item in items:
+            txt = _full_text(item)
+            emb = generate(txt)
+            if emb:
+                await collection.update_one(
+                    {"_id": item["_id"]},
+                    {"$set": {"embedding": emb, "emb_v": _EMB_VERSION}},
+                )
+    except Exception:
+        pass
 
 
 @router.get("/all", summary="Lihat Semua Lomba")
@@ -70,48 +69,59 @@ async def get_all_competitions(
     user_embedding = user.embedding if user else None
     user_skill_names = {s.skill.name.lower() for s in user.skills} if user and user.skills else set()
 
->>>>>>> Stashed changes
+
     try:
+        collection = get_competition_collection()
+        if collection is None:
+            return {"status": "success", "total": 0, "data": []}
+
         cursor = collection.find({}).limit(50)
         data = await cursor.to_list(length=50)
+        base_url = str(request.base_url).rstrip("/")
+        items_needing_embed: list[dict] = []
+
         for item in data:
             item["_id"] = str(item["_id"])
-<<<<<<< Updated upstream
-=======
             poster = item.get("poster", "")
             local = _local_poster_url(poster)
-            item["poster"] = f"{base}{local}" if local else ""
+            item["poster"] = f"{base_url}{local}" if local else ""
 
-            comp_emb = _get_or_generate_embedding(item)
+            kategori_val = (item.get("kategori") or "").lower().strip()
+            domain_match = kategori_val in _TECH_KATEGORI
+
             score = 0
-            if user_embedding and comp_emb:
-                score = int(cosine_similarity(user_embedding, comp_emb) * 100)
+            if user_embedding:
+                cached = item.get("embedding")
+                version = item.get("emb_v")
+                if version == _EMB_VERSION and isinstance(cached, list) and len(cached) == 384:
+                    comp_emb = [float(v) for v in cached]
+                    score = int(cosine_similarity(user_embedding, comp_emb) * 100)
+                else:
+                    items_needing_embed.append(item)
+
+            # Fallback: use category-based score when no cached embedding
+            if score == 0 and domain_match:
+                score = 30
+                if user_skill_names:
+                    text = _full_text(item)
+                    if any(s in text for s in user_skill_names):
+                        score = 60
 
             # Zero score if user has skills but no mention in text AND category doesn't match domain
-            if user_skill_names:
+            if user_skill_names and score > 0:
                 text = _full_text(item)
                 skill_in_text = any(s in text for s in user_skill_names)
-                kategori_val = (item.get("kategori") or "").lower().strip()
-                domain_match = kategori_val in _TECH_KATEGORI
                 if not skill_in_text and not domain_match:
                     score = 0
 
             item["match_score"] = score
 
+        # Generate & cache embeddings for uncached items in background
+        if items_needing_embed:
+            asyncio.create_task(_cache_missing_embeddings(collection, items_needing_embed))
+
         data.sort(key=lambda x: x.get("match_score", 0), reverse=True)
 
-        # Cache embeddings back to MongoDB in background
-        try:
-            for item in data:
-                if isinstance(item.get("embedding"), list):
-                    await collection.update_one(
-                        {"_id": item["_id"]},
-                        {"$set": {"embedding": item["embedding"], "emb_v": _EMB_VERSION}},
-                    )
-        except Exception:
-            pass
-
->>>>>>> Stashed changes
         return {"status": "success", "total": len(data), "data": data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memuat data lomba: {str(e)}")
@@ -121,6 +131,10 @@ async def get_all_competitions(
 async def get_competition_stats():
     """Ambil statistik lomba: by source, by deadline, by kategori."""
     try:
+        collection = get_competition_collection()
+        if collection is None:
+            return {"status": "success", "data": {"by_source": [], "by_deadline": [], "by_kategori": []}}
+
         cursor = collection.find({}).limit(50)
         data = await cursor.to_list(length=50)
 
@@ -180,6 +194,10 @@ async def get_relevant_competitions(
     user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
 
     try:
+        collection = get_competition_collection()
+        if collection is None:
+            return {"status": "success", "total": 0, "data": []}
+
         cursor = collection.find({}).limit(50)
         data = await cursor.to_list(length=50)
         for item in data:
@@ -187,20 +205,35 @@ async def get_relevant_competitions(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memuat data lomba: {str(e)}")
 
+    items_needing_embed: list[dict] = []
     relevant_data = []
 
     for item in data:
-        comp_emb = _get_or_generate_embedding(item)
+        kategori_val = (item.get("kategori") or "").lower().strip()
+        domain_match = kategori_val in _TECH_KATEGORI
+
         score = 0
-        if user_embedding and comp_emb:
-            score = int(cosine_similarity(user_embedding, comp_emb) * 100)
+        if user_embedding:
+            cached = item.get("embedding")
+            version = item.get("emb_v")
+            if version == _EMB_VERSION and isinstance(cached, list) and len(cached) == 384:
+                comp_emb = [float(v) for v in cached]
+                score = int(cosine_similarity(user_embedding, comp_emb) * 100)
+            else:
+                items_needing_embed.append(item)
+
+        # Fallback: use category-based score when no cached embedding
+        if score == 0 and domain_match:
+            score = 30
+            if user_skill_names:
+                text = _full_text(item)
+                if any(s in text for s in user_skill_names):
+                    score = 60
 
         # Zero score if user has skills but no mention in text AND category doesn't match domain
-        if user_skill_names:
+        if user_skill_names and score > 0:
             text = _full_text(item)
             skill_in_text = any(s in text for s in user_skill_names)
-            kategori_val = (item.get("kategori") or "").lower().strip()
-            domain_match = kategori_val in _TECH_KATEGORI
             if not skill_in_text and not domain_match:
                 score = 0
 
@@ -209,16 +242,9 @@ async def get_relevant_competitions(
             item_copy["match_score"] = score
             relevant_data.append(item_copy)
 
-    relevant_data.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    if items_needing_embed:
+        asyncio.create_task(_cache_missing_embeddings(collection, items_needing_embed))
 
-    try:
-        for item in data:
-            if isinstance(item.get("embedding"), list):
-                await collection.update_one(
-                    {"_id": item["_id"]},
-                    {"$set": {"embedding": item["embedding"], "emb_v": _EMB_VERSION}},
-                )
-    except Exception:
-        pass
+    relevant_data.sort(key=lambda x: x.get("match_score", 0), reverse=True)
 
     return {"status": "success", "total": len(relevant_data), "data": relevant_data}

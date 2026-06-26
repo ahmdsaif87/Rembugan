@@ -1,4 +1,5 @@
 class Project {
+  final int projectId;
   final String title;
   final String description;
   final String postedBy;
@@ -11,11 +12,13 @@ class Project {
   final int totalSlots;
   final int filledSlots;
   final int matchScore;
+  final bool hasApplied;
   final List<String> skills;
   final List<String> memberAvatars;
   final List<String> memberNames;
 
   const Project({
+    this.projectId = 0,
     required this.title,
     required this.description,
     required this.postedBy,
@@ -28,6 +31,7 @@ class Project {
     required this.totalSlots,
     required this.filledSlots,
     this.matchScore = 0,
+    this.hasApplied = false,
     required this.skills,
     required this.memberAvatars,
     required this.memberNames,

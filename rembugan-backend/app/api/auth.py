@@ -9,6 +9,7 @@ from app.schemas.auth import (
     RegisterInput, LoginInput, AdminLoginInput,
     SendOtpInput, VerifyOtpInput, ForgotPasswordSendOtpInput,
     ForgotPasswordResetInput, AdminCreateUserInput,
+    RegisterVerifyOtpInput,
 )
 from app.services.otp import send_otp_to_email, verify_otp_code
 from app.services.email import send_otp_email
@@ -52,8 +53,6 @@ async def register(
     }
 
 
-<<<<<<< Updated upstream
-=======
 @router.post("/register/verify-otp", summary="Verifikasi OTP Registrasi")
 @limiter.limit("5/minute")
 async def register_verify_otp(
@@ -80,7 +79,7 @@ async def register_verify_otp(
     }
 
 
->>>>>>> Stashed changes
+
 @router.post("/login", summary="Login via NIM atau Email + Password")
 @limiter.limit("10/minute")
 async def login(
@@ -88,28 +87,19 @@ async def login(
     data: LoginInput,
     db: Prisma = Depends(get_db),
 ):
-<<<<<<< Updated upstream
-    if "@" in data.identifier:
-        user = await db.user.find_first(
-            where={"email": data.identifier, "email_verified": True}
-        )
-=======
     # Deteksi input: NIM atau Email?
     if "@" in data.identifier:
         user = await db.user.find_unique(where={"email": data.identifier})
->>>>>>> Stashed changes
+
     else:
         user = await db.user.find_unique(where={"nim": data.identifier})
 
     if not user:
         raise HTTPException(status_code=401, detail="NIM/Email atau password salah.")
 
-<<<<<<< Updated upstream
-    if user.email and not user.email_verified:
-=======
     # Skip email_verified check untuk imported users (punya NIM, email null)
     if not user.email_verified and not user.nim:
->>>>>>> Stashed changes
+
         raise HTTPException(
             status_code=403,
             detail="Email belum diverifikasi. Silakan verifikasi email terlebih dahulu.",
@@ -130,14 +120,12 @@ async def login(
             "full_name": user.full_name,
             "handle": user.handle,
             "is_onboarded": user.is_onboarded,
-<<<<<<< Updated upstream
-=======
             "interest": user.interest,
             "nim": user.nim,
             "faculty": user.faculty,
             "major": user.major,
             "email": user.email,
->>>>>>> Stashed changes
+
         },
     }
 
@@ -288,13 +276,8 @@ async def get_current_user(
             "email": user.email,
             "email_verified": user.email_verified,
             "is_onboarded": user.is_onboarded,
-<<<<<<< Updated upstream
-=======
             "nim": user.nim,
             "faculty": user.faculty,
             "major": user.major,
-            "connection_count": user.connection_count,
-            "project_count": user.project_count,
->>>>>>> Stashed changes
         },
     }

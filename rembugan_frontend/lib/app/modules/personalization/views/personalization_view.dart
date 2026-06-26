@@ -508,10 +508,12 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
             ),
             const SizedBox(height: 12),
             AppTextField(
-              initialValue: profile.socialLink,
-              onChanged: widget.controller.updateSocialLink,
-              labelText: 'Social link',
-              hintText: 'GitHub, portfolio, LinkedIn, atau website pribadi',
+              initialValue: profile.socialLinks['website'] ?? '',
+              onChanged: (v) => widget.controller.updateSocialLinks(
+                v.isNotEmpty ? {'website': v} : {},
+              ),
+              labelText: 'Tautan Eksternal',
+              hintText: 'https://namadomain.com (Framer, dll)',
             ),
             const SizedBox(height: 12),
             AppTextField(

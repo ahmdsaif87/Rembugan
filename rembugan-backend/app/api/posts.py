@@ -106,7 +106,6 @@ async def create_post(
                 "title": project.title,
                 "description": project.description,
                 "category": project.category,
-                "interest": project.interest,
                 "required_skills": project.required_skills,
                 "total_slots": project.total_slots,
                 "deadline": project.deadline.isoformat() if project.deadline else None,

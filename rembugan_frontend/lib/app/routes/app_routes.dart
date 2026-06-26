@@ -12,6 +12,7 @@ abstract class Routes {
   static const TEAM = _Paths.TEAM;
   static const PROFILE = _Paths.PROFILE;
   static const OTHER_PROFILE = _Paths.OTHER_PROFILE;
+  static String otherProfileRoute(String userId) => '/other-profile/$userId';
   static const COMMENTS = _Paths.COMMENTS;
   static const CREATE_POST = _Paths.CREATE_POST;
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
@@ -24,6 +25,8 @@ abstract class Routes {
   static const PERSONALIZATION = _Paths.PERSONALIZATION;
   static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
   static const SCAN = _Paths.SCAN;
+  static const CONNECTIONS_LIST = _Paths.CONNECTIONS_LIST;
+  static const PROJECT_HISTORY = _Paths.PROJECT_HISTORY;
 }
 
 abstract class _Paths {
@@ -36,7 +39,7 @@ abstract class _Paths {
   static const EXPLORE = '/explore';
   static const TEAM = '/team';
   static const PROFILE = '/profile';
-  static const OTHER_PROFILE = '/profile/user';
+  static const OTHER_PROFILE = '/other-profile/:userId';
   static const COMMENTS = '/comments';
   static const CREATE_POST = '/create-post';
   static const EDIT_PROFILE = '/edit-profile';
@@ -49,4 +52,6 @@ abstract class _Paths {
   static const PERSONALIZATION = '/personalization';
   static const FORGOT_PASSWORD = '/forgot-password';
   static const SCAN = '/scan';
+  static const CONNECTIONS_LIST = '/connections-list';
+  static const PROJECT_HISTORY = '/project-history';
 }

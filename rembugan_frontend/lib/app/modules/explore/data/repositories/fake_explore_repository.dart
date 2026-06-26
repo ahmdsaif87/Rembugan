@@ -105,4 +105,7 @@ class FakeExploreRepository implements ExploreRepository {
   Future<List<String>> getMyOfferingsSkills() async {
     return [];
   }
+
+  @override
+  Future<void> applyToProject(int projectId) async {}
 }

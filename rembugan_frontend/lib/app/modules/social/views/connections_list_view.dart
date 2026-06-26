@@ -118,9 +118,7 @@ class _ConnectionsListViewState extends State<ConnectionsListView> {
                             if (targetId == currentUid) {
                               Get.toNamed(Routes.PROFILE);
                             } else {
-                              Get.toNamed(Routes.OTHER_PROFILE, arguments: {
-                                'userId': targetId,
-                              });
+                              Get.toNamed(Routes.otherProfileRoute(targetId));
                             }
                           }
                         },

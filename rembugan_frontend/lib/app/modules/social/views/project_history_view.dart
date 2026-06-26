@@ -12,9 +12,7 @@ class ProjectHistoryView extends StatelessWidget {
   Widget build(BuildContext context) {
     final args = Get.arguments as Map<String, dynamic>?;
     final userName = args?['userName'] as String? ?? '';
-    final projects = (args?['projects'] as List<dynamic>?)
-            ?.cast<ProjectHistoryItem>() ??
-        [];
+    final projects = (args?['projects'] as List<dynamic>?) ?? [];
     final c = AppC.of(context);
     return SocialScaffold(
       title: 'Proyek $userName',
@@ -37,10 +35,10 @@ class ProjectHistoryView extends StatelessWidget {
               itemCount: projects.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final project = projects[index];
+                final project = projects[index] as Map<String, dynamic>;
                 String statusLabel;
                 Color statusColor;
-                switch (project.status) {
+                switch (project['status'] as String? ?? '') {
                   case 'ongoing':
                     statusLabel = 'Berlangsung';
                     statusColor = AppColors.primary;
@@ -50,7 +48,7 @@ class ProjectHistoryView extends StatelessWidget {
                     statusColor = AppColors.success500;
                     break;
                   default:
-                    statusLabel = project.status;
+                    statusLabel = project['status'] as String? ?? '';
                     statusColor = c.textSecondary;
                 }
 
@@ -70,7 +68,7 @@ class ProjectHistoryView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              project.title,
+                              project['title'] as String? ?? '',
                               style: AppFonts.satoshiStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -79,7 +77,7 @@ class ProjectHistoryView extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Peran: ${project.role}',
+                              'Peran: ${project['role'] as String? ?? ''}',
                               style: AppFonts.satoshiStyle(
                                 fontSize: 12,
                                 color: c.textSecondary,

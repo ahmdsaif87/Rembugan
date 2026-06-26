@@ -26,8 +26,10 @@ class _EditProfileViewState extends State<EditProfileView> {
   late ProfileData draft;
   late TextEditingController nameController;
   late TextEditingController bioController;
-  late TextEditingController majorController;
-  late TextEditingController socialController;
+  late TextEditingController interestController;
+  late TextEditingController instagramController;
+  late TextEditingController linkedinController;
+  late TextEditingController externalController;
   bool _isSaving = false;
 
   @override
@@ -36,16 +38,20 @@ class _EditProfileViewState extends State<EditProfileView> {
     draft = profileService.profile.value;
     nameController = TextEditingController(text: draft.name);
     bioController = TextEditingController(text: draft.bio);
-    majorController = TextEditingController(text: draft.major);
-    socialController = TextEditingController(text: draft.socialLink);
+    interestController = TextEditingController(text: draft.interest);
+    instagramController = TextEditingController(text: draft.socialLinks['instagram'] ?? '');
+    linkedinController = TextEditingController(text: draft.socialLinks['linkedin'] ?? '');
+    externalController = TextEditingController(text: draft.socialLinks['website'] ?? '');
   }
 
   @override
   void dispose() {
     nameController.dispose();
     bioController.dispose();
-    majorController.dispose();
-    socialController.dispose();
+    interestController.dispose();
+    instagramController.dispose();
+    linkedinController.dispose();
+    externalController.dispose();
     super.dispose();
   }
 
@@ -129,11 +135,16 @@ class _EditProfileViewState extends State<EditProfileView> {
     setState(() => _isSaving = true);
 
     final old = profileService.profile.value;
+    final newSocialLinks = <String, String>{};
+    if (instagramController.text.trim().isNotEmpty) newSocialLinks['instagram'] = instagramController.text.trim();
+    if (linkedinController.text.trim().isNotEmpty) newSocialLinks['linkedin'] = linkedinController.text.trim();
+    if (externalController.text.trim().isNotEmpty) newSocialLinks['website'] = externalController.text.trim();
+
     final newDraft = draft.copyWith(
       name: nameController.text.trim(),
       bio: bioController.text.trim(),
-      major: majorController.text.trim(),
-      socialLink: socialController.text.trim(),
+      interest: interestController.text.trim(),
+      socialLinks: newSocialLinks,
     );
 
     profileService.updateProfile(newDraft);
@@ -141,11 +152,11 @@ class _EditProfileViewState extends State<EditProfileView> {
     final settings = <String, dynamic>{};
     if (newDraft.name != old.name) settings['full_name'] = newDraft.name;
     if (newDraft.bio != old.bio) settings['bio'] = newDraft.bio;
-    if (newDraft.major != old.major) settings['major'] = newDraft.major;
+    if (newDraft.interest != old.interest) settings['interest'] = newDraft.interest;
     if (newDraft.photoUrl != old.photoUrl) settings['photo_url'] = newDraft.photoUrl;
     if (newDraft.coverUrl != old.coverUrl) settings['cover_url'] = newDraft.coverUrl;
-    if (newDraft.socialLink != old.socialLink) {
-      settings['social_links'] = {'url': newDraft.socialLink};
+    if (newDraft.socialLinks != old.socialLinks) {
+      settings['social_links'] = newSocialLinks;
     }
 
     if (settings.isNotEmpty) {
@@ -507,16 +518,45 @@ class _EditProfileViewState extends State<EditProfileView> {
                   maxLines: 4,
                 ),
                 const SizedBox(height: 16),
-                _Field(
+                _ReadonlyField(
                   label: 'Jurusan',
-                  controller: majorController,
-                  hint: 'Program studi atau jurusan',
+                  value: draft.major,
                 ),
                 const SizedBox(height: 16),
                 _Field(
-                  label: 'Tautan',
-                  controller: socialController,
-                  hint: 'GitHub, portfolio, LinkedIn, atau website',
+                  label: 'Minat',
+                  controller: interestController,
+                  hint: 'Bidang yang kamu minati',
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Tautan Sosial',
+                  style: AppFonts.interStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: c.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _SocialLinkField(
+                  icon: FluentIcons.camera_24_regular,
+                  label: 'Instagram',
+                  controller: instagramController,
+                  hint: 'Username Instagram',
+                ),
+                const SizedBox(height: 12),
+                _SocialLinkField(
+                  icon: FluentIcons.briefcase_24_regular,
+                  label: 'LinkedIn',
+                  controller: linkedinController,
+                  hint: 'Username LinkedIn',
+                ),
+                const SizedBox(height: 12),
+                _SocialLinkField(
+                  icon: FluentIcons.link_24_regular,
+                  label: 'Tautan Eksternal',
+                  controller: externalController,
+                  hint: 'https://namadomain.com (Framer, GitHub, dll)',
                 ),
               ],
             ),
@@ -668,6 +708,108 @@ class _Field extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReadonlyField extends StatelessWidget {
+  const _ReadonlyField({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppFonts.interStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: c.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: c.surfaceElevated,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: c.border.withValues(alpha: 0.5)),
+          ),
+          child: Text(
+            value.isNotEmpty ? value : 'Belum diatur oleh admin',
+            style: AppFonts.interStyle(
+              fontSize: 14,
+              color: value.isNotEmpty ? c.textPrimary : c.textTertiary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SocialLinkField extends StatelessWidget {
+  const _SocialLinkField({
+    required this.icon,
+    required this.label,
+    required this.controller,
+    this.hint,
+  });
+
+  final IconData icon;
+  final String label;
+  final TextEditingController controller;
+  final String? hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: c.primarySoft,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Icon(icon, color: AppColors.primary500, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            style: AppFonts.interStyle(fontSize: 14, color: c.textPrimary),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppFonts.interStyle(fontSize: 14, color: c.textTertiary),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: c.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: c.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: const BorderSide(color: AppColors.primary),
+              ),
             ),
           ),
         ),

@@ -1,11 +1,13 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/profile_controller.dart';
 
@@ -211,6 +213,63 @@ class _ProfileIdentity extends StatelessWidget {
             color: c.grey500,
           ),
         ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.CONNECTIONS_LIST, arguments: {
+                'userId': profile.id,
+                'userName': profile.name,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.people_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${profile.connectionCount} koneksi',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.PROJECT_HISTORY, arguments: {
+                'userName': profile.name,
+                'projects': profile.projectHistory,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.briefcase_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${profile.projectCount} proyek',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (profile.interest.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            profile.interest,
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: c.textSecondary,
+            ),
+          ),
+        ],
         if (profile.bio.isNotEmpty) ...[
           const SizedBox(height: 10),
           Text(
@@ -224,20 +283,83 @@ class _ProfileIdentity extends StatelessWidget {
             ),
           ),
         ],
-        if (profile.socialLink.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            profile.socialLink,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.info500,
-            ),
+        if (profile.socialLinks.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (profile.socialLinks.containsKey('instagram'))
+                _SocialLinkButton(
+                  icon: FluentIcons.camera_24_regular,
+                  label: 'Instagram',
+                  url: 'https://instagram.com/${profile.socialLinks['instagram']}',
+                ),
+              if (profile.socialLinks.containsKey('linkedin'))
+                _SocialLinkButton(
+                  icon: FluentIcons.briefcase_24_regular,
+                  label: 'LinkedIn',
+                  url: 'https://linkedin.com/in/${profile.socialLinks['linkedin']}',
+                ),
+              if (profile.socialLinks.containsKey('website'))
+                _SocialLinkButton(
+                  icon: FluentIcons.globe_24_regular,
+                  label: 'Website',
+                  url: profile.socialLinks['website']!,
+                ),
+            ],
           ),
         ],
       ],
+    );
+  }
+}
+
+class _SocialLinkButton extends StatelessWidget {
+  const _SocialLinkButton({
+    required this.icon,
+    required this.label,
+    required this.url,
+  });
+
+  final IconData icon;
+  final String label;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Material(
+      color: c.primarySoft,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        onTap: () async {
+          try {
+            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          } catch (_) {
+            AppToast.error('Tidak bisa membuka tautan');
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppColors.primary500),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

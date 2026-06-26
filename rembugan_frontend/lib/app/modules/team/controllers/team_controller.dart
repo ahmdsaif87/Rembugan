@@ -1,15 +1,20 @@
 import 'package:get/get.dart';
+import '../data/repositories/workspace_repository.dart';
 
 class WorkspaceMember {
+  final String id;
   final String name;
   final String initials;
   final String role;
   final bool isOnline;
+  final String? photoUrl;
   const WorkspaceMember({
+    required this.id,
     required this.name,
     required this.role,
     this.initials = '',
     this.isOnline = false,
+    this.photoUrl,
   });
 }
 
@@ -28,7 +33,7 @@ class WorkspaceModel {
   final int applicants;
   final int unreadCount;
   final String? activityCue;
-  final String? urgency; // null, 'deadline', 'overdue'
+  final String? urgency;
 
   const WorkspaceModel({
     required this.id,
@@ -118,7 +123,7 @@ class RecentActivity {
   final String text;
   final String time;
   final String workspace;
-  final String type; // 'message', 'file', 'task', 'member', 'mention'
+  final String type;
   const RecentActivity({
     required this.text,
     required this.time,
@@ -147,14 +152,18 @@ class DiscussionMessage {
 }
 
 class WorkspaceTask {
+  final int id;
   final String title;
-  final String assignee;
+  final List<String> assigneeNames;
+  final List<String> assigneeIds;
   final String deadline;
   final String status;
   final bool isDone;
   const WorkspaceTask({
+    this.id = 0,
     required this.title,
-    required this.assignee,
+    this.assigneeNames = const [],
+    this.assigneeIds = const [],
     required this.deadline,
     required this.status,
     this.isDone = false,
@@ -177,11 +186,13 @@ class WorkspaceFile {
 }
 
 class TeamController extends GetxController {
+  final WorkspaceRepository _repo = WorkspaceRepository();
+
   var detailTabIndex = 0.obs;
   var workspaceTabIndex = 0.obs;
+  final isLoading = true.obs;
   final selectedWorkspace = Rxn<WorkspaceModel>();
 
-  // Group Chat File Attachment State
   final attachedGroupFileName = RxnString();
   final attachedGroupFileSize = RxnString();
 
@@ -195,130 +206,7 @@ class TeamController extends GetxController {
     attachedGroupFileSize.value = null;
   }
 
-  final workspaces = <WorkspaceModel>[
-    WorkspaceModel(
-      id: '1',
-      name: 'Rembugan App',
-      category: 'Mobile Dev',
-      description:
-          'Platform kolaborasi berbasis mobile untuk ekosistem kampus.',
-      userRole: 'Pemilik',
-      totalTasks: 7,
-      doneTasks: 5,
-      applicants: 2,
-      unreadCount: 3,
-      activityCue: 'Raka mengirim 2 pesan baru',
-      urgency: 'deadline',
-      memberCount: 5,
-      members: const [
-        WorkspaceMember(
-          name: 'Dede (Kamu)',
-          initials: 'DF',
-          role: 'Owner',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Raka',
-          initials: 'RP',
-          role: 'Admin',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Cameron',
-          initials: 'CW',
-          role: 'Member',
-          isOnline: false,
-        ),
-        WorkspaceMember(
-          name: 'Marvin',
-          initials: 'MM',
-          role: 'Member',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Aisyah',
-          initials: 'AN',
-          role: 'Member',
-          isOnline: false,
-        ),
-      ],
-      lastActivity: '30 menit lalu',
-      isOwned: true,
-    ),
-    WorkspaceModel(
-      id: '2',
-      name: 'Hackathon 2026',
-      category: 'Kompetisi',
-      description: 'Persiapan hackathon nasional. Pitch deck, MVP, dan tugas.',
-      userRole: 'Pemilik',
-      totalTasks: 8,
-      doneTasks: 2,
-      activityCue: 'Deadline submission besok',
-      urgency: 'overdue',
-      memberCount: 4,
-      members: const [
-        WorkspaceMember(
-          name: 'Dede (Kamu)',
-          initials: 'DF',
-          role: 'Owner',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Cameron',
-          initials: 'CW',
-          role: 'Member',
-          isOnline: false,
-        ),
-        WorkspaceMember(
-          name: 'Marvin',
-          initials: 'MM',
-          role: 'Member',
-          isOnline: false,
-        ),
-        WorkspaceMember(
-          name: 'Raka',
-          initials: 'RP',
-          role: 'Member',
-          isOnline: true,
-        ),
-      ],
-      lastActivity: '3 jam lalu',
-      isOwned: true,
-    ),
-    WorkspaceModel(
-      id: '3',
-      name: 'GEMASTIK Data Mining',
-      category: 'ML/AI',
-      description: 'Tim untuk GEMASTIK XVII bidang Data Mining.',
-      userRole: 'Anggota',
-      totalTasks: 5,
-      doneTasks: 2,
-      activityCue: 'Raka upload dataset_v3.csv',
-      memberCount: 3,
-      members: const [
-        WorkspaceMember(
-          name: 'Raka',
-          initials: 'RP',
-          role: 'Owner',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Dede (Kamu)',
-          initials: 'DF',
-          role: 'Member',
-          isOnline: true,
-        ),
-        WorkspaceMember(
-          name: 'Aisyah',
-          initials: 'AN',
-          role: 'Member',
-          isOnline: false,
-        ),
-      ],
-      lastActivity: '2 jam lalu',
-      isOwned: false,
-    ),
-  ].obs;
+  final workspaces = <WorkspaceModel>[].obs;
 
   List<WorkspaceModel> get ownedWorkspaces =>
       workspaces.where((w) => w.isOwned).toList();
@@ -326,36 +214,53 @@ class TeamController extends GetxController {
       workspaces.where((w) => !w.isOwned).toList();
 
   final workspaceHistory = <WorkspaceHistory>[].obs;
+  final applicants = <WorkspaceApplicant>[].obs;
+  final discussions = <DiscussionMessage>[].obs;
+  final tasks = <WorkspaceTask>[].obs;
+  final files = <WorkspaceFile>[].obs;
+  final recentActivities = <RecentActivity>[];
+  final channels = ['umum', 'design', 'aset-proyek', 'referensi'];
 
-  final applicants = <WorkspaceApplicant>[
-    const WorkspaceApplicant(
-      id: 'app-1',
-      workspaceId: '1',
-      name: 'Nabila Putri',
-      role: 'UI/UX Designer',
-      note: 'Ingin bantu rapihin flow onboarding dan prototype testing.',
-      skills: ['Figma', 'UX Research', 'Design System'],
-    ),
-    const WorkspaceApplicant(
-      id: 'app-2',
-      workspaceId: '1',
-      name: 'Farhan Akbar',
-      role: 'Backend Developer',
-      note: 'Pernah build API FastAPI dan tertarik bantu auth service.',
-      skills: ['FastAPI', 'PostgreSQL', 'REST API'],
-    ),
-  ].obs;
+  @override
+  void onInit() {
+    super.onInit();
+    fetchWorkspaces();
+  }
+
+  Future<void> fetchWorkspaces() async {
+    isLoading.value = true;
+    workspaces.assignAll(await _repo.getWorkspaces());
+    isLoading.value = false;
+  }
 
   List<WorkspaceApplicant> applicantsFor(String workspaceId) =>
       applicants.where((a) => a.workspaceId == workspaceId).toList();
 
   void changeDetailTab(int i) => detailTabIndex.value = i;
-  void openWorkspace(WorkspaceModel ws) {
+
+  Future<void> openWorkspace(WorkspaceModel ws) async {
     selectedWorkspace.value = ws;
     detailTabIndex.value = 0;
+    final pid = int.tryParse(ws.id) ?? 0;
+    if (pid == 0) return;
+
+    final results = await Future.wait([
+      _repo.getDiscussions(pid),
+      _repo.getTasks(pid),
+      _repo.getFiles(pid),
+      _repo.getApplicants(pid),
+    ]);
+    discussions.assignAll(results[0] as List<DiscussionMessage>);
+    tasks.assignAll(results[1] as List<WorkspaceTask>);
+    files.assignAll(results[2] as List<WorkspaceFile>);
+    applicants.assignAll(results[3] as List<WorkspaceApplicant>);
   }
 
-  void approveApplicant(WorkspaceApplicant applicant) {
+  Future<void> approveApplicant(WorkspaceApplicant applicant) async {
+    final id = int.tryParse(applicant.id);
+    if (id == null) return;
+    await _repo.respondApplication(id, 'accepted', role: applicant.role);
+
     applicants.removeWhere((a) => a.id == applicant.id);
     final index = workspaces.indexWhere((w) => w.id == applicant.workspaceId);
     if (index == -1) return;
@@ -367,6 +272,7 @@ class TeamController extends GetxController {
       members: [
         ...ws.members,
         WorkspaceMember(
+          id: applicant.id,
           name: applicant.name,
           initials: applicant.name
               .split(' ')
@@ -384,7 +290,11 @@ class TeamController extends GetxController {
     selectedWorkspace.value = updated;
   }
 
-  void rejectApplicant(WorkspaceApplicant applicant) {
+  Future<void> rejectApplicant(WorkspaceApplicant applicant) async {
+    final id = int.tryParse(applicant.id);
+    if (id == null) return;
+    await _repo.respondApplication(id, 'rejected');
+
     applicants.removeWhere((a) => a.id == applicant.id);
     final index = workspaces.indexWhere((w) => w.id == applicant.workspaceId);
     if (index == -1) return;
@@ -398,7 +308,12 @@ class TeamController extends GetxController {
     selectedWorkspace.value = updated;
   }
 
-  void endCollaboration(WorkspaceModel ws) {
+  Future<void> endCollaboration(WorkspaceModel ws) async {
+    final pid = int.tryParse(ws.id);
+    if (pid != null) {
+      await _repo.endCollaboration(pid);
+    }
+
     workspaceHistory.insert(
       0,
       WorkspaceHistory(
@@ -417,143 +332,39 @@ class TeamController extends GetxController {
     detailTabIndex.value = 0;
   }
 
-  // Recent activity
-  final recentActivities = <RecentActivity>[
-    const RecentActivity(
-      text: 'Raka mengirim pesan di #umum',
-      time: '30m lalu',
-      workspace: 'Rembugan App',
-      type: 'message',
-    ),
-    const RecentActivity(
-      text: 'wireframe_v2.fig diunggah',
-      time: '1j lalu',
-      workspace: 'Rembugan App',
-      type: 'file',
-    ),
-    const RecentActivity(
-      text: 'Task "Setup CI/CD" selesai',
-      time: '2j lalu',
-      workspace: 'Hackathon 2026',
-      type: 'task',
-    ),
-    const RecentActivity(
-      text: 'Aisyah bergabung ke tim',
-      time: '3j lalu',
-      workspace: 'GEMASTIK',
-      type: 'member',
-    ),
-  ];
+  Future<void> createTask(String title, List<String> assigneeIds, String? deadline) async {
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final pid = int.tryParse(ws.id);
+    if (pid == null) return;
+    await _repo.createTask(pid, title, assigneeIds, deadline);
+    tasks.assignAll(await _repo.getTasks(pid));
+  }
 
-  // ── Detail dummy data ──
+  Future<void> moveTask(int taskId, String newStatus) async {
+    await _repo.moveTask(taskId, newStatus);
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final pid = int.tryParse(ws.id);
+    if (pid == null) return;
+    tasks.assignAll(await _repo.getTasks(pid));
+  }
 
-  final discussions = <DiscussionMessage>[
-    const DiscussionMessage(
-      sender: '',
-      body: 'Raka menambahkan file wireframe_v2.fig',
-      time: '10:20',
-      isSystem: true,
-    ),
-    const DiscussionMessage(
-      sender: 'Raka',
-      body: 'Wireframe onboarding sudah selesai, bisa dicek di Figma ya!',
-      time: '10:24',
-    ),
-    const DiscussionMessage(
-      sender: 'Dede',
-      body: 'Sudah lihat, bagus! Kita lanjut ke home screen aja.',
-      time: '10:31',
-      isMe: true,
-    ),
-    const DiscussionMessage(
-      sender: '',
-      body: 'Task "Setup CI/CD" diselesaikan oleh Marvin',
-      time: '11:00',
-      isSystem: true,
-    ),
-    const DiscussionMessage(
-      sender: 'Cameron',
-      body: 'Project Flutter sudah disetup, tinggal integrasi API auth nih.',
-      time: '11:05',
-    ),
-    const DiscussionMessage(
-      sender: 'Dede',
-      body: 'Siap, nanti aku handle bagian auth-nya.',
-      time: '11:08',
-      isMe: true,
-    ),
-    const DiscussionMessage(
-      sender: 'Aisyah',
-      body: 'Mockup profile page sudah aku upload di tab File.',
-      time: '11:15',
-      attachment: 'profile_mockup_v2.fig',
-    ),
-  ].obs;
+  Future<void> updateTask(int taskId, {String? title, List<String>? assigneeIds, String? deadline}) async {
+    await _repo.updateTask(taskId, title: title, assigneeIds: assigneeIds, deadline: deadline);
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final pid = int.tryParse(ws.id);
+    if (pid == null) return;
+    tasks.assignAll(await _repo.getTasks(pid));
+  }
 
-  final channels = ['umum', 'design', 'aset-proyek', 'referensi'];
-
-  final tasks = <WorkspaceTask>[
-    const WorkspaceTask(
-      title: 'Slicing UI Onboarding',
-      assignee: 'Dede',
-      deadline: 'Hari ini',
-      status: 'In Progress',
-    ),
-    const WorkspaceTask(
-      title: 'Integrasi API Login',
-      assignee: 'Cameron',
-      deadline: 'Besok',
-      status: 'In Progress',
-    ),
-    const WorkspaceTask(
-      title: 'Review UX Flow Chat',
-      assignee: 'Raka',
-      deadline: '20 Mei',
-      status: 'Todo',
-    ),
-    const WorkspaceTask(
-      title: 'Setup CI/CD Pipeline',
-      assignee: 'Marvin',
-      deadline: '18 Mei',
-      status: 'Done',
-      isDone: true,
-    ),
-    const WorkspaceTask(
-      title: 'Design System Docs',
-      assignee: 'Aisyah',
-      deadline: '22 Mei',
-      status: 'Todo',
-    ),
-  ].obs;
-
-  final files = <WorkspaceFile>[
-    const WorkspaceFile(
-      name: 'profile_mockup_v2.fig',
-      uploader: 'Aisyah',
-      date: 'Hari ini',
-      size: '2.4 MB',
-      type: 'fig',
-    ),
-    const WorkspaceFile(
-      name: 'api_spec_v3.pdf',
-      uploader: 'Cameron',
-      date: 'Kemarin',
-      size: '540 KB',
-      type: 'pdf',
-    ),
-    const WorkspaceFile(
-      name: 'meeting_notes.doc',
-      uploader: 'Dede',
-      date: '15 Mei',
-      size: '128 KB',
-      type: 'doc',
-    ),
-    const WorkspaceFile(
-      name: 'wireframe_explore.png',
-      uploader: 'Raka',
-      date: '14 Mei',
-      size: '1.8 MB',
-      type: 'png',
-    ),
-  ].obs;
+  Future<void> deleteTask(int taskId) async {
+    await _repo.deleteTask(taskId);
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final pid = int.tryParse(ws.id);
+    if (pid == null) return;
+    tasks.assignAll(await _repo.getTasks(pid));
+  }
 }

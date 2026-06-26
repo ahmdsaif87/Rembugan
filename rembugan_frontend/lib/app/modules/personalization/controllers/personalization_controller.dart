@@ -28,7 +28,6 @@ class PersonalizationController extends GetxController {
     handle: '',
     bio: '',
     major: '',
-    socialLink: '',
     skills: [],
     experiences: [],
     collaborationHistory: [],
@@ -104,6 +103,7 @@ class PersonalizationController extends GetxController {
 
       _photoUrl = responseData['photo_url'] as String?;
       final nama = responseData['nama'] as String? ?? '';
+      final major = responseData['major'] as String? ?? '';
       final skills = (responseData['skills_terdeteksi'] as List?)
               ?.map((s) => s.toString())
               .toList() ??
@@ -129,8 +129,7 @@ class PersonalizationController extends GetxController {
         name: nama.isNotEmpty ? nama : '',
         handle: '',
         bio: bio,
-        major: '',
-        socialLink: '',
+        major: major,
         skills: skills,
         experiences: experiences,
         collaborationHistory: const [],
@@ -226,8 +225,8 @@ class PersonalizationController extends GetxController {
     extractedProfile.value = extractedProfile.value.copyWith(major: value);
   }
 
-  void updateSocialLink(String value) {
-    extractedProfile.value = extractedProfile.value.copyWith(socialLink: value);
+  void updateSocialLinks(Map<String, String> value) {
+    extractedProfile.value = extractedProfile.value.copyWith(socialLinks: value);
   }
 
   void addSkill(String value) {
@@ -285,7 +284,6 @@ class PersonalizationController extends GetxController {
       handle: '',
       bio: '',
       major: '',
-      socialLink: '',
       skills: [],
       experiences: [],
       collaborationHistory: [],
@@ -314,8 +312,8 @@ class PersonalizationController extends GetxController {
         'bio': profile.bio,
         'photo_url': _photoUrl,
         'skills': profile.skills,
-        'social_links': profile.socialLink.isNotEmpty
-            ? {'website': profile.socialLink}
+        'social_links': profile.socialLinks.isNotEmpty
+            ? profile.socialLinks
             : null,
         'experiences': profile.experiences
             .map((e) => {
@@ -356,7 +354,6 @@ class PersonalizationController extends GetxController {
       handle: '',
       bio: '',
       major: '',
-      socialLink: '',
       skills: [],
       experiences: [],
       collaborationHistory: [],

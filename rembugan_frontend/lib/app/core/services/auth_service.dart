@@ -127,6 +127,47 @@ class AuthService extends GetxService {
     }
   }
 
+  Future<String?> register({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    isLoading.value = true;
+    try {
+      await _api.post('/auth/register', data: {
+        'email': email,
+        'password': password,
+        'full_name': fullName,
+      });
+      return null;
+    } on DioException catch (e) {
+      final detail = e.response?.data['detail'];
+      return detail?.toString() ?? 'Registrasi gagal.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<String?> registerVerifyOtp({
+    required String email,
+    required String otp,
+  }) async {
+    isLoading.value = true;
+    try {
+      await _api.post('/auth/register/verify-otp', data: {
+        'email': email,
+        'otp': otp,
+      });
+      await login(identifier: email, password: '');
+      return null;
+    } on DioException catch (e) {
+      final detail = e.response?.data['detail'];
+      return detail?.toString() ?? 'Verifikasi OTP gagal.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> logout() async {
     await _api.clearToken();
     currentUser.value = null;

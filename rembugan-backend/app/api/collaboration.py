@@ -58,6 +58,7 @@ async def apply_to_project(
         "application_received",
         "Lamaran Baru",
         f"{application.applicant.full_name if application.applicant else 'Seseorang'} ingin bergabung ke '{project.title}'",
+        link=f"/workspace/{project.id}",
     )
 
     return {
@@ -168,6 +169,17 @@ async def respond_to_application(
 
     # Jika accepted, tambahkan sebagai member
     if data.status == APP_ACCEPTED:
+        ts = application.project.total_slots
+        current = 0
+        if ts is not None:
+            current = await db.projectmember.count(
+                where={"project_id": application.project_id}
+            )
+            if current >= ts:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Slot proyek sudah penuh ({current}/{ts})",
+                )
         await db.projectmember.create(
             data={
                 "project_id": application.project_id,
@@ -175,14 +187,8 @@ async def respond_to_application(
                 "role": data.role,
             }
         )
-        # Auto-close jika slots sudah penuh
-        current_members = await db.projectmember.count(
-            where={"project_id": application.project_id}
-        )
-        project = await db.project.find_unique(
-            where={"id": application.project_id}
-        )
-        if project and project.total_slots is not None and current_members >= project.total_slots:
+        # Auto-ongoing jika slots penuh setelah anggota baru
+        if ts is not None and current + 1 >= ts:
             await db.project.update(
                 where={"id": application.project_id},
                 data={"status": PJ_ONGOING},

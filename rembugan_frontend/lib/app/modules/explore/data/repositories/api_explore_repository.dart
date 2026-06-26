@@ -99,6 +99,11 @@ class ApiExploreRepository implements ExploreRepository {
   }
 
   @override
+  Future<void> applyToProject(int projectId) async {
+    await _api.post('/collaboration/apply', data: {'project_id': projectId});
+  }
+
+  @override
   Future<List<ExplorePerson>> searchPeople(String query) async {
     try {
       final response = await _api.get('/profile/search', queryParameters: {'q': query});
@@ -141,12 +146,14 @@ class ApiExploreRepository implements ExploreRepository {
         (postedBy.isNotEmpty ? [postedBy] : const []);
     final memberAvatars = (raw['member_avatars'] as List<dynamic>?)
             ?.map((e) => e.toString())
-            .where((u) => u.isNotEmpty)
             .toList() ??
         [];
     final matchScore = raw['match_score'] as int? ?? 0;
+    final hasApplied = raw['has_applied'] as bool? ?? false;
+    final projectId = raw['id'] as int? ?? 0;
 
     return Project(
+      projectId: projectId,
       title: title,
       description: description,
       postedBy: postedBy,
@@ -159,6 +166,7 @@ class ApiExploreRepository implements ExploreRepository {
       totalSlots: totalSlots,
       filledSlots: filledSlots,
       matchScore: matchScore,
+      hasApplied: hasApplied,
       skills: skills,
       memberAvatars: memberAvatars,
       memberNames: memberNames,
@@ -237,6 +245,8 @@ class ApiExploreRepository implements ExploreRepository {
     final posterUrl = raw['poster'] as String? ?? '';
     final campusTag = _campusTag(organizer);
 
+    final matchScore = raw['match_score'] as int? ?? 0;
+
     return Competition(
       title: title,
       caption: caption,
@@ -248,6 +258,7 @@ class ApiExploreRepository implements ExploreRepository {
       registrationLink: link,
       campusTag: campusTag,
       posterUrl: posterUrl,
+      matchScore: matchScore,
     );
   }
 

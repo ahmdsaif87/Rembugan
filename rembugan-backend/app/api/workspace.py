@@ -525,7 +525,7 @@ async def get_workspace_activities(
         where={"project_id": project_id},
         order={"created_at": "desc"},
         take=limit,
-        include={"assignee": True},
+        include={"assignees": {"include": {"user": True}}},
     )
     for t in tasks:
         status_text = {
@@ -534,9 +534,10 @@ async def get_workspace_activities(
             TASK_DONE: "diselesaikan",
         }
         actions = status_text.get(t.status, "diupdate")
-        assignee = t.assignee.full_name if t.assignee else "Seseorang"
+        names = [a.user.full_name for a in t.assignees] if t.assignees else ["Seseorang"]
+        assignee_str = ", ".join(names)
         activities.append({
-            "text": f"Task '{t.title}' {actions} oleh {assignee}",
+            "text": f"Task '{t.title}' {actions} oleh {assignee_str}",
             "time": _format_relative_time(t.created_at),
             "workspace": project.title,
             "type": "task",
@@ -594,11 +595,15 @@ async def create_task(
         data={
             "project_id": project_id,
             "title": data.title,
-            "assignee_id": data.assignee_id,
             "status": TASK_TODO,
             "deadline": deadline_dt,
+            "assignees": {
+                "create": [
+                    {"user_id": uid} for uid in data.assignee_ids
+                ]
+            } if data.assignee_ids else {},
         },
-        include={"assignee": True},
+        include={"assignees": {"include": {"user": True}}},
     )
 
     return {
@@ -608,8 +613,10 @@ async def create_task(
             "id": task.id,
             "title": task.title,
             "status": task.status,
-            "assignee_name": task.assignee.full_name if task.assignee else None,
-            "assignee_id": task.assignee_id,
+            "assignees": [
+                {"id": a.user_id, "name": a.user.full_name}
+                for a in task.assignees
+            ],
             "deadline": task.deadline.isoformat() if task.deadline else None,
             "created_at": tz_iso(task.created_at),
         },
@@ -651,7 +658,7 @@ async def get_project_tasks(
 
     tasks = await db.task.find_many(
         where={"project_id": project_id},
-        include={"assignee": True},
+        include={"assignees": {"include": {"user": True}}},
         order={"created_at": "asc"},
     )
 
@@ -661,8 +668,10 @@ async def get_project_tasks(
             "id": t.id,
             "title": t.title,
             "status": t.status,
-            "assignee_name": t.assignee.full_name if t.assignee else None,
-            "assignee_id": t.assignee_id,
+            "assignees": [
+                {"id": a.user_id, "name": a.user.full_name}
+                for a in t.assignees
+            ],
             "deadline": t.deadline.isoformat() if t.deadline else None,
             "created_at": tz_iso(t.created_at),
         }
@@ -696,15 +705,18 @@ async def update_task(
     update_data = {}
     if data.title is not None:
         update_data["title"] = data.title
-    if data.assignee_id is not None:
-        update_data["assignee_id"] = data.assignee_id
     if data.deadline is not None:
         update_data["deadline"] = datetime.fromisoformat(data.deadline)
+
+    if data.assignee_ids is not None:
+        await db.taskassignee.delete_many(where={"task_id": task_id})
+        for uid in data.assignee_ids:
+            await db.taskassignee.create(data={"task_id": task_id, "user_id": uid})
 
     updated = await db.task.update(
         where={"id": task_id},
         data=update_data,
-        include={"assignee": True},
+        include={"assignees": {"include": {"user": True}}},
     )
 
     return {
@@ -714,8 +726,10 @@ async def update_task(
             "id": updated.id,
             "title": updated.title,
             "status": updated.status,
-            "assignee_name": updated.assignee.full_name if updated.assignee else None,
-            "assignee_id": updated.assignee_id,
+            "assignees": [
+                {"id": a.user_id, "name": a.user.full_name}
+                for a in updated.assignees
+            ],
             "deadline": updated.deadline.isoformat() if updated.deadline else None,
         },
     }

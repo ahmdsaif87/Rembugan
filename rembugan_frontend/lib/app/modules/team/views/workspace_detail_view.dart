@@ -9,6 +9,17 @@ import '../../../core/widgets/app_chrome.dart';
 import '../controllers/team_controller.dart';
 import 'widgets/qr_code_sheet.dart';
 
+String _formatDeadline(String raw) {
+  if (raw == '-' || raw.isEmpty) return raw;
+  final dt = DateTime.tryParse(raw);
+  if (dt == null) return raw;
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+  ];
+  return "${dt.day} ${months[dt.month - 1]} ${dt.year}";
+}
+
 class WorkspaceDetailView extends GetView<TeamController> {
   const WorkspaceDetailView({super.key});
 
@@ -225,8 +236,8 @@ class WorkspaceDetailView extends GetView<TeamController> {
       backgroundColor: AppColors.transparent,
       builder: (_) => _EndCollaborationSheet(
         ws: ws,
-        onConfirm: () {
-          controller.endCollaboration(ws);
+        onConfirm: () async {
+          await controller.endCollaboration(ws);
           Navigator.pop(context);
           Get.back<void>();
           AppToast.success('${ws.name} dipindahkan ke History.', title: 'Kolaborasi selesai');
@@ -356,12 +367,12 @@ class ApplicantSheet extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: _ApplicantCard(
                     applicant: applicant,
-                    onAccept: () {
-                      ctrl.approveApplicant(applicant);
+                    onAccept: () async {
+                      await ctrl.approveApplicant(applicant);
                       AppToast.success('${applicant.name} masuk ke workspace.', title: 'Pelamar diterima');
                     },
-                    onReject: () {
-                      ctrl.rejectApplicant(applicant);
+                    onReject: () async {
+                      await ctrl.rejectApplicant(applicant);
                       AppToast.info('${applicant.name} tidak masuk ke workspace.', title: 'Lamaran ditolak');
                     },
                   ),
@@ -1290,9 +1301,9 @@ class _TaskTab extends StatelessWidget {
   final TeamController ctrl;
 
   static const _sections = [
-    _SectionConfig('To Do', AppColors.info500, 'Todo', 'Belum ada tugas'),
-    _SectionConfig('In Progress', AppColors.warning700, 'In Progress', 'Belum ada tugas dikerjakan'),
-    _SectionConfig('Done', AppColors.success600, 'Done', 'Belum ada tugas selesai'),
+    _SectionConfig('To Do', AppColors.info500, 'todo', 'Belum ada tugas'),
+    _SectionConfig('In Progress', AppColors.warning700, 'doing', 'Belum ada tugas dikerjakan'),
+    _SectionConfig('Done', AppColors.success600, 'done', 'Belum ada tugas selesai'),
   ];
 
   @override
@@ -1389,7 +1400,7 @@ class _TaskActionSheet extends StatelessWidget {
   final int taskIndex;
   final TeamController ctrl;
 
-  static const _allStatuses = ['Todo', 'In Progress', 'Done'];
+  static const _allStatuses = ['todo', 'doing', 'done'];
 
   @override
   Widget build(BuildContext context) {
@@ -1443,15 +1454,9 @@ class _TaskActionSheet extends StatelessWidget {
                       icon: _statusIcon(status),
                       title: _statusLabel(status),
                       subtitle: '',
-                      onTap: () {
-                        ctrl.tasks[taskIndex] = WorkspaceTask(
-                          title: task.title,
-                          assignee: task.assignee,
-                          deadline: task.deadline,
-                          status: status,
-                          isDone: status == 'Done',
-                        );
-                        Navigator.pop(context);
+                      onTap: () async {
+                        await ctrl.moveTask(task.id, status);
+                        if (context.mounted) Navigator.pop(context);
                       },
                     ),
                   ))),
@@ -1481,9 +1486,9 @@ class _TaskActionSheet extends StatelessWidget {
                 child: _SheetButton(
                   label: 'Hapus',
                   danger: true,
-                  onTap: () {
-                    ctrl.tasks.removeAt(taskIndex);
-                    Navigator.pop(context);
+                  onTap: () async {
+                    await ctrl.deleteTask(task.id);
+                    if (context.mounted) Navigator.pop(context);
                   },
                 ),
               ),
@@ -1496,9 +1501,9 @@ class _TaskActionSheet extends StatelessWidget {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Todo':
+      case 'todo':
         return AppColors.info500;
-      case 'In Progress':
+      case 'doing':
         return AppColors.warning700;
       default:
         return AppColors.success600;
@@ -1507,9 +1512,9 @@ class _TaskActionSheet extends StatelessWidget {
 
   IconData _statusIcon(String status) {
     switch (status) {
-      case 'Todo':
+      case 'todo':
         return FluentIcons.document_24_regular;
-      case 'In Progress':
+      case 'doing':
         return FluentIcons.clock_24_regular;
       default:
         return FluentIcons.checkmark_24_regular;
@@ -1518,9 +1523,9 @@ class _TaskActionSheet extends StatelessWidget {
 
   String _statusLabel(String status) {
     switch (status) {
-      case 'Todo':
+      case 'todo':
         return 'To Do';
-      case 'In Progress':
+      case 'doing':
         return 'In Progress';
       default:
         return 'Done';
@@ -1549,10 +1554,13 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
   final descCtrl = TextEditingController();
 
   bool isExpanded = false;
-  String selectedAssignee = 'Saya';
+  late List<String> memberNames;
+  late Map<String, String> memberIdByName;
+  late List<String> memberIds;
+  final selectedMemberIds = <String>{};
   String selectedPriority = 'Sedang';
+  DateTime? selectedDeadline;
 
-  final List<String> assignees = ['Saya', 'Dede', 'Raka', 'Cameron', 'Aisyah'];
   final List<String> priorities = ['Rendah', 'Sedang', 'Tinggi'];
 
   final List<String> suggestions = [
@@ -1564,11 +1572,20 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
   @override
   void initState() {
     super.initState();
+    final members = widget.ctrl.selectedWorkspace.value?.members ?? [];
+    memberNames = members.map((m) => m.name).toList();
+    memberIds = members.map((m) => m.id).toList();
+    memberIdByName = {for (final m in members) m.name: m.id};
     final t = widget.existingTask;
     if (t != null) {
       titleCtrl.text = t.title;
-      deadlineCtrl.text = t.deadline;
-      selectedAssignee = t.assignee;
+      deadlineCtrl.text = _formatDeadline(t.deadline);
+      selectedDeadline = DateTime.tryParse(t.deadline);
+      for (final uid in t.assigneeIds) {
+        if (memberIds.contains(uid)) {
+          selectedMemberIds.add(uid);
+        }
+      }
     }
   }
 
@@ -1785,32 +1802,59 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           border: Border.all(color: c.border),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedAssignee,
-                            isExpanded: true,
-                            icon: const Icon(Icons.arrow_drop_down, size: 18),
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: c.textPrimary,
-                            ),
-                              items: assignees.map((name) {
-                                return DropdownMenuItem(
-                                  value: name,
-                                  child: Text(name),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() {
-                                    selectedAssignee = val;
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        ),
+                        child: memberNames.isEmpty
+                            ? Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                child: Text(
+                                  'Tidak ada anggota',
+                                  style: AppFonts.satoshiStyle(
+                                    fontSize: 13,
+                                    color: c.textTertiary,
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                children: memberNames.map((name) {
+                                  final uid = memberIdByName[name] ?? '';
+                                  final selected = selectedMemberIds.contains(uid);
+                                  return InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        if (selected) {
+                                          selectedMemberIds.remove(uid);
+                                        } else {
+                                          selectedMemberIds.add(uid);
+                                        }
+                                      });
+                                    },
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 4),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            selected
+                                                ? Icons.check_box
+                                                : Icons.check_box_outline_blank,
+                                            size: 18,
+                                            color: selected
+                                                ? AppColors.primary500
+                                                : c.textTertiary,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            name,
+                                            style: AppFonts.satoshiStyle(
+                                              fontSize: 13,
+                                              color: c.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                      ),
                       ],
                     ),
                   ),
@@ -1857,23 +1901,13 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                               },
                             );
                             if (picked != null) {
+                              selectedDeadline = picked;
                               final months = [
-                                'Jan',
-                                'Feb',
-                                'Mar',
-                                'Apr',
-                                'Mei',
-                                'Jun',
-                                'Jul',
-                                'Agu',
-                                'Sep',
-                                'Okt',
-                                'Nov',
-                                'Des',
+                                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+                                'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
                               ];
-                              final formattedDate =
+                              deadlineCtrl.text =
                                   "${picked.day} ${months[picked.month - 1]} ${picked.year}";
-                              deadlineCtrl.text = formattedDate;
                             }
                           },
                           decoration: InputDecoration(
@@ -2048,22 +2082,29 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
               width: double.infinity,
               height: 44,
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (titleCtrl.text.trim().isEmpty) return;
-                  final t = WorkspaceTask(
-                    title: titleCtrl.text.trim(),
-                    assignee: selectedAssignee,
-                    deadline: deadlineCtrl.text.trim().isNotEmpty
-                        ? deadlineCtrl.text.trim()
-                        : '-',
-                    status: _isEditing ? widget.existingTask!.status : 'Todo',
-                  );
+                  final title = titleCtrl.text.trim();
+                  final deadline = selectedDeadline != null
+                      ? '${selectedDeadline!.year.toString().padLeft(4, '0')}-${selectedDeadline!.month.toString().padLeft(2, '0')}-${selectedDeadline!.day.toString().padLeft(2, '0')}'
+                      : deadlineCtrl.text.trim().isNotEmpty
+                          ? deadlineCtrl.text.trim()
+                          : null;
                   if (_isEditing) {
-                    widget.ctrl.tasks[widget.taskIndex!] = t;
+                    await widget.ctrl.updateTask(
+                      widget.existingTask!.id,
+                      title: title,
+                      assigneeIds: selectedMemberIds.toList(),
+                      deadline: deadline,
+                    );
                   } else {
-                    widget.ctrl.tasks.add(t);
+                    await widget.ctrl.createTask(
+                      title,
+                      selectedMemberIds.toList(),
+                      deadline,
+                    );
                   }
-                  Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
                 },
                 child: Container(
                   alignment: Alignment.center,
@@ -2259,46 +2300,50 @@ class _KanbanTaskCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                FluentIcons.person_24_regular,
-                                size: 12,
-                                color: c.textTertiary,
+                          if (task.assigneeNames.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children: task.assigneeNames.map((name) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: c.grey50,
+                                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                                    ),
+                                    child: Text(
+                                      name,
+                                      style: AppFonts.satoshiStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        color: c.textSecondary,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                task.assignee,
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 11,
-                                  color: c.textTertiary,
-                                ),
-                              ),
-                              if (task.deadline != '-') ...[
-                                const SizedBox(width: 12),
+                            ),
+                          if (task.deadline != '-' && task.deadline.isNotEmpty)
+                            Row(
+                              children: [
                                 Icon(
                                   FluentIcons.calendar_24_regular,
                                   size: 12,
-                                  color: task.deadline == 'Hari ini'
-                                      ? AppColors.danger500
-                                      : c.textTertiary,
+                                  color: c.textTertiary,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  task.deadline,
+                                  _formatDeadline(task.deadline),
                                   style: AppFonts.satoshiStyle(
                                     fontSize: 11,
-                                    fontWeight: task.deadline == 'Hari ini'
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: task.deadline == 'Hari ini'
-                                        ? AppColors.danger500
-                                        : c.textTertiary,
+                                    fontWeight: FontWeight.w500,
+                                    color: c.textTertiary,
                                   ),
                                 ),
                               ],
-                            ],
-                          ),
+                            ),
                         ],
                       ),
                     ),

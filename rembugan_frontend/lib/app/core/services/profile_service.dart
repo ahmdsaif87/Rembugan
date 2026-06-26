@@ -95,38 +95,43 @@ class ProfileData {
   final String name;
   final String handle;
   final String bio;
+  final String interest;
   final String major;
-  final String socialLink;
+  final Map<String, String> socialLinks;
   final String photoUrl;
   final String coverUrl;
   final List<String> skills;
   final List<ProfileExperience> experiences;
   final List<PlatformCollaboration> collaborationHistory;
   final bool hasResumePhoto;
+  final int connectionCount;
+  final int projectCount;
+  final List<Map<String, dynamic>> projectHistory;
 
   const ProfileData({
     this.id,
     required this.name,
     required this.handle,
     required this.bio,
+    this.interest = '',
     required this.major,
-    required this.socialLink,
+    this.socialLinks = const {},
     this.photoUrl = '',
     this.coverUrl = '',
     required this.skills,
     required this.experiences,
     required this.collaborationHistory,
     this.hasResumePhoto = false,
+    this.connectionCount = 0,
+    this.projectCount = 0,
+    this.projectHistory = const [],
   });
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
-    final socialLinks = json['social_links'];
-    String socialLink = '';
-    if (socialLinks is Map) {
-      final values = socialLinks.values.whereType<String>().toList();
-      if (values.isNotEmpty) socialLink = values.first;
-    } else if (socialLinks is String) {
-      socialLink = socialLinks;
+    final rawSocialLinks = json['social_links'];
+    Map<String, String> parsedLinks = {};
+    if (rawSocialLinks is Map) {
+      parsedLinks = rawSocialLinks.map((k, v) => MapEntry(k.toString(), v.toString()));
     }
 
     final experiences = (json['experiences'] as List<dynamic>?)
@@ -139,8 +144,9 @@ class ProfileData {
       name: json['full_name'] as String? ?? '',
       handle: json['handle'] as String? ?? '',
       bio: json['bio'] as String? ?? '',
+      interest: json['interest'] as String? ?? '',
       major: json['major'] as String? ?? '',
-      socialLink: socialLink,
+      socialLinks: parsedLinks,
       photoUrl: json['photo_url'] as String? ?? '',
       coverUrl: json['cover_url'] as String? ?? '',
       skills: (json['skills'] as List<dynamic>?)
@@ -150,6 +156,11 @@ class ProfileData {
       experiences: experiences,
       collaborationHistory: const [],
       hasResumePhoto: false,
+      connectionCount: json['connection_count'] as int? ?? 0,
+      projectCount: json['project_count'] as int? ?? 0,
+      projectHistory: (json['project_history'] as List<dynamic>?)
+              ?.cast<Map<String, dynamic>>() ??
+          [],
     );
   }
 
@@ -158,28 +169,36 @@ class ProfileData {
     String? name,
     String? handle,
     String? bio,
+    String? interest,
     String? major,
-    String? socialLink,
+    Map<String, String>? socialLinks,
     String? photoUrl,
     String? coverUrl,
     List<String>? skills,
     List<ProfileExperience>? experiences,
     List<PlatformCollaboration>? collaborationHistory,
     bool? hasResumePhoto,
+    int? connectionCount,
+    int? projectCount,
+    List<Map<String, dynamic>>? projectHistory,
   }) {
     return ProfileData(
       id: id ?? this.id,
       name: name ?? this.name,
       handle: handle ?? this.handle,
       bio: bio ?? this.bio,
+      interest: interest ?? this.interest,
       major: major ?? this.major,
-      socialLink: socialLink ?? this.socialLink,
+      socialLinks: socialLinks ?? this.socialLinks,
       photoUrl: photoUrl ?? this.photoUrl,
       coverUrl: coverUrl ?? this.coverUrl,
       skills: skills ?? this.skills,
       experiences: experiences ?? this.experiences,
       collaborationHistory: collaborationHistory ?? this.collaborationHistory,
       hasResumePhoto: hasResumePhoto ?? this.hasResumePhoto,
+      connectionCount: connectionCount ?? this.connectionCount,
+      projectCount: projectCount ?? this.projectCount,
+      projectHistory: projectHistory ?? this.projectHistory,
     );
   }
 }
@@ -192,7 +211,6 @@ class ProfileService extends GetxService {
     handle: '',
     bio: '',
     major: '',
-    socialLink: '',
     skills: [],
     experiences: [],
     collaborationHistory: [],
@@ -229,30 +247,25 @@ class ProfileService extends GetxService {
       final res = await _api.patch('/profile/settings', data: data);
       final resultData = res.data['data'] as Map<String, dynamic>?;
       if (resultData != null) {
+        final rawLinks = resultData['social_links'];
+        Map<String, String> parsedLinks = {};
+        if (rawLinks is Map) {
+          parsedLinks = rawLinks.map((k, v) => MapEntry(k.toString(), v.toString()));
+        }
         profile.value = profile.value.copyWith(
           name: resultData['full_name'] as String? ?? profile.value.name,
           handle: resultData['handle'] as String? ?? profile.value.handle,
           bio: resultData['bio'] as String? ?? profile.value.bio,
-          major: resultData['major'] as String? ?? profile.value.major,
+          interest: resultData['interest'] as String? ?? profile.value.interest,
           photoUrl: resultData['photo_url'] as String? ?? profile.value.photoUrl,
           coverUrl: resultData['cover_url'] as String? ?? profile.value.coverUrl,
-          socialLink: _extractSocialLink(resultData['social_links']),
+          socialLinks: parsedLinks,
         );
       }
       return null;
     } catch (e) {
       return 'Gagal menyimpan pengaturan';
     }
-  }
-
-  String _extractSocialLink(dynamic socialLinks) {
-    if (socialLinks is Map) {
-      final values = socialLinks.values.whereType<String>().toList();
-      if (values.isNotEmpty) return values.first;
-    } else if (socialLinks is String) {
-      return socialLinks;
-    }
-    return profile.value.socialLink;
   }
 
   void updateProfile(ProfileData data) {

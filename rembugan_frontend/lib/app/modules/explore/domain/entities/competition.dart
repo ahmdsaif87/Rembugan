@@ -11,6 +11,7 @@ class Competition {
   final String registrationLink;
   final String campusTag;
   final String posterUrl;
+  final int matchScore;
 
   const Competition({
     required this.title,
@@ -23,6 +24,7 @@ class Competition {
     required this.registrationLink,
     required this.campusTag,
     this.posterUrl = '',
+    this.matchScore = 0,
   });
 
   int? get daysLeft {

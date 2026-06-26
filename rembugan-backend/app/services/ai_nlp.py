@@ -62,13 +62,15 @@ Ekstrak data dari teks OCR CV berikut:
 
 Aturan:
 1. Ambil "nama" lengkap.
-2. Ekstrak "skills" teknis penting saja dalam bentuk array string.
-3. Buat "bio_suggestion" bergaya LinkedIn: 2-3 kalimat profesional tentang keahlian utama, fokus pengembangan, dan nilai yang bisa ditawarkan. Bukan terlalu singkat (1 kalimat) dan bukan terlalu panjang (lebih dari 3 kalimat). Gunakan nada bicara yang confident tapi tetap humble, seperti bio profesional di LinkedIn.
-4. Ekstrak "experiences" dari CV: setiap pengalaman kerja, organisasi, atau proyek yang disebutkan. Jika tidak ada pengalaman yang terdeteksi, kembalikan array kosong [].
+2. Ambil "major" / program studi / jurusan mahasiswa. Jika tidak ada, isi dengan string kosong "".
+3. Ekstrak "skills" teknis penting saja dalam bentuk array string.
+4. Buat "bio_suggestion" bergaya LinkedIn: 2-3 kalimat profesional tentang keahlian utama, fokus pengembangan, dan nilai yang bisa ditawarkan. Bukan terlalu singkat (1 kalimat) dan bukan terlalu panjang (lebih dari 3 kalimat). Gunakan nada bicara yang confident tapi tetap humble, seperti bio profesional di LinkedIn.
+5. Ekstrak "experiences" dari CV: setiap pengalaman kerja, organisasi, atau proyek yang disebutkan. Jika tidak ada pengalaman yang terdeteksi, kembalikan array kosong [].
 
 Format:
 {{
     "nama": "Nama Asli",
+    "major": "Program Studi",
     "skills": ["Skill 1", "Skill 2"],
     "bio_suggestion": "Bio LinkedIn 2-3 kalimat...",
     "experiences": [

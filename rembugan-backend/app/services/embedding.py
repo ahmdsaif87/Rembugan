@@ -1,6 +1,24 @@
+import asyncio
 from fastembed import TextEmbedding
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 _model: TextEmbedding | None = None
+_model_ready = asyncio.Event()
+
+
+async def preload_embedding_model():
+    """Preload embedding model di background agar request pertama tidak lambat."""
+    logger.info("Preloading embedding model...")
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, _get_model)
+    _model_ready.set()
+    logger.info("Embedding model siap!")
+
+
+async def wait_for_model():
+    await _model_ready.wait()
 
 
 def _get_model() -> TextEmbedding:
@@ -69,7 +87,7 @@ async def reembed_project(db, project_id: int):
     from prisma import Json
     project = await db.project.find_unique(where={"id": project_id})
     if project:
-        txt = text_for_project(project.title, project.description, project.required_skills or [], project.interest)
+        txt = text_for_project(project.title, project.description, project.required_skills or [])
         emb = generate(txt)
         await db.project.update(where={"id": project_id}, data={"embedding": Json(emb)})
 

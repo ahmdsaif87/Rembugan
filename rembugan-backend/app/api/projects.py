@@ -42,8 +42,6 @@ async def create_project(
     }
     if data.category is not None:
         create_data["category"] = data.category
-    if data.faculty is not None:
-        create_data["faculty"] = data.faculty
     if data.deadline is not None:
         create_data["deadline"] = data.deadline
     if data.total_slots is not None:
@@ -67,7 +65,6 @@ async def create_project(
             "required_skills": project.required_skills,
             "status": project.status,
             "category": project.category,
-            "faculty": project.faculty,
             "deadline": tz_iso(project.deadline) if project.deadline else None,
             "total_slots": project.total_slots,
             "filled_slots": len(project.members) if project.members else 0,
@@ -82,7 +79,6 @@ async def get_all_projects(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
     category: str = Query(None, description="Filter by category"),
-    faculty: str = Query(None, description="Filter by faculty"),
     min_slots: int = Query(None, ge=1, description="Min total slots"),
     max_slots: int = Query(None, ge=1, description="Max total slots"),
     deadline_before: str = Query(None, description="Filter deadline before (ISO datetime)"),
@@ -106,18 +102,13 @@ async def get_all_projects(
     if not user:
         raise HTTPException(status_code=404, detail="User belum terdaftar.")
 
-<<<<<<< Updated upstream
-    user_skills = [us.skill.name for us in user.skills] if user.skills else []
-=======
     user_embedding = user.embedding
->>>>>>> Stashed changes
+
 
     # Build filter conditions
     where_conditions = {"status": PJ_OPEN, "owner_id": {"not": uid}}
     if category:
         where_conditions["category"] = category
-    if faculty:
-        where_conditions["faculty"] = faculty
     if min_slots is not None:
         where_conditions["total_slots"] = {"gte": min_slots}
     if max_slots is not None:
@@ -159,9 +150,6 @@ async def get_all_projects(
     applied_ids = {a.project_id for a in my_apps}
 
     for p in projects:
-<<<<<<< Updated upstream
-        score = calculate_match_score(user_skills, p.required_skills)
-=======
         p_emb = p.embedding
         score = 0
         if user_embedding and p_emb:
@@ -175,8 +163,8 @@ async def get_all_projects(
         
 
         member_names = [m.user.full_name for m in p.members if m.user] if p.members else []
-        member_avatars = [m.user.photo_url for m in p.members if m.user and m.user.photo_url] if p.members else []
->>>>>>> Stashed changes
+        member_avatars = [m.user.photo_url or '' for m in p.members if m.user] if p.members else []
+
         scored_projects.append({
             "id": p.id,
             "title": p.title,
@@ -184,12 +172,14 @@ async def get_all_projects(
             "required_skills": p.required_skills,
             "status": p.status,
             "category": p.category,
-            "faculty": p.faculty,
             "deadline": tz_iso(p.deadline) if p.deadline else None,
             "total_slots": p.total_slots,
             "filled_slots": len(p.members) if p.members else 0,
             "owner_name": p.owner.full_name if p.owner else None,
-            "member_count": len(p.members) if p.members else 0,
+            "owner_photo": p.owner.photo_url if p.owner else None,
+            "owner_id": p.owner.id if p.owner else None,
+            "member_names": member_names,
+            "member_avatars": member_avatars,
             "match_score": score,
             "has_applied": p.id in applied_ids,
             "created_at": tz_iso(p.created_at),
@@ -234,7 +224,6 @@ async def get_my_projects(
             "required_skills": p.required_skills,
             "status": p.status,
             "category": p.category,
-            "faculty": p.faculty,
             "deadline": tz_iso(p.deadline) if p.deadline else None,
             "total_slots": p.total_slots,
             "filled_slots": len(p.members) if p.members else 0,
@@ -257,7 +246,7 @@ async def get_project_detail(
         include={
             "owner": True,
             "members": {"include": {"user": True}},
-            "tasks": {"include": {"assignee": True}},
+            "tasks": {"include": {"assignees": {"include": {"user": True}}}},
             "applications": {"include": {"applicant": True}},
         },
     )
@@ -282,7 +271,10 @@ async def get_project_detail(
                 "id": t.id,
                 "title": t.title,
                 "status": t.status,
-                "assignee_name": t.assignee.full_name if t.assignee else None,
+                "assignees": [
+                    {"id": a.user_id, "name": a.user.full_name}
+                    for a in (t.assignees or [])
+                ],
             })
 
     return {
@@ -294,7 +286,6 @@ async def get_project_detail(
             "required_skills": project.required_skills,
             "status": project.status,
             "category": project.category,
-            "faculty": project.faculty,
             "deadline": tz_iso(project.deadline) if project.deadline else None,
             "total_slots": project.total_slots,
             "filled_slots": len(project.members) if project.members else 0,

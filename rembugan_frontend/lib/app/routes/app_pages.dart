@@ -26,6 +26,8 @@ import '../modules/social/views/other_profile_view.dart';
 import '../modules/social/views/saved_view.dart';
 import '../modules/social/views/search_view.dart';
 import '../modules/social/views/settings_view.dart';
+import '../modules/social/views/connections_list_view.dart';
+import '../modules/social/views/project_history_view.dart';
 import '../modules/personalization/bindings/personalization_binding.dart';
 import '../modules/personalization/views/personalization_view.dart';
 import '../modules/forgot_password/bindings/forgot_password_binding.dart';
@@ -104,6 +106,13 @@ class AppPages {
       page: () => const ForgotPasswordView(),
       binding: ForgotPasswordBinding(),
     ),
-    GetPage(name: _Paths.SCAN, page: () => const ScanView()),
+    GetPage(
+      name: _Paths.CONNECTIONS_LIST,
+      page: () => const ConnectionsListView(),
+    ),
+    GetPage(
+      name: _Paths.PROJECT_HISTORY,
+      page: () => const ProjectHistoryView(),
+    ),
   ];
 }

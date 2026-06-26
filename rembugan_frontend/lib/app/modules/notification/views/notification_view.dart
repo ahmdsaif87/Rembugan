@@ -85,7 +85,17 @@ class _NotificationViewState extends State<NotificationView> {
       final teamCtrl = Get.isRegistered<TeamController>()
           ? Get.find<TeamController>()
           : Get.put(TeamController());
-      final ws = teamCtrl.workspaces.firstOrNull;
+
+      WorkspaceModel? ws;
+      if (link != null) {
+        final parts = link.split('/');
+        if (parts.length >= 3) {
+          final wsId = parts[2];
+          ws = teamCtrl.workspaces.firstWhereOrNull((w) => w.id == wsId);
+        }
+      }
+      ws ??= teamCtrl.workspaces.firstOrNull;
+
       if (ws != null) {
         teamCtrl.openWorkspace(ws);
         Get.to<void>(() => const WorkspaceDetailView());
@@ -96,10 +106,12 @@ class _NotificationViewState extends State<NotificationView> {
               context: context,
               isScrollControlled: true,
               backgroundColor: AppColors.transparent,
-              builder: (_) => ApplicantSheet(ctrl: teamCtrl, ws: ws),
+              builder: (_) => ApplicantSheet(ctrl: teamCtrl, ws: ws!),
             );
           }
         });
+      } else {
+        Get.toNamed(Routes.TEAM);
       }
     } else {
       Get.toNamed(Routes.TEAM);

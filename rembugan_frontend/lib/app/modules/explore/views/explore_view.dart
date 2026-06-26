@@ -230,7 +230,11 @@ class ExploreView extends GetView<ExploreController> {
               matchLabel: dataIndex == 0
                   ? 'Paling cocok untuk kamu'
                   : 'Skill yang sama',
-              onDetail: () => ExploreView.showProjectSheet(context, project),
+              onDetail: () => ExploreView.showProjectSheet(
+                context,
+                project,
+                onApply: controller.applyToProject,
+              ),
             );
           },
         );
@@ -487,122 +491,142 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  static void showProjectSheet(BuildContext context, Project project) {
+  static void showProjectSheet(
+    BuildContext context,
+    Project project, {
+    Future<String?> Function(int projectId)? onApply,
+  }) {
     final c = AppC.of(context);
+    var applying = false;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
       builder: (_) {
-        return _DetailSheetFrame(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                project.title,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  height: 1.15,
-                  color: c.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return _DetailSheetFrame(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(FluentIcons.clock_24_regular, size: 16, color: c.textSecondary),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 20),
                   Text(
-                    'Deadline ${project.deadline}',
+                    project.title,
                     style: AppFonts.satoshiStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      height: 1.15,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    project.description.isNotEmpty
+                        ? project.description
+                        : 'Belum ada deskripsi proyek.',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13,
+                      height: 1.55,
                       color: c.textSecondary,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                project.description.isNotEmpty
-                    ? project.description
-                    : 'Belum ada deskripsi proyek.',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 13,
-                  height: 1.55,
-                  color: c.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Skill Dibutuhkan',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: project.skills
-                    .map((skill) => _Pill(skill, c.grey50, c.textSecondary))
-                    .toList(),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Anggota Tim',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  for (var i = 0; i < project.memberAvatars.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(right: AppSpacing.md),
-                      child: _TeamMember(
-                        name: project.memberNames[i],
-                        avatarUrl: project.memberAvatars[i],
+                  const SizedBox(height: 24),
+                  Text(
+                    'Skill Dibutuhkan',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    children: project.skills
+                        .map((skill) => _Pill(skill, c.grey50, c.textSecondary))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Anggota Tim',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      for (var i = 0; i < project.memberNames.length; i++)
+                        Padding(
+                          padding: const EdgeInsets.only(right: AppSpacing.md),
+                          child: _TeamMember(
+                            name: project.memberNames[i],
+                            avatarUrl: i < project.memberAvatars.length
+                                ? project.memberAvatars[i]
+                                : null,
+                          ),
+                        ),
+                      for (var i = 0; i < project.openSlots; i++)
+                        const Padding(
+                          padding: EdgeInsets.only(right: AppSpacing.md),
+                          child: _EmptyMember(),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _OwnerTile(project: project),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _OutlineAction(
+                          label: 'Tutup',
+                          onTap: () => Navigator.of(context).pop(),
+                        ),
                       ),
-                    ),
-                  for (var i = 0; i < project.openSlots; i++)
-                    const Padding(
-                      padding: EdgeInsets.only(right: AppSpacing.md),
-                      child: _EmptyMember(),
-                    ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: _PrimaryAction(
+                          label: project.hasApplied
+                              ? 'Menunggu'
+                              : (applying ? 'Mengirim...' : 'Minta Bergabung'),
+                          onTap: project.hasApplied || applying
+                              ? null
+                              : () async {
+                                  if (onApply == null) return;
+                                  setSheetState(() => applying = true);
+                                  final err = await onApply(project.projectId);
+                                  if (!context.mounted) return;
+                                  if (err == null) {
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Lamaran berhasil dikirim!'),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  } else {
+                                    setSheetState(() => applying = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(err),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                },
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: 24),
-              _OwnerTile(project: project),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _OutlineAction(
-                      label: 'Tutup',
-                      onTap: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: _PrimaryAction(
-                      label: 'Minta Bergabung',
-                      onTap: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -1608,7 +1632,9 @@ class _ProjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (project.matchScore > 0)
+              if (project.hasApplied)
+                _MatchBadge(label: 'Menunggu')
+              else if (project.matchScore > 0)
                 _MatchBadge(label: 'Sesuai skill'),
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -1833,21 +1859,23 @@ class _CompetitionCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          FluentIcons.circle_12_filled,
-                          size: 7,
-                          color: AppColors.warning500,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Paling Sesuai',
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.warning600,
+                        if (competition.matchScore > 0) ...[
+                          const SizedBox(width: 4),
+                          const Icon(
+                            FluentIcons.circle_12_filled,
+                            size: 7,
+                            color: AppColors.warning500,
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Paling Sesuai',
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.warning600,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -1902,6 +1930,13 @@ class _MatchBadge extends StatelessWidget {
         background: AppColors.primary50,
         border: AppColors.primary50,
         foreground: AppColors.primary400,
+      );
+    }
+    if (value.contains('menunggu')) {
+      return const _StatusTone(
+        background: AppColors.warning50,
+        border: AppColors.warning100,
+        foreground: AppColors.warning700,
       );
     }
     return const _StatusTone(
@@ -2075,14 +2110,31 @@ class _MiniChip extends StatelessWidget {
 }
 
 class _TeamMember extends StatelessWidget {
-  const _TeamMember({required this.name, required this.avatarUrl});
+  const _TeamMember({required this.name, this.avatarUrl});
 
   final String name;
-  final String avatarUrl;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
-    return AppAvatar(photoUrl: avatarUrl, radius: 18);
+    final c = AppC.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppAvatar(photoUrl: avatarUrl, radius: 18),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 48,
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppFonts.satoshiStyle(fontSize: 9, color: c.textSecondary),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -2127,13 +2179,11 @@ class _OwnerTile extends StatelessWidget {
   void _goToProfile(BuildContext context) {
     if (project.posterId.isEmpty) return;
     Get.toNamed(
-      Routes.OTHER_PROFILE,
+      Routes.otherProfileRoute(project.posterId),
       arguments: {
-        'id': project.posterId,
         'name': project.postedBy,
         'role': '',
         'avatarUrl': project.avatarUrl,
-        'tags': <String>[],
       },
     );
   }
@@ -2209,13 +2259,14 @@ class _OwnerTile extends StatelessWidget {
 }
 
 class _PrimaryAction extends StatelessWidget {
-  const _PrimaryAction({required this.label, required this.onTap});
+  const _PrimaryAction({required this.label, this.onTap});
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onTap != null;
     return Material(
       color: AppColors.transparent,
       child: InkWell(
@@ -2225,7 +2276,7 @@ class _PrimaryAction extends StatelessWidget {
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.primary500,
+            color: enabled ? AppColors.primary500 : AppColors.grey300,
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Text(
@@ -2302,9 +2353,8 @@ class _PersonCard extends StatelessWidget {
       color: AppColors.transparent,
       child: InkWell(
         onTap: () => Get.toNamed(
-          Routes.OTHER_PROFILE,
+          Routes.otherProfileRoute(id),
           arguments: {
-            'id': id,
             'name': name,
             'role': role,
             'avatarUrl': avatarUrl,

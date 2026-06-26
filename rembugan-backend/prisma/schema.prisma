@@ -14,28 +14,23 @@ datasource db {
 model User {
   id            String    @id @default(uuid())
   
-<<<<<<< Updated upstream
-  // Kredensial (Multi-Auth)
-  nim           String    @unique // Wajib, identitas utama mahasiswa
-=======
   // Kredensial
-  email         String?   @unique // Wajib, identitas utama (nullable untuk imported users)
->>>>>>> Stashed changes
-  password      String    // Wajib, di-hash saat registrasi
   email         String?   @unique
+  password      String
   email_verified Boolean  @default(false)
   
-  // Data Kampus (Skala 1 Kampus)
-  nim           String?   @unique // NIM untuk login
-  faculty       String?   // Fakultas
-  major         String?   // Jurusan/Program Studi
+  // Data Kampus
+  nim           String?   @unique
+  faculty       String?   
+  major         String?   
   
   // Data Profil Dasar
   full_name     String
-  handle        String?   @unique // @username untuk profil
-  major         String
+  handle        String?   @unique
   bio           String?
+  interest      String?
   photo_url     String?   
+  cover_url     String?
   social_links  Json?
   is_onboarded  Boolean   @default(false)
   
@@ -50,8 +45,8 @@ model User {
   applications  ProjectApplication[]
   
   // Relasi ke Workspace
-  tasksAssigned Task[]               @relation("TaskAssignee")
-  sentMessages  Message[]            @relation("SentMessages")
+  taskAssignments TaskAssignee[]     @relation("TaskAssignee")
+  sentMessages    Message[]          @relation("SentMessages")
   receivedMsgs  Message[]            @relation("ReceivedMessages")
 
   // Relasi ke Interaksi Sosial & Notifikasi
@@ -131,7 +126,6 @@ model Project {
   
   // Field tambahan untuk UI Flutter
   category        String?              // Kategori proyek (Tech, Design, Business, dll)
-  faculty         String?              // Fakultas terkait proyek
   deadline        DateTime?            // Batas waktu pendaftaran
   total_slots     Int?                 // Total slot anggota yang dibutuhkan
   
@@ -152,7 +146,6 @@ model Project {
   @@index([status])
   @@index([owner_id])
   @@index([category])
-  @@index([faculty])
   @@index([deadline])
 }
 
@@ -216,17 +209,25 @@ model SavedItem {
 model Task {
   id          Int      @id @default(autoincrement())
   project_id  Int
-  assignee_id String?  // Siapa yang mengerjakan tugas ini
   title       String
-  status      String   @default("todo") // Kolom Kanban: 'todo', 'doing', 'done'
-  deadline    DateTime? // Batas waktu tugas
+  status      String   @default("todo") // Kanban: 'todo', 'doing', 'done'
+  deadline    DateTime?
   
-  project     Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  assignee    User?    @relation("TaskAssignee", fields: [assignee_id], references: [id], onDelete: SetNull)
-  created_at  DateTime @default(now())
+  project     Project         @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  assignees   TaskAssignee[]
+  created_at  DateTime        @default(now())
 
   @@index([project_id, status])
-  @@index([assignee_id])
+}
+
+model TaskAssignee {
+  task_id Int
+  user_id String
+
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user User @relation("TaskAssignee", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([task_id, user_id])
 }
 
 model Message {

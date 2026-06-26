@@ -5,12 +5,9 @@ from app.core.dates import tz_iso
 
 from app.core.security import verify_token
 from app.core.database import get_db
-<<<<<<< Updated upstream
-from app.schemas.user import UserProfileInput
-=======
 from app.schemas.user import UserProfileInput, ExperienceInput
 from app.services.embedding import reembed_user
->>>>>>> Stashed changes
+
 from app.services.ai_vision import extract_photo_from_pdf
 from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_ai
 from app.services.storage import upload_image_to_cloudinary
@@ -64,6 +61,7 @@ async def extract_cv_data(
         "data": {
             "photo_url": photo_url,
             "nama": _format_nama(ai_result.get("nama", "Tidak Terdeteksi")),
+            "major": ai_result.get("major", ""),
             "skills_terdeteksi": ai_result.get("skills", []),
             "bio_suggestion": ai_result.get("bio_suggestion", ""),
             "experiences": ai_result.get("experiences", []),
@@ -126,8 +124,6 @@ async def save_user_profile(
             data=[{"user_id": uid, "skill_id": name_to_id[n]} for n in data.skills]
         )
 
-<<<<<<< Updated upstream
-=======
     await reembed_user(db, uid)
 
     # 3. Simpan Experiences
@@ -144,7 +140,7 @@ async def save_user_profile(
             "end_date": end_date,
         })
 
->>>>>>> Stashed changes
+
     return {
         "status": "success",
         "message": "Profil berhasil diupdate!",

@@ -216,22 +216,11 @@ async def seed():
             "role": "Ketua",
         })
 
-        # Add 2-3 random members
-        num_members = random.randint(2, 3)
-        candidates = [u for u in user_list if u.id != owner.id]
-        members = random.sample(candidates, min(num_members, len(candidates)))
-        for m in members:
-            await db.projectmember.create(data={
-                "project_id": project.id,
-                "user_id": m.id,
-                "role": "Anggota",
-            })
-
         # Add 3-6 tasks
         num_tasks = random.randint(3, 6)
         task_statuses = ["todo", "doing", "done"]
         for t in range(num_tasks):
-            assignee = random.choice([owner] + members) if members else owner
+            assignee = owner
             status = random.choice(task_statuses)
             await db.task.create(data={
                 "project_id": project.id,

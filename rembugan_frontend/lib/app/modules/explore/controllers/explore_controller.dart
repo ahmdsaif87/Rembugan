@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -169,16 +170,52 @@ class ExploreController extends GetxController {
 
       applyFilters();
     } catch (e) {
-      hasError.value = false;
+      debugPrint('ExploreController.loadExploreData error: $e');
+      hasError.value = true;
+      errorMessage.value = 'Gagal memuat data. Periksa koneksi atau coba lagi.';
       // If offering endpoint fails, show people without badge
       final loadedPeople = _savedRecommendedPeople.isNotEmpty
           ? _savedRecommendedPeople
           : <ExplorePerson>[];
       people.assignAll(loadedPeople);
       filteredPeople.assignAll(loadedPeople);
-      // Don't set error for this non-critical failure
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<String?> applyToProject(int projectId) async {
+    try {
+      await _repository.applyToProject(projectId);
+      final idx = projects.indexWhere((p) => p.projectId == projectId);
+      if (idx >= 0) {
+        final p = projects[idx];
+        projects[idx] = Project(
+          projectId: p.projectId,
+          title: p.title,
+          description: p.description,
+          postedBy: p.postedBy,
+          posterRole: p.posterRole,
+          avatarUrl: p.avatarUrl,
+          posterId: p.posterId,
+          deadline: p.deadline,
+          university: p.university,
+          postedAgo: p.postedAgo,
+          totalSlots: p.totalSlots,
+          filledSlots: p.filledSlots,
+          matchScore: p.matchScore,
+          hasApplied: true,
+          skills: p.skills,
+          memberAvatars: p.memberAvatars,
+          memberNames: p.memberNames,
+        );
+      }
+      return null;
+    } on dio.DioException catch (e) {
+      final msg = e.response?.data?['detail'] as String? ?? 'Gagal mengirim lamaran';
+      return msg;
+    } catch (e) {
+      return 'Terjadi kesalahan. Coba lagi.';
     }
   }
 
@@ -242,8 +279,10 @@ class ExploreController extends GetxController {
 
       if (!matchesQuery) return false;
 
+      // Hide only when sort is relevan AND there are scored projects to show
       if (selectedSort.value == 'Paling relevan' && project.matchScore <= 0) {
-        return false;
+        final hasScored = projects.any((p) => p.matchScore > 0);
+        if (hasScored) return false;
       }
 
       return true;

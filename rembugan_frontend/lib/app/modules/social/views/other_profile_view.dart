@@ -1,11 +1,14 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/services/api_client.dart';
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_toast.dart';
+import '../../../routes/app_pages.dart';
 
 class OtherProfileView extends StatefulWidget {
   const OtherProfileView({super.key});
@@ -16,8 +19,10 @@ class OtherProfileView extends StatefulWidget {
 
 class _OtherProfileViewState extends State<OtherProfileView> {
   int selectedTabIndex = 0;
-  bool isFollowing = false;
   bool _isLoading = true;
+  String? _connectionStatus;
+  int _connectionCount = 0;
+  int _projectCount = 0;
 
   final _api = Get.find<ApiClient>();
 
@@ -27,6 +32,8 @@ class _OtherProfileViewState extends State<OtherProfileView> {
   String _avatarUrl = '';
   String _coverUrl = '';
   String _bio = '';
+  String _interest = '';
+  Map<String, String> _socialLinks = {};
   List<String> _tags = [];
   List<ProfileExperience> _experiences = [];
   List<Map<String, dynamic>> _portfolios = [];
@@ -35,8 +42,8 @@ class _OtherProfileViewState extends State<OtherProfileView> {
   @override
   void initState() {
     super.initState();
+    _id = Get.parameters['userId'] ?? '';
     final args = Get.arguments as Map<String, dynamic>?;
-    _id = args?['id'] as String? ?? '';
     _name = args?['name'] as String? ?? '';
     _role = args?['role'] as String? ?? '';
     _avatarUrl = args?['avatarUrl'] as String? ?? '';
@@ -75,22 +82,44 @@ class _OtherProfileViewState extends State<OtherProfileView> {
                 .toList() ??
             [];
 
+        final rawSocialLinks = data['social_links'];
+        Map<String, String> parsedLinks = {};
+        if (rawSocialLinks is Map) {
+          parsedLinks = rawSocialLinks.map((k, v) => MapEntry(k.toString(), v.toString()));
+        }
+
         setState(() {
           _name = data['full_name'] as String? ?? _name;
           _role = data['major'] as String? ?? _role;
           _avatarUrl = data['photo_url'] as String? ?? _avatarUrl;
           _coverUrl = data['cover_url'] as String? ?? _coverUrl;
           _bio = data['bio'] as String? ?? '';
+          _interest = data['interest'] as String? ?? '';
+          _socialLinks = parsedLinks;
           _tags = skills;
           _experiences = experiences;
           _portfolios = portfolios;
           _projectHistory = projectHistory;
+          _connectionStatus = data['connection_status'] as String?;
+          _connectionCount = data['connection_count'] as int? ?? 0;
+          _projectCount = data['project_count'] as int? ?? 0;
           _isLoading = false;
         });
         return;
       }
     } catch (_) {}
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _sendConnection() async {
+    try {
+      await _api.post('/connections/send/$_id');
+      setState(() {
+        _connectionStatus = 'pending';
+      });
+    } catch (_) {
+      AppToast.error('Gagal mengirim permintaan koneksi');
+    }
   }
 
   @override
@@ -113,38 +142,27 @@ class _OtherProfileViewState extends State<OtherProfileView> {
             avatarUrl: _avatarUrl,
             coverUrl: _coverUrl,
             onBack: () => Get.back(),
-            onMore: () {},
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ProfileIdentity(name: _name, role: _role),
-                if (_bio.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    _bio,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13,
-                      height: 1.32,
-                      color: c.grey900,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
+                _ProfileIdentity(
+                  userId: _id,
+                  name: _name,
+                  major: _role,
+                  interest: _interest,
+                  bio: _bio,
+                  socialLinks: _socialLinks,
+                  connectionCount: _connectionCount,
+                  projectCount: _projectCount,
+                  projectHistory: _projectHistory,
+                ),
+                const SizedBox(height: 14),
                 _ProfileActions(
-                  isFollowing: isFollowing,
-                  onFollowToggle: () {
-                    setState(() {
-                      isFollowing = !isFollowing;
-                    });
-                  },
-                  onChat: () {
-                    Get.toNamed('/room-chat');
-                  },
+                  connectionStatus: _connectionStatus,
+                  onConnect: _sendConnection,
                 ),
                 const SizedBox(height: 16),
                 _ProfileTabs(
@@ -180,13 +198,11 @@ class _ProfileCover extends StatelessWidget {
     this.avatarUrl,
     this.coverUrl = '',
     required this.onBack,
-    required this.onMore,
   });
 
   final String? avatarUrl;
   final String coverUrl;
   final VoidCallback onBack;
-  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -209,15 +225,6 @@ class _ProfileCover extends StatelessWidget {
             child: _ProfileCircleButton(
               icon: FluentIcons.chevron_left_24_regular,
               onTap: onBack,
-            ),
-          ),
-          Positioned(
-            top: topPadding + 16,
-            right: 16,
-            child: _ProfileCircleButton(
-              icon: FluentIcons.more_horizontal_24_regular,
-              onTap: onMore,
-              tooltip: 'Lainnya',
             ),
           ),
           Positioned(
@@ -271,12 +278,26 @@ class _ProfileCircleButton extends StatelessWidget {
 
 class _ProfileIdentity extends StatelessWidget {
   const _ProfileIdentity({
+    required this.userId,
     required this.name,
-    required this.role,
+    required this.major,
+    required this.interest,
+    required this.bio,
+    required this.socialLinks,
+    required this.connectionCount,
+    required this.projectCount,
+    required this.projectHistory,
   });
 
+  final String userId;
   final String name;
-  final String role;
+  final String major;
+  final String interest;
+  final String bio;
+  final Map<String, String> socialLinks;
+  final int connectionCount;
+  final int projectCount;
+  final List<Map<String, dynamic>> projectHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -297,13 +318,110 @@ class _ProfileIdentity extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          role,
+          major,
           style: AppFonts.satoshiStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: c.grey500,
           ),
         ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.CONNECTIONS_LIST, arguments: {
+                'userId': userId,
+                'userName': name,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.people_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$connectionCount koneksi',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.PROJECT_HISTORY, arguments: {
+                'userName': name,
+                'projects': projectHistory,
+              }),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.briefcase_24_regular, size: 14, color: c.grey500),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$projectCount proyek',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: c.grey500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (interest.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            interest,
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: c.textSecondary,
+            ),
+          ),
+        ],
+        if (bio.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            bio,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: AppFonts.satoshiStyle(
+              fontSize: 13,
+              height: 1.32,
+              color: c.grey900,
+            ),
+          ),
+        ],
+        if (socialLinks.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (socialLinks.containsKey('instagram'))
+                _SocialLinkButton(
+                  icon: FluentIcons.camera_24_regular,
+                  label: 'Instagram',
+                  url: 'https://instagram.com/${socialLinks['instagram']}',
+                ),
+              if (socialLinks.containsKey('linkedin'))
+                _SocialLinkButton(
+                  icon: FluentIcons.briefcase_24_regular,
+                  label: 'LinkedIn',
+                  url: 'https://linkedin.com/in/${socialLinks['linkedin']}',
+                ),
+              if (socialLinks.containsKey('website'))
+                _SocialLinkButton(
+                  icon: FluentIcons.globe_24_regular,
+                  label: 'Website',
+                  url: socialLinks['website']!,
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -356,65 +474,68 @@ class _SkillChip extends StatelessWidget {
 
 class _ProfileActions extends StatelessWidget {
   const _ProfileActions({
-    required this.isFollowing,
-    required this.onFollowToggle,
-    required this.onChat,
+    required this.connectionStatus,
+    required this.onConnect,
   });
 
-  final bool isFollowing;
-  final VoidCallback onFollowToggle;
-  final VoidCallback onChat;
+  final String? connectionStatus;
+  final VoidCallback onConnect;
+
+  bool get _isConnected => connectionStatus == 'accepted';
+  bool get _isPending => connectionStatus == 'pending';
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: onFollowToggle,
-            child: Container(
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isFollowing ? c.grey100 : AppColors.primary500,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: isFollowing
-                    ? Border.all(color: c.border)
-                    : null,
-              ),
-              child: Text(
-                isFollowing ? 'Mengikuti' : 'Ikuti',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: isFollowing
-                      ? c.textSecondary
-                      : c.surface,
-                ),
+
+    if (_isConnected) {
+      return Container(
+        width: double.infinity,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: c.grey100,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: c.border),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(FluentIcons.person_24_regular, size: 16, color: c.textSecondary),
+            const SizedBox(width: 6),
+            Text(
+              'Terhubung',
+              style: AppFonts.satoshiStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: c.textSecondary,
               ),
             ),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _isPending ? null : onConnect,
+      child: Container(
+        width: double.infinity,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: _isPending ? c.grey100 : AppColors.primary500,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: _isPending ? Border.all(color: c.border) : null,
+        ),
+        child: Text(
+          _isPending ? 'Tertunda' : 'Terhubung',
+          style: AppFonts.satoshiStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: _isPending ? c.textSecondary : c.surface,
           ),
         ),
-        const SizedBox(width: 16),
-        GestureDetector(
-          onTap: onChat,
-          child: Container(
-            width: 42,
-            height: 40,
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: c.borderStrong),
-            ),
-            child: Icon(
-              FluentIcons.chat_24_regular,
-              color: c.textPrimary,
-              size: 22,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -601,7 +722,56 @@ class _ProfileTabContent extends StatelessWidget {
             commentCount: '${p['comments_count'] ?? 0}',
           );
         }).toList(),
-      );
+    );
+  }
+}
+
+class _SocialLinkButton extends StatelessWidget {
+  const _SocialLinkButton({
+    required this.icon,
+    required this.label,
+    required this.url,
+  });
+
+  final IconData icon;
+  final String label;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Material(
+      color: c.primarySoft,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        onTap: () async {
+          try {
+            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          } catch (_) {
+            AppToast.error('Tidak bisa membuka tautan');
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppColors.primary500),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

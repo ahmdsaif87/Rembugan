@@ -8,4 +8,5 @@ abstract class ExploreRepository {
   Future<List<ExplorePerson>> getRecommendedPeople();
   Future<List<ExplorePerson>> searchPeople(String query);
   Future<List<String>> getMyOfferingsSkills();
+  Future<void> applyToProject(int projectId);
 }

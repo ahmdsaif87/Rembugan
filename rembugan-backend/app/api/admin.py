@@ -40,15 +40,6 @@ async def admin_create_user(
     admin_token: dict = Depends(verify_admin_token),
     db: Prisma = Depends(get_db),
 ):
-<<<<<<< Updated upstream
-    """
-    Admin membuat user baru.
-    User akan memiliki NIM + Password untuk login pertama.
-    """
-    existing = await db.user.find_unique(where={"nim": data.nim})
-    if existing:
-        raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
-=======
     if data.email:
         existing = await db.user.find_unique(where={"email": data.email})
         if existing:
@@ -58,17 +49,11 @@ async def admin_create_user(
         existing = await db.user.find_unique(where={"nim": data.nim})
         if existing:
             raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
->>>>>>> Stashed changes
+
 
     hashed = hash_password(data.password)
     user = await db.user.create(
         data={
-<<<<<<< Updated upstream
-            "nim": data.nim,
-            "password": hashed,
-            "full_name": data.full_name,
-            "major": data.major,
-=======
             "email": data.email or None,
             "nim": data.nim or None,
             "faculty": data.faculty or None,
@@ -77,7 +62,7 @@ async def admin_create_user(
             "full_name": data.full_name,
             "interest": data.interest,
             "email_verified": True if data.email else False,
->>>>>>> Stashed changes
+
         }
     )
 
@@ -87,16 +72,12 @@ async def admin_create_user(
         "data": {
             "id": user.id,
             "nim": user.nim,
-<<<<<<< Updated upstream
-            "full_name": user.full_name,
-            "major": user.major,
-=======
             "email": user.email,
             "full_name": user.full_name,
             "faculty": user.faculty,
             "major": user.major,
             "interest": user.interest,
->>>>>>> Stashed changes
+
             "is_onboarded": user.is_onboarded,
         },
     }
@@ -265,7 +246,7 @@ async def get_all_tasks(
         take=limit,
         include={
             "project": True,
-            "assignee": True,
+            "assignees": {"include": {"user": True}},
         },
         order={"created_at": "desc"}
     )

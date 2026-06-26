@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -8,6 +9,7 @@ from app.core.config import setup_cloudinary
 from app.core.database import db
 from app.core.rate_limit import limiter
 from app.core.logger import setup_logging, get_logger
+from app.services.embedding import preload_embedding_model
 
 logger = get_logger("main")
 setup_logging()
@@ -27,6 +29,10 @@ setup_cloudinary()
 async def lifespan(app: FastAPI):
     await db.connect()
     logger.info("Database terhubung!")
+
+    # Preload embedding model in background agar tidak nge-lambatin request pertama
+    asyncio.create_task(preload_embedding_model())
+
     yield
     await db.disconnect()
     logger.info("Database terputus.")
