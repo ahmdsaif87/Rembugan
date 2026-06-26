@@ -102,7 +102,7 @@ class _EmailStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: controller.formKeyEmail,
+      key: controller.formKeyNim,
       child: Column(
         children: [
           const SizedBox(height: 4),
@@ -116,18 +116,18 @@ class _EmailStep extends StatelessWidget {
           const _Title(
             title: 'Lupa kata sandi?',
             subtitle:
-                'Masukkan email akunmu untuk menerima instruksi\npengaturan ulang kata sandi.',
+                'Masukkan NIM akunmu untuk menerima instruksi\npengaturan ulang kata sandi.',
           ),
           const SizedBox(height: 24),
           AppTextField(
-            controller: controller.emailController,
-            labelText: 'Email',
-            hintText: 'nanda@gmail.com',
-            keyboardType: TextInputType.emailAddress,
+            controller: controller.nimController,
+            labelText: 'NIM',
+            hintText: '23090122',
+            keyboardType: TextInputType.number,
             validator: (value) {
-              final email = value?.trim() ?? '';
-              if (email.isEmpty) return 'Email wajib diisi';
-              if (!email.contains('@')) return 'Email tidak valid';
+              final nim = value?.trim() ?? '';
+              if (nim.isEmpty) return 'NIM wajib diisi';
+              if (nim.length < 5) return 'NIM minimal 5 karakter';
               return null;
             },
           ),
@@ -152,7 +152,7 @@ class _OtpStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final displayEmail = controller.email.isEmpty ? '*****@***.***' : controller.email;
+    final displayNim = controller.nim.isEmpty ? '*****' : controller.nim;
 
     return Column(
       children: [
@@ -168,7 +168,7 @@ class _OtpStep extends StatelessWidget {
         _Title(
           title: 'Cek email kamu',
           subtitle:
-              'Kode OTP telah dikirim ke $displayEmail. Email biasanya tiba dalam 1-2 menit. Periksa juga folder spam.',
+              'Kode OTP telah dikirim ke email yang terdaftar dengan NIM $displayNim. Email biasanya tiba dalam 1-2 menit. Periksa juga folder spam.',
         ),
         const SizedBox(height: 32),
         Row(

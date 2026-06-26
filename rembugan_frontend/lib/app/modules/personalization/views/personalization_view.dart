@@ -501,9 +501,9 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
             ),
             const SizedBox(height: 12),
             AppTextField(
-              initialValue: profile.interest,
+              initialValue: profile.major,
               onChanged: widget.controller.updateMajor,
-              labelText: 'Minat/Bidang',
+              labelText: 'Jurusan',
               hintText: 'Contoh: Teknik Informatika',
             ),
             const SizedBox(height: 12),

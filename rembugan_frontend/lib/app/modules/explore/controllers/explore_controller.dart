@@ -2,38 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../domain/entities/competition.dart';
+import '../domain/entities/explore_person.dart';
 import '../domain/entities/explore_tab.dart';
 import '../domain/entities/project.dart';
 import '../domain/repositories/explore_repository.dart';
-
-<<<<<<< Updated upstream
-class ExplorePerson {
-  final String name;
-  final String role;
-  final String avatarUrl;
-  final List<String> tags;
-  final String matchLabel;
-
-  const ExplorePerson({
-    required this.name,
-    required this.role,
-    required this.avatarUrl,
-    required this.tags,
-    required this.matchLabel,
-  });
-}
-=======
-const _matchThreshold = 40;
->>>>>>> Stashed changes
 
 class ExploreController extends GetxController {
   ExploreController(this._repository);
 
   final searchTextController = TextEditingController();
+  final projectScrollController = ScrollController();
+  final isLoading = true.obs;
+  final isLoadingMore = false.obs;
+  final hasError = false.obs;
+  final errorMessage = ''.obs;
+  var projectPage = 1;
+  var projectTotalAvailable = 0;
+  bool get hasMoreProjects => projectPage * 15 < projectTotalAvailable;
 
   @override
   void onClose() {
+    _searchDebounce.dispose();
     searchTextController.dispose();
+    projectScrollController.dispose();
     super.onClose();
   }
 
@@ -58,33 +49,11 @@ class ExploreController extends GetxController {
 
   final searchQuery = ''.obs;
 
-  final people = const [
-    ExplorePerson(
-      name: 'Dede Fernanda',
-      role: 'Flutter Developer',
-      avatarUrl: 'https://i.pravatar.cc/100?img=60',
-      tags: ['Flutter', 'Figma'],
-      matchLabel: 'Skill yang sama',
-    ),
-    ExplorePerson(
-      name: 'Raka Pratama',
-      role: 'UI/UX Designer',
-      avatarUrl: 'https://i.pravatar.cc/100?img=47',
-      tags: ['Design', 'Research'],
-      matchLabel: 'Paling cocok untuk kamu',
-    ),
-  ];
+  final people = <ExplorePerson>[].obs;
   final filteredPeople = <ExplorePerson>[].obs;
+  final _savedRecommendedPeople = <ExplorePerson>[];
 
   final sortOptions = const ['Terbaru', 'Terpopuler', 'Paling Relevan'];
-  final categoryOptions = const [
-    'Mobile Dev',
-    'Web Dev',
-    'UI/UX Design',
-    'Data Science',
-    'Backend',
-    'Machine Learning',
-  ];
   final skillOptions = const [
     'React',
     'Flutter',
@@ -94,28 +63,150 @@ class ExploreController extends GetxController {
     'Kotlin',
   ];
 
+  late final Worker _searchDebounce;
+
   @override
   void onInit() {
     super.onInit();
+    projectScrollController.addListener(_onProjectScroll);
+    _searchDebounce = debounce<String>(
+      searchQuery,
+      (_) => _onSearchChanged(),
+      time: const Duration(milliseconds: 300),
+    );
     loadExploreData();
   }
 
-  void loadExploreData() {
-    final loadedProjects = _repository.getProjects();
-    projects.assignAll(loadedProjects);
-    filteredProjects.assignAll(loadedProjects);
+  void _onSearchChanged() {
+    final query = searchQuery.value;
+    if (activeTab.value == ExploreTab.people && query.isNotEmpty) {
+      _searchPeople();
+    } else {
+      applyFilters();
+    }
+  }
 
-    final loadedCompetitions = _repository.getCompetitions();
-    competitions.assignAll(loadedCompetitions);
-    filteredCompetitions.assignAll(loadedCompetitions);
+  void _searchPeople() async {
+    final query = searchQuery.value;
+    if (query.isEmpty) {
+      people.assignAll(_savedRecommendedPeople);
+      applyFilters();
+      return;
+    }
+    try {
+      final results = await _repository.searchPeople(query);
+      people.assignAll(results);
+      applyFilters();
+    } catch (_) {
+      applyFilters();
+    }
+  }
 
-    filteredPeople.assignAll(people);
+  void _onProjectScroll() {
+    if (projectScrollController.position.pixels >=
+        projectScrollController.position.maxScrollExtent - 250) {
+      loadMoreProjects();
+    }
+  }
+
+  void loadExploreData() async {
+    isLoading.value = true;
+    hasError.value = false;
+    errorMessage.value = '';
+    projectPage = 1;
+    try {
+      final projectResult = await _repository.getProjects(page: 1, limit: 15);
+      projects.assignAll(projectResult.projects);
+      filteredProjects.assignAll(projectResult.projects);
+      projectTotalAvailable = projectResult.total;
+
+      final results = await Future.wait([
+        _repository.getCompetitions(),
+        _repository.getRecommendedPeople(),
+        _repository.getMyOfferingsSkills(),
+      ]);
+
+      final loadedCompetitions = results[0] as List<Competition>;
+      competitions.assignAll(loadedCompetitions);
+      filteredCompetitions.assignAll(loadedCompetitions);
+
+      final loadedPeople = results[1] as List<ExplorePerson>;
+      final offeringSkills = results[2] as List<String>;
+
+      // Set matchLabel only when offering exists with matching skills
+      List<ExplorePerson> processedPeople;
+      if (offeringSkills.isNotEmpty) {
+        final offeringLower = offeringSkills.map((s) => s.toLowerCase()).toSet();
+        processedPeople = loadedPeople.map((person) {
+          final hasMatch = person.tags.any(
+            (t) => offeringLower.contains(t.toLowerCase()),
+          );
+          return ExplorePerson(
+            id: person.id,
+            name: person.name,
+            role: person.role,
+            avatarUrl: person.avatarUrl,
+            tags: person.tags,
+            matchLabel: hasMatch ? 'Rekomendasi untukmu' : '',
+          );
+        }).toList();
+      } else {
+        processedPeople = loadedPeople.map((p) => ExplorePerson(
+          id: p.id,
+          name: p.name,
+          role: p.role,
+          avatarUrl: p.avatarUrl,
+          tags: p.tags,
+          matchLabel: '',
+        )).toList();
+      }
+
+      _savedRecommendedPeople
+        ..clear()
+        ..addAll(processedPeople);
+      people.assignAll(processedPeople);
+      filteredPeople.assignAll(processedPeople);
+
+      applyFilters();
+    } catch (e) {
+      hasError.value = false;
+      // If offering endpoint fails, show people without badge
+      final loadedPeople = _savedRecommendedPeople.isNotEmpty
+          ? _savedRecommendedPeople
+          : <ExplorePerson>[];
+      people.assignAll(loadedPeople);
+      filteredPeople.assignAll(loadedPeople);
+      // Don't set error for this non-critical failure
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void loadMoreProjects() async {
+    if (isLoadingMore.value || !hasMoreProjects) return;
+    isLoadingMore.value = true;
+    try {
+      projectPage++;
+      final result = await _repository.getProjects(page: projectPage, limit: 15);
+      projects.addAll(result.projects);
+      filteredProjects.addAll(result.projects);
+      applyFilters();
+    } catch (e) {
+      projectPage--;
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  void retry() {
+    loadExploreData();
   }
 
   void changeTab(ExploreTab tab) {
     activeTab.value = tab;
     searchTextController.clear();
-    search('');
+    searchQuery.value = '';
+    applyFilters();
   }
 
   int get activeFilterCount {
@@ -124,8 +215,7 @@ class ExploreController extends GetxController {
       count++;
     if (selectedFaculty.value != 'Semua jurusan') count++;
     if (selectedCategory.value != 'Semua kategori' &&
-        selectedCategory.value != 'Semua kategori lomba' &&
-        selectedCategory.value != 'Semua kategori proyek')
+        selectedCategory.value != 'Semua kategori lomba')
       count++;
     if (selectedSkill.value != 'Semua skill') count++;
     if (selectedDeadline.value != 'Semua deadline') count++;
@@ -136,59 +226,30 @@ class ExploreController extends GetxController {
 
   void search(String query) {
     searchQuery.value = query;
-    applyFilters();
   }
 
   void applyFilters() {
     final query = searchQuery.value.toLowerCase();
 
-    // 1. Projects
+    // 1. Projects — search query + hide full teams + relevan filter
     var tempProjects = projects.where((project) {
-<<<<<<< Updated upstream
-=======
       if (project.openSlots <= 0) return false;
 
-      if (selectedSort.value == 'Paling relevan' &&
-          project.matchScore < _matchThreshold) {
-        return false;
-      }
-
->>>>>>> Stashed changes
       final matchesQuery =
           query.isEmpty ||
           project.title.toLowerCase().contains(query) ||
-          project.category.toLowerCase().contains(query) ||
           project.skills.any((s) => s.toLowerCase().contains(query));
 
-      final matchesFaculty =
-          selectedFaculty.value == 'Semua jurusan' ||
-          project.faculty.toLowerCase().contains(
-            selectedFaculty.value.toLowerCase(),
-          );
+      if (!matchesQuery) return false;
 
-      var categoryFilter = selectedCategory.value;
-      if (categoryFilter == 'Semua kategori proyek')
-        categoryFilter = 'Semua kategori';
-      final matchesCategory =
-          categoryFilter == 'Semua kategori' ||
-          project.category.toLowerCase().contains(
-            categoryFilter
-                .replaceAll(' App', '')
-                .replaceAll(' Dev', '')
-                .replaceAll(' Design', '')
-                .toLowerCase(),
-          );
+      if (selectedSort.value == 'Paling relevan' && project.matchScore <= 0) {
+        return false;
+      }
 
-      final matchesSlot =
-          selectedSlot.value == 'Semua slot' ||
-          (selectedSlot.value == '1 slot' && project.openSlots == 1) ||
-          (selectedSlot.value == '2 slot' && project.openSlots == 2) ||
-          (selectedSlot.value == '3+ slot' && project.openSlots >= 3);
-
-      return matchesQuery && matchesFaculty && matchesCategory && matchesSlot;
+      return true;
     }).toList();
 
-    if (selectedSort.value == 'Terbaru') {
+    if (selectedSort.value == 'Semua') {
       tempProjects = tempProjects.reversed.toList();
     }
     filteredProjects.assignAll(tempProjects);
@@ -198,55 +259,8 @@ class ExploreController extends GetxController {
       final matchesQuery =
           query.isEmpty ||
           comp.title.toLowerCase().contains(query) ||
-          comp.category.toLowerCase().contains(query) ||
           comp.caption.toLowerCase().contains(query) ||
           comp.organizer.toLowerCase().contains(query);
-
-      bool matchesFaculty = true;
-      if (selectedFaculty.value != 'Semua jurusan') {
-        final org = comp.organizer.toLowerCase();
-        final cat = comp.category.toLowerCase();
-        final title = comp.title.toLowerCase();
-        if (selectedFaculty.value == 'Teknik Informatika') {
-          matchesFaculty =
-              org.contains('ftik') ||
-              cat.contains('coding') ||
-              cat.contains('hackathon');
-        } else if (selectedFaculty.value == 'Sistem Informasi') {
-          matchesFaculty =
-              org.contains('ftik') ||
-              cat.contains('data') ||
-              title.contains('edutech');
-        } else if (selectedFaculty.value == 'DKV') {
-          matchesFaculty = cat.contains('design') || cat.contains('ui/ux');
-        } else if (selectedFaculty.value == 'Manajemen') {
-          matchesFaculty =
-              org.contains('ekonomi') ||
-              org.contains('feb') ||
-              cat.contains('business');
-        }
-      }
-
-      var categoryFilter = selectedCategory.value;
-      if (categoryFilter == 'Semua kategori lomba')
-        categoryFilter = 'Semua kategori';
-      bool matchesCategory = true;
-      if (categoryFilter != 'Semua kategori') {
-        final compCat = comp.category.toUpperCase();
-        if (categoryFilter == 'Hackathon') {
-          matchesCategory = compCat.contains('HACKATHON');
-        } else if (categoryFilter == 'UI/UX') {
-          matchesCategory = compCat.contains('DESIGN');
-        } else if (categoryFilter == 'Bisnis') {
-          matchesCategory = compCat.contains('BUSINESS');
-        } else if (categoryFilter == 'Data') {
-          matchesCategory = compCat.contains('CODING');
-        } else {
-          matchesCategory = comp.category.toLowerCase().contains(
-            categoryFilter.toLowerCase(),
-          );
-        }
-      }
 
       bool matchesDeadline = true;
       if (selectedDeadline.value != 'Semua deadline') {
@@ -266,16 +280,11 @@ class ExploreController extends GetxController {
         }
       }
 
-      return matchesQuery &&
-          matchesFaculty &&
-          matchesCategory &&
-          matchesDeadline;
+      return matchesQuery && matchesDeadline;
     }).toList();
 
-    if (selectedSort.value == 'Terbaru') {
+    if (selectedSort.value == 'Semua') {
       tempCompetitions = tempCompetitions.reversed.toList();
-    } else {
-      tempCompetitions.sort((a, b) => b.matchScore.compareTo(a.matchScore));
     }
     filteredCompetitions.assignAll(tempCompetitions);
 

@@ -197,14 +197,12 @@ class ApiExploreRepository implements ExploreRepository {
   static ExplorePerson _mapToPerson(Map<String, dynamic> raw) {
     final id = raw['id'] as String? ?? '';
     final name = raw['full_name'] as String? ?? '';
-    final role = raw['interest'] as String? ?? raw['bio'] as String? ?? '';
+    final role = raw['major'] as String? ?? raw['bio'] as String? ?? '';
     final avatarUrl = raw['photo_url'] as String? ?? '';
     final skills = (raw['skills'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         [];
-    final matchScore = raw['match_score'] as int? ?? 0;
-    final matchType = raw['match_type'] as String? ?? '';
 
     return ExplorePerson(
       id: id,
@@ -212,9 +210,7 @@ class ApiExploreRepository implements ExploreRepository {
       role: role,
       avatarUrl: avatarUrl,
       tags: skills,
-      matchLabel: matchScore > 0 ? 'Rekomendasi untukmu' : '',
-      matchScore: matchScore,
-      matchType: matchType,
+      matchLabel: 'Rekomendasi untukmu',
     );
   }
 

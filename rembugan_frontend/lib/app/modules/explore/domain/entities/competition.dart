@@ -10,11 +10,7 @@ class Competition {
   final ColorSeed color;
   final String registrationLink;
   final String campusTag;
-<<<<<<< Updated upstream
-=======
   final String posterUrl;
-  final int matchScore;
->>>>>>> Stashed changes
 
   const Competition({
     required this.title,
@@ -26,46 +22,53 @@ class Competition {
     required this.color,
     required this.registrationLink,
     required this.campusTag,
-<<<<<<< Updated upstream
-=======
     this.posterUrl = '',
-    this.matchScore = 0,
->>>>>>> Stashed changes
   });
 
   int? get daysLeft {
+    final endDate = parseEndDate(deadline);
+    if (endDate == null) return null;
+    final now = DateTime.now();
+    return endDate.difference(now).inDays;
+  }
+
+  static DateTime? parseEndDate(String ddl) {
     try {
-      final parts = deadline.split(' ');
+      final parts = ddl.split(' ');
       if (parts.length < 3) return null;
-      final day = int.parse(parts[0]);
-      final monthStr = parts[1].toLowerCase();
-      final year = int.parse(parts[2]);
 
-      const months = {
-        'jan': 1,
-        'feb': 2,
-        'mar': 3,
-        'apr': 4,
-        'mei': 5,
-        'jun': 6,
-        'jul': 7,
-        'agu': 8,
-        'sep': 9,
-        'okt': 10,
-        'nov': 11,
-        'des': 12,
-        'may': 5,
-        'aug': 8,
-        'oct': 10,
-        'dec': 12,
-      };
+      String dayStr, monthStr, yearStr;
+      final dashIdx = parts.indexOf('-');
+      if (dashIdx >= 0 && dashIdx + 3 < parts.length) {
+        dayStr = parts[dashIdx + 1];
+        monthStr = parts[dashIdx + 2];
+        yearStr = parts[dashIdx + 3];
+      } else {
+        dayStr = parts[0];
+        monthStr = parts[1];
+        yearStr = parts[2];
+      }
 
-      final month = months[monthStr.substring(0, 3)] ?? 1;
-      final deadlineDate = DateTime(year, month, day);
-      final now = DateTime(2026, 6, 3); // Simulated base date: June 3, 2026
-      return deadlineDate.difference(now).inDays;
-    } catch (e) {
+      final day = int.parse(dayStr.replaceAll(RegExp(r'[^\d]'), ''));
+      final year = int.parse(yearStr.replaceAll(RegExp(r'[^\d]'), ''));
+      final month = _monthNumber(monthStr);
+
+      return DateTime(year, month, day);
+    } catch (_) {
       return null;
     }
+  }
+
+  static int _monthNumber(String m) {
+    const months = {
+      'januari': 1, 'februari': 2, 'maret': 3, 'april': 4,
+      'mei': 5, 'juni': 6, 'juli': 7, 'agustus': 8,
+      'september': 9, 'oktober': 10, 'november': 11, 'desember': 12,
+      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4,
+      'may': 5, 'jun': 6, 'jul': 7, 'aug': 8,
+      'agu': 8, 'sep': 9, 'okt': 10, 'nov': 11, 'des': 12,
+    };
+    final key = m.substring(0, 3).toLowerCase();
+    return months[key] ?? 1;
   }
 }
