@@ -16,17 +16,32 @@ class RoomChatView extends StatefulWidget {
 
 class _RoomChatViewState extends State<RoomChatView> {
   late final RoomChatController ctrl;
+  final _scrollCtrl = ScrollController();
 
   @override
   void initState() {
     super.initState();
     ctrl = Get.put(RoomChatController());
+    ctrl.messages.listen((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    });
   }
 
   @override
   void dispose() {
+    _scrollCtrl.dispose();
     Get.delete<RoomChatController>();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollCtrl.hasClients) {
+      _scrollCtrl.animateTo(
+        _scrollCtrl.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -44,6 +59,7 @@ class _RoomChatViewState extends State<RoomChatView> {
                   return const _ChatShimmer();
                 }
                 return ListView.builder(
+                  controller: _scrollCtrl,
                   padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: ctrl.messages.length + 1,
                   itemBuilder: (context, index) {

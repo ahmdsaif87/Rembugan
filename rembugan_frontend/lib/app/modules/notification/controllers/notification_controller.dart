@@ -121,7 +121,7 @@ class NotificationController extends GetxController {
   static bool isCollaboration(String type) {
     return switch (type) {
       'application_received' || 'application_accepted' || 'application_rejected'
-      || 'chat' || 'group_chat_tag' || 'task_assigned'
+      || 'group_chat_tag' || 'task_assigned'
       || 'deadline_reminder' || 'file_uploaded' || 'role_approved' => true,
       _ => false,
     };

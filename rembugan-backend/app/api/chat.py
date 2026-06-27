@@ -89,6 +89,11 @@ async def websocket_chat(
 
                 await manager.broadcast(pesan, room_id)
 
+                # Feed broadcast — group member lain
+                asyncio.create_task(
+                    _broadcast_feed_group(db, user_id, project_id, room_id, text[:80], now)
+                )
+
                 if msg_type == "text":
                     mentions = re.findall(r'@(\w+)', text)
                     if mentions:
@@ -121,6 +126,12 @@ async def websocket_chat(
 
                 await manager.broadcast(pesan, room_id)
 
+                # Feed broadcast — DM receiver
+                if receiver_id:
+                    asyncio.create_task(
+                        _broadcast_feed_dm(user_id, receiver_id, room_id, text[:80], now)
+                    )
+
                 if receiver_id and msg_type == "text":
                     asyncio.create_task(
                         _handle_dm_notification(db, user_id, receiver_id, text[:30], room_id)
@@ -133,6 +144,33 @@ async def websocket_chat(
 
     except WebSocketDisconnect:
         manager.disconnect(websocket, room_id, user_id)
+
+
+@router.websocket("/ws/feed")
+async def websocket_feed(
+    websocket: WebSocket,
+    token: str = Query(...),
+):
+    try:
+        jwt_secret = os.getenv("JWT_SECRET_KEY")
+        payload = jwt_lib.decode(token, jwt_secret, algorithms=["HS256"])
+        user_id = payload["uid"]
+    except Exception:
+        await websocket.close(code=4001, reason="Token tidak valid")
+        return
+
+    # Daftarkan ke user_connections tanpa room_id (feed saja)
+    await manager.connect(websocket, "_feed_", user_id)
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Feed WS hanya menerima (tidak mengirim pesan ke sini)
+            # Keepalive / ignore
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, "_feed_", user_id)
 
 
 async def _handle_mentions(db: Prisma, sender_id: str, project_id: int, preview: str, mentions: list[str]):
@@ -154,6 +192,39 @@ async def _handle_mentions(db: Prisma, sender_id: str, project_id: int, preview:
                 )
     except Exception as e:
         logger.error(f"Gagal proses mention: {e}")
+
+
+async def _broadcast_feed_group(db: Prisma, sender_id: str, project_id: int, room_id: str, preview: str, now: datetime):
+    try:
+        members = await db.projectmember.find_many(where={"project_id": project_id})
+        feed = {
+            "event": "feed_message",
+            "room_id": room_id,
+            "type": "group",
+            "sender_id": sender_id,
+            "text": preview,
+            "timestamp": now.isoformat(),
+        }
+        for m in members:
+            if m.user_id != sender_id:
+                await manager.send_to_user(m.user_id, feed)
+    except Exception as e:
+        logger.error(f"Gagal broadcast feed group: {e}")
+
+
+async def _broadcast_feed_dm(sender_id: str, receiver_id: str, room_id: str, preview: str, now: datetime):
+    try:
+        feed = {
+            "event": "feed_message",
+            "room_id": room_id,
+            "type": "dm",
+            "sender_id": sender_id,
+            "text": preview,
+            "timestamp": now.isoformat(),
+        }
+        await manager.send_to_user(receiver_id, feed)
+    except Exception as e:
+        logger.error(f"Gagal broadcast feed DM: {e}")
 
 
 async def _handle_dm_notification(db: Prisma, sender_id: str, receiver_id: str, preview: str, room_id: str):
@@ -210,6 +281,10 @@ async def upload_dm_file(
     }
     await manager.broadcast(payload, room_id)
 
+    asyncio.create_task(
+        _broadcast_feed_dm(uid, receiver_id, room_id, f"Mengirim file: {file.filename}", msg.created_at)
+    )
+
     sender = await db.user.find_unique(where={"id": uid})
     await notify(
         db, receiver_id, NOTIF_CHAT,
@@ -251,33 +326,46 @@ async def get_my_rooms(
     for m in messages:
         if m.project_id:
             room_id = str(m.project_id)
-            if room_id not in seen:
-                seen.add(room_id)
+        elif m.receiver_id:
+            other_id = m.receiver_id if m.sender_id == uid else m.sender_id
+            other = m.receiver if m.sender_id == uid else m.sender
+            sorted_ids = "_".join(sorted([uid, other_id]))
+            room_id = f"dm_{sorted_ids}"
+        else:
+            continue
+
+        if room_id not in seen:
+            seen.add(room_id)
+
+            if m.project_id:
                 project = await db.project.find_unique(where={"id": m.project_id})
+                unread = await db.message.count(
+                    where={"project_id": m.project_id, "sender_id": {"not": uid}}
+                )
+            else:
+                unread = await db.message.count(
+                    where={"sender_id": other_id, "receiver_id": uid}
+                )
+
+            if m.project_id:
                 rooms.append({
                     "room_id": room_id,
                     "type": "group",
                     "name": project.title if project else "Workspace",
                     "last_message": m.content[:80] if m.content else "",
                     "last_time": tz_iso(m.created_at),
-                    "unread": 1 if m.sender_id != uid else 0,
+                    "unread": unread,
                 })
-        elif m.receiver_id:
-            other_id = m.receiver_id if m.sender_id == uid else m.sender_id
-            other = m.receiver if m.sender_id == uid else m.sender
-            sorted_ids = "_".join(sorted([uid, other_id]))
-            room_id = f"dm_{sorted_ids}"
-            if room_id not in seen:
-                seen.add(room_id)
+            else:
                 rooms.append({
-                    "room_id": room_id.replace("_", "_", 1).replace("_", "_"),  # keep format dm_{a}_{b}
+                    "room_id": room_id,
                     "type": "dm",
                     "name": other.full_name if other else "User",
                     "other_user_id": other_id,
                     "photo_url": other.photo_url if other else None,
                     "last_message": m.content[:80] if m.content else "",
                     "last_time": tz_iso(m.created_at),
-                    "unread": 1 if m.sender_id != uid else 0,
+                    "unread": unread,
                 })
 
     return {"status": "success", "data": rooms}

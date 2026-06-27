@@ -181,16 +181,15 @@ class ChatView extends GetView<ChatController> {
                               '@${conn['handle'] as String? ?? ''}',
                               style: AppFonts.satoshiStyle(fontSize: 12, color: c.textSecondary),
                             ),
-                            onTap: () async {
+                            onTap: () {
                               Get.back();
-                              await Get.toNamed(Routes.ROOM_CHAT, arguments: ChatRoom(
+                              Get.toNamed(Routes.ROOM_CHAT, arguments: ChatRoom(
                                 roomId: roomId,
                                 type: 'dm',
                                 name: name,
                                 otherUserId: uid,
                                 photoUrl: photo,
                               ));
-                              controller.fetchRooms();
                             },
                           );
                         },
@@ -281,16 +280,8 @@ class ChatView extends GetView<ChatController> {
       color: c.background,
       child: InkWell(
         onTap: () async {
-          final idx = controller.rooms.indexWhere((r) => r.roomId == chat.roomId);
+          controller.markRead(chat.roomId);
           await Get.toNamed(Routes.ROOM_CHAT, arguments: chat);
-          if (idx != -1) {
-            controller.rooms[idx] = ChatRoom(
-              roomId: chat.roomId, type: chat.type, name: chat.name,
-              otherUserId: chat.otherUserId, photoUrl: chat.photoUrl,
-              lastMessage: chat.lastMessage, lastTime: chat.lastTime,
-            );
-          }
-          controller.fetchRooms();
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),

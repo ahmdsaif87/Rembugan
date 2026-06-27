@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../core/services/api_client.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/services/chat_socket_service.dart';
 
 class ChatRoom {
   final String roomId;
@@ -21,20 +24,68 @@ class ChatRoom {
     this.lastTime = '',
     this.unread = 0,
   });
+
+  ChatRoom copyWith({String? lastMessage, String? lastTime, int? unread}) {
+    return ChatRoom(
+      roomId: roomId, type: type, name: name,
+      otherUserId: otherUserId, photoUrl: photoUrl,
+      lastMessage: lastMessage ?? this.lastMessage,
+      lastTime: lastTime ?? this.lastTime,
+      unread: unread ?? this.unread,
+    );
+  }
 }
 
 class ChatController extends GetxController {
   final ApiClient _api = Get.find();
+  final ChatSocketService _socket = Get.find();
+  StreamSubscription? _feedSub;
 
   var filterIndex = 1.obs;
   final rooms = <ChatRoom>[].obs;
   final isLoading = true.obs;
 
+  final _readRooms = <String>{};
+
   @override
   void onInit() {
     super.onInit();
     fetchRooms();
+    _socket.connectFeed();
+    _feedSub = _socket.onFeed.listen(_handleFeedMessage);
   }
+
+  @override
+  void onClose() {
+    _feedSub?.cancel();
+    _socket.disconnectFeed();
+    super.onClose();
+  }
+
+  void _handleFeedMessage(Map<String, dynamic> data) {
+    final senderId = data['sender_id'] as String? ?? '';
+    final roomId = data['room_id'] as String?;
+    if (roomId == null) return;
+    final idx = rooms.indexWhere((r) => r.roomId == roomId);
+    if (idx == -1) return;
+    final isUnread = senderId != _getMyId() && !_readRooms.contains(roomId);
+    rooms[idx] = rooms[idx].copyWith(
+      lastMessage: data['text'] as String? ?? '',
+      lastTime: data['timestamp'] as String? ?? '',
+      unread: isUnread ? rooms[idx].unread + 1 : rooms[idx].unread,
+    );
+  }
+
+  String _getMyId() {
+    try {
+      final auth = Get.find<AuthService>();
+      return auth.currentUser.value?.id ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  int get totalUnread => rooms.fold(0, (sum, r) => sum + r.unread);
 
   List<ChatRoom> get filteredRooms {
     if (filterIndex.value == 0) {
@@ -44,6 +95,14 @@ class ChatController extends GetxController {
   }
 
   void changeFilter(int index) => filterIndex.value = index;
+
+  void markRead(String roomId) {
+    _readRooms.add(roomId);
+    final idx = rooms.indexWhere((r) => r.roomId == roomId);
+    if (idx != -1) {
+      rooms[idx] = rooms[idx].copyWith(unread: 0);
+    }
+  }
 
   Future<void> fetchRooms() async {
     isLoading.value = true;
@@ -59,7 +118,7 @@ class ChatController extends GetxController {
         photoUrl: r['photo_url'] as String?,
         lastMessage: r['last_message'] as String? ?? '',
         lastTime: r['last_time'] as String? ?? '',
-        unread: r['unread'] as int? ?? 0,
+        unread: _readRooms.contains(r['room_id'] as String? ?? '') ? 0 : (r['unread'] as int? ?? 0),
       )));
     } catch (_) {}
     isLoading.value = false;

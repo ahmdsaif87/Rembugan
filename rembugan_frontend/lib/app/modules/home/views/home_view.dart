@@ -7,6 +7,7 @@ import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
 import '../../social/views/comment_view.dart';
 import '../controllers/home_controller.dart';
+import '../../chat/controllers/chat_controller.dart';
 import '../../explore/views/explore_view.dart';
 import '../../notification/controllers/notification_controller.dart';
 import 'widgets/header_icon.dart';
@@ -51,6 +52,9 @@ class HomeView extends GetView<HomeController> {
     final notifCtrl = Get.isRegistered<NotificationController>()
         ? Get.find<NotificationController>()
         : Get.put(NotificationController());
+    final chatCtrl = Get.isRegistered<ChatController>()
+        ? Get.find<ChatController>()
+        : Get.put(ChatController());
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       child: Row(
@@ -66,10 +70,13 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
           ),
-          HeaderIcon(
-            icon: FluentIcons.chat_empty_24_regular,
-            tooltip: 'Chat',
-            onTap: () => Get.toNamed(Routes.CHAT),
+          Obx(
+            () => HeaderIcon(
+              icon: FluentIcons.chat_empty_24_regular,
+              tooltip: 'Chat',
+              badgeCount: chatCtrl.totalUnread,
+              onTap: () => Get.toNamed(Routes.CHAT),
+            ),
           ),
           const SizedBox(width: 18),
           Obx(
