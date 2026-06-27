@@ -1,73 +1,67 @@
 import 'package:get/get.dart';
 
-class ChatModel {
-  final String name;
-  final String message;
-  final String time;
-  final String avatarUrl;
-  final bool isUnread;
-  final int unreadCount;
+import '../../../core/services/api_client.dart';
 
-  ChatModel({
+class ChatRoom {
+  final String roomId;
+  final String type;
+  final String name;
+  final String? otherUserId;
+  final String? photoUrl;
+  final String lastMessage;
+  final String lastTime;
+  final int unread;
+  ChatRoom({
+    required this.roomId,
+    required this.type,
     required this.name,
-    required this.message,
-    required this.time,
-    required this.avatarUrl,
-    required this.isUnread,
-    this.unreadCount = 0,
+    this.otherUserId,
+    this.photoUrl,
+    this.lastMessage = '',
+    this.lastTime = '',
+    this.unread = 0,
   });
 }
 
 class ChatController extends GetxController {
-  // 0: Belum dibaca, 1: Semua
+  final ApiClient _api = Get.find();
+
   var filterIndex = 1.obs;
+  final rooms = <ChatRoom>[].obs;
+  final isLoading = true.obs;
 
-  // Dummy Chat Data
-  var allChats = <ChatModel>[
-    ChatModel(
-      name: 'Raka Pratama',
-      message: 'Eh Raka, poster lomba Creative Fest 2026 ini menarik banget...',
-      time: '18.38',
-      avatarUrl: 'lib/assets/img/avatar.png',
-      isUnread: false,
-    ),
-    ChatModel(
-      name: 'Aisyah Rahma',
-      message:
-          'Halo! Progres wireframe buat menu project udah selesai nih, bisa tolong dicek?',
-      time: '17.45',
-      avatarUrl: 'https://i.pravatar.cc/100?img=49',
-      isUnread: true,
-      unreadCount: 1,
-    ),
-    ChatModel(
-      name: 'Nadia Saputri',
-      message:
-          'FastAPI backend-nya udah aku deploy ke Railway ya, nanti tinggal kita integrasi sama Flutter.',
-      time: 'Kemarin',
-      avatarUrl: 'https://i.pravatar.cc/100?img=47',
-      isUnread: false,
-    ),
-    ChatModel(
-      name: 'Dede Fernanda',
-      message:
-          'Siap Dede, nanti malam kita kumpul di Discord buat bahas mockups & database ya!',
-      time: '2 hari lalu',
-      avatarUrl: 'https://i.pravatar.cc/100?img=12',
-      isUnread: true,
-      unreadCount: 3,
-    ),
-  ].obs;
-
-  List<ChatModel> get filteredChats {
-    if (filterIndex.value == 0) {
-      return allChats.where((chat) => chat.isUnread).toList();
-    } else {
-      return allChats;
-    }
+  @override
+  void onInit() {
+    super.onInit();
+    fetchRooms();
   }
 
-  void changeFilter(int index) {
-    filterIndex.value = index;
+  List<ChatRoom> get filteredRooms {
+    if (filterIndex.value == 0) {
+      return rooms.where((r) => r.unread > 0).toList();
+    }
+    return rooms;
+  }
+
+  void changeFilter(int index) => filterIndex.value = index;
+
+  Future<void> fetchRooms() async {
+    isLoading.value = true;
+    try {
+      final res = await _api.get('/chat/rooms');
+      final body = res.data as Map<String, dynamic>? ?? {};
+      final data = body['data'] as List<dynamic>? ?? [];
+      rooms.assignAll(data.map((r) => ChatRoom(
+        roomId: r['room_id'] as String? ?? '',
+        type: r['type'] as String? ?? 'dm',
+        name: r['name'] as String? ?? '',
+        otherUserId: r['other_user_id'] as String?,
+        photoUrl: r['photo_url'] as String?,
+        lastMessage: r['last_message'] as String? ?? '',
+        lastTime: r['last_time'] as String? ?? '',
+        unread: r['unread'] as int? ?? 0,
+      )));
+    } catch (_) {}
+    isLoading.value = false;
   }
 }

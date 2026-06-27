@@ -17,6 +17,27 @@ class NotificationModel {
     required this.createdAt,
   });
 
+  int? get connectionId {
+    if (link == null || !link!.startsWith('/connection/')) return null;
+    final parts = link!.split('/');
+    if (parts.length < 3) return null;
+    return int.tryParse(parts[2]);
+  }
+
+  String? get profileUserId {
+    if (link == null || !link!.startsWith('/profile/')) return null;
+    final parts = link!.split('/');
+    if (parts.length < 3) return null;
+    return parts[2];
+  }
+
+  int? get workspaceId {
+    if (link == null || !link!.startsWith('/workspace/')) return null;
+    final parts = link!.split('/');
+    if (parts.length < 3) return null;
+    return int.tryParse(parts[2]);
+  }
+
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
       id: json['id'] as int,

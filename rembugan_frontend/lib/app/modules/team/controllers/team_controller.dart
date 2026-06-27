@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/services/chat_socket_service.dart';
 import '../data/repositories/workspace_repository.dart';
 
 class WorkspaceMember {
@@ -135,20 +139,29 @@ class RecentActivity {
 class DiscussionMessage {
   final String sender;
   final String body;
+  final String type;
   final String time;
   final bool isMe;
   final bool isSystem;
   final String? replyTo;
-  final String? attachment;
+  final AttachmentData? attachment;
   const DiscussionMessage({
     required this.sender,
     required this.body,
     required this.time,
+    this.type = 'text',
     this.isMe = false,
     this.isSystem = false,
     this.replyTo,
     this.attachment,
   });
+}
+
+class AttachmentData {
+  final String url;
+  final String? name;
+  final int? size;
+  const AttachmentData({required this.url, this.name, this.size});
 }
 
 class WorkspaceTask {
@@ -171,22 +184,27 @@ class WorkspaceTask {
 }
 
 class WorkspaceFile {
+  final int id;
   final String name;
   final String uploader;
   final String date;
   final String size;
   final String type;
+  final String url;
   const WorkspaceFile({
+    this.id = 0,
     required this.name,
     required this.uploader,
     required this.date,
     required this.size,
     required this.type,
+    this.url = '',
   });
 }
 
 class TeamController extends GetxController {
   final WorkspaceRepository _repo = WorkspaceRepository();
+  StreamSubscription? _wsSub;
 
   var detailTabIndex = 0.obs;
   var workspaceTabIndex = 0.obs;
@@ -195,6 +213,7 @@ class TeamController extends GetxController {
 
   final attachedGroupFileName = RxnString();
   final attachedGroupFileSize = RxnString();
+  final isUploading = false.obs;
 
   void attachGroupFile(String name, String size) {
     attachedGroupFileName.value = name;
@@ -227,6 +246,60 @@ class TeamController extends GetxController {
     fetchWorkspaces();
   }
 
+  @override
+  void onClose() {
+    _disconnectWs();
+    _wsSub?.cancel();
+    super.onClose();
+  }
+
+  void _connectWs() {
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final roomId = ws.id;
+    try {
+      final socket = Get.find<ChatSocketService>();
+      socket.connect(roomId);
+      _wsSub?.cancel();
+      _wsSub = socket.onMessage.listen((data) {
+        final senderId = data['sender_id'] as String? ?? '';
+        final isMe = senderId == _getMyId();
+        discussions.add(DiscussionMessage(
+          sender: data['sender_name'] as String? ?? (isMe ? 'Saya' : ''),
+          body: data['text'] as String? ?? '',
+          type: data['type'] as String? ?? 'text',
+          time: data['timestamp'] as String? ?? '',
+          isMe: isMe,
+          isSystem: data['type'] == 'system',
+          attachment: data['attachment_url'] != null
+              ? AttachmentData(
+                  url: data['attachment_url'] as String,
+                  name: data['attachment_name'] as String?,
+                  size: data['attachment_size'] as int?,
+                )
+              : null,
+        ));
+      });
+    } catch (_) {}
+  }
+
+  void _disconnectWs() {
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    try {
+      Get.find<ChatSocketService>().disconnect(ws.id);
+    } catch (_) {}
+  }
+
+  String _getMyId() {
+    try {
+      final auth = Get.find<AuthService>();
+      return auth.currentUser.value?.id ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   Future<void> fetchWorkspaces() async {
     isLoading.value = true;
     workspaces.assignAll(await _repo.getWorkspaces());
@@ -239,6 +312,7 @@ class TeamController extends GetxController {
   void changeDetailTab(int i) => detailTabIndex.value = i;
 
   Future<void> openWorkspace(WorkspaceModel ws) async {
+    _disconnectWs();
     selectedWorkspace.value = ws;
     detailTabIndex.value = 0;
     final pid = int.tryParse(ws.id) ?? 0;
@@ -254,6 +328,39 @@ class TeamController extends GetxController {
     tasks.assignAll(results[1] as List<WorkspaceTask>);
     files.assignAll(results[2] as List<WorkspaceFile>);
     applicants.assignAll(results[3] as List<WorkspaceApplicant>);
+    _connectWs();
+  }
+
+  void sendMessage(String text) {
+    final ws = selectedWorkspace.value;
+    if (ws == null || text.trim().isEmpty) return;
+    try {
+      Get.find<ChatSocketService>().send(ws.id, text.trim());
+    } catch (_) {}
+  }
+
+  Future<void> uploadAndSendFile() async {
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final pid = int.tryParse(ws.id);
+    if (pid == null) return;
+    isUploading.value = true;
+    try {
+      await _repo.uploadWorkspaceFile(pid);
+      final updatedFiles = await _repo.getFiles(pid);
+      files.assignAll(updatedFiles);
+    } catch (e) {
+      debugPrint('uploadAndSendFile error: $e');
+    }
+    isUploading.value = false;
+  }
+
+  void sendReply(String text, int? replyToId) {
+    final ws = selectedWorkspace.value;
+    if (ws == null || text.trim().isEmpty) return;
+    try {
+      Get.find<ChatSocketService>().send(ws.id, text.trim(), replyToId: replyToId);
+    } catch (_) {}
   }
 
   Future<void> approveApplicant(WorkspaceApplicant applicant) async {

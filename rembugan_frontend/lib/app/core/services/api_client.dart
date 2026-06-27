@@ -56,17 +56,18 @@ class ApiClient extends GetxService {
 
   Future<dio.Response> delete(String path) => _dio.delete(path);
 
-  Future<String?> uploadImageBytes(
+  Future<dynamic> uploadImageBytes(
     String path,
-    Uint8List bytes,
-    String filename,
-  ) async {
+    Uint8List bytes, {
+    String filename = 'file',
+    String fieldName = 'file',
+  }) async {
     final formData = dio.FormData.fromMap({
-      'file': dio.MultipartFile.fromBytes(bytes, filename: filename),
+      fieldName: dio.MultipartFile.fromBytes(bytes, filename: filename),
     });
     final res = await _dio.post(path, data: formData);
-    final data = res.data['data'] as Map<String, dynamic>?;
-    return data?['url'] as String?;
+    final data = res.data as Map<String, dynamic>?;
+    return data?['data'] ?? data;
   }
 }
 

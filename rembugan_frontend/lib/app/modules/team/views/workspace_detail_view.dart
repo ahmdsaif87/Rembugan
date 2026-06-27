@@ -954,30 +954,22 @@ class _DiscussionTabState extends State<_DiscussionTab> {
                                       color: AppColors.primary,
                                     ),
                                     title: 'Foto & Media',
-                                    onTap: () {
-                                      _ctrl.attachGroupFile(
-                                        'GEMASTIK_PitchDeck.png',
-                                        '3.2 MB',
-                                      );
-                                      Get.back();
-                                      AppToast.success('GEMASTIK_PitchDeck.png berhasil dipilih', title: 'File Dilampirkan');
-                                    },
-                                  ),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  AppListItem(
-                                    leading: const Icon(
-                                      FluentIcons.document_24_regular,
-                                      color: AppColors.primary,
+                    onTap: () {
+                                        Get.back();
+                                        _ctrl.uploadAndSendFile();
+                                      },
                                     ),
-                                    title: 'Dokumen & File PDF',
-                                    onTap: () {
-                                      _ctrl.attachGroupFile(
-                                        'Revisi_Proposal_v3.pdf',
-                                        '2.1 MB',
-                                      );
-                                      Get.back();
-                                      AppToast.success('Revisi_Proposal_v3.pdf berhasil dipilih', title: 'File Dilampirkan');
-                                    },
+                                    const SizedBox(height: AppSpacing.sm),
+                                    AppListItem(
+                                      leading: const Icon(
+                                        FluentIcons.document_24_regular,
+                                        color: AppColors.primary,
+                                      ),
+                                      title: 'Dokumen & File PDF',
+                                      onTap: () {
+                                        Get.back();
+                                        _ctrl.uploadAndSendFile();
+                                      },
                                   ),
                                   const SizedBox(height: 12),
                                 ],
@@ -1059,17 +1051,7 @@ class _DiscussionTabState extends State<_DiscussionTab> {
                           if (text.isEmpty &&
                               _ctrl.attachedGroupFileName.value == null)
                             return;
-
-                          _ctrl.discussions.add(
-                            DiscussionMessage(
-                              sender: 'Dede',
-                              body: text,
-                              time: 'Just now',
-                              isMe: true,
-                              attachment: _ctrl.attachedGroupFileName.value,
-                            ),
-                          );
-
+                          _ctrl.sendMessage(text);
                           _msgCtrl.clear();
                           _ctrl.removeGroupAttachment();
                         },
@@ -1217,8 +1199,8 @@ class _Bubble extends StatelessWidget {
                           child: Row(
                             children: [
                               Icon(
-                                msg.attachment!.endsWith('.png') ||
-                                        msg.attachment!.endsWith('.jpg')
+                                msg.attachment!.url.contains('.png') ||
+                                        msg.attachment!.url.contains('.jpg')
                                     ? FluentIcons.image_24_regular
                                     : FluentIcons.document_24_regular,
                                 color: msg.isMe
@@ -1232,7 +1214,7 @@ class _Bubble extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      msg.attachment!,
+                                      msg.attachment!.name ?? 'File',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: AppFonts.satoshiStyle(
@@ -1245,7 +1227,9 @@ class _Bubble extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        '2.4 MB',
+                                        msg.attachment!.size != null
+                                            ? '${(msg.attachment!.size! / 1024 / 1024).toStringAsFixed(1)} MB'
+                                            : '',
                                         style: AppFonts.satoshiStyle(
                                           fontSize: 9,
                                           color: msg.isMe
@@ -1257,13 +1241,6 @@ class _Bubble extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                              ),
-                              Icon(
-                                FluentIcons.arrow_download_24_regular,
-                                color: msg.isMe
-                                    ? AppColors.white70
-                                    : c.textSecondary,
-                                size: 16,
                               ),
                             ],
                           ),

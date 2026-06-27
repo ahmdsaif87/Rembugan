@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import 'api_client.dart';
+import '../utils/date_utils.dart';
 
 class ProfileExperience {
   final String? id;
@@ -22,11 +23,10 @@ class ProfileExperience {
   factory ProfileExperience.fromJson(Map<String, dynamic> json) {
     final start = json['start_date'] as String? ?? '';
     final end = json['end_date'] as String? ?? '';
-    final duration = switch ((start.isNotEmpty, end.isNotEmpty)) {
-      (true, true) => '$start - $end',
-      (true, false) => start,
-      _ => '',
-    };
+    final duration = formatDateRange(
+      start.isNotEmpty ? start : null,
+      end.isNotEmpty ? end : null,
+    );
     return ProfileExperience(
       id: json['id']?.toString(),
       title: json['title'] as String? ?? '',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../../core/services/api_client.dart';
 import '../../controllers/team_controller.dart';
 
@@ -38,14 +39,24 @@ class WorkspaceRepository {
       final items = data['data'] as List<dynamic>? ?? [];
       return items.map((e) {
         final raw = e as Map<String, dynamic>;
+        AttachmentData? attachment;
+        final attRaw = raw['attachment'] as Map<String, dynamic>?;
+        if (attRaw != null && attRaw['url'] != null) {
+          attachment = AttachmentData(
+            url: attRaw['url'] as String,
+            name: attRaw['name'] as String?,
+            size: attRaw['size'] as int?,
+          );
+        }
         return DiscussionMessage(
           sender: raw['sender'] as String? ?? '',
           body: raw['body'] as String? ?? '',
+          type: raw['type'] as String? ?? 'text',
           time: _formatTime(raw['time'] as String?),
           isMe: raw['is_me'] as bool? ?? false,
           isSystem: raw['is_system'] as bool? ?? false,
           replyTo: raw['reply_to'] as String?,
-          attachment: raw['attachment'] as String?,
+          attachment: attachment,
         );
       }).toList();
     } catch (e) {
@@ -98,11 +109,13 @@ class WorkspaceRepository {
       return items.map((e) {
         final raw = e as Map<String, dynamic>;
         return WorkspaceFile(
+          id: raw['id'] as int? ?? 0,
           name: raw['name'] as String? ?? '',
           uploader: raw['uploader'] as String? ?? '',
           date: raw['date'] as String? ?? '',
           size: raw['size'] as String? ?? '',
           type: raw['type'] as String? ?? 'file',
+          url: raw['url'] as String? ?? '',
         );
       }).toList();
     } catch (e) {
@@ -134,6 +147,22 @@ class WorkspaceRepository {
       debugPrint('WorkspaceRepository.getApplicants error: $e');
       return [];
     }
+  }
+
+  Future<void> uploadWorkspaceFile(int projectId) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null) return;
+    await _api.uploadImageBytes(
+      '/workspace/$projectId/files',
+      bytes,
+      filename: file.name,
+    );
   }
 
   Future<Map<String, dynamic>?> createTask(int projectId, String title, List<String> assigneeIds, String? deadline) async {

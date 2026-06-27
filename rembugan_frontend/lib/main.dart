@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'app/core/services/api_client.dart';
 import 'app/core/services/auth_service.dart';
+import 'app/core/services/chat_socket_service.dart';
 import 'app/core/services/profile_service.dart';
 import 'app/core/services/theme_service.dart';
 import 'app/core/theme/theme.dart';
@@ -15,6 +16,7 @@ void main() async {
   Get.put(AuthService(), permanent: true);
   Get.put(ProfileService(), permanent: true);
   Get.put(ThemeService(), permanent: true);
+  Get.put(ChatSocketService(), permanent: true);
 
   await Get.find<AuthService>().init();
 

@@ -35,6 +35,13 @@ NOTIF_CHAT: Final = "chat"
 NOTIF_GROUP_TAG: Final = "group_chat_tag"
 NOTIF_CONN_REQUEST: Final = "connection_request"
 NOTIF_CONN_ACCEPTED: Final = "connection_accepted"
+NOTIF_APPLICATION_RECEIVED: Final = "application_received"
+NOTIF_APPLICATION_ACCEPTED: Final = "application_accepted"
+NOTIF_APPLICATION_REJECTED: Final = "application_rejected"
+NOTIF_TASK_ASSIGNED: Final = "task_assigned"
+NOTIF_DEADLINE_REMINDER: Final = "deadline_reminder"
+NOTIF_FILE_UPLOADED: Final = "file_uploaded"
+NOTIF_ROLE_APPROVED: Final = "role_approved"
 
 # ── Auth ──
 ROLE_ADMIN: Final = "admin"

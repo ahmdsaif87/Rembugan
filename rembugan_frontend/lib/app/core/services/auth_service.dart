@@ -2,7 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../models/user_model.dart';
+import '../../modules/home/controllers/home_controller.dart';
+import '../../modules/notification/controllers/notification_controller.dart';
 import 'api_client.dart';
+import 'chat_socket_service.dart';
 
 class AuthService extends GetxService {
   final _api = Get.find<ApiClient>();
@@ -172,6 +175,15 @@ class AuthService extends GetxService {
     await _api.clearToken();
     currentUser.value = null;
     isLoggedIn.value = false;
+    if (Get.isRegistered<ChatSocketService>()) {
+      Get.find<ChatSocketService>().disconnectAll();
+    }
+    if (Get.isRegistered<NotificationController>()) {
+      Get.delete<NotificationController>(force: true);
+    }
+    if (Get.isRegistered<HomeController>()) {
+      Get.delete<HomeController>(force: true);
+    }
     Get.offAllNamed('/onboarding');
   }
 }

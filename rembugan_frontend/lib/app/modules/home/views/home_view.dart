@@ -8,6 +8,7 @@ import '../../../routes/app_pages.dart';
 import '../../social/views/comment_view.dart';
 import '../controllers/home_controller.dart';
 import '../../explore/views/explore_view.dart';
+import '../../notification/controllers/notification_controller.dart';
 import 'widgets/header_icon.dart';
 import 'widgets/post_card_widget.dart';
 import 'widgets/skeleton_block.dart';
@@ -47,6 +48,9 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildHeader(BuildContext context) {
     final c = AppC.of(context);
+    final notifCtrl = Get.isRegistered<NotificationController>()
+        ? Get.find<NotificationController>()
+        : Get.put(NotificationController());
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       child: Row(
@@ -68,10 +72,13 @@ class HomeView extends GetView<HomeController> {
             onTap: () => Get.toNamed(Routes.CHAT),
           ),
           const SizedBox(width: 18),
-          HeaderIcon(
-            icon: FluentIcons.alert_24_regular,
-            tooltip: 'Notifikasi',
-            onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
+          Obx(
+            () => HeaderIcon(
+              icon: FluentIcons.alert_24_regular,
+              tooltip: 'Notifikasi',
+              badgeCount: notifCtrl.unreadCount.value,
+              onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
+            ),
           ),
           const SizedBox(width: 18),
           HeaderIcon(

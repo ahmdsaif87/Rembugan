@@ -233,6 +233,8 @@ async def get_profile_func(
     is_own_profile = user_token and user_token.get("uid") == user.id
 
     connection_status = None
+    connection_id = None
+    is_incoming = None
     if not is_own_profile and user_token:
         viewer_id = user_token.get("uid")
         existing_conn = await db.connection.find_first(
@@ -245,9 +247,13 @@ async def get_profile_func(
         )
         if existing_conn:
             connection_status = existing_conn.status
+            connection_id = existing_conn.id
+            is_incoming = existing_conn.receiver_id == viewer_id
     
     data = {
         "connection_status": connection_status,
+        "connection_id": connection_id,
+        "is_incoming": is_incoming,
         "connection_count": connection_count,
         "project_count": len(all_projects),
         "id": user.id,

@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../routes/app_pages.dart';
-
 import '../../social/views/social_components.dart';
 import '../../team/controllers/team_controller.dart';
 import '../../team/views/workspace_detail_view.dart';
@@ -52,6 +51,10 @@ class _NotificationViewState extends State<NotificationView> {
       'application_rejected' => FluentIcons.dismiss_24_regular,
       'chat' => FluentIcons.chat_24_regular,
       'group_chat_tag' => FluentIcons.mention_24_regular,
+      'task_assigned' => FluentIcons.task_list_square_ltr_24_regular,
+      'deadline_reminder' => FluentIcons.calendar_checkmark_24_regular,
+      'file_uploaded' => FluentIcons.document_24_regular,
+      'role_approved' => FluentIcons.shield_checkmark_24_regular,
       _ => FluentIcons.alert_24_regular,
     };
   }
@@ -72,23 +75,30 @@ class _NotificationViewState extends State<NotificationView> {
     }
   }
 
-  String? _actionLabel(String type) {
-    return switch (type) {
+  String? _actionLabel(NotificationModel item) {
+    if (item.connectionId != null) return 'Terima';
+    return switch (item.type) {
       'application_received' => 'Tinjau',
       'application_accepted' || 'application_rejected' => 'Buka',
       _ => null,
     };
   }
 
-  void _handleAction(String type, String? link) {
-    if (type == 'application_received') {
+  void _handleAction(NotificationModel item) {
+    final connId = item.connectionId;
+    if (connId != null) {
+      _ctrl.acceptConnectionRequest(item.id, connId);
+      return;
+    }
+
+    if (item.type == 'application_received') {
       final teamCtrl = Get.isRegistered<TeamController>()
           ? Get.find<TeamController>()
           : Get.put(TeamController());
 
       WorkspaceModel? ws;
-      if (link != null) {
-        final parts = link.split('/');
+      if (item.link != null) {
+        final parts = item.link!.split('/');
         if (parts.length >= 3) {
           final wsId = parts[2];
           ws = teamCtrl.workspaces.firstWhereOrNull((w) => w.id == wsId);
@@ -114,7 +124,69 @@ class _NotificationViewState extends State<NotificationView> {
         Get.toNamed(Routes.TEAM);
       }
     } else {
+      final wsId = item.workspaceId;
+      if (wsId != null) {
+        Get.toNamed(Routes.TEAM);
+      } else {
+        final profileId = item.profileUserId;
+        if (profileId != null) {
+          Get.toNamed(Routes.otherProfileRoute(profileId));
+        }
+      }
+    }
+  }
+
+  void _handleSecondaryAction(NotificationModel item) {
+    final connId = item.connectionId;
+    if (connId != null) {
+      _ctrl.rejectConnectionRequest(item.id, connId);
+    }
+  }
+
+  void _onTapNotification(NotificationModel item) {
+    if (!item.isRead) _ctrl.markAsRead(item.id);
+
+    if (item.type == 'connection_request' || item.type == 'connection_accepted') {
+      final profileId = item.profileUserId;
+      if (profileId != null) {
+        Get.toNamed(Routes.otherProfileRoute(profileId));
+      }
+      return;
+    }
+
+    if (item.type == 'chat') {
+      Get.toNamed(Routes.CHAT);
+      return;
+    }
+
+    if (item.type == 'group_chat_tag') {
+      final wsId = item.workspaceId;
+      if (wsId != null) {
+        final teamCtrl = Get.isRegistered<TeamController>()
+            ? Get.find<TeamController>()
+            : Get.put(TeamController());
+        final ws = teamCtrl.workspaces.firstWhereOrNull((w) => w.id == wsId.toString());
+        if (ws != null) {
+          teamCtrl.openWorkspace(ws);
+          Get.to<void>(() => const WorkspaceDetailView());
+        } else {
+          Get.toNamed(Routes.TEAM);
+        }
+      } else {
+        Get.toNamed(Routes.TEAM);
+      }
+      return;
+    }
+
+    if (item.type == 'application_accepted' || item.type == 'application_rejected') {
       Get.toNamed(Routes.TEAM);
+      return;
+    }
+
+    final wsId = item.workspaceId;
+    if (wsId != null) {
+      Get.toNamed(Routes.TEAM);
+      return;
     }
   }
 
@@ -174,13 +246,13 @@ class _NotificationViewState extends State<NotificationView> {
         subtitle: 'Update sosial dan kolaborasi',
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: _ctrl.unreadCount.value > 0 ? () => _ctrl.markAllAsRead() : null,
             child: Text(
               'Tandai dibaca',
               style: AppFonts.interStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: c.textPrimary,
+                color: _ctrl.unreadCount.value > 0 ? c.textPrimary : c.textTertiary,
               ),
             ),
           ),
@@ -212,10 +284,14 @@ class _NotificationViewState extends State<NotificationView> {
                             icon: _iconForType(item.type),
                             isCollab: _isCollab(item.type),
                             time: _relativeTime(item.createdAt),
-                            actionLabel: _actionLabel(item.type),
-                            onAction: _actionLabel(item.type) != null
-                                ? () => _handleAction(item.type, item.link)
+                            actionLabel: _actionLabel(item),
+                            onAction: _actionLabel(item) != null
+                                ? () => _handleAction(item)
                                 : null,
+                            onSecondaryAction: item.connectionId != null
+                                ? () => _handleSecondaryAction(item)
+                                : null,
+                            onTap: () => _onTapNotification(item),
                           ),
                           if (!isLast) Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
                         ],
@@ -395,6 +471,8 @@ class _NotificationTile extends StatelessWidget {
     required this.time,
     this.actionLabel,
     this.onAction,
+    this.onSecondaryAction,
+    this.onTap,
   });
 
   final NotificationModel item;
@@ -403,105 +481,137 @@ class _NotificationTile extends StatelessWidget {
   final String time;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final VoidCallback? onSecondaryAction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (!isCollab)
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: c.primarySoft,
-                borderRadius: BorderRadius.circular(20),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (!isCollab)
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: item.isRead ? c.grey100 : c.primarySoft,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(icon, size: 18, color: AppColors.primary500),
+              )
+            else
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: item.isRead ? c.grey100 : AppColors.warning50,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Icon(icon, size: 18, color: item.isRead ? c.textTertiary : AppColors.warning700),
               ),
-              child: Icon(icon, size: 18, color: AppColors.primary500),
-            )
-          else
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.warning50,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Icon(icon, size: 18, color: AppColors.warning700),
-            ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.title,
-                        style: AppFonts.satoshiStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          height: 1.25,
-                          color: c.textPrimary,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 13.5,
+                            fontWeight: item.isRead ? FontWeight.w500 : FontWeight.w600,
+                            height: 1.25,
+                            color: item.isRead ? c.textSecondary : c.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      time,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: c.textTertiary,
+                      const SizedBox(width: 8),
+                      Text(
+                        time,
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: c.textTertiary,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  item.content,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    height: 1.35,
-                    color: c.textSecondary,
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 5),
+                  Text(
+                    item.content,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      height: 1.35,
+                      color: item.isRead ? c.textTertiary : c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (actionLabel != null) ...[
-            const SizedBox(width: 12),
-            InkWell(
-              onTap: onAction,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xxs,
-                ),
-                decoration: BoxDecoration(
-                  color: c.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: c.borderStrong, width: 1),
-                ),
-                child: Text(
-                  actionLabel!,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary,
+            if (onSecondaryAction != null) ...[
+              const SizedBox(width: 4),
+              InkWell(
+                onTap: onSecondaryAction,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: c.border, width: 1),
+                  ),
+                  child: Text(
+                    'Tolak',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error500,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
+            if (actionLabel != null) ...[
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: onAction,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: c.borderStrong, width: 1),
+                  ),
+                  child: Text(
+                    actionLabel!,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

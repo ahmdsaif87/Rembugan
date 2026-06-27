@@ -30,4 +30,46 @@ class NotificationRepository {
       return false;
     }
   }
+
+  Future<bool> markAllAsRead() async {
+    try {
+      await _api.put('/notifications/read-all');
+      return true;
+    } catch (e) {
+      debugPrint('NotificationRepository.markAllAsRead error: $e');
+      return false;
+    }
+  }
+
+  Future<int> getUnreadCount() async {
+    try {
+      final response = await _api.get('/notifications/unread-count');
+      final data = response.data as Map<String, dynamic>;
+      final result = data['data'] as Map<String, dynamic>? ?? {};
+      return result['unread_count'] as int? ?? 0;
+    } catch (e) {
+      debugPrint('NotificationRepository.getUnreadCount error: $e');
+      return 0;
+    }
+  }
+
+  Future<bool> acceptConnection(int connectionId) async {
+    try {
+      await _api.put('/connections/accept/$connectionId');
+      return true;
+    } catch (e) {
+      debugPrint('NotificationRepository.acceptConnection error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> rejectConnection(int connectionId) async {
+    try {
+      await _api.put('/connections/reject/$connectionId');
+      return true;
+    } catch (e) {
+      debugPrint('NotificationRepository.rejectConnection error: $e');
+      return false;
+    }
+  }
 }

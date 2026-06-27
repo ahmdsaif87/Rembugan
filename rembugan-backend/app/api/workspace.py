@@ -1,13 +1,16 @@
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from prisma import Prisma
 from app.core.dates import tz_iso
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.core.security import verify_token
 from app.core.database import get_db
-from app.core.constants import APP_PENDING, TASK_TODO, TASK_DOING, TASK_DONE, PJ_COMPLETED, ROLE_ANGGOTA
+from app.core.constants import APP_PENDING, TASK_TODO, TASK_DOING, TASK_DONE, PJ_COMPLETED, ROLE_ANGGOTA, NOTIF_FILE_UPLOADED
 from app.schemas.workspace import TaskCreateInput, TaskMoveInput, TaskUpdateInput
 from app.services.storage import upload_image_to_cloudinary
+from app.services.chat_manager import manager
+from app.services.notification import notify
 
 router = APIRouter(prefix="/workspace", tags=["6. Workspace & Kanban"])
 
@@ -327,16 +330,24 @@ async def get_workspace_discussions(
 
     result = []
     for m in reversed(messages):
+        attachment_data = None
+        if m.attachment_url:
+            attachment_data = {
+                "url": m.attachment_url,
+                "name": m.attachment_name,
+                "size": m.attachment_size,
+            }
         result.append({
             "id": m.id,
-            "sender": m.sender.full_name,
+            "sender": m.sender.full_name if m.sender else "System",
             "sender_id": m.sender_id,
             "body": m.content,
+            "type": m.type,
             "time": tz_iso(m.created_at),
             "is_me": m.sender_id == uid,
-            "is_system": False,
-            "reply_to": None,
-            "attachment": None,
+            "is_system": m.type == "system",
+            "reply_to": m.reply_to_id,
+            "attachment": attachment_data,
         })
 
     return {"status": "success", "data": result}
@@ -394,8 +405,9 @@ async def upload_workspace_file(
 
     content = await file.read()
     size = len(content)
+    if size > 50 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File terlalu besar (maks 50MB)")
 
-    # Upload ke Cloudinary
     url = upload_image_to_cloudinary(content, folder_name="rembugan_workspace_files")
 
     pf = await db.projectfile.create(
@@ -409,6 +421,44 @@ async def upload_workspace_file(
         },
         include={"uploader": True},
     )
+
+    # Buat system message di chat
+    system_text = f"{pf.uploader.full_name} mengunggah {pf.name}"
+    asyncio.create_task(
+        db.message.create(data={
+            "content": system_text,
+            "type": "system",
+            "sender_id": uid,
+            "project_id": project_id,
+            "attachment_name": pf.name,
+            "attachment_url": pf.url,
+            "attachment_size": pf.size,
+        })
+    )
+
+    room_id = str(project_id)
+    asyncio.create_task(
+        manager.broadcast({
+            "sender_id": uid,
+            "text": system_text,
+            "type": "system",
+            "attachment_url": pf.url,
+            "attachment_name": pf.name,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }, room_id)
+    )
+
+    # Notifikasi anggota lain
+    members = await db.projectmember.find_many(where={"project_id": project_id})
+    uploader = pf.uploader
+    for m in members:
+        if m.user_id != uid:
+            asyncio.create_task(
+                notify(db, m.user_id, NOTIF_FILE_UPLOADED,
+                       f"File baru di {project.title}",
+                       f"{uploader.full_name} mengunggah {pf.name}",
+                       f"/workspace/{project_id}")
+            )
 
     return {
         "status": "success",

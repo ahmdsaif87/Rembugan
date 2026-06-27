@@ -36,6 +36,31 @@ async def get_notifications(
         
     return {"status": "success", "data": result}
 
+@router.get("/unread-count", summary="Jumlah Notifikasi Belum Dibaca")
+async def unread_count(
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    uid = user_token.get("uid")
+    count = await db.notification.count(
+        where={"user_id": uid, "is_read": False}
+    )
+    return {"status": "success", "data": {"unread_count": count}}
+
+
+@router.put("/read-all", summary="Tandai Semua Notifikasi Telah Dibaca")
+async def read_all_notifications(
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    uid = user_token.get("uid")
+    await db.notification.update_many(
+        where={"user_id": uid, "is_read": False},
+        data={"is_read": True},
+    )
+    return {"status": "success", "message": "Semua notifikasi ditandai telah dibaca"}
+
+
 @router.put("/{notification_id}/read", summary="Tandai Notifikasi Telah Dibaca")
 async def read_notification(
     notification_id: int,

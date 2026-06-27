@@ -104,11 +104,11 @@ class _EditProfileViewState extends State<EditProfileView> {
     AppToast.info('Mengupload gambar...');
     try {
       final bytes = await picked.readAsBytes();
-      final url = await api.uploadImageBytes(
+      final url = (await api.uploadImageBytes(
         '/upload/image',
         bytes,
-        picked.name,
-      );
+        filename: picked.name,
+      ) as Map<String, dynamic>?)?['url'] as String?;
       if (url != null && mounted) {
         setState(() {
           if (isCover) {

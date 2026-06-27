@@ -177,7 +177,7 @@ async def send_connection_request(
         notify, db, receiver_id, NOTIF_CONN_REQUEST,
         "Permintaan Koneksi Baru",
         f"{sender.full_name} ingin terhubung dengan Anda.",
-        f"/profile/{uid}",
+        f"/connection/{conn.id}",
     )
 
     return {"status": "success", "message": "Permintaan terkirim"}

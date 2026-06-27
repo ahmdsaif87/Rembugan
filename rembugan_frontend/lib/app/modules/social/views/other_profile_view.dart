@@ -4,8 +4,11 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/services/api_client.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/profile_service.dart';
+import '../../chat/controllers/chat_controller.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../routes/app_pages.dart';
@@ -21,6 +24,8 @@ class _OtherProfileViewState extends State<OtherProfileView> {
   int selectedTabIndex = 0;
   bool _isLoading = true;
   String? _connectionStatus;
+  int? _connectionId;
+  bool _isIncoming = false;
   int _connectionCount = 0;
   int _projectCount = 0;
 
@@ -101,6 +106,8 @@ class _OtherProfileViewState extends State<OtherProfileView> {
           _portfolios = portfolios;
           _projectHistory = projectHistory;
           _connectionStatus = data['connection_status'] as String?;
+          _connectionId = data['connection_id'] as int?;
+          _isIncoming = data['is_incoming'] as bool? ?? false;
           _connectionCount = data['connection_count'] as int? ?? 0;
           _projectCount = data['project_count'] as int? ?? 0;
           _isLoading = false;
@@ -120,6 +127,48 @@ class _OtherProfileViewState extends State<OtherProfileView> {
     } catch (_) {
       AppToast.error('Gagal mengirim permintaan koneksi');
     }
+  }
+
+  Future<void> _acceptConnection() async {
+    if (_connectionId == null) return;
+    try {
+      await _api.put('/connections/accept/$_connectionId');
+      setState(() {
+        _connectionStatus = 'accepted';
+      });
+      AppToast.success('Koneksi diterima');
+    } catch (_) {
+      AppToast.error('Gagal menerima koneksi');
+    }
+  }
+
+  Future<void> _rejectConnection() async {
+    if (_connectionId == null) return;
+    try {
+      await _api.put('/connections/reject/$_connectionId');
+      setState(() {
+        _connectionStatus = 'rejected';
+        _connectionId = null;
+        _isIncoming = false;
+      });
+      AppToast.success('Koneksi ditolak');
+    } catch (_) {
+      AppToast.error('Gagal menolak koneksi');
+    }
+  }
+
+  void _navigateToChat() {
+    final currentUid = Get.find<AuthService>().currentUser.value?.id;
+    if (currentUid == null || _id.isEmpty) return;
+    final sorted = [currentUid, _id]..sort();
+    final roomId = 'dm_${sorted[0]}_${sorted[1]}';
+    Get.toNamed(Routes.ROOM_CHAT, arguments: ChatRoom(
+      roomId: roomId,
+      type: 'dm',
+      name: _name,
+      otherUserId: _id,
+      photoUrl: _avatarUrl.isNotEmpty ? _avatarUrl : null,
+    ));
   }
 
   @override
@@ -162,7 +211,11 @@ class _OtherProfileViewState extends State<OtherProfileView> {
                 const SizedBox(height: 14),
                 _ProfileActions(
                   connectionStatus: _connectionStatus,
+                  isIncoming: _isIncoming,
                   onConnect: _sendConnection,
+                  onAccept: _acceptConnection,
+                  onReject: _rejectConnection,
+                  onChat: _navigateToChat,
                 ),
                 const SizedBox(height: 16),
                 _ProfileTabs(
@@ -475,11 +528,19 @@ class _SkillChip extends StatelessWidget {
 class _ProfileActions extends StatelessWidget {
   const _ProfileActions({
     required this.connectionStatus,
+    required this.isIncoming,
     required this.onConnect,
+    required this.onAccept,
+    required this.onReject,
+    required this.onChat,
   });
 
   final String? connectionStatus;
+  final bool isIncoming;
   final VoidCallback onConnect;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+  final VoidCallback onChat;
 
   bool get _isConnected => connectionStatus == 'accepted';
   bool get _isPending => connectionStatus == 'pending';
@@ -489,52 +550,147 @@ class _ProfileActions extends StatelessWidget {
     final c = AppC.of(context);
 
     if (_isConnected) {
-      return Container(
+      return SizedBox(
         width: double.infinity,
-        height: 44,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: c.grey100,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: c.border),
-        ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(FluentIcons.person_24_regular, size: 16, color: c.textSecondary),
-            const SizedBox(width: 6),
-            Text(
-              'Terhubung',
-              style: AppFonts.satoshiStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: c.textSecondary,
+            Expanded(
+              child: Container(
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.grey100,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: c.border),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(FluentIcons.person_24_regular, size: 16, color: c.textSecondary),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Terhubung',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: c.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            const SizedBox(width: 10),
+            _ChatButton(onTap: onChat),
           ],
         ),
       );
     }
 
+    if (_isPending && isIncoming) {
+      return Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: onReject,
+              child: Container(
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: c.border),
+                ),
+                child: Text(
+                  'Tolak',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: c.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: GestureDetector(
+              onTap: onAccept,
+              child: Container(
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primary500,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Text(
+                  'Terima',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: c.surface,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          _ChatButton(onTap: onChat),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: _isPending ? null : onConnect,
+            child: Container(
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _isPending ? c.grey100 : AppColors.primary500,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: _isPending ? Border.all(color: c.border) : null,
+              ),
+              child: Text(
+                _isPending ? 'Tertunda' : 'Terhubung',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _isPending ? c.textSecondary : c.surface,
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (!_isPending) ...[
+          const SizedBox(width: 10),
+          _ChatButton(onTap: onChat),
+        ],
+      ],
+    );
+  }
+}
+
+class _ChatButton extends StatelessWidget {
+  const _ChatButton({required this.onTap});
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
     return GestureDetector(
-      onTap: _isPending ? null : onConnect,
+      onTap: onTap,
       child: Container(
-        width: double.infinity,
+        width: 44,
         height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: _isPending ? c.grey100 : AppColors.primary500,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: _isPending ? Border.all(color: c.border) : null,
+          border: Border.all(color: c.border),
         ),
-        child: Text(
-          _isPending ? 'Tertunda' : 'Terhubung',
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            color: _isPending ? c.textSecondary : c.surface,
-          ),
-        ),
+        child: Icon(FluentIcons.chat_24_regular, color: AppColors.primary, size: 20),
       ),
     );
   }
@@ -716,7 +872,7 @@ class _ProfileTabContent extends StatelessWidget {
           return _PostCard(
             avatarUrl: avatarUrl,
             name: name,
-            subtitle: '$role - ${p['created_at'] as String? ?? ''}',
+            subtitle: '$role - ${formatDate(p['created_at'] as String?)}',
             content: p['content'] as String? ?? '',
             likeCount: '${p['likes_count'] ?? 0}',
             commentCount: '${p['comments_count'] ?? 0}',

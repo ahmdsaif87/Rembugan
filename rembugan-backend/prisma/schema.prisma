@@ -231,9 +231,20 @@ model TaskAssignee {
 }
 
 model Message {
-  id          Int      @id @default(autoincrement())
-  content     String
-  sender_id   String
+  id              Int      @id @default(autoincrement())
+  content         String   // Teks pesan atau deskripsi file
+  type            String   @default("text") // "text", "file", "system"
+  sender_id       String
+  
+  // Lampiran file
+  attachment_url  String?
+  attachment_name String?
+  attachment_size Int?
+  
+  // Reply ke pesan lain
+  reply_to_id     Int?
+  reply_to        Message? @relation("MessageReplies", fields: [reply_to_id], references: [id])
+  replies         Message[] @relation("MessageReplies")
   
   // Fleksibilitas Chat: DM atau Group
   receiver_id String?  // Diisi jika ini adalah DM pribadi (Direct Message)
@@ -248,6 +259,7 @@ model Message {
   @@index([sender_id])
   @@index([receiver_id])
   @@index([project_id])
+  @@index([type])
 }
 
 // 5. ENTITAS SHOWCASE (PORTOFOLIO/DOKUMENTASI)

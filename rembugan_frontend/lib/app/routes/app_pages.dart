@@ -21,8 +21,9 @@ import '../modules/social/views/create_post_view.dart';
 import '../modules/social/views/edit_profile_view.dart';
 import '../modules/social/views/empty_state_view.dart';
 import '../modules/social/views/loading_state_view.dart';
-import '../modules/social/views/notification_view.dart';
 import '../modules/social/views/other_profile_view.dart';
+import '../modules/notification/views/notification_view.dart';
+import '../modules/notification/bindings/notification_binding.dart';
 import '../modules/social/views/saved_view.dart';
 import '../modules/social/views/search_view.dart';
 import '../modules/social/views/settings_view.dart';
@@ -92,7 +93,11 @@ class AppPages {
     GetPage(name: _Paths.CREATE_POST, page: () => const CreatePostView()),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfileView()),
     GetPage(name: _Paths.SETTINGS, page: () => const SettingsView()),
-    GetPage(name: _Paths.NOTIFICATIONS, page: () => const NotificationView()),
+    GetPage(
+      name: _Paths.NOTIFICATIONS,
+      page: () => const NotificationView(),
+      binding: NotificationBinding(),
+    ),
     GetPage(name: _Paths.SAVED, page: () => const SavedView()),
     GetPage(name: _Paths.EMPTY_STATE, page: () => const EmptyStateView()),
     GetPage(name: _Paths.LOADING_STATE, page: () => const LoadingStateView()),

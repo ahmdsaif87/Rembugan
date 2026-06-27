@@ -1,18 +1,19 @@
 import os
 import re
+import json
 import asyncio
 import jwt as jwt_lib
 from datetime import datetime, timezone
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, HTTPException, UploadFile, File
 from prisma import Prisma
-from zoneinfo import ZoneInfo
 from app.core.dates import tz_iso
 
 from app.core.database import get_db
 from app.core.security import verify_token
-from app.core.constants import CHAT_HISTORY_MAX, NOTIF_GROUP_TAG, NOTIF_CHAT
+from app.core.constants import CHAT_HISTORY_MAX, NOTIF_GROUP_TAG, NOTIF_CHAT, NOTIF_FILE_UPLOADED
 from app.services.chat_manager import manager
 from app.services.notification import notify
+from app.services.storage import upload_image_to_cloudinary
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -35,36 +36,65 @@ async def websocket_chat(
         return
 
     db = await get_db()
-    await manager.connect(websocket, room_id)
+    await manager.connect(websocket, room_id, user_id)
 
     try:
+        sender = await db.user.find_unique(where={"id": user_id})
+        sender_name = sender.full_name if sender else "Seseorang"
+
         while True:
-            data = await websocket.receive_text()
+            raw = await websocket.receive_text()
             now = datetime.now(timezone.utc)
+
+            # Support JSON payload untuk file messages
+            try:
+                data = json.loads(raw)
+                text = data.get("text", "")
+                msg_type = data.get("type", "text")
+                attachment_url = data.get("attachment_url")
+                attachment_name = data.get("attachment_name")
+                attachment_size = data.get("attachment_size")
+                reply_to_id = data.get("reply_to_id")
+            except json.JSONDecodeError:
+                text = raw
+                msg_type = "text"
+                attachment_url = None
+                attachment_name = None
+                attachment_size = None
+                reply_to_id = None
 
             pesan = {
                 "sender_id": user_id,
-                "text": data,
+                "sender_name": sender_name,
+                "text": text,
+                "type": msg_type,
+                "attachment_url": attachment_url,
+                "attachment_name": attachment_name,
+                "attachment_size": attachment_size,
                 "timestamp": now.isoformat(),
             }
 
             if room_id.isdigit():
                 project_id = int(room_id)
-
                 save_task = asyncio.create_task(
                     db.message.create(data={
-                        "content": data, "sender_id": user_id,
-                        "project_id": project_id,
+                        "content": text, "type": msg_type,
+                        "sender_id": user_id, "project_id": project_id,
+                        "attachment_url": attachment_url,
+                        "attachment_name": attachment_name,
+                        "attachment_size": attachment_size,
+                        "reply_to_id": reply_to_id,
                     })
                 )
 
                 await manager.broadcast(pesan, room_id)
 
-                mentions = re.findall(r'@(\w+)', data)
-                if mentions:
-                    asyncio.create_task(
-                        _handle_mentions(db, user_id, project_id, data[:30], mentions)
-                    )
+                if msg_type == "text":
+                    mentions = re.findall(r'@(\w+)', text)
+                    if mentions:
+                        asyncio.create_task(
+                            _handle_mentions(db, user_id, project_id, text[:30], mentions)
+                        )
 
                 try:
                     await save_task
@@ -80,16 +110,20 @@ async def websocket_chat(
 
                 save_task = asyncio.create_task(
                     db.message.create(data={
-                        "content": data, "sender_id": user_id,
-                        "receiver_id": receiver_id,
+                        "content": text, "type": msg_type,
+                        "sender_id": user_id, "receiver_id": receiver_id,
+                        "attachment_url": attachment_url,
+                        "attachment_name": attachment_name,
+                        "attachment_size": attachment_size,
+                        "reply_to_id": reply_to_id,
                     })
                 )
 
                 await manager.broadcast(pesan, room_id)
 
-                if receiver_id:
+                if receiver_id and msg_type == "text":
                     asyncio.create_task(
-                        _handle_dm_notification(db, user_id, receiver_id, data[:30], room_id)
+                        _handle_dm_notification(db, user_id, receiver_id, text[:30], room_id)
                     )
 
                 try:
@@ -98,7 +132,7 @@ async def websocket_chat(
                     logger.error(f"Gagal simpan chat DM: {e}")
 
     except WebSocketDisconnect:
-        manager.disconnect(websocket, room_id)
+        manager.disconnect(websocket, room_id, user_id)
 
 
 async def _handle_mentions(db: Prisma, sender_id: str, project_id: int, preview: str, mentions: list[str]):
@@ -136,6 +170,119 @@ async def _handle_dm_notification(db: Prisma, sender_id: str, receiver_id: str, 
         logger.error(f"Gagal proses notif DM: {e}")
 
 
+@router.post("/dm/upload/{receiver_id}", summary="Upload File ke DM")
+async def upload_dm_file(
+    receiver_id: str,
+    file: UploadFile = File(...),
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    uid = user_token.get("uid")
+    if uid == receiver_id:
+        raise HTTPException(status_code=400, detail="Tidak bisa kirim file ke diri sendiri")
+
+    content = await file.read()
+    size = len(content)
+    if size > 50 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File terlalu besar (maks 50MB)")
+
+    url = upload_image_to_cloudinary(content, folder_name="rembugan_chat_files")
+
+    msg = await db.message.create(data={
+        "content": file.filename or "File",
+        "type": "file",
+        "sender_id": uid,
+        "receiver_id": receiver_id,
+        "attachment_url": url,
+        "attachment_name": file.filename,
+        "attachment_size": size,
+    })
+
+    room_id = f"dm_{min(uid, receiver_id)}_{max(uid, receiver_id)}"
+    payload = {
+        "sender_id": uid,
+        "text": f"Mengirim file: {file.filename}",
+        "type": "file",
+        "attachment_url": url,
+        "attachment_name": file.filename,
+        "attachment_size": size,
+        "timestamp": msg.created_at.isoformat(),
+    }
+    await manager.broadcast(payload, room_id)
+
+    sender = await db.user.find_unique(where={"id": uid})
+    await notify(
+        db, receiver_id, NOTIF_CHAT,
+        f"File baru dari {sender.full_name if sender else 'Seseorang'}",
+        file.filename or "File",
+        f"/chat/{room_id}",
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "id": msg.id,
+            "name": file.filename,
+            "url": url,
+            "size": size,
+        },
+    }
+
+
+@router.get("/rooms", summary="Daftar Room Chat Saya")
+async def get_my_rooms(
+    db: Prisma = Depends(get_db),
+    user_token: dict = Depends(verify_token),
+):
+    uid = user_token.get("uid")
+    messages = await db.message.find_many(
+        where={
+            "OR": [
+                {"sender_id": uid},
+                {"receiver_id": uid},
+            ]
+        },
+        include={"sender": True, "receiver": True},
+        order={"created_at": "desc"},
+    )
+
+    seen = set()
+    rooms = []
+    for m in messages:
+        if m.project_id:
+            room_id = str(m.project_id)
+            if room_id not in seen:
+                seen.add(room_id)
+                project = await db.project.find_unique(where={"id": m.project_id})
+                rooms.append({
+                    "room_id": room_id,
+                    "type": "group",
+                    "name": project.title if project else "Workspace",
+                    "last_message": m.content[:80] if m.content else "",
+                    "last_time": tz_iso(m.created_at),
+                    "unread": 1 if m.sender_id != uid else 0,
+                })
+        elif m.receiver_id:
+            other_id = m.receiver_id if m.sender_id == uid else m.sender_id
+            other = m.receiver if m.sender_id == uid else m.sender
+            sorted_ids = "_".join(sorted([uid, other_id]))
+            room_id = f"dm_{sorted_ids}"
+            if room_id not in seen:
+                seen.add(room_id)
+                rooms.append({
+                    "room_id": room_id.replace("_", "_", 1).replace("_", "_"),  # keep format dm_{a}_{b}
+                    "type": "dm",
+                    "name": other.full_name if other else "User",
+                    "other_user_id": other_id,
+                    "photo_url": other.photo_url if other else None,
+                    "last_message": m.content[:80] if m.content else "",
+                    "last_time": tz_iso(m.created_at),
+                    "unread": 1 if m.sender_id != uid else 0,
+                })
+
+    return {"status": "success", "data": rooms}
+
+
 @router.get("/history/{room_id}", summary="Ambil Riwayat Chat")
 async def get_chat_history(
     room_id: str,
@@ -171,9 +318,15 @@ async def get_chat_history(
     result = []
     for msg in messages:
         result.append({
-            "id": msg.id, "content": msg.content,
+            "id": msg.id,
+            "content": msg.content,
+            "type": msg.type,
             "sender_id": msg.sender_id,
             "sender_name": msg.sender.full_name if msg.sender else None,
+            "attachment_url": msg.attachment_url,
+            "attachment_name": msg.attachment_name,
+            "attachment_size": msg.attachment_size,
+            "reply_to_id": msg.reply_to_id,
             "created_at": tz_iso(msg.created_at),
         })
 
