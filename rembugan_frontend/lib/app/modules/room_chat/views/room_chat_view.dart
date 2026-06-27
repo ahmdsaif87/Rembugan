@@ -8,8 +8,26 @@ import '../../../core/widgets/app_chrome.dart';
 
 import '../controllers/room_chat_controller.dart';
 
-class RoomChatView extends GetView<RoomChatController> {
+class RoomChatView extends StatefulWidget {
   const RoomChatView({super.key});
+  @override
+  State<RoomChatView> createState() => _RoomChatViewState();
+}
+
+class _RoomChatViewState extends State<RoomChatView> {
+  late final RoomChatController ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    ctrl = Get.put(RoomChatController());
+  }
+
+  @override
+  void dispose() {
+    Get.delete<RoomChatController>();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +40,12 @@ class RoomChatView extends GetView<RoomChatController> {
           children: [
             Expanded(
               child: Obx(() {
-                if (controller.isLoading.value) {
+                if (ctrl.isLoading.value) {
                   return const _ChatShimmer();
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.all(AppSpacing.md),
-                  itemCount: controller.messages.length + 1,
+                  itemCount: ctrl.messages.length + 1,
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       return Center(
@@ -42,7 +60,7 @@ class RoomChatView extends GetView<RoomChatController> {
                         ),
                       );
                     }
-                    final msg = controller.messages[index - 1];
+                    final msg = ctrl.messages[index - 1];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: _buildMessageBubble(c: c, msg: msg),
@@ -59,7 +77,7 @@ class RoomChatView extends GetView<RoomChatController> {
   }
 
   PreferredSizeWidget _buildAppBar(AppC c) {
-    final room = controller.room;
+    final room = ctrl.room;
     return AppBar(
       backgroundColor: c.surface.withValues(alpha: 0.96),
       elevation: 0,
@@ -104,7 +122,7 @@ class RoomChatView extends GetView<RoomChatController> {
   }
 
   Widget _buildMessageBubble({required AppC c, required ChatMessage msg}) {
-    final room = controller.room;
+    final room = ctrl.room;
     final isGroup = room.type == 'group';
     final otherPhoto = !msg.isMe && isGroup ? room.photoUrl : null;
     final ts = relativeTime(msg.time);
@@ -235,7 +253,7 @@ class RoomChatView extends GetView<RoomChatController> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Obx(() {
-          if (!controller.isUploading.value) return const SizedBox.shrink();
+          if (!ctrl.isUploading.value) return const SizedBox.shrink();
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
             color: c.grey50,
@@ -256,7 +274,7 @@ class RoomChatView extends GetView<RoomChatController> {
               Material(
                 color: AppColors.transparent,
                 child: InkWell(
-                  onTap: () => controller.uploadAndSendFile(),
+                  onTap: () => ctrl.uploadAndSendFile(),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Container(
                     width: 44, height: 44,
@@ -272,7 +290,7 @@ class RoomChatView extends GetView<RoomChatController> {
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
-                  controller: controller.messageController,
+                  controller: ctrl.messageController,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: c.surface,
@@ -299,7 +317,7 @@ class RoomChatView extends GetView<RoomChatController> {
               Material(
                 color: AppColors.transparent,
                 child: InkWell(
-                  onTap: () => controller.sendMessage(),
+                  onTap: () => ctrl.sendMessage(),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Container(
                     width: 44, height: 44,

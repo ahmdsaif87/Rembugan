@@ -8,7 +8,7 @@ import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/chat/bindings/chat_binding.dart';
 import '../modules/chat/views/chat_view.dart';
-import '../modules/room_chat/bindings/room_chat_binding.dart';
+
 import '../modules/room_chat/views/room_chat_view.dart';
 import '../modules/explore/bindings/explore_binding.dart';
 import '../modules/explore/views/explore_view.dart';
@@ -67,7 +67,6 @@ class AppPages {
     GetPage(
       name: _Paths.ROOM_CHAT,
       page: () => const RoomChatView(),
-      binding: RoomChatBinding(),
     ),
     GetPage(
       name: _Paths.EXPLORE,
