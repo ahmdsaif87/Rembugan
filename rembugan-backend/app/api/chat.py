@@ -310,6 +310,11 @@ async def get_my_rooms(
     user_token: dict = Depends(verify_token),
 ):
     uid = user_token.get("uid")
+
+    # Ambil read status semua room user
+    read_states = await db.roomread.find_many(where={"user_id": uid})
+    read_map = {r.room_id: r.last_read_at for r in read_states}
+
     messages = await db.message.find_many(
         where={
             "OR": [
@@ -337,15 +342,19 @@ async def get_my_rooms(
         if room_id not in seen:
             seen.add(room_id)
 
+            last_read = read_map.get(room_id)
+
             if m.project_id:
                 project = await db.project.find_unique(where={"id": m.project_id})
-                unread = await db.message.count(
-                    where={"project_id": m.project_id, "sender_id": {"not": uid}}
-                )
+                unread_where = {"project_id": m.project_id, "sender_id": {"not": uid}}
+                if last_read:
+                    unread_where["created_at"] = {"gt": last_read}
+                unread = await db.message.count(where=unread_where)
             else:
-                unread = await db.message.count(
-                    where={"sender_id": other_id, "receiver_id": uid}
-                )
+                unread_where = {"sender_id": other_id, "receiver_id": uid}
+                if last_read:
+                    unread_where["created_at"] = {"gt": last_read}
+                unread = await db.message.count(where=unread_where)
 
             if m.project_id:
                 rooms.append({
@@ -369,6 +378,23 @@ async def get_my_rooms(
                 })
 
     return {"status": "success", "data": rooms}
+
+
+@router.post("/rooms/{room_id}/read", summary="Tandai Room Sudah Dibaca")
+async def mark_room_read(
+    room_id: str,
+    db: Prisma = Depends(get_db),
+    user_token: dict = Depends(verify_token),
+):
+    uid = user_token.get("uid")
+    await db.roomread.upsert(
+        where={"user_id_room_id": {"user_id": uid, "room_id": room_id}},
+        data={
+            "create": {"user_id": uid, "room_id": room_id},
+            "update": {"last_read_at": datetime.now(timezone.utc)},
+        },
+    )
+    return {"status": "success"}
 
 
 @router.get("/history/{room_id}", summary="Ambil Riwayat Chat")

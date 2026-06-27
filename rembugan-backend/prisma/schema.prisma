@@ -56,6 +56,7 @@ model User {
   receivedConnections Connection[]   @relation("ReceivedConnections")
   uploadedFiles   ProjectFile[]
   notifications Notification[]
+  roomReads      RoomRead[]
 
   // Relasi ke OTP & Saved Items
   otp_codes     OtpCode[]
@@ -354,4 +355,16 @@ model Notification {
 
   @@index([user_id, is_read])
   @@index([type])
+}
+
+model RoomRead {
+  id           Int      @id @default(autoincrement())
+  user_id      String
+  room_id      String   // "dm_xxx_yyy" untuk DM, "39" untuk project
+  last_read_at DateTime @default(now())
+
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, room_id])
+  @@index([user_id])
 }

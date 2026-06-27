@@ -205,6 +205,7 @@ class ExploreController extends GetxController {
           filledSlots: p.filledSlots,
           matchScore: p.matchScore,
           hasApplied: true,
+          isMember: p.isMember,
           skills: p.skills,
           memberAvatars: p.memberAvatars,
           memberNames: p.memberNames,

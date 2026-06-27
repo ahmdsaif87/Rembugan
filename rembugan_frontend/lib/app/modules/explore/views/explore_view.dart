@@ -591,10 +591,12 @@ class ExploreView extends GetView<ExploreController> {
                       Expanded(
                         flex: 2,
                         child: _PrimaryAction(
-                          label: project.hasApplied
-                              ? 'Menunggu'
-                              : (applying ? 'Mengirim...' : 'Minta Bergabung'),
-                          onTap: project.hasApplied || applying
+                          label: project.isMember
+                              ? 'Bergabung'
+                              : (project.hasApplied
+                                  ? 'Menunggu'
+                                  : (applying ? 'Mengirim...' : 'Minta Bergabung')),
+                          onTap: project.isMember || project.hasApplied || applying
                               ? null
                               : () async {
                                   if (onApply == null) return;
@@ -1632,7 +1634,9 @@ class _ProjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (project.hasApplied)
+              if (project.isMember)
+                _MatchBadge(label: 'Anggota')
+              else if (project.hasApplied)
                 _MatchBadge(label: 'Menunggu')
               else if (project.matchScore > 0)
                 _MatchBadge(label: 'Sesuai skill'),

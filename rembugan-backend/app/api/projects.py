@@ -143,11 +143,15 @@ async def get_all_projects(
 
     scored_projects = []
 
-    # Ambil semua aplikasi user untuk cek status
+    # Ambil semua aplikasi + membership user untuk cek status
     my_apps = await db.projectapplication.find_many(
         where={"applicant_id": uid},
     )
     applied_ids = {a.project_id for a in my_apps}
+    my_memberships = await db.projectmember.find_many(
+        where={"user_id": uid},
+    )
+    member_ids = {m.project_id for m in my_memberships}
 
     for p in projects:
         p_emb = p.embedding
@@ -182,6 +186,7 @@ async def get_all_projects(
             "member_avatars": member_avatars,
             "match_score": score,
             "has_applied": p.id in applied_ids,
+            "is_member": p.id in member_ids,
             "created_at": tz_iso(p.created_at),
         })
         
