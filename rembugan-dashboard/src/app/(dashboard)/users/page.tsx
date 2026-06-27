@@ -54,17 +54,12 @@ import { QrCodeDialog } from "@/components/qr-code"
 
 interface User {
   id: string
-<<<<<<< Updated upstream
-  nim: string
-=======
   nim: string | null
-  email: string
->>>>>>> Stashed changes
-  full_name: string
   email: string | null
+  full_name: string
   photo_url: string | null
-  major: string
   bio: string | null
+  interest: string | null
   faculty: string | null
   major: string | null
   is_onboarded: boolean
@@ -83,12 +78,8 @@ export default function UsersPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [onboardFilter, setOnboardFilter] = useState<string>("all")
   const [addOpen, setAddOpen] = useState(false)
-<<<<<<< Updated upstream
-  const [form, setForm] = useState({ nim: "", full_name: "", major: "", password: "" })
-=======
   const [importOpen, setImportOpen] = useState(false)
   const [form, setForm] = useState({ email: "", full_name: "", interest: "", password: "", nim: "", faculty: "", major: "" })
->>>>>>> Stashed changes
   const [qrUser, setQrUser] = useState<User | null>(null)
   const [qrOpen, setQrOpen] = useState(false)
   const [importPreview, setImportPreview] = useState<Array<{ nim: string; full_name: string; faculty: string; major: string }> | null>(null)
@@ -109,7 +100,7 @@ export default function UsersPage() {
       if (response.status === 'success') {
         toast.success(`User ${form.full_name} berhasil dibuat`)
         setAddOpen(false)
-        setForm({ nim: "", full_name: "", major: "", password: "" })
+        setForm({ email: "", full_name: "", interest: "", password: "", nim: "", faculty: "", major: "" })
         queryClient.invalidateQueries({ queryKey: ['users'] })
       } else {
         toast.error(response.detail || "Gagal membuat user")
@@ -239,11 +230,7 @@ export default function UsersPage() {
             </Avatar>
               <div>
               <p className="table-primary">{user.full_name}</p>
-<<<<<<< Updated upstream
-              <p className="text-xs text-muted-foreground">{user.nim}</p>
-=======
               <p className="text-xs text-muted-foreground">{user.email || user.nim}</p>
->>>>>>> Stashed changes
             </div>
           </div>
         )
@@ -257,10 +244,6 @@ export default function UsersPage() {
       ),
     },
     {
-<<<<<<< Updated upstream
-      accessorKey: "major",
-      header: "Major",
-=======
       accessorKey: "faculty",
       header: "Fakultas",
       cell: ({ row }) => (
@@ -277,7 +260,6 @@ export default function UsersPage() {
     {
       accessorKey: "interest",
       header: "Interest",
->>>>>>> Stashed changes
       cell: ({ row }) => (
         <span className="text-muted-foreground">{row.original.major || "—"}</span>
       ),
@@ -370,58 +352,6 @@ export default function UsersPage() {
             <UploadIcon className="mr-2 h-4 w-4" />
             Import CSV
           </Button>
-<<<<<<< Updated upstream
-          <DialogContent className="sm:max-w-md">
-            <form onSubmit={handleAddUser}>
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-                <DialogDescription>
-                  Create a new user account. They will use NIM + password to log in.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="nim">NIM</Label>
-                  <Input
-                    id="nim"
-                    placeholder="12345678"
-                    value={form.nim}
-                    onChange={(e) => setForm({ ...form, nim: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="full_name">Full Name</Label>
-                  <Input
-                    id="full_name"
-                    placeholder="John Doe"
-                    value={form.full_name}
-                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="major">Major</Label>
-                  <Input
-                    id="major"
-                    placeholder="Informatika"
-                    value={form.major}
-                    onChange={(e) => setForm({ ...form, major: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Min. 6 characters"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    required
-                    minLength={6}
-                  />
-=======
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <Button onClick={() => setAddOpen(true)}>
               <PlusIcon className="mr-2 h-4 w-4" />
@@ -589,7 +519,6 @@ export default function UsersPage() {
                       )}
                     </tbody>
                   </table>
->>>>>>> Stashed changes
                 </div>
               </div>
             )}
@@ -647,20 +576,15 @@ export default function UsersPage() {
         title={detailUser?.full_name || "User Details"}
         identity={detailUser ? {
           name: detailUser.full_name,
-          subtitle: detailUser.major,
+          subtitle: detailUser.major ?? undefined,
           avatar: detailUser.photo_url,
         } : undefined}
         fields={[
-<<<<<<< Updated upstream
-          { label: "Email", value: detailUser?.email },
-          { label: "NIM", value: detailUser?.nim },
-=======
           { label: "NIM", value: detailUser?.nim || "—" },
           { label: "Email", value: detailUser?.email || "—" },
           { label: "Fakultas", value: detailUser?.faculty || "—" },
           { label: "Jurusan", value: detailUser?.major || "—" },
           { label: "Interest", value: detailUser?.interest || "—" },
->>>>>>> Stashed changes
           { label: "Onboarded", value: detailUser?.is_onboarded ? "Yes" : "No" },
           { label: "Skills", value: detailUser?.skills?.map(s => s.skill.name).join(", "), variant: "badge" },
           { label: "Bio", value: detailUser?.bio || "", variant: "bio" },

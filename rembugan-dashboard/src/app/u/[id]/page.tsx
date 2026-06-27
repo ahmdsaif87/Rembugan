@@ -58,7 +58,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch(`${API_BASE_URL}/profile/${id}`)
+        const res = await fetch(`${API_BASE_URL}/profile/${id}`, { headers: { "ngrok-skip-browser-warning": "true" } })
         const data = await res.json()
         if (data.status === "success") {
           setProfile(data.data)

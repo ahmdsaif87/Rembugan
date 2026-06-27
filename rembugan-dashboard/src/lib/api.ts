@@ -4,7 +4,7 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000
 
 function getAuthHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
@@ -88,11 +88,7 @@ export async function fetchCompetitions() {
   }
 }
 
-<<<<<<< Updated upstream
-export async function createUser(data: { nim: string; full_name: string; major: string; password: string }) {
-=======
 export async function createUser(data: { email?: string; full_name: string; interest?: string; password: string; nim?: string; faculty?: string; major?: string }) {
->>>>>>> Stashed changes
   try {
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
       method: 'POST',
