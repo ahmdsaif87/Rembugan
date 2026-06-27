@@ -315,8 +315,10 @@ async def get_my_rooms(
     read_states = await db.roomread.find_many(where={"user_id": uid})
     read_map = {r.room_id: r.last_read_at for r in read_states}
 
+    # Hanya DM saja (exclude group/workspace chat)
     messages = await db.message.find_many(
         where={
+            "project_id": None,
             "OR": [
                 {"sender_id": uid},
                 {"receiver_id": uid},
@@ -329,53 +331,31 @@ async def get_my_rooms(
     seen = set()
     rooms = []
     for m in messages:
-        if m.project_id:
-            room_id = str(m.project_id)
-        elif m.receiver_id:
-            other_id = m.receiver_id if m.sender_id == uid else m.sender_id
-            other = m.receiver if m.sender_id == uid else m.sender
-            sorted_ids = "_".join(sorted([uid, other_id]))
-            room_id = f"dm_{sorted_ids}"
-        else:
+        if not m.receiver_id:
             continue
+        other_id = m.receiver_id if m.sender_id == uid else m.sender_id
+        other = m.receiver if m.sender_id == uid else m.sender
+        sorted_ids = "_".join(sorted([uid, other_id]))
+        room_id = f"dm_{sorted_ids}"
 
         if room_id not in seen:
             seen.add(room_id)
-
             last_read = read_map.get(room_id)
+            unread_where = {"sender_id": other_id, "receiver_id": uid}
+            if last_read:
+                unread_where["created_at"] = {"gt": last_read}
+            unread = await db.message.count(where=unread_where)
 
-            if m.project_id:
-                project = await db.project.find_unique(where={"id": m.project_id})
-                unread_where = {"project_id": m.project_id, "sender_id": {"not": uid}}
-                if last_read:
-                    unread_where["created_at"] = {"gt": last_read}
-                unread = await db.message.count(where=unread_where)
-            else:
-                unread_where = {"sender_id": other_id, "receiver_id": uid}
-                if last_read:
-                    unread_where["created_at"] = {"gt": last_read}
-                unread = await db.message.count(where=unread_where)
-
-            if m.project_id:
-                rooms.append({
-                    "room_id": room_id,
-                    "type": "group",
-                    "name": project.title if project else "Workspace",
-                    "last_message": m.content[:80] if m.content else "",
-                    "last_time": tz_iso(m.created_at),
-                    "unread": unread,
-                })
-            else:
-                rooms.append({
-                    "room_id": room_id,
-                    "type": "dm",
-                    "name": other.full_name if other else "User",
-                    "other_user_id": other_id,
-                    "photo_url": other.photo_url if other else None,
-                    "last_message": m.content[:80] if m.content else "",
-                    "last_time": tz_iso(m.created_at),
-                    "unread": unread,
-                })
+            rooms.append({
+                "room_id": room_id,
+                "type": "dm",
+                "name": other.full_name if other else "User",
+                "other_user_id": other_id,
+                "photo_url": other.photo_url if other else None,
+                "last_message": m.content[:80] if m.content else "",
+                "last_time": tz_iso(m.created_at),
+                "unread": unread,
+            })
 
     return {"status": "success", "data": rooms}
 

@@ -1,3 +1,5 @@
+import 'package:url_launcher/url_launcher.dart';
+
 String formatDate(String? iso) {
   if (iso == null || iso.isEmpty) return '';
   try {
@@ -27,18 +29,29 @@ String formatDateRange(String? startIso, String? endIso) {
 
 String relativeTime(String iso) {
   try {
-    final dt = DateTime.parse(iso);
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Baru saja';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} menit';
-    if (diff.inHours < 24) return '${diff.inHours} jam';
-    if (diff.inDays < 7) return '${diff.inDays} hari';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} minggu';
-    return formatDateShort(iso);
+    final dt = DateTime.parse(iso).toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final msgDate = DateTime(dt.year, dt.month, dt.day);
+
+    if (msgDate == today) {
+      if (now.difference(dt).inMinutes < 1) return 'Baru saja';
+      return '${_pad(dt.hour)}:${_pad(dt.minute)}';
+    }
+
+    if (msgDate == yesterday) return 'Kemarin';
+
+    if (today.difference(msgDate).inDays < 7) return _dayNames[dt.weekday];
+
+    if (dt.year == now.year) return '${dt.day} ${_monthsShort[dt.month - 1]}';
+    return '${dt.day} ${_monthsShort[dt.month - 1]} ${dt.year}';
   } catch (_) {
     return '';
   }
 }
+
+const _dayNames = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 const _months = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -51,3 +64,32 @@ const _monthsShort = [
 ];
 
 String _pad(int n) => n.toString().padLeft(2, '0');
+
+String formatBytes(int? bytes) {
+  if (bytes == null || bytes <= 0) return '';
+  if (bytes < 1024) return '$bytes B';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  return '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
+}
+
+Future<String> downloadFile(String url, String? filename) async {
+  String downloadUrl = url;
+  if (url.contains('res.cloudinary.com')) {
+    if (url.contains('/image/upload/')) {
+      downloadUrl = url.replaceAll('/image/upload/', '/image/upload/fl_attachment/');
+    } else if (url.contains('/raw/upload/')) {
+      downloadUrl = url.replaceAll('/raw/upload/', '/raw/upload/fl_attachment/');
+    } else if (url.contains('/video/upload/')) {
+      downloadUrl = url.replaceAll('/video/upload/', '/video/upload/fl_attachment/');
+    }
+  }
+
+  final uri = Uri.parse(downloadUrl);
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    throw Exception('Gagal mendownload file: $e');
+  }
+
+  return filename ?? url.split('/').last;
+}

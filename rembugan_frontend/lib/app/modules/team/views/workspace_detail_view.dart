@@ -1,8 +1,8 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../core/theme/theme.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
@@ -1091,17 +1091,78 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     if (msg.isSystem) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        child: Center(
-          child: Text(
-            msg.body,
-            style: AppFonts.satoshiStyle(
-              fontSize: 11,
-              color: c.textTertiary,
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: Center(
+              child: Text(
+                msg.body,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 11,
+                  color: c.textTertiary,
+                ),
+              ),
             ),
           ),
-        ),
+          if (msg.attachment != null)
+            Center(
+                  child: GestureDetector(
+                          onTap: () async {
+                            await downloadFile(msg.attachment!.url, msg.attachment!.name);
+                            AppToast.success('File terdownload');
+                          },
+                child: Container(
+                  width: 200,
+                  padding: const EdgeInsets.all(AppSpacing.xs),
+                  decoration: BoxDecoration(
+                    color: c.card,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    border: Border.all(color: c.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        (msg.attachment!.url.contains('.png') ||
+                                msg.attachment!.url.contains('.jpg'))
+                            ? FluentIcons.image_24_regular
+                            : FluentIcons.document_24_regular,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              msg.attachment!.name ?? 'File',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: c.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              formatBytes(msg.attachment!.size),
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 9,
+                                color: c.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       );
     }
 
@@ -1182,67 +1243,71 @@ class _Bubble extends StatelessWidget {
                       ),
                       if (msg.attachment != null) ...[
                         const SizedBox(height: 8),
-                        Container(
-                          width: 200,
-                          padding: const EdgeInsets.all(AppSpacing.xs),
-                          decoration: BoxDecoration(
-                            color: msg.isMe
-                                ? AppColors.white.withValues(alpha: 0.12)
-                                : c.card,
-                            borderRadius: BorderRadius.circular(AppRadius.xs),
-                            border: Border.all(
+                        GestureDetector(
+                          onTap: () async {
+                            await downloadFile(msg.attachment!.url, msg.attachment!.name);
+                            AppToast.success('File terdownload');
+                          },
+                          child: Container(
+                            width: 200,
+                            padding: const EdgeInsets.all(AppSpacing.xs),
+                            decoration: BoxDecoration(
                               color: msg.isMe
-                                  ? AppColors.white.withValues(alpha: 0.2)
-                                  : c.border,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                msg.attachment!.url.contains('.png') ||
-                                        msg.attachment!.url.contains('.jpg')
-                                    ? FluentIcons.image_24_regular
-                                    : FluentIcons.document_24_regular,
+                                  ? AppColors.white.withValues(alpha: 0.12)
+                                  : c.card,
+                              borderRadius: BorderRadius.circular(AppRadius.xs),
+                              border: Border.all(
                                 color: msg.isMe
-                                    ? AppColors.white
-                                    : AppColors.primary,
-                                size: 18,
+                                    ? AppColors.white.withValues(alpha: 0.2)
+                                    : c.border,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      msg.attachment!.name ?? 'File',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppFonts.satoshiStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: msg.isMe
-                                            ? AppColors.white
-                                            : c.textPrimary,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  msg.attachment!.url.contains('.png') ||
+                                          msg.attachment!.url.contains('.jpg')
+                                      ? FluentIcons.image_24_regular
+                                      : FluentIcons.document_24_regular,
+                                  color: msg.isMe
+                                      ? AppColors.white
+                                      : AppColors.primary,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        msg.attachment!.name ?? 'File',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppFonts.satoshiStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: msg.isMe
+                                              ? AppColors.white
+                                              : c.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          formatBytes(msg.attachment!.size),
+                                          style: AppFonts.satoshiStyle(
+                                            fontSize: 9,
+                                            color: msg.isMe
+                                                ? AppColors.white.withValues(
+                                                    alpha: 0.7,
+                                                  )
+                                                : c.textTertiary,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        msg.attachment!.size != null
-                                            ? '${(msg.attachment!.size! / 1024 / 1024).toStringAsFixed(1)} MB'
-                                            : '',
-                                        style: AppFonts.satoshiStyle(
-                                          fontSize: 9,
-                                          color: msg.isMe
-                                              ? AppColors.white.withValues(
-                                                  alpha: 0.7,
-                                                )
-                                              : c.textTertiary,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],

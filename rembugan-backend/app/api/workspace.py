@@ -408,7 +408,7 @@ async def upload_workspace_file(
     if size > 50 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File terlalu besar (maks 50MB)")
 
-    url = upload_image_to_cloudinary(content, folder_name="rembugan_workspace_files")
+    url = await upload_image_to_cloudinary(content, folder_name="rembugan_workspace_files")
 
     pf = await db.projectfile.create(
         data={
@@ -440,10 +440,12 @@ async def upload_workspace_file(
     asyncio.create_task(
         manager.broadcast({
             "sender_id": uid,
+            "sender_name": pf.uploader.full_name,
             "text": system_text,
             "type": "system",
             "attachment_url": pf.url,
             "attachment_name": pf.name,
+            "attachment_size": pf.size,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }, room_id)
     )

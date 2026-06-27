@@ -187,30 +187,31 @@ class ExploreController extends GetxController {
   Future<String?> applyToProject(int projectId) async {
     try {
       await _repository.applyToProject(projectId);
-      final idx = projects.indexWhere((p) => p.projectId == projectId);
-      if (idx >= 0) {
-        final p = projects[idx];
-        projects[idx] = Project(
-          projectId: p.projectId,
-          title: p.title,
-          description: p.description,
-          postedBy: p.postedBy,
-          posterRole: p.posterRole,
-          avatarUrl: p.avatarUrl,
-          posterId: p.posterId,
-          deadline: p.deadline,
-          university: p.university,
-          postedAgo: p.postedAgo,
-          totalSlots: p.totalSlots,
-          filledSlots: p.filledSlots,
-          matchScore: p.matchScore,
-          hasApplied: true,
-          isMember: p.isMember,
-          skills: p.skills,
-          memberAvatars: p.memberAvatars,
-          memberNames: p.memberNames,
-        );
-      }
+      Project updated(Project p) => Project(
+        projectId: p.projectId,
+        title: p.title,
+        description: p.description,
+        postedBy: p.postedBy,
+        posterRole: p.posterRole,
+        avatarUrl: p.avatarUrl,
+        posterId: p.posterId,
+        deadline: p.deadline,
+        university: p.university,
+        postedAgo: p.postedAgo,
+        totalSlots: p.totalSlots,
+        filledSlots: p.filledSlots,
+        matchScore: p.matchScore,
+        hasApplied: true,
+        isMember: p.isMember,
+        skills: p.skills,
+        memberAvatars: p.memberAvatars,
+        memberNames: p.memberNames,
+      );
+
+      final pIdx = projects.indexWhere((p) => p.projectId == projectId);
+      if (pIdx >= 0) projects[pIdx] = updated(projects[pIdx]);
+      final fIdx = filteredProjects.indexWhere((p) => p.projectId == projectId);
+      if (fIdx >= 0) filteredProjects[fIdx] = updated(filteredProjects[fIdx]);
       return null;
     } on dio.DioException catch (e) {
       final msg = e.response?.data?['detail'] as String? ?? 'Gagal mengirim lamaran';

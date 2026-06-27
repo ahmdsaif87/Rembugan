@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
@@ -52,7 +54,7 @@ class WorkspaceRepository {
           sender: raw['sender'] as String? ?? '',
           body: raw['body'] as String? ?? '',
           type: raw['type'] as String? ?? 'text',
-          time: _formatTime(raw['time'] as String?),
+          time: raw['time'] as String? ?? '',
           isMe: raw['is_me'] as bool? ?? false,
           isSystem: raw['is_system'] as bool? ?? false,
           replyTo: raw['reply_to'] as String?,
@@ -156,8 +158,14 @@ class WorkspaceRepository {
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    final bytes = file.bytes;
-    if (bytes == null) return;
+    Uint8List bytes;
+    if (file.bytes != null) {
+      bytes = file.bytes!;
+    } else if (file.path != null) {
+      bytes = await File(file.path!).readAsBytes();
+    } else {
+      return;
+    }
     await _api.uploadImageBytes(
       '/workspace/$projectId/files',
       bytes,
@@ -295,18 +303,4 @@ class WorkspaceRepository {
     }
   }
 
-  String _formatTime(String? iso) {
-    if (iso == null || iso.isEmpty) return '';
-    try {
-      final dt = DateTime.parse(iso);
-      final now = DateTime.now();
-      final diff = now.difference(dt);
-      if (diff.inMinutes < 1) return 'Baru saja';
-      if (diff.inHours < 1) return '${diff.inMinutes}m';
-      if (diff.inDays < 1) return '${diff.inHours}j';
-      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return iso;
-    }
-  }
 }

@@ -188,7 +188,10 @@ class _RoomChatViewState extends State<RoomChatView> {
                     if (msg.attachmentUrl != null) ...[
                       if (msg.text.isNotEmpty || msg.type == 'file') const SizedBox(height: 8),
                       GestureDetector(
-                        onTap: () {/* TODO: open file url */},
+                        onTap: () async {
+                          final path = await downloadFile(msg.attachmentUrl!, msg.attachmentName);
+                          Get.snackbar('Download berhasil', path.split('/').last);
+                        },
                         child: Container(
                           width: 220,
                           padding: const EdgeInsets.all(AppSpacing.sm),
@@ -227,7 +230,7 @@ class _RoomChatViewState extends State<RoomChatView> {
                                     if (msg.attachmentSize != null) ...[
                                       const SizedBox(height: 2),
                                       Text(
-                                        '${(msg.attachmentSize! / 1024 / 1024).toStringAsFixed(1)} MB',
+                                        formatBytes(msg.attachmentSize),
                                         style: AppFonts.satoshiStyle(
                                           fontSize: 10,
                                           color: msg.isMe
