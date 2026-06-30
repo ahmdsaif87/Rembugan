@@ -58,6 +58,7 @@ class WorkspaceRepository {
           isMe: raw['is_me'] as bool? ?? false,
           isSystem: raw['is_system'] as bool? ?? false,
           replyTo: raw['reply_to'] as String?,
+          senderPhotoUrl: raw['sender_photo_url'] as String?,
           attachment: attachment,
         );
       }).toList();

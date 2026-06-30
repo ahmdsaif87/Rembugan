@@ -257,10 +257,12 @@ async def upload_dm_file(
     if size > 50 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File terlalu besar (maks 50MB)")
 
-    url = upload_image_to_cloudinary(content, folder_name="rembugan_chat_files")
+    url = await upload_image_to_cloudinary(content, folder_name="rembugan_chat_files")
+
+    sender = await db.user.find_unique(where={"id": uid})
 
     msg = await db.message.create(data={
-        "content": file.filename or "File",
+        "content": "",
         "type": "file",
         "sender_id": uid,
         "receiver_id": receiver_id,
@@ -272,7 +274,8 @@ async def upload_dm_file(
     room_id = f"dm_{min(uid, receiver_id)}_{max(uid, receiver_id)}"
     payload = {
         "sender_id": uid,
-        "text": f"Mengirim file: {file.filename}",
+        "sender_name": sender.full_name if sender else "Seseorang",
+        "text": "",
         "type": "file",
         "attachment_url": url,
         "attachment_name": file.filename,
@@ -282,10 +285,9 @@ async def upload_dm_file(
     await manager.broadcast(payload, room_id)
 
     asyncio.create_task(
-        _broadcast_feed_dm(uid, receiver_id, room_id, f"Mengirim file: {file.filename}", msg.created_at)
+        _broadcast_feed_dm(uid, receiver_id, room_id, file.filename or "File", msg.created_at)
     )
 
-    sender = await db.user.find_unique(where={"id": uid})
     await notify(
         db, receiver_id, NOTIF_CHAT,
         f"File baru dari {sender.full_name if sender else 'Seseorang'}",

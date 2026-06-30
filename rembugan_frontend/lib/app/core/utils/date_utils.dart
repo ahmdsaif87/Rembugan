@@ -37,7 +37,7 @@ String relativeTime(String iso) {
 
     if (msgDate == today) {
       if (now.difference(dt).inMinutes < 1) return 'Baru saja';
-      return '${_pad(dt.hour)}:${_pad(dt.minute)}';
+      return '${_pad(dt.hour)}.${_pad(dt.minute)}';
     }
 
     if (msgDate == yesterday) return 'Kemarin';
@@ -49,6 +49,53 @@ String relativeTime(String iso) {
   } catch (_) {
     return '';
   }
+}
+
+String formatTimeOnly(String iso) {
+  try {
+    final dt = DateTime.parse(iso).toLocal();
+    return '${_pad(dt.hour)}.${_pad(dt.minute)}';
+  } catch (_) {
+    return '';
+  }
+}
+
+String dateSeparator(String iso) {
+  try {
+    final dt = DateTime.parse(iso).toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final msgDate = DateTime(dt.year, dt.month, dt.day);
+
+    if (msgDate == today) return 'Hari Ini';
+    if (msgDate == yesterday) return 'Kemarin';
+    return '${_months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  } catch (_) {
+    return '';
+  }
+}
+
+bool isImageUrl(String url) {
+  final lower = url.toLowerCase();
+  final ext = lower.split('?')[0].split('.').last;
+  if (ext == 'pdf') return false;
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].contains(ext)) return true;
+  if (lower.contains('/image/upload/')) return true;
+  return false;
+}
+
+Future<void> openFile(String url, String? filename) async {
+  String downloadUrl = url;
+  if (url.contains('res.cloudinary.com')) {
+    if (url.contains('/raw/upload/')) {
+      downloadUrl = url.replaceAll('/raw/upload/', '/raw/upload/fl_attachment/');
+    } else if (url.contains('/video/upload/')) {
+      downloadUrl = url.replaceAll('/video/upload/', '/video/upload/fl_attachment/');
+    }
+  }
+  final uri = Uri.parse(downloadUrl);
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
 const _dayNames = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];

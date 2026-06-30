@@ -138,6 +138,7 @@ class RecentActivity {
 
 class DiscussionMessage {
   final String sender;
+  final String? senderPhotoUrl;
   final String body;
   final String type;
   final String time;
@@ -149,6 +150,7 @@ class DiscussionMessage {
     required this.sender,
     required this.body,
     required this.time,
+    this.senderPhotoUrl,
     this.type = 'text',
     this.isMe = false,
     this.isSystem = false,
@@ -271,6 +273,7 @@ class TeamController extends GetxController {
           time: data['timestamp'] as String? ?? '',
           isMe: isMe,
           isSystem: data['type'] == 'system',
+          senderPhotoUrl: data['sender_photo_url'] as String?,
           attachment: data['attachment_url'] != null
               ? AttachmentData(
                   url: data['attachment_url'] as String,

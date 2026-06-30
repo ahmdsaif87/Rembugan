@@ -16,6 +16,7 @@ class ChatMessage {
   final String time;
   final bool isMe;
   final String senderName;
+  final String? senderPhotoUrl;
   final String type;
   final String? attachmentUrl;
   final String? attachmentName;
@@ -28,6 +29,7 @@ class ChatMessage {
     required this.time,
     required this.isMe,
     this.senderName = '',
+    this.senderPhotoUrl,
     this.type = 'text',
     this.attachmentUrl,
     this.attachmentName,
@@ -90,6 +92,7 @@ class RoomChatController extends GetxController {
         time: m['created_at'] as String? ?? '',
         isMe: (m['sender_id'] as String? ?? '') == myId,
         senderName: m['sender_name'] as String? ?? '',
+        senderPhotoUrl: m['sender_photo_url'] as String?,
         attachmentUrl: m['attachment_url'] as String?,
         attachmentName: m['attachment_name'] as String?,
         attachmentSize: m['attachment_size'] as int?,
@@ -109,6 +112,7 @@ class RoomChatController extends GetxController {
       time: data['timestamp'] as String? ?? '',
       isMe: isMe,
       senderName: data['sender_name'] as String? ?? (isMe ? 'Saya' : ''),
+      senderPhotoUrl: data['sender_photo_url'] as String?,
       attachmentUrl: data['attachment_url'] as String?,
       attachmentName: data['attachment_name'] as String?,
       attachmentSize: data['attachment_size'] as int?,

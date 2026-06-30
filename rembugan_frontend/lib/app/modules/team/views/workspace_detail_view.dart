@@ -6,6 +6,7 @@ import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../core/widgets/preview_page.dart';
 import '../controllers/team_controller.dart';
 import 'widgets/qr_code_sheet.dart';
 
@@ -777,18 +778,139 @@ class _DiscussionTab extends StatefulWidget {
 class _DiscussionTabState extends State<_DiscussionTab> {
   late final TextEditingController _msgCtrl;
   late final TeamController _ctrl;
+  final _scrollCtrl = ScrollController();
+  final _userScrolledUp = false.obs;
 
   @override
   void initState() {
     super.initState();
     _msgCtrl = TextEditingController();
     _ctrl = widget.ctrl;
+    _ctrl.discussions.listen((_) {
+      _userScrolledUp.value = false;
+      _afterFrame(_scrollToBottom);
+    });
+    _scrollCtrl.addListener(_onScrollChanged);
+    _afterFrame(_scrollToBottom);
+  }
+
+  double? _lastExtent;
+  double? _lastPixels;
+
+  void _onScrollChanged() {
+    if (!_scrollCtrl.hasClients) return;
+    final pixels = _scrollCtrl.position.pixels;
+    final extent = _scrollCtrl.position.maxScrollExtent;
+
+    if (_lastExtent != null && extent > _lastExtent!) {
+      final wasNearBottom = (_lastExtent! - _lastPixels!) < 50;
+      if (wasNearBottom) _afterFrame(_scrollToBottom);
+    }
+
+    _userScrolledUp.value = extent - pixels > 50;
+    _lastExtent = extent;
+    _lastPixels = pixels;
   }
 
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScrollChanged);
     _msgCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollCtrl.hasClients) {
+      _scrollCtrl.animateTo(
+        _scrollCtrl.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _afterFrame(VoidCallback fn) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => fn());
+  }
+
+  bool _isSameDay(String a, String b) {
+    try {
+      final da = DateTime.parse(a).toLocal();
+      final db = DateTime.parse(b).toLocal();
+      return da.year == db.year && da.month == db.month && da.day == db.day;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  int _discussionItemCount(List<DiscussionMessage> msgs) {
+    if (msgs.isEmpty) return 0;
+    int seps = 1;
+    for (int i = 1; i < msgs.length; i++) {
+      if (!_isSameDay(msgs[i - 1].time, msgs[i].time)) seps++;
+    }
+    return msgs.length + seps;
+  }
+
+  String? _lookupSenderPhoto(String senderName) {
+    final ws = _ctrl.selectedWorkspace.value;
+    if (ws == null) return null;
+    final member = ws.members.cast<WorkspaceMember?>().firstWhere(
+      (m) => m!.name == senderName,
+      orElse: () => null,
+    );
+    return member?.photoUrl;
+  }
+
+  bool _isConsecutive(DiscussionMessage a, DiscussionMessage b) {
+    if (a.sender != b.sender) return false;
+    try {
+      final ta = DateTime.parse(a.time);
+      final tb = DateTime.parse(b.time);
+      return tb.difference(ta).inMinutes < 5;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Widget _buildDiscussionItem(AppC c, int target, List<DiscussionMessage> msgs) {
+    int current = 0;
+    String? prevDate;
+    for (int i = 0; i < msgs.length; i++) {
+      final msg = msgs[i];
+      final msgDate = _dateKey(msg.time);
+      final needsSep = msgDate != prevDate;
+      if (needsSep) {
+        if (current == target) {
+          return _DiscussionDateSeparator(c: c, date: msg.time);
+        }
+        current++;
+        prevDate = msgDate;
+      }
+      if (current == target) {
+        final photoUrl = _lookupSenderPhoto(msg.sender) ?? msg.senderPhotoUrl;
+        final isFirst = i == 0 || !_isConsecutive(msgs[i - 1], msg);
+        final isLast = i == msgs.length - 1 || !_isConsecutive(msg, msgs[i + 1]);
+        return _Bubble(
+          msg: msg,
+          senderPhotoUrl: photoUrl,
+          isFirstInGroup: isFirst,
+          isLastInGroup: isLast,
+        );
+      }
+      current++;
+    }
+    return const SizedBox.shrink();
+  }
+
+  String? _dateKey(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return '${dt.year}-${dt.month}-${dt.day}';
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -798,12 +920,56 @@ class _DiscussionTabState extends State<_DiscussionTab> {
       children: [
         // Messages
         Expanded(
-          child: Obx(
-            () => ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              itemCount: _ctrl.discussions.length,
-              itemBuilder: (_, i) => _Bubble(msg: _ctrl.discussions[i]),
-            ),
+          child: Stack(
+            children: [
+              Obx(() {
+                final msgs = _ctrl.discussions;
+                if (msgs.isEmpty) return const SizedBox.shrink();
+                return ListView.builder(
+                  controller: _scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  itemCount: _discussionItemCount(msgs),
+                  itemBuilder: (_, i) => _buildDiscussionItem(c, i, msgs),
+                );
+              }),
+              Obx(() {
+                if (!_userScrolledUp.value) return const SizedBox.shrink();
+                return Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: Material(
+                    color: AppColors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        _userScrolledUp.value = false;
+                        _scrollToBottom();
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: c.surface,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          FluentIcons.chevron_down_24_regular,
+                          color: c.textPrimary,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+                  }),
+            ],
           ),
         ),
 
@@ -1083,18 +1249,134 @@ class _DiscussionTabState extends State<_DiscussionTab> {
   }
 }
 
+class _DiscussionDateSeparator extends StatelessWidget {
+  const _DiscussionDateSeparator({required this.c, required this.date});
+  final AppC c;
+  final String date;
+
+  @override
+  Widget build(BuildContext context) {
+    final sep = dateSeparator(date);
+    if (sep.isEmpty) return const SizedBox.shrink();
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+            color: c.surface.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: c.border.withValues(alpha: 0.6)),
+          ),
+          child: Text(
+            sep,
+            style: AppFonts.satoshiStyle(
+              fontSize: 12, color: c.textSecondary, fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.msg});
+  const _Bubble({
+    required this.msg,
+    this.senderPhotoUrl,
+    this.isFirstInGroup = true,
+    this.isLastInGroup = true,
+  });
   final DiscussionMessage msg;
+  final String? senderPhotoUrl;
+  final bool isFirstInGroup;
+  final bool isLastInGroup;
+
+  bool _isPdfUrl(DiscussionMessage m) {
+    final name = m.attachment?.name?.toLowerCase() ?? '';
+    final url = m.attachment?.url.toLowerCase() ?? '';
+    return name.endsWith('.pdf') || url.contains('.pdf');
+  }
+
+  BorderRadius _bubbleRadius(bool isMe) {
+    if (isMe) {
+      if (isFirstInGroup && isLastInGroup) {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(4),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        );
+      } else if (isFirstInGroup) {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(4),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(4),
+        );
+      } else if (isLastInGroup) {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(4),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        );
+      } else {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(4),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(4),
+        );
+      }
+    } else {
+      if (isFirstInGroup && isLastInGroup) {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        );
+      } else if (isFirstInGroup) {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(16),
+          bottomLeft: Radius.circular(4),
+          bottomRight: Radius.circular(16),
+        );
+      } else if (isLastInGroup) {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(4),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        );
+      } else {
+        return const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(4),
+          bottomLeft: Radius.circular(4),
+          bottomRight: Radius.circular(16),
+        );
+      }
+    }
+  }
+
+  EdgeInsets _bubblePadding() {
+    if (msg.attachment != null) {
+      return const EdgeInsets.symmetric(horizontal: 10, vertical: 8);
+    }
+    return const EdgeInsets.symmetric(horizontal: 13, vertical: 9);
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    if (msg.isSystem) {
+    if (msg.isSystem && msg.attachment == null) {
       return Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
             child: Center(
               child: Text(
                 msg.body,
@@ -1105,226 +1387,183 @@ class _Bubble extends StatelessWidget {
               ),
             ),
           ),
-          if (msg.attachment != null)
-            Center(
-                  child: GestureDetector(
-                          onTap: () async {
-                            await downloadFile(msg.attachment!.url, msg.attachment!.name);
-                            AppToast.success('File terdownload');
-                          },
-                child: Container(
-                  width: 200,
-                  padding: const EdgeInsets.all(AppSpacing.xs),
-                  decoration: BoxDecoration(
-                    color: c.card,
-                    borderRadius: BorderRadius.circular(AppRadius.xs),
-                    border: Border.all(color: c.border),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        (msg.attachment!.url.contains('.png') ||
-                                msg.attachment!.url.contains('.jpg'))
-                            ? FluentIcons.image_24_regular
-                            : FluentIcons.document_24_regular,
-                        color: AppColors.primary,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              msg.attachment!.name ?? 'File',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: c.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              formatBytes(msg.attachment!.size),
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 9,
-                                color: c.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
         ],
       );
     }
 
+    final topPad = isFirstInGroup ? 4.0 : 1.0;
+    final bottomPad = isLastInGroup ? 4.0 : 1.0;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.only(top: topPad, bottom: bottomPad),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: msg.isMe
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         children: [
-          if (!msg.isMe) ...[
-            const AppAvatar(radius: 13),
+          if (!msg.isMe && isFirstInGroup) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: AppAvatar(radius: 13, photoUrl: senderPhotoUrl),
+            ),
             const SizedBox(width: 8),
           ],
-          Flexible(
-            child: Column(
-              crossAxisAlignment: msg.isMe
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                if (!msg.isMe)
-                  Padding(
+          if (!msg.isMe && !isFirstInGroup)
+            const SizedBox(width: 34),
+          IntrinsicWidth(
+            child: Container(
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+              padding: _bubblePadding(),
+              decoration: BoxDecoration(
+                color: msg.isMe
+                    ? AppColors.primary500
+                    : c.surfaceSecondary,
+                borderRadius: _bubbleRadius(msg.isMe),
+                border: msg.isMe
+                    ? null
+                    : Border.all(color: c.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!msg.isMe && isFirstInGroup)
+                    Padding(
                       padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          msg.sender,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: c.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          msg.time,
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 10,
-                            color: c.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: msg.isMe
-                        ? AppColors.primary500
-                        : c.surfaceSecondary,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(AppRadius.md),
-                      topRight: const Radius.circular(AppRadius.md),
-                      bottomLeft: Radius.circular(msg.isMe ? 14 : 4),
-                      bottomRight: Radius.circular(msg.isMe ? 4 : 14),
-                    ),
-                    border: msg.isMe
-                        ? null
-                        : Border.all(color: c.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        msg.body,
+                      child: Text(
+                        msg.sender,
                         style: AppFonts.satoshiStyle(
-                          fontSize: 13,
-                          height: 1.4,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                           color: msg.isMe
-                              ? AppColors.white
-                              : c.textPrimary,
+                              ? AppColors.white70
+                              : AppColors.primary500,
                         ),
                       ),
-                      if (msg.attachment != null) ...[
-                        const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: () async {
-                            await downloadFile(msg.attachment!.url, msg.attachment!.name);
-                            AppToast.success('File terdownload');
-                          },
-                          child: Container(
+                    ),
+                  Text(
+                    msg.body,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: msg.isMe
+                          ? AppColors.white
+                          : c.textPrimary,
+                    ),
+                  ),
+                  if (msg.attachment != null) ...[
+                    const SizedBox(height: 8),
+                    if (isImageUrl(msg.attachment!.url))
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => ImagePreviewPage(url: msg.attachment!.url, filename: msg.attachment!.name),
+                        )),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            msg.attachment!.url,
                             width: 200,
-                            padding: const EdgeInsets.all(AppSpacing.xs),
-                            decoration: BoxDecoration(
-                              color: msg.isMe
-                                  ? AppColors.white.withValues(alpha: 0.12)
-                                  : c.card,
-                              borderRadius: BorderRadius.circular(AppRadius.xs),
-                              border: Border.all(
-                                color: msg.isMe
-                                    ? AppColors.white.withValues(alpha: 0.2)
-                                    : c.border,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  msg.attachment!.url.contains('.png') ||
-                                          msg.attachment!.url.contains('.jpg')
-                                      ? FluentIcons.image_24_regular
-                                      : FluentIcons.document_24_regular,
-                                  color: msg.isMe
-                                      ? AppColors.white
-                                      : AppColors.primary,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        msg.attachment!.name ?? 'File',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppFonts.satoshiStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: msg.isMe
-                                              ? AppColors.white
-                                              : c.textPrimary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          formatBytes(msg.attachment!.size),
-                                          style: AppFonts.satoshiStyle(
-                                            fontSize: 9,
-                                            color: msg.isMe
-                                                ? AppColors.white.withValues(
-                                                    alpha: 0.7,
-                                                  )
-                                                : c.textTertiary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                            fit: BoxFit.cover,
+                            loadingBuilder: (_, child, progress) {
+                              if (progress == null) return child;
+                              return Container(
+                                width: 200, height: 140,
+                                color: c.surfaceSecondary,
+                                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                              );
+                            },
+                            errorBuilder: (_, __, ___) => _buildFileCard(context, c, msg),
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (msg.isMe)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                      )
+                    else if (_isPdfUrl(msg))
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => PdfPreviewPage(url: msg.attachment!.url, filename: msg.attachment!.name),
+                        )),
+                        child: _buildFileCard(context, c, msg),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: () async {
+                          try {
+                            await openFile(msg.attachment!.url, msg.attachment!.name);
+                          } catch (_) {
+                            if (context.mounted) Get.snackbar('Gagal', 'Gagal membuka file');
+                          }
+                        },
+                        child: _buildFileCard(context, c, msg),
+                      ),
+                  ],
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.bottomRight,
                     child: Text(
-                      msg.time,
+                      formatTimeOnly(msg.time),
                       style: AppFonts.satoshiStyle(
                         fontSize: 10,
-                        color: c.textTertiary,
+                        color: msg.isMe
+                            ? AppColors.white.withValues(alpha: 0.7)
+                            : c.textTertiary,
+                        height: 1,
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+          if (msg.isMe) const SizedBox(width: 4),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileCard(BuildContext context, AppC c, DiscussionMessage msg) {
+    return Container(
+      width: 200,
+      padding: const EdgeInsets.all(AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: msg.isMe ? AppColors.white.withValues(alpha: 0.12) : c.card,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        border: Border.all(
+          color: msg.isMe ? AppColors.white.withValues(alpha: 0.2) : c.border,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            msg.attachment!.url.contains('.png') || msg.attachment!.url.contains('.jpg')
+                ? FluentIcons.image_24_regular
+                : FluentIcons.document_24_regular,
+            color: msg.isMe ? AppColors.white : AppColors.primary,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  msg.attachment!.name ?? 'File',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: msg.isMe ? AppColors.white : c.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  formatBytes(msg.attachment!.size),
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 9,
+                    color: msg.isMe
+                        ? AppColors.white.withValues(alpha: 0.7)
+                        : c.textTertiary,
+                  ),
+                ),
               ],
             ),
           ),

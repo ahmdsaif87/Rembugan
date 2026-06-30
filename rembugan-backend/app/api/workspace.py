@@ -422,12 +422,12 @@ async def upload_workspace_file(
         include={"uploader": True},
     )
 
-    # Buat system message di chat
-    system_text = f"{pf.uploader.full_name} mengunggah {pf.name}"
+    # Buat message di chat
+    room_id = str(project_id)
     asyncio.create_task(
         db.message.create(data={
-            "content": system_text,
-            "type": "system",
+            "content": "",
+            "type": "file",
             "sender_id": uid,
             "project_id": project_id,
             "attachment_name": pf.name,
@@ -436,13 +436,13 @@ async def upload_workspace_file(
         })
     )
 
-    room_id = str(project_id)
     asyncio.create_task(
         manager.broadcast({
             "sender_id": uid,
             "sender_name": pf.uploader.full_name,
-            "text": system_text,
-            "type": "system",
+            "sender_photo_url": pf.uploader.photo_url,
+            "text": "",
+            "type": "file",
             "attachment_url": pf.url,
             "attachment_name": pf.name,
             "attachment_size": pf.size,
