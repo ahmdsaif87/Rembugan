@@ -25,6 +25,7 @@ abstract class Routes {
   static const PERSONALIZATION = _Paths.PERSONALIZATION;
   static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
   static const SCAN = _Paths.SCAN;
+  static const PROFILE_QR = _Paths.PROFILE_QR;
   static const CONNECTIONS_LIST = _Paths.CONNECTIONS_LIST;
   static const PROJECT_HISTORY = _Paths.PROJECT_HISTORY;
 }
@@ -52,6 +53,7 @@ abstract class _Paths {
   static const PERSONALIZATION = '/personalization';
   static const FORGOT_PASSWORD = '/forgot-password';
   static const SCAN = '/scan';
+  static const PROFILE_QR = '/profile-qr';
   static const CONNECTIONS_LIST = '/connections-list';
   static const PROJECT_HISTORY = '/project-history';
 }

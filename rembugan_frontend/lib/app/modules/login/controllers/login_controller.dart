@@ -30,7 +30,8 @@ class LoginController extends GetxController {
       return;
     }
 
-    AppToast.success('Berhasil Masuk!', title: 'Login');
+    final userName = _auth.currentUser.value?.fullName ?? '';
+    AppToast.success('Selamat datang kembali${userName.isNotEmpty ? ', $userName' : ''} 👋');
 
     final user = _auth.currentUser.value;
     if (user != null && !user.isOnboarded) {

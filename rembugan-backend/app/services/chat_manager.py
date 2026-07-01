@@ -40,5 +40,9 @@ class ConnectionManager:
                 return_exceptions=True,
             )
 
+    def is_online(self, user_id: str) -> bool:
+        """Cek apakah user memiliki koneksi WebSocket aktif."""
+        return user_id in self.user_connections and len(self.user_connections[user_id]) > 0
+
 
 manager = ConnectionManager()

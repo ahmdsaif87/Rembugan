@@ -5,9 +5,10 @@ import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/theme/theme.dart';
+import '../../../../core/services/api_client.dart';
 import '../../../../core/widgets/app_toast.dart';
 
-class QrCodeSheet extends StatelessWidget {
+class QrCodeSheet extends StatefulWidget {
   const QrCodeSheet({
     super.key,
     required this.workspaceId,
@@ -32,9 +33,36 @@ class QrCodeSheet extends StatelessWidget {
   }
 
   @override
+  State<QrCodeSheet> createState() => _QrCodeSheetState();
+}
+
+class _QrCodeSheetState extends State<QrCodeSheet> {
+  final _api = Get.find<ApiClient>();
+  String? _inviteUrl;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInvite();
+  }
+
+  Future<void> _loadInvite() async {
+    try {
+      final res = await _api.post('/qr/project/${widget.workspaceId}/invite');
+      final data = res.data as Map<String, dynamic>?;
+      final qrData = data?['data']?['qr_data'] as String?;
+      if (qrData != null) {
+        setState(() => _inviteUrl = qrData);
+      }
+    } catch (_) {}
+    setState(() => _isLoading = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final url = 'https://rembugan.app/join/workspace/$workspaceId';
+    final url = _inviteUrl ?? 'https://rembugan.app/join/workspace/${widget.workspaceId}';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -70,7 +98,7 @@ class QrCodeSheet extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Scan untuk melihat dan bergabung ke "$workspaceName".',
+              'Scan untuk bergabung ke "$widget.workspaceName".',
               textAlign: TextAlign.center,
               style: AppFonts.interStyle(
                 fontSize: 13,
@@ -79,26 +107,32 @@ class QrCodeSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: QrImageView(
-                data: url,
-                version: QrVersions.auto,
-                size: 200,
-                eyeStyle: QrEyeStyle(
-                  eyeShape: QrEyeShape.square,
-                  color: AppColors.grey900,
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                dataModuleStyle: const QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: AppColors.grey900,
+                child: QrImageView(
+                  data: url,
+                  version: QrVersions.auto,
+                  size: 200,
+                  eyeStyle: QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: AppColors.grey900,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: AppColors.grey900,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

@@ -642,33 +642,14 @@ class ExploreView extends GetView<ExploreController> {
     final c = AppC.of(context);
     final posterUrl = competition.posterUrl;
 
-    final String richCaption =
-        '''
+    final String richCaption = competition.caption.isNotEmpty
+        ? competition.caption
+        : '''
 🚨 OPEN REGISTRATION! 🚨
 🎉 ${competition.title.toUpperCase()}
 📝 ${competition.category} Competition
 
-Saatnya generasi muda bersuara lewat karya!
-Tunjukkan ide terbaikmu tentang:
-✨ Peran generasi muda di era digital✨
-
-📌 Kategori:
-✍️ Essay / Ideation
-🎨 Poster / Design Product
-
-📌 Benefit Peserta:
-🏆 Juara 1, 2, 3 (Uang Pembinaan + Trophy + Sertifikat)
-🎖️ Harapan 1, 2, 3 (Uang Pembinaan + Trophy + Sertifikat)
-📄 E-sertifikat untuk 10 Finalis Karya Terbaik
-📜 E-sertifikat nasional untuk semua peserta aktif
-
-⚠️ KUOTA TERBATAS!
-Sistem pendaftaran akan ditutup seketika jika kuota terpenuhi.
-
 📅 Deadline: ${competition.deadline}
-
-🔥 Jangan tunggu “nanti”
-Karena nanti = sudah ditutup
 
 📲 Daftar sekarang di link ini!
 ${competition.registrationLink}

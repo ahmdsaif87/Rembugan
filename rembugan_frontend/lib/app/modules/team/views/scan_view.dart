@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/services/api_client.dart';
 import '../../../core/widgets/app_toast.dart';
-import '../controllers/team_controller.dart';
 
 class ScanView extends StatefulWidget {
   const ScanView({super.key});
@@ -48,17 +48,23 @@ class _ScanViewState extends State<ScanView> {
     HapticFeedback.heavyImpact();
 
     final uri = Uri.tryParse(raw);
-    if (uri == null || !uri.pathSegments.contains('workspace')) {
+    if (uri == null) {
       AppToast.error('QR Code tidak valid.', title: 'Gagal');
       _hasResult = false;
       return;
     }
 
-    final id = uri.pathSegments.last;
+    // Extract invite token from URL path: /join/{token}
+    final segments = uri.pathSegments;
+    final joinIdx = segments.indexOf('join');
+    final token = joinIdx != -1 && joinIdx < segments.length - 1
+        ? segments[joinIdx + 1]
+        : null;
+
     _controller?.stop();
 
     Get.bottomSheet(
-      _JoinPreview(workspaceId: id),
+      _JoinPreview(token: token),
       backgroundColor: AppColors.transparent,
       isScrollControlled: true,
     ).whenComplete(() {
@@ -124,18 +130,70 @@ class _ScanViewState extends State<ScanView> {
   }
 }
 
-class _JoinPreview extends StatelessWidget {
-  const _JoinPreview({required this.workspaceId});
+class _JoinPreview extends StatefulWidget {
+  const _JoinPreview({this.token});
 
-  final String workspaceId;
+  final String? token;
+
+  @override
+  State<_JoinPreview> createState() => _JoinPreviewState();
+}
+
+class _JoinPreviewState extends State<_JoinPreview> {
+  final _api = Get.find<ApiClient>();
+  bool _isLoading = true;
+  String? _error;
+  String? _projectTitle;
+  int? _projectId;
+  bool _isJoining = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verify();
+  }
+
+  Future<void> _verify() async {
+    if (widget.token == null) {
+      setState(() => _error = 'QR Code tidak valid.');
+      _isLoading = false;
+      return;
+    }
+    try {
+      final res = await _api.get('/qr/project/join/${widget.token}');
+      final data = res.data as Map<String, dynamic>?;
+      final d = data?['data'] as Map<String, dynamic>?;
+      if (d != null) {
+        _projectId = d['project_id'] as int?;
+        _projectTitle = d['project_title'] as String?;
+      }
+    } catch (e) {
+      _error = 'Undangan tidak valid atau sudah kadaluarsa.';
+    }
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _join() async {
+    if (_projectId == null || widget.token == null) return;
+    setState(() => _isJoining = true);
+    try {
+      await _api.post('/qr/project/join/${widget.token}');
+      if (mounted) {
+        Navigator.pop(context);
+        AppToast.success('Berhasil bergabung ke ${_projectTitle ?? "proyek"}!');
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToast.error('Gagal bergabung. Coba lagi nanti.', title: 'Error');
+      }
+    }
+    setState(() => _isJoining = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final ctrl = Get.find<TeamController>();
-    final workspace = ctrl.workspaces.firstWhereOrNull(
-      (w) => w.id == workspaceId,
-    );
+    final projectTitle = _projectTitle;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -161,61 +219,54 @@ class _JoinPreview extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Icon(
-              workspace != null
-                  ? FluentIcons.checkmark_circle_24_filled
-                  : FluentIcons.question_24_regular,
-              size: 48,
-              color: workspace != null
-                  ? AppColors.success500
-                  : c.textTertiary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              workspace?.name ?? 'Proyek Tidak Ditemukan',
-              style: AppFonts.interStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: c.textPrimary,
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              )
+            else ...[
+              Icon(
+                projectTitle != null
+                    ? FluentIcons.checkmark_circle_24_filled
+                    : FluentIcons.error_circle_24_regular,
+                size: 48,
+                color: projectTitle != null
+                    ? AppColors.success500
+                    : AppColors.danger500,
               ),
-            ),
-            if (workspace != null) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 16),
               Text(
-                workspace.description,
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+                projectTitle ?? (_error ?? 'Proyek Tidak Ditemukan'),
                 style: AppFonts.interStyle(
-                  fontSize: 13,
-                  height: 1.4,
-                  color: c.textSecondary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${workspace.memberCount} anggota · ${workspace.category}',
-                style: AppFonts.interStyle(
-                  fontSize: 12,
-                  color: c.textTertiary,
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  onPressed: projectTitle != null && !_isJoining
+                      ? _join
+                      : () => Navigator.pop(context),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary500,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                  child: _isJoining
+                      ? const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                        )
+                      : Text(projectTitle != null ? 'Gabung' : 'Tutup'),
                 ),
               ),
             ],
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                onPressed: workspace != null ? Get.back : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary500,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                ),
-                child: Text(workspace != null ? 'Gabung' : 'Tutup'),
-              ),
-            ),
           ],
         ),
       ),

@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 String formatDate(String? iso) {
@@ -120,23 +122,28 @@ String formatBytes(int? bytes) {
 }
 
 Future<String> downloadFile(String url, String? filename) async {
-  String downloadUrl = url;
-  if (url.contains('res.cloudinary.com')) {
-    if (url.contains('/image/upload/')) {
-      downloadUrl = url.replaceAll('/image/upload/', '/image/upload/fl_attachment/');
-    } else if (url.contains('/raw/upload/')) {
-      downloadUrl = url.replaceAll('/raw/upload/', '/raw/upload/fl_attachment/');
-    } else if (url.contains('/video/upload/')) {
-      downloadUrl = url.replaceAll('/video/upload/', '/video/upload/fl_attachment/');
-    }
-  }
+  final dir = await getApplicationDocumentsDirectory();
+  final name = filename ?? url.split('/').last;
+  final savePath = '${dir.path}/$name';
 
-  final uri = Uri.parse(downloadUrl);
   try {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final dio = Dio();
+    await dio.download(url, savePath);
+    return savePath;
   } catch (e) {
-    throw Exception('Gagal mendownload file: $e');
+    // fallback: buka di browser
+    String downloadUrl = url;
+    if (url.contains('res.cloudinary.com')) {
+      if (url.contains('/image/upload/')) {
+        downloadUrl = url.replaceAll('/image/upload/', '/image/upload/fl_attachment/');
+      } else if (url.contains('/raw/upload/')) {
+        downloadUrl = url.replaceAll('/raw/upload/', '/raw/upload/fl_attachment/');
+      } else if (url.contains('/video/upload/')) {
+        downloadUrl = url.replaceAll('/video/upload/', '/video/upload/fl_attachment/');
+      }
+    }
+    final uri = Uri.parse(downloadUrl);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    return name;
   }
-
-  return filename ?? url.split('/').last;
 }

@@ -25,6 +25,7 @@ class ChatSocketService extends GetxService {
 
   WebSocketChannel? _feedChannel;
   bool _feedConnected = false;
+  Timer? _feedPingTimer;
 
   @override
   void onInit() {
@@ -96,8 +97,15 @@ class ChatSocketService extends GetxService {
       _feedConnected = true;
       connectionStatus.value = true;
 
+      _feedPingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        try {
+          _feedChannel?.sink.add('ping');
+        } catch (_) {}
+      });
+
       channel.stream.listen(
         (data) {
+          if (data == 'pong') return;
           try {
             final parsed = jsonDecode(data as String) as Map<String, dynamic>;
             if (parsed['event'] == 'new_notification') {
@@ -109,11 +117,13 @@ class ChatSocketService extends GetxService {
         },
         onDone: () {
           _feedConnected = false;
+          _feedPingTimer?.cancel();
           connectionStatus.value = _channels.isNotEmpty || _feedConnected;
           _scheduleFeedReconnect();
         },
         onError: (_) {
           _feedConnected = false;
+          _feedPingTimer?.cancel();
           connectionStatus.value = _channels.isNotEmpty || _feedConnected;
           _scheduleFeedReconnect();
         },
@@ -126,6 +136,7 @@ class ChatSocketService extends GetxService {
 
   void disconnectFeed() {
     _feedConnected = false;
+    _feedPingTimer?.cancel();
     _feedChannel?.sink.close();
     _feedChannel = null;
     connectionStatus.value = _channels.isNotEmpty;

@@ -57,7 +57,7 @@ class ProfileView extends GetView<ProfileController> {
               photoUrl: profile.photoUrl,
               coverUrl: profile.coverUrl,
               onSettings: () => Get.toNamed(Routes.SETTINGS),
-              onEditCover: () => Get.toNamed(Routes.EDIT_PROFILE),
+              onQrTap: () => Get.toNamed(Routes.PROFILE_QR),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
@@ -66,9 +66,11 @@ class ProfileView extends GetView<ProfileController> {
                 children: [
                   _ProfileIdentity(profile: profile),
                   const SizedBox(height: 14),
-                  _ProfileActions(
-                    onEdit: () => Get.toNamed(Routes.EDIT_PROFILE),
-                    onSaved: () => Get.toNamed(Routes.SAVED),
+                  _ProfileActionButton(
+                    icon: FluentIcons.edit_24_regular,
+                    label: 'Edit Profil',
+                    onTap: () => Get.toNamed(Routes.EDIT_PROFILE),
+                    primary: true,
                   ),
                   const SizedBox(height: 16),
                   _ProfileTabs(
@@ -98,17 +100,16 @@ class _ProfileCover extends StatelessWidget {
     required this.photoUrl,
     this.coverUrl = '',
     required this.onSettings,
-    required this.onEditCover,
+    required this.onQrTap,
   });
 
   final String photoUrl;
   final String coverUrl;
   final VoidCallback onSettings;
-  final VoidCallback onEditCover;
+  final VoidCallback onQrTap;
 
   @override
   Widget build(BuildContext context) {
-    final c = AppC.of(context);
     final topPadding = MediaQuery.of(context).padding.top;
 
     return SizedBox(
@@ -133,8 +134,8 @@ class _ProfileCover extends StatelessWidget {
             top: topPadding + 64,
             right: 16,
             child: _ProfileCircleButton(
-              icon: FluentIcons.image_edit_24_regular,
-              onTap: onEditCover,
+              icon: FluentIcons.qr_code_24_regular,
+              onTap: onQrTap,
             ),
           ),
           Positioned(
@@ -409,70 +410,52 @@ class _SkillChip extends StatelessWidget {
   }
 }
 
-class _ProfileActions extends StatelessWidget {
-  const _ProfileActions({required this.onEdit, required this.onSaved});
+class _ProfileActionButton extends StatelessWidget {
+  const _ProfileActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.primary,
+  });
 
-  final VoidCallback onEdit;
-  final VoidCallback onSaved;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool primary;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Row(
-      children: [
-        Expanded(
-          child: Material(
-            color: AppColors.transparent,
-            child: InkWell(
-              onTap: onEdit,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Container(
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primary500,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Edit profil',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Material(
-          color: AppColors.transparent,
-          child: InkWell(
-            onTap: onSaved,
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Container(
+          width: double.infinity,
+          height: 44,
+          decoration: BoxDecoration(
+            color: primary ? AppColors.primary500 : c.surface,
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: Container(
-              width: 42,
-              height: 40,
-              decoration: BoxDecoration(
-                color: c.surface,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: c.borderStrong),
+            border: primary ? null : Border.all(color: c.borderStrong),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: primary ? AppColors.white : c.textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: primary ? AppColors.white : c.textSecondary,
+                ),
               ),
-              child: Icon(
-                FluentIcons.bookmark_24_regular,
-                color: c.textPrimary,
-                size: 22,
-              ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -954,3 +937,5 @@ class _ProfileTab extends StatelessWidget {
     );
   }
 }
+
+

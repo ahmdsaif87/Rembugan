@@ -318,7 +318,7 @@ class ChatView extends GetView<ChatController> {
                       child: Container(
                         width: 11, height: 11,
                         decoration: BoxDecoration(
-                          color: AppColors.success,
+                          color: chat.isOnline ? AppColors.success : AppColors.textSecondary,
                           shape: BoxShape.circle,
                           border: Border.all(color: c.surface, width: 2),
                         ),

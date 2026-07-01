@@ -48,7 +48,7 @@ class RegisterController extends GetxController {
 
     _registeredEmail = emailController.text.trim();
     showOtpStep.value = true;
-    AppToast.success('Kode OTP terkirim ke $_registeredEmail', title: 'Cek Email');
+    AppToast.success('Cek email $_registeredEmail untuk kode OTP 📬');
   }
 
   Future<void> onVerifyOtp() async {
@@ -66,12 +66,12 @@ class RegisterController extends GetxController {
       return;
     }
 
-    AppToast.success('Email berhasil diverifikasi! Silakan masuk.', title: 'Registrasi');
+    AppToast.success('Akun berhasil dibuat! Yuk, masuk 🎉');
     Get.offNamed(Routes.LOGIN);
   }
 
   void resendOtp() {
-    AppToast.info('Fitur kirim ulang OTP belum tersedia');
+    AppToast.info('Kirim ulang OTP belum bisa digunakan sekarang');
   }
 
   @override

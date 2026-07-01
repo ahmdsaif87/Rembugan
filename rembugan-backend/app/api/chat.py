@@ -43,7 +43,13 @@ async def websocket_chat(
         sender_name = sender.full_name if sender else "Seseorang"
 
         while True:
-            raw = await websocket.receive_text()
+            try:
+                raw = await asyncio.wait_for(websocket.receive_text(), timeout=70)
+            except asyncio.TimeoutError:
+                break
+            if raw == "ping":
+                await websocket.send_text("pong")
+                continue
             now = datetime.now(timezone.utc)
 
             # Support JSON payload untuk file messages
@@ -143,7 +149,8 @@ async def websocket_chat(
                     logger.error(f"Gagal simpan chat DM: {e}")
 
     except WebSocketDisconnect:
-        manager.disconnect(websocket, room_id, user_id)
+        pass
+    manager.disconnect(websocket, room_id, user_id)
 
 
 @router.websocket("/ws/feed")
@@ -164,13 +171,15 @@ async def websocket_feed(
 
     try:
         while True:
-            data = await websocket.receive_text()
-            # Feed WS hanya menerima (tidak mengirim pesan ke sini)
-            # Keepalive / ignore
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=70)
+            except asyncio.TimeoutError:
+                break
             if data == "ping":
                 await websocket.send_text("pong")
     except WebSocketDisconnect:
-        manager.disconnect(websocket, "_feed_", user_id)
+        pass
+    manager.disconnect(websocket, "_feed_", user_id)
 
 
 async def _handle_mentions(db: Prisma, sender_id: str, project_id: int, preview: str, mentions: list[str]):
@@ -357,6 +366,7 @@ async def get_my_rooms(
                 "last_message": m.content[:80] if m.content else "",
                 "last_time": tz_iso(m.created_at),
                 "unread": unread,
+                "is_online": manager.is_online(other_id),
             })
 
     return {"status": "success", "data": rooms}
@@ -384,8 +394,11 @@ async def get_chat_history(
     room_id: str,
     limit: int = Query(50, ge=1, le=CHAT_HISTORY_MAX),
     db: Prisma = Depends(get_db),
-    _user_token: dict = Depends(verify_token),
+    user_token: dict = Depends(verify_token),
 ):
+    uid = user_token.get("uid")
+    other_user_online = None
+
     if room_id.isdigit():
         messages = await db.message.find_many(
             where={"project_id": int(room_id)},
@@ -397,6 +410,8 @@ async def get_chat_history(
         parts = room_id.split("_")
         if len(parts) >= 3:
             user1, user2 = parts[1], parts[2]
+            other_id = user2 if user1 == uid else user1
+            other_user_online = manager.is_online(other_id)
             messages = await db.message.find_many(
                 where={
                     "OR": [
@@ -426,4 +441,7 @@ async def get_chat_history(
             "created_at": tz_iso(msg.created_at),
         })
 
-    return {"status": "success", "room_id": room_id, "data": result}
+    resp = {"status": "success", "room_id": room_id, "data": result}
+    if other_user_online is not None:
+        resp["other_user_online"] = other_user_online
+    return resp

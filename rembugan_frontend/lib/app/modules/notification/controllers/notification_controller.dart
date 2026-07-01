@@ -57,7 +57,7 @@ class NotificationController extends GetxController {
   }
 
   int get collabCount =>
-      notifications.where((n) => isCollaboration(n.type)).length;
+      notifications.where((n) => isCollaboration(n.type) && !n.isRead).length;
 
   Future<void> markAsRead(int id) async {
     final ok = await _repo.markAsRead(id);

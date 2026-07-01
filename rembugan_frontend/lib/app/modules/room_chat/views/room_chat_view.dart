@@ -2,6 +2,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'dart:async';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_chrome.dart';
@@ -19,20 +20,23 @@ class _RoomChatViewState extends State<RoomChatView> {
   late final RoomChatController ctrl;
   final _scrollCtrl = ScrollController();
   final _userScrolledUp = false.obs;
+  StreamSubscription? _msgSub;
+  StreamSubscription? _loadingSub;
 
   @override
   void initState() {
     super.initState();
     ctrl = Get.put(RoomChatController());
-    ctrl.messages.listen((_) {
-      _userScrolledUp.value = false;
-      _afterFrame(_scrollToBottom);
+    _msgSub = ctrl.messages.listen((_) {
+      if (_scrollCtrl.hasClients) {
+        final isNearBottom = _scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 50;
+        if (isNearBottom) _afterFrame(_scrollToBottom);
+      }
     });
-    ctrl.isLoading.listen((loading) {
+    _loadingSub = ctrl.isLoading.listen((loading) {
       if (!loading) _afterFrame(_scrollToBottom);
     });
     _scrollCtrl.addListener(_onScrollChanged);
-    _afterFrame(_scrollToBottom);
   }
 
   double? _lastExtent;
@@ -59,6 +63,8 @@ class _RoomChatViewState extends State<RoomChatView> {
 
   @override
   void dispose() {
+    _msgSub?.cancel();
+    _loadingSub?.cancel();
     _scrollCtrl.removeListener(_onScrollChanged);
     _scrollCtrl.dispose();
     Get.delete<RoomChatController>();
@@ -162,16 +168,32 @@ class _RoomChatViewState extends State<RoomChatView> {
       ),
       title: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: c.primarySoft,
-            backgroundImage: room.photoUrl != null
-                ? NetworkImage(room.photoUrl!) as ImageProvider
-                : null,
-            child: room.photoUrl == null
-                ? Text(room.name.isNotEmpty ? room.name[0].toUpperCase() : '?')
-                : null,
-          ),
+          Obx(() => Stack(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: c.primarySoft,
+                backgroundImage: room.photoUrl != null
+                    ? NetworkImage(room.photoUrl!) as ImageProvider
+                    : null,
+                child: room.photoUrl == null
+                    ? Text(room.name.isNotEmpty ? room.name[0].toUpperCase() : '?')
+                    : null,
+              ),
+              if (room.type == 'dm')
+                Positioned(
+                  right: 0, bottom: 0,
+                  child: Container(
+                    width: 10, height: 10,
+                    decoration: BoxDecoration(
+                      color: ctrl.otherUserOnline.value ? AppColors.success : AppColors.textSecondary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: c.surface, width: 2),
+                    ),
+                  ),
+                ),
+            ],
+          )),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -183,6 +205,13 @@ class _RoomChatViewState extends State<RoomChatView> {
                     fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary,
                   ),
                 ),
+                if (room.type == 'dm')
+                  Obx(() => Text(
+                    ctrl.otherUserOnline.value ? 'Online' : 'Offline',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12, color: ctrl.otherUserOnline.value ? AppColors.success : c.textSecondary,
+                    ),
+                  )),
               ],
             ),
           ),

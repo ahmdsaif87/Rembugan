@@ -296,7 +296,7 @@ class WorkspaceRepository {
 
   Future<bool> kickMember(int projectId, String userId) async {
     try {
-      await _api.post('/projects/$projectId/members/$userId/kick');
+      await _api.post('/workspace/$projectId/members/$userId/kick');
       return true;
     } catch (e) {
       debugPrint('WorkspaceRepository.kickMember error: $e');

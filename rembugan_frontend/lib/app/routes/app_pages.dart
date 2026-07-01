@@ -15,6 +15,7 @@ import '../modules/explore/views/explore_view.dart';
 import '../modules/team/bindings/team_binding.dart';
 import '../modules/team/views/team_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
+import '../modules/profile/views/profile_qr_view.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/social/views/comment_view.dart';
 import '../modules/social/views/create_post_view.dart';
@@ -117,6 +118,14 @@ class AppPages {
     GetPage(
       name: _Paths.PROJECT_HISTORY,
       page: () => const ProjectHistoryView(),
+    ),
+    GetPage(
+      name: _Paths.SCAN,
+      page: () => const ScanView(),
+    ),
+    GetPage(
+      name: _Paths.PROFILE_QR,
+      page: () => const ProfileQrView(),
     ),
   ];
 }

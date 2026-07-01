@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -62,14 +63,13 @@ class WorkspaceDetailView extends GetView<TeamController> {
           children: [
             _tabs(c),
             Expanded(
-              child: Obx(() {
-                switch (controller.detailTabIndex.value) {
-                  case 1:
-                    return _TaskTab(ctrl: controller);
-                  default:
-                    return _DiscussionTab(ctrl: controller);
-                }
-              }),
+              child: Obx(() => IndexedStack(
+                index: controller.detailTabIndex.value,
+                children: const [
+                  _DiscussionTab(),
+                  _TaskTab(),
+                ],
+              )),
             ),
           ],
         ),
@@ -214,11 +214,24 @@ class WorkspaceDetailView extends GetView<TeamController> {
           Navigator.pop(context);
           _showApplicantSheet(context, ws);
         },
+        onMemberList: () {
+          Navigator.pop(context);
+          _showMemberListSheet(context, ws);
+        },
         onEndCollaboration: () {
           Navigator.pop(context);
           _showEndCollaborationSheet(context, ws);
         },
       ),
+    );
+  }
+
+  void _showMemberListSheet(BuildContext context, WorkspaceModel ws) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => _MemberListSheet(ctrl: controller, ws: ws),
     );
   }
 
@@ -257,12 +270,14 @@ class _WorkspaceActionSheet extends StatelessWidget {
     required this.ws,
     required this.pendingApplicants,
     required this.onManageApplicants,
+    required this.onMemberList,
     required this.onEndCollaboration,
   });
 
   final WorkspaceModel ws;
   final List<WorkspaceApplicant> pendingApplicants;
   final VoidCallback onManageApplicants;
+  final VoidCallback onMemberList;
   final VoidCallback onEndCollaboration;
 
   @override
@@ -293,6 +308,13 @@ class _WorkspaceActionSheet extends StatelessWidget {
             },
           ),
           const SizedBox(height: 8),
+          _ActionTile(
+            icon: FluentIcons.people_team_24_regular,
+            title: 'Anggota Workspace',
+            subtitle: '${ws.memberCount} anggota · ${ws.isOwned ? "Ketua bisa kelola" : "Lihat anggota"}',
+            onTap: onMemberList,
+          ),
+          const SizedBox(height: 8),
           if (ws.isOwned) ...[
             _ActionTile(
               icon: FluentIcons.person_add_24_regular,
@@ -309,12 +331,7 @@ class _WorkspaceActionSheet extends StatelessWidget {
               danger: true,
               onTap: onEndCollaboration,
             ),
-          ] else
-            const _ActionTile(
-              icon: FluentIcons.people_team_24_regular,
-              title: 'Kolaborasi aktif',
-              subtitle: 'Gunakan Group Chat dan Kanban untuk kerja bareng tim.',
-            ),
+          ],
         ],
       ),
     );
@@ -574,6 +591,114 @@ class _EndCollaborationSheet extends StatelessWidget {
   }
 }
 
+class _MemberListSheet extends StatelessWidget {
+  const _MemberListSheet({required this.ctrl, required this.ws});
+
+  final TeamController ctrl;
+  final WorkspaceModel ws;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    final members = ws.members;
+    return _SheetShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SheetHandle(),
+          const SizedBox(height: 18),
+          const _SheetHeader(
+            title: 'Anggota Workspace',
+            subtitle: 'Ketua bisa mengeluarkan anggota dari workspace.',
+          ),
+          const SizedBox(height: 14),
+          if (members.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Tidak ada anggota',
+                  style: AppFonts.satoshiStyle(fontSize: 13, color: c.textTertiary),
+                ),
+              ),
+            )
+          else
+            ...members.map((member) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: c.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: c.border),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: c.surfaceSecondary,
+                      backgroundImage: member.photoUrl != null
+                          ? NetworkImage(member.photoUrl!) as ImageProvider
+                          : null,
+                      child: member.photoUrl == null
+                          ? Text(
+                              member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
+                              style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            member.name,
+                            style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            member.role,
+                            style: AppFonts.satoshiStyle(fontSize: 11, color: c.textTertiary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (ws.isOwned && member.role != 'Ketua')
+                      GestureDetector(
+                        onTap: () async {
+                          final pid = int.tryParse(ws.id);
+                          if (pid == null) return;
+                          final ok = await ctrl.kickMemberLocal(pid, member.id);
+                          if (ok && context.mounted) {
+                            Navigator.pop(context);
+                            AppToast.success('${member.name} dikeluarkan dari workspace.');
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger50,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: Text(
+                            'Kick',
+                            style: AppFonts.satoshiStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.danger600),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            )),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
 class _SheetShell extends StatelessWidget {
   const _SheetShell({required this.child});
 
@@ -768,8 +893,7 @@ class _SheetButton extends StatelessWidget {
 }
 
 class _DiscussionTab extends StatefulWidget {
-  const _DiscussionTab({required this.ctrl});
-  final TeamController ctrl;
+  const _DiscussionTab();
 
   @override
   State<_DiscussionTab> createState() => _DiscussionTabState();
@@ -780,18 +904,20 @@ class _DiscussionTabState extends State<_DiscussionTab> {
   late final TeamController _ctrl;
   final _scrollCtrl = ScrollController();
   final _userScrolledUp = false.obs;
+  StreamSubscription? _discSub;
 
   @override
   void initState() {
     super.initState();
     _msgCtrl = TextEditingController();
-    _ctrl = widget.ctrl;
-    _ctrl.discussions.listen((_) {
-      _userScrolledUp.value = false;
-      _afterFrame(_scrollToBottom);
+    _ctrl = Get.find<TeamController>();
+    _discSub = _ctrl.discussions.listen((_) {
+      if (_scrollCtrl.hasClients) {
+        final isNearBottom = _scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 50;
+        if (isNearBottom) _afterFrame(_scrollToBottom);
+      }
     });
     _scrollCtrl.addListener(_onScrollChanged);
-    _afterFrame(_scrollToBottom);
   }
 
   double? _lastExtent;
@@ -814,6 +940,7 @@ class _DiscussionTabState extends State<_DiscussionTab> {
 
   @override
   void dispose() {
+    _discSub?.cancel();
     _scrollCtrl.removeListener(_onScrollChanged);
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
@@ -1578,8 +1705,9 @@ class _Bubble extends StatelessWidget {
 // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
 
 class _TaskTab extends StatelessWidget {
-  const _TaskTab({required this.ctrl});
-  final TeamController ctrl;
+  const _TaskTab();
+
+  TeamController get ctrl => Get.find();
 
   static const _sections = [
     _SectionConfig('To Do', AppColors.info500, 'todo', 'Belum ada tugas'),
@@ -1880,6 +2008,109 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
     super.dispose();
   }
 
+  void _showAssigneePicker() {
+    final c = AppC.of(context);
+    final localSelected = {...selectedMemberIds};
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(
+                        color: c.grey300,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Pilih Anggota',
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700, color: c.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...memberNames.map((name) {
+                    final uid = memberIdByName[name] ?? '';
+                    final selected = localSelected.contains(uid);
+                    return InkWell(
+                      onTap: () {
+                        setSheetState(() {
+                          if (selected) {
+                            localSelected.remove(uid);
+                          } else {
+                            localSelected.add(uid);
+                          }
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              selected ? Icons.check_box : Icons.check_box_outline_blank,
+                              size: 22,
+                              color: selected ? AppColors.primary500 : c.textTertiary,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 14, color: c.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedMemberIds.clear();
+                          selectedMemberIds.addAll(localSelected);
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary500,
+                        foregroundColor: AppColors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
@@ -2074,67 +2305,56 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                        ),
-                        decoration: BoxDecoration(
-                          color: c.grey50,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(color: c.border),
-                        ),
-                        child: memberNames.isEmpty
-                            ? Padding(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                child: Text(
-                                  'Tidak ada anggota',
+                      GestureDetector(
+                        onTap: _showAssigneePicker,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: c.grey50,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            border: Border.all(color: c.border),
+                          ),
+                          child: selectedMemberIds.isEmpty
+                              ? Text(
+                                  'Pilih anggota...',
                                   style: AppFonts.satoshiStyle(
                                     fontSize: 13,
                                     color: c.textTertiary,
                                   ),
-                                ),
-                              )
-                            : Column(
-                                children: memberNames.map((name) {
-                                  final uid = memberIdByName[name] ?? '';
-                                  final selected = selectedMemberIds.contains(uid);
-                                  return InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        if (selected) {
-                                          selectedMemberIds.remove(uid);
-                                        } else {
-                                          selectedMemberIds.add(uid);
-                                        }
-                                      });
-                                    },
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 4),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            selected
-                                                ? Icons.check_box
-                                                : Icons.check_box_outline_blank,
-                                            size: 18,
-                                            color: selected
-                                                ? AppColors.primary500
-                                                : c.textTertiary,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
+                                )
+                              : SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: selectedMemberIds.map((uid) {
+                                      final idx = memberIds.indexOf(uid);
+                                      final name = idx >= 0 ? memberNames[idx] : '';
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 4),
+                                        child: Chip(
+                                          label: Text(
                                             name,
                                             style: AppFonts.satoshiStyle(
-                                              fontSize: 13,
-                                              color: c.textPrimary,
+                                              fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary700,
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                                          backgroundColor: AppColors.primary50,
+                                          deleteIcon: Icon(FluentIcons.dismiss_24_regular, size: 14, color: AppColors.primary500),
+                                          onDeleted: () {
+                                            setState(() => selectedMemberIds.remove(uid));
+                                          },
+                                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          visualDensity: VisualDensity.compact,
+                                          padding: EdgeInsets.zero,
+                                          labelPadding: const EdgeInsets.only(left: 6),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                        ),
                       ),
                       ],
                     ),
@@ -2589,6 +2809,7 @@ class _KanbanTaskCard extends StatelessWidget {
                                 runSpacing: 4,
                                 children: task.assigneeNames.map((name) {
                                   return Container(
+                                    constraints: const BoxConstraints(maxWidth: 140),
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: c.grey50,
@@ -2596,6 +2817,8 @@ class _KanbanTaskCard extends StatelessWidget {
                                     ),
                                     child: Text(
                                       name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: AppFonts.satoshiStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w500,

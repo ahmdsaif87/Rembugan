@@ -477,4 +477,17 @@ class TeamController extends GetxController {
     if (pid == null) return;
     tasks.assignAll(await _repo.getTasks(pid));
   }
+
+  Future<bool> kickMemberLocal(int projectId, String userId) async {
+    final ok = await _repo.kickMember(projectId, userId);
+    if (ok) {
+      await fetchWorkspaces();
+      final ws = selectedWorkspace.value;
+      if (ws != null) {
+        final updated = await _repo.getWorkspaceDetail(projectId);
+        if (updated != null) selectedWorkspace.value = updated;
+      }
+    }
+    return ok;
+  }
 }

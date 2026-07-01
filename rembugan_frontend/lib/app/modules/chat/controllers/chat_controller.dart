@@ -13,6 +13,7 @@ class ChatRoom {
   final String lastMessage;
   final String lastTime;
   final int unread;
+  final bool isOnline;
   ChatRoom({
     required this.roomId,
     required this.type,
@@ -22,15 +23,17 @@ class ChatRoom {
     this.lastMessage = '',
     this.lastTime = '',
     this.unread = 0,
+    this.isOnline = false,
   });
 
-  ChatRoom copyWith({String? lastMessage, String? lastTime, int? unread}) {
+  ChatRoom copyWith({String? lastMessage, String? lastTime, int? unread, bool? isOnline}) {
     return ChatRoom(
       roomId: roomId, type: type, name: name,
       otherUserId: otherUserId, photoUrl: photoUrl,
       lastMessage: lastMessage ?? this.lastMessage,
       lastTime: lastTime ?? this.lastTime,
       unread: unread ?? this.unread,
+      isOnline: isOnline ?? this.isOnline,
     );
   }
 }
@@ -48,14 +51,12 @@ class ChatController extends GetxController {
   void onInit() {
     super.onInit();
     fetchRooms();
-    _socket.connectFeed();
     _feedSub = _socket.onFeed.listen(_handleFeedMessage);
   }
 
   @override
   void onClose() {
     _feedSub?.cancel();
-    _socket.disconnectFeed();
     super.onClose();
   }
 
@@ -105,6 +106,7 @@ class ChatController extends GetxController {
         lastMessage: r['last_message'] as String? ?? '',
         lastTime: r['last_time'] as String? ?? '',
         unread: r['unread'] as int? ?? 0,
+        isOnline: r['is_online'] as bool? ?? false,
       )));
     } catch (_) {}
     isLoading.value = false;

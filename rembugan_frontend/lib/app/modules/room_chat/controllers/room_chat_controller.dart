@@ -50,6 +50,7 @@ class RoomChatController extends GetxController {
   final isUploading = false.obs;
   final isLoading = true.obs;
   final isWsConnected = false.obs;
+  final otherUserOnline = false.obs;
 
   late final String _myId;
 
@@ -83,6 +84,7 @@ class RoomChatController extends GetxController {
     try {
       final res = await _api.get('/chat/history/${room.roomId}?limit=50');
       final body = res.data as Map<String, dynamic>? ?? {};
+      otherUserOnline.value = body['other_user_online'] as bool? ?? false;
       final data = body['data'] as List<dynamic>? ?? [];
       final myId = _myId;
       messages.assignAll(data.map((m) => ChatMessage(

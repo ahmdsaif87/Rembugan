@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from app.core.security import verify_token
 from app.core.database import get_db
-from app.core.constants import APP_PENDING, TASK_TODO, TASK_DOING, TASK_DONE, PJ_COMPLETED, ROLE_ANGGOTA, NOTIF_FILE_UPLOADED
+from app.core.constants import APP_PENDING, TASK_TODO, TASK_DOING, TASK_DONE, PJ_COMPLETED, ROLE_ANGGOTA, NOTIF_FILE_UPLOADED, NOTIF_TASK_ASSIGNED
 from app.schemas.workspace import TaskCreateInput, TaskMoveInput, TaskUpdateInput
 from app.services.storage import upload_image_to_cloudinary
 from app.services.chat_manager import manager
@@ -75,7 +75,7 @@ async def _build_workspace_data(
             "name": m.user.full_name,
             "initials": initials,
             "role": m.role,
-            "is_online": False,
+            "is_online": manager.is_online(m.user_id),
             "photo_url": m.user.photo_url,
         })
 
@@ -235,7 +235,7 @@ async def _build_workspace_data_fast(
             "name": m.user.full_name,
             "initials": initials,
             "role": m.role,
-            "is_online": False,
+            "is_online": manager.is_online(m.user_id),
             "photo_url": m.user.photo_url,
         })
 
@@ -658,6 +658,17 @@ async def create_task(
         include={"assignees": {"include": {"user": True}}},
     )
 
+    for assignee in task.assignees:
+        if assignee.user_id != user_id:
+            await notify(
+                db=db,
+                user_id=assignee.user_id,
+                type_=NOTIF_TASK_ASSIGNED,
+                title="Tugas Baru",
+                content=f"Kamu ditugaskan: {task.title}",
+                link=f"/workspace/{project_id}",
+            )
+
     return {
         "status": "success",
         "message": f"Tugas '{task.title}' berhasil dibuat!",
@@ -764,6 +775,15 @@ async def update_task(
         await db.taskassignee.delete_many(where={"task_id": task_id})
         for uid in data.assignee_ids:
             await db.taskassignee.create(data={"task_id": task_id, "user_id": uid})
+            if uid != user_id:
+                await notify(
+                    db=db,
+                    user_id=uid,
+                    type_=NOTIF_TASK_ASSIGNED,
+                    title="Tugas Diperbarui",
+                    content=f"Kamu ditugaskan: {task.title}",
+                    link=f"/workspace/{task.project_id}",
+                )
 
     updated = await db.task.update(
         where={"id": task_id},
@@ -810,6 +830,42 @@ async def delete_task(
     await db.task.delete(where={"id": task_id})
 
     return {"status": "success", "message": f"Tugas '{task.title}' berhasil dihapus!"}
+
+
+@router.post("/{project_id}/members/{user_id}/kick", summary="Keluarkan anggota dari workspace")
+async def kick_member(
+    project_id: int,
+    user_id: str,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    """Keluarkan anggota dari workspace. Hanya ketua yang bisa kick."""
+    requester_id = user_token.get("uid")
+
+    project = await db.project.find_unique(where={"id": project_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Proyek tidak ditemukan.")
+
+    if project.owner_id != requester_id:
+        raise HTTPException(status_code=403, detail="Hanya ketua proyek yang bisa mengeluarkan anggota.")
+
+    if user_id == requester_id:
+        raise HTTPException(status_code=400, detail="Tidak bisa mengeluarkan diri sendiri.")
+
+    member = await db.projectmember.find_first(
+        where={"project_id": project_id, "user_id": user_id}
+    )
+    if not member:
+        raise HTTPException(status_code=404, detail="Anggota tidak ditemukan.")
+
+    await db.projectmember.delete(
+        where={"id": member.id}
+    )
+
+    return {
+        "status": "success",
+        "message": "Anggota berhasil dikeluarkan dari workspace.",
+    }
 
 
 @router.post("/{project_id}/end", summary="Akhiri Kolaborasi Proyek")
