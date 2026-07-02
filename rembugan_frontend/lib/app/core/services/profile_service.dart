@@ -248,10 +248,12 @@ class ProfileService extends GetxService {
       final resultData = res.data['data'] as Map<String, dynamic>?;
       if (resultData != null) {
         final rawLinks = resultData['social_links'];
-        Map<String, String> parsedLinks = {};
+        Map<String, String>? parsedLinks;
         if (rawLinks is Map) {
           parsedLinks = rawLinks.map((k, v) => MapEntry(k.toString(), v.toString()));
         }
+        final rawSkills = resultData['skills'];
+        final rawExperiences = resultData['experiences'];
         profile.value = profile.value.copyWith(
           name: resultData['full_name'] as String? ?? profile.value.name,
           handle: resultData['handle'] as String? ?? profile.value.handle,
@@ -260,6 +262,14 @@ class ProfileService extends GetxService {
           photoUrl: resultData['photo_url'] as String? ?? profile.value.photoUrl,
           coverUrl: resultData['cover_url'] as String? ?? profile.value.coverUrl,
           socialLinks: parsedLinks,
+          skills: rawSkills is List
+              ? rawSkills.map((e) => e.toString()).toList()
+              : null,
+          experiences: rawExperiences is List
+              ? rawExperiences
+                  .map((e) => ProfileExperience.fromJson(e as Map<String, dynamic>))
+                  .toList()
+              : null,
         );
       }
       return null;

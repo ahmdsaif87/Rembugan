@@ -37,13 +37,9 @@ class ApiExploreRepository implements ExploreRepository {
   Future<List<Competition>> getCompetitions() async {
     try {
       final response = await _api.get('/competitions/all');
-      print('=== COMPETITIONS DEBUG ===');
-      print('Status: ${response.statusCode}');
       final data = response.data;
-      print('Data type: ${data.runtimeType}');
       if (data is Map<String, dynamic>) {
         final items = data['data'];
-        print('Items type: ${items.runtimeType} count: ${items is List ? items.length : 'N/A'}');
         if (items is List) {
           return items.map((item) {
             final raw = item as Map<String, dynamic>;
@@ -51,12 +47,9 @@ class ApiExploreRepository implements ExploreRepository {
           }).toList();
         }
       }
-      print('UNEXPECTED FORMAT: $data');
       return [];
-    } catch (e, stack) {
-      print('=== COMPETITIONS ERROR ===');
-      print(e);
-      print(stack);
+    } catch (e) {
+      debugPrint('ApiExploreRepository.getCompetitions error: $e');
       return [];
     }
   }

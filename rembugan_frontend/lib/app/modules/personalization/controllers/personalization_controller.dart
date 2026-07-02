@@ -62,10 +62,7 @@ class PersonalizationController extends GetxController {
     scanningStep.value = 0;
 
     try {
-      for (var i = 0; i < extractionSteps.length; i++) {
-        scanningStep.value = i;
-        await Future.delayed(const Duration(milliseconds: 400));
-      }
+      scanningStep.value = 0;
 
       final token = await _api.getToken();
       final uri = Uri.parse('${ApiConfig.baseUrl}/onboarding/extract-cv');

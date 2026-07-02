@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -31,6 +34,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   late TextEditingController linkedinController;
   late TextEditingController externalController;
   bool _isSaving = false;
+  bool _hasLocalOnlyCollaborationChanges = false;
 
   @override
   void initState() {
@@ -117,13 +121,66 @@ class _EditProfileViewState extends State<EditProfileView> {
             draft = draft.copyWith(photoUrl: url);
           }
         });
-        AppToast.success('Gambar berhasil diupload.');
+        AppToast.success('Gambar siap disimpan. Tekan Simpan untuk memperbarui profil.');
       } else {
         AppToast.error('Gagal mengupload gambar.');
       }
     } catch (e) {
-      AppToast.error('Gagal mengupload: $e');
+      debugPrint('EditProfileView._pickImage error: $e');
+      AppToast.error('Gagal mengupload gambar. Coba lagi.');
     }
+  }
+
+  bool _experiencesChanged(List<ProfileExperience> a, List<ProfileExperience> b) {
+    if (a.length != b.length) return true;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].title != b[i].title ||
+          a[i].organization != b[i].organization ||
+          a[i].duration != b[i].duration ||
+          a[i].description != b[i].description ||
+          !listEquals(a[i].techStack, b[i].techStack)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  DateTime? _parseDurationStart(String? duration) {
+    if (duration == null || duration.isEmpty) return null;
+    final parts = duration.split(' - ');
+    if (parts.isEmpty) return null;
+    return _parseDateStr(parts[0].trim());
+  }
+
+  DateTime? _parseDurationEnd(String? duration) {
+    if (duration == null || duration.isEmpty) return null;
+    final parts = duration.split(' - ');
+    if (parts.length < 2) return null;
+    final end = parts[1].trim().toLowerCase();
+    if (['now', 'present', 'sekarang', 'saat ini'].contains(end)) return null;
+    return _parseDateStr(parts[1].trim());
+  }
+
+  DateTime? _parseDateStr(String s) {
+    try {
+      return DateTime.parse(s);
+    } catch (_) {}
+    final parts = s.split('-');
+    if (parts.length == 2) {
+      final y = int.tryParse(parts[0].trim());
+      final m = int.tryParse(parts[1].trim());
+      if (y != null && m != null && m >= 1 && m <= 12) return DateTime(y, m);
+    }
+    final y = int.tryParse(s);
+    if (y != null) return DateTime(y, 1);
+    return null;
+  }
+
+  String _formatDuration(DateTime start, DateTime? end) {
+    final startStr = '${start.year}-${start.month.toString().padLeft(2, '0')}';
+    if (end == null) return '$startStr - Present';
+    final endStr = '${end.year}-${end.month.toString().padLeft(2, '0')}';
+    return '$startStr - $endStr';
   }
 
   Future<void> _save() async {
@@ -147,155 +204,265 @@ class _EditProfileViewState extends State<EditProfileView> {
       socialLinks: newSocialLinks,
     );
 
-    profileService.updateProfile(newDraft);
-
     final settings = <String, dynamic>{};
     if (newDraft.name != old.name) settings['full_name'] = newDraft.name;
     if (newDraft.bio != old.bio) settings['bio'] = newDraft.bio;
     if (newDraft.interest != old.interest) settings['interest'] = newDraft.interest;
     if (newDraft.photoUrl != old.photoUrl) settings['photo_url'] = newDraft.photoUrl;
     if (newDraft.coverUrl != old.coverUrl) settings['cover_url'] = newDraft.coverUrl;
-    if (newDraft.socialLinks != old.socialLinks) {
+    if (!mapEquals(newDraft.socialLinks, old.socialLinks)) {
       settings['social_links'] = newSocialLinks;
     }
+    if (!listEquals(newDraft.skills, old.skills)) settings['skills'] = newDraft.skills;
+    if (_experiencesChanged(newDraft.experiences, old.experiences)) {
+      settings['experiences'] = newDraft.experiences.map((e) => {
+        'title': e.title,
+        'organization': e.organization,
+        'duration': e.duration,
+        'description': e.description,
+        'tech_stack': e.techStack,
+      }).toList();
+    }
 
-    if (settings.isNotEmpty) {
+    final hasBackendChanges = settings.isNotEmpty;
+    final hasLocalOnlyChanges = _hasLocalOnlyCollaborationChanges;
+
+    if (hasBackendChanges) {
       final err = await profileService.updateSettings(settings);
       if (err != null) {
         AppToast.error(err, title: 'Error');
-        setState(() => _isSaving = false);
+        if (mounted) setState(() => _isSaving = false);
         return;
       }
     }
 
+    profileService.updateProfile(newDraft);
+
+    if (!mounted) return;
+
     setState(() {
       draft = newDraft;
       _isSaving = false;
+      _hasLocalOnlyCollaborationChanges = false;
     });
-    AppToast.success('Profil berhasil diperbarui.');
+
+    if (!hasBackendChanges && !hasLocalOnlyChanges) {
+      AppToast.info('Tidak ada perubahan.');
+      Get.offNamed(Routes.PROFILE);
+      return;
+    }
+
+    AppToast.success(
+      hasLocalOnlyChanges
+          ? 'Profil utama tersimpan. Riwayat kolaborasi belum tersimpan permanen.'
+          : 'Profil berhasil diperbarui.',
+    );
     Get.offNamed(Routes.PROFILE);
   }
 
-  void showSkillSheet() {
+  bool get _hasUnsavedChanges {
+    final old = profileService.profile.value;
+    final currentSocialLinks = <String, String>{};
+    if (instagramController.text.trim().isNotEmpty) {
+      currentSocialLinks['instagram'] = instagramController.text.trim();
+    }
+    if (linkedinController.text.trim().isNotEmpty) {
+      currentSocialLinks['linkedin'] = linkedinController.text.trim();
+    }
+    if (externalController.text.trim().isNotEmpty) {
+      currentSocialLinks['website'] = externalController.text.trim();
+    }
+
+    return nameController.text.trim() != old.name ||
+        bioController.text.trim() != old.bio ||
+        interestController.text.trim() != old.interest ||
+        draft.photoUrl != old.photoUrl ||
+        draft.coverUrl != old.coverUrl ||
+        !mapEquals(currentSocialLinks, old.socialLinks) ||
+        !listEquals(draft.skills, old.skills) ||
+        _experiencesChanged(draft.experiences, old.experiences) ||
+        _hasLocalOnlyCollaborationChanges;
+  }
+
+  Future<void> _closeWithUnsavedCheck() async {
+    if (!_hasUnsavedChanges) {
+      Get.back();
+      return;
+    }
+
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Keluar tanpa menyimpan?'),
+        content: const Text('Perubahan yang belum disimpan akan hilang.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
+    );
+    if (discard == true) Get.back();
+  }
+
+  Future<void> showSkillSheet() async {
     final skillController = TextEditingController();
     var skills = [...draft.skills];
 
-    _showEditSheet(
-      title: 'Perbarui skill',
-      helper: 'Skill membantu sistem merekomendasikan proyek yang relevan.',
-      child: StatefulBuilder(
-        builder: (context, setSheetState) {
-          final c = AppC.of(context);
-          void addSkill(String value) {
-            final skill = value.trim();
-            if (skill.isEmpty || skills.contains(skill)) return;
-            setSheetState(() {
-              skills = [...skills, skill];
-              skillController.clear();
-            });
-          }
+    try {
+      await _showEditSheet(
+        title: 'Perbarui skill',
+        helper: 'Skill membantu sistem merekomendasikan proyek yang relevan.',
+        child: StatefulBuilder(
+          builder: (context, setSheetState) {
+            final c = AppC.of(context);
+            void addSkill(String value) {
+              final skill = value.trim();
+              if (skill.isEmpty ||
+                  skills.any((item) => item.toLowerCase() == skill.toLowerCase())) {
+                return;
+              }
+              setSheetState(() {
+                skills = [...skills, skill];
+                skillController.clear();
+              });
+            }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: skills.map((skill) {
-                  return InputChip(
-                    label: Text(skill),
-                    onDeleted: () {
-                      setSheetState(() {
-                        skills = skills.where((item) => item != skill).toList();
-                      });
-                    },
-                    backgroundColor: c.primarySoft,
-                    side: BorderSide(color: c.border),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: skillController,
-                onSubmitted: addSkill,
-                decoration: InputDecoration(
-                  hintText: 'Cari atau tambah skill',
-                  suffixIcon: IconButton(
-                    onPressed: () => addSkill(skillController.text),
-                    icon: const Icon(FluentIcons.add_24_regular),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: skills.map((skill) {
+                    return InputChip(
+                      label: Text(skill),
+                      onDeleted: () {
+                        setSheetState(() {
+                          skills = skills.where((item) => item != skill).toList();
+                        });
+                      },
+                      backgroundColor: c.primarySoft,
+                      side: BorderSide(color: c.border),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: skillController,
+                  onSubmitted: addSkill,
+                  decoration: InputDecoration(
+                    hintText: 'Cari atau tambah skill',
+                    suffixIcon: IconButton(
+                      onPressed: () => addSkill(skillController.text),
+                      icon: const Icon(FluentIcons.add_24_regular),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
+              ],
+            );
+          },
+        ),
+        onSave: () {
+          final leftover = skillController.text.trim();
+          if (leftover.isNotEmpty &&
+              !skills.any((item) => item.toLowerCase() == leftover.toLowerCase())) {
+            skills = [...skills, leftover];
+          }
+          setState(() => draft = draft.copyWith(skills: skills));
+          return true;
         },
-      ),
-      onSave: () {
-        setState(() => draft = draft.copyWith(skills: skills));
-        _saveSkills(skills);
-      },
-    );
-  }
-
-  Future<void> _saveSkills(List<String> skills) async {
-    final err = await profileService.updateSettings({'skills': skills});
-    if (err != null) {
-      AppToast.error(err, title: 'Error');
+      );
+    } finally {
+      skillController.dispose();
     }
   }
 
-  void showExperienceSheet({ProfileExperience? experience, int? index}) {
+  Future<void> showExperienceSheet({ProfileExperience? experience, int? index}) async {
     final titleController = TextEditingController(
       text: experience?.title ?? '',
     );
     final orgController = TextEditingController(
       text: experience?.organization ?? '',
     );
-    final durationController = TextEditingController(
-      text: experience?.duration ?? '',
-    );
     final descriptionController = TextEditingController(
       text: experience?.description ?? '',
     );
 
-    _showEditSheet(
-      title: experience == null ? 'Tambah pengalaman' : 'Edit pengalaman',
-      helper: 'Pengalaman yang membentuk perjalanan dan skill kamu.',
-      child: Column(
-        children: [
-          _SheetField(label: 'Peran atau posisi', controller: titleController),
-          _SheetField(
-            label: 'Nama organisasi atau proyek',
-            controller: orgController,
-          ),
-          _SheetField(
-            label: 'Waktu berlangsung',
-            controller: durationController,
-          ),
-          _SheetField(
-            label: 'Ceritakan kontribusi atau pengalamanmu',
-            controller: descriptionController,
-            maxLines: 4,
-          ),
-        ],
-      ),
-      onSave: () {
-        final updated = ProfileExperience(
-          title: titleController.text.trim(),
-          organization: orgController.text.trim(),
-          duration: durationController.text.trim(),
-          description: descriptionController.text.trim(),
-          techStack: experience?.techStack ?? const [],
-        );
-        final experiences = [...draft.experiences];
-        if (index == null) {
-          experiences.add(updated);
-        } else {
-          experiences[index] = updated;
-        }
-        setState(() => draft = draft.copyWith(experiences: experiences));
-      },
-    );
+    var startDate = _parseDurationStart(experience?.duration);
+    var endDate = _parseDurationEnd(experience?.duration);
+
+    try {
+      await _showEditSheet(
+        title: experience == null ? 'Tambah pengalaman' : 'Edit pengalaman',
+        helper: 'Pengalaman yang membentuk perjalanan dan skill kamu.',
+        child: StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Column(
+              children: [
+                _SheetField(label: 'Peran atau posisi', controller: titleController),
+                _SheetField(
+                  label: 'Nama organisasi atau proyek',
+                  controller: orgController,
+                ),
+                _SheetDateField(
+                  label: 'Tanggal mulai',
+                  value: startDate,
+                  onChanged: (d) => setSheetState(() => startDate = d),
+                ),
+                _SheetDateField(
+                  label: 'Tanggal selesai',
+                  value: endDate,
+                  onChanged: (d) => setSheetState(() => endDate = d),
+                  isEndDate: true,
+                ),
+                _SheetField(
+                  label: 'Ceritakan kontribusi atau pengalamanmu',
+                  controller: descriptionController,
+                  maxLines: 4,
+                ),
+              ],
+            );
+          },
+        ),
+        onSave: () {
+          if (titleController.text.trim().isEmpty || orgController.text.trim().isEmpty) {
+            AppToast.error('Peran dan organisasi wajib diisi.');
+            return false;
+          }
+          if (startDate == null) {
+            AppToast.error('Tanggal mulai wajib diisi.');
+            return false;
+          }
+          final updated = ProfileExperience(
+            title: titleController.text.trim(),
+            organization: orgController.text.trim(),
+            duration: _formatDuration(startDate!, endDate),
+            description: descriptionController.text.trim(),
+            techStack: experience?.techStack ?? const [],
+          );
+          final experiences = [...draft.experiences];
+          if (index == null) {
+            experiences.add(updated);
+          } else {
+            experiences[index] = updated;
+          }
+          setState(() {
+            draft = draft.copyWith(experiences: experiences);
+          });
+          return true;
+        },
+      );
+    } finally {
+      titleController.dispose();
+      orgController.dispose();
+      descriptionController.dispose();
+    }
   }
 
   void deleteExperience(ProfileExperience experience) {
@@ -313,7 +480,6 @@ class _EditProfileViewState extends State<EditProfileView> {
             );
           });
           Get.back();
-          AppToast.success('Pengalaman dihapus.');
         },
       ),
       backgroundColor: AppColors.transparent,
@@ -321,14 +487,14 @@ class _EditProfileViewState extends State<EditProfileView> {
     );
   }
 
-  void _showEditSheet({
+  Future<T?> _showEditSheet<T>({
     required String title,
     required String helper,
     required Widget child,
-    required VoidCallback onSave,
+    required bool Function() onSave,
     GlobalKey<FormState>? formKey,
   }) {
-    Get.bottomSheet(
+    return Get.bottomSheet<T>(
       _EditBottomSheet(
         title: title,
         helper: helper,
@@ -348,11 +514,19 @@ class _EditProfileViewState extends State<EditProfileView> {
 
     return Scaffold(
       backgroundColor: c.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: c.surface,
+        backgroundColor: c.surface.withValues(alpha: 0.7),
+        elevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(color: AppColors.transparent),
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(FluentIcons.dismiss_24_regular),
-          onPressed: Get.back,
+          onPressed: _closeWithUnsavedCheck,
         ),
         title: Text(
           'Edit profil',
@@ -412,24 +586,33 @@ class _EditProfileViewState extends State<EditProfileView> {
                 GestureDetector(
                   onTap: () => _pickImage(true),
                   child: SizedBox(
-                    height: 140,
+                    height: topPadding + 140,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
                         draft.coverUrl.isNotEmpty
                             ? Image.network(draft.coverUrl, fit: BoxFit.cover)
-                            : Container(color: AppColors.grey200),
+                            : Container(
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Color(0xFFE2E8F0), Color(0xFFCBD5E1)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                              ),
                         Container(
-                          color: Colors.black26,
+                          color: Colors.black.withValues(alpha: 0.3),
                           alignment: Alignment.center,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+                              horizontal: 14,
+                              vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black54,
+                              color: Colors.black.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(AppRadius.pill),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -467,7 +650,15 @@ class _EditProfileViewState extends State<EditProfileView> {
                         Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.white, width: 3),
+                            border: Border.all(color: c.surface, width: 4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: AppAvatar(
                             photoUrl: draft.photoUrl,
@@ -539,7 +730,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                 ),
                 const SizedBox(height: 8),
                 _SocialLinkField(
-                  icon: FluentIcons.camera_24_regular,
+                  icon: FluentIcons.person_24_regular,
                   label: 'Instagram',
                   controller: instagramController,
                   hint: 'Username Instagram',
@@ -631,7 +822,9 @@ class _EditProfileViewState extends State<EditProfileView> {
                       );
                       setState(() {
                         draft = draft.copyWith(collaborationHistory: collaborations);
+                        _hasLocalOnlyCollaborationChanges = true;
                       });
+                      AppToast.info('Visibilitas riwayat hanya berubah di draft.');
                     },
                   );
                 }).toList(),
@@ -830,7 +1023,23 @@ class _AiPersonalizeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: c.border),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.05),
+            c.surface,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: AppColors.transparent,
@@ -845,13 +1054,16 @@ class _AiPersonalizeCard extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: c.primarySoft,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF8B5CF6), AppColors.primary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: c.border),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     FluentIcons.sparkle_24_filled,
-                    color: AppColors.primary500,
+                    color: AppColors.white,
                     size: 20,
                   ),
                 ),
@@ -990,9 +1202,16 @@ class _ExperiencePreviewItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: c.primarySoft,
+        color: c.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: c.border),
+        border: Border.all(color: c.border.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1071,9 +1290,16 @@ class _CollaborationVisibilityItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: c.primarySoft,
+        color: c.surfaceElevated,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: c.border),
+        border: Border.all(color: c.border.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -1129,7 +1355,7 @@ class _EditBottomSheet extends StatefulWidget {
 
   final String title;
   final String helper;
-  final VoidCallback onSave;
+  final bool Function() onSave;
   final GlobalKey<FormState>? formKey;
   final Widget child;
 
@@ -1205,13 +1431,19 @@ class _EditBottomSheetState extends State<_EditBottomSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _isSaving
+                  onPressed: _isSaving
                               ? null
                               : () {
                                   if (widget.formKey?.currentState?.validate() == false) return;
                                   setState(() => _isSaving = true);
-                                  widget.onSave();
-                                  Get.back();
+                                  try {
+                                    final saved = widget.onSave();
+                                    if (saved) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  } finally {
+                                    if (mounted) setState(() => _isSaving = false);
+                                  }
                                 },
                           child: _isSaving
                               ? const SizedBox(
@@ -1355,6 +1587,88 @@ class _SheetField extends StatelessWidget {
   }
 }
 
+class _SheetDateField extends StatelessWidget {
+  const _SheetDateField({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.isEndDate = false,
+  });
+
+  final String label;
+  final DateTime? value;
+  final ValueChanged<DateTime?> onChanged;
+  final bool isEndDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    final dateStr = value != null
+        ? '${value!.year}-${value!.month.toString().padLeft(2, '0')}-${value!.day.toString().padLeft(2, '0')}'
+        : null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppFonts.interStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: c.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: value ?? now,
+                firstDate: DateTime(1900),
+                lastDate: now.add(const Duration(days: 365)),
+              );
+              if (picked != null) onChanged(picked);
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(
+                border: Border.all(color: c.border),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.calendar_24_regular, size: 16, color: c.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      dateStr ?? (isEndDate ? 'Sekarang' : 'Pilih tanggal'),
+                      style: AppFonts.interStyle(
+                        fontSize: 14,
+                        color: dateStr != null ? c.textPrimary : c.textTertiary,
+                      ),
+                    ),
+                  ),
+                  if (value != null)
+                    GestureDetector(
+                      onTap: () => onChanged(null),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Icon(FluentIcons.dismiss_circle_24_regular, size: 16, color: c.textTertiary),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MiniEditButton extends StatelessWidget {
   const _MiniEditButton({required this.onTap});
 
@@ -1362,11 +1676,26 @@ class _MiniEditButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppColors.grey600;
-    return Material(
-      color: bg,
-      shape: const CircleBorder(),
-      child: InkWell(
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [AppColors.grey600, AppColors.grey800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: const SizedBox(
@@ -1377,6 +1706,7 @@ class _MiniEditButton extends StatelessWidget {
             color: AppColors.white,
             size: 14,
           ),
+        ),
         ),
       ),
     );

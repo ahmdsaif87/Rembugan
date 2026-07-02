@@ -1,4 +1,6 @@
-from typing import Optional
+import re
+from datetime import datetime
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from prisma import Prisma, Json
 from app.core.dates import tz_iso
@@ -6,20 +8,87 @@ from pydantic import BaseModel, Field
 from app.core.database import get_db
 from app.core.security import verify_token, verify_token_optional
 from app.core.constants import PJ_OPEN, ROLE_KETUA, ROLE_ADMIN
+from app.schemas.user import ExperienceInput
 from app.services.embedding import cosine_similarity, reembed_user
 
 
 router = APIRouter(prefix="/profile", tags=["Profil User"])
 
 
+def _parse_duration(duration: str) -> tuple[datetime, datetime | None]:
+    """Parse free-text duration menjadi start_date & end_date."""
+    if not duration or not duration.strip():
+        now = datetime.now()
+        return now, None
+
+    parts = re.split(r'\s*[-–—]+\s*', duration.strip())
+    if len(parts) == 2:
+        start_str, end_str = parts[0].strip(), parts[1].strip()
+        start = _parse_date(start_str) or datetime.now()
+        end = _parse_date(end_str) if end_str and end_str.lower() not in ('now', 'present', 'sekarang', 'saat ini') else None
+        return start, end
+
+    parsed = _parse_date(duration.strip())
+    if parsed:
+        return parsed, None
+
+    return datetime.now(), None
+
+
+def _parse_date(s: str) -> datetime | None:
+    """Coba parse berbagai format tanggal umum."""
+    s = s.strip()
+    if not s:
+        return None
+
+    fmts = [
+        "%Y-%m-%d", "%Y-%m", "%Y",
+        "%d/%m/%Y", "%m/%Y",
+        "%B %Y", "%b %Y",
+    ]
+    for fmt in fmts:
+        try:
+            dt = datetime.strptime(s, fmt)
+            if fmt == "%Y":
+                return datetime(dt.year, 1, 1)
+            if fmt == "%Y-%m":
+                return datetime(dt.year, dt.month, 1)
+            if fmt == "%m/%Y":
+                return datetime(dt.year, dt.month, 1)
+            return dt
+        except ValueError:
+            continue
+
+    month_map = {
+        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+        'januari': 1, 'februari': 2, 'maret': 3, 'april': 4, 'mei': 5, 'juni': 6,
+        'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12,
+    }
+    m = re.match(r'(\d{4})', s)
+    if m:
+        return datetime(int(m.group(1)), 1, 1)
+
+    for name, month_num in month_map.items():
+        if name in s.lower():
+            m = re.search(r'(\d{4})', s)
+            if m:
+                return datetime(int(m.group(1)), month_num, 1)
+
+    return None
+
+
 class SettingsUpdateInput(BaseModel):
     """Data untuk update settings profil."""
+    full_name: Optional[str] = Field(None, description="Nama lengkap")
     handle: Optional[str] = Field(None, description="@username")
     bio: Optional[str] = Field(None, description="Bio singkat")
     interest: Optional[str] = Field(None, description="Minat/bidang")
     photo_url: Optional[str] = Field(None, description="URL foto profil")
     cover_url: Optional[str] = Field(None, description="URL cover profile")
     social_links: Optional[dict] = Field(None, description="Link sosial media (instagram, linkedin, website)")
+    skills: Optional[List[str]] = Field(None, description="Daftar skill/keahlian")
+    experiences: Optional[List[ExperienceInput]] = Field(None, description="Riwayat pengalaman")
 
 
 @router.patch("/settings", summary="Update Settings Profil")
@@ -32,6 +101,11 @@ async def update_settings(
     uid = user_token.get("uid")
 
     update_data = {}
+    if data.full_name is not None:
+        name = data.full_name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Nama wajib diisi")
+        update_data["full_name"] = name
     if data.handle is not None:
         existing = await db.user.find_first(where={"handle": data.handle, "id": {"not": uid}})
         if existing:
@@ -48,26 +122,75 @@ async def update_settings(
     if data.social_links is not None:
         update_data["social_links"] = Json(data.social_links)
 
-    if not update_data:
+    if not update_data and data.skills is None and data.experiences is None:
         raise HTTPException(status_code=400, detail="Tidak ada data yang diupdate")
 
-    user = await db.user.update(
-        where={"id": uid},
-        data=update_data,
-    )
+    if update_data:
+        await db.user.update(
+            where={"id": uid},
+            data=update_data,
+        )
+
+    if data.skills is not None:
+        skill_names = []
+        seen = set()
+        for raw_skill in data.skills:
+            skill_name = raw_skill.strip()
+            key = skill_name.lower()
+            if skill_name and key not in seen:
+                seen.add(key)
+                skill_names.append(skill_name)
+
+        await db.userskill.delete_many(where={"user_id": uid})
+        for skill_name in skill_names:
+            skill = await db.skill.find_unique(where={"name": skill_name})
+            if skill is None:
+                skill = await db.skill.create(data={"name": skill_name})
+            await db.userskill.create(data={"user_id": uid, "skill_id": skill.id})
+
+    if data.experiences is not None:
+        await db.experience.delete_many(where={"user_id": uid})
+        for exp in data.experiences:
+            start_date, end_date = _parse_duration(exp.duration)
+            await db.experience.create(data={
+                "user_id": uid,
+                "title": exp.title,
+                "company": exp.organization,
+                "description": exp.description,
+                "start_date": start_date,
+                "end_date": end_date,
+            })
 
     await reembed_user(db, uid)
+
+    user = await db.user.find_unique(
+        where={"id": uid},
+        include={"experiences": True},
+    )
 
     return {
         "status": "success",
         "message": "Settings berhasil diupdate!",
         "data": {
             "handle": user.handle,
+            "full_name": user.full_name,
             "bio": user.bio,
             "interest": user.interest,
             "photo_url": user.photo_url,
             "cover_url": user.cover_url,
             "social_links": user.social_links,
+            "skills": skill_names if data.skills is not None else None,
+            "experiences": [
+                {
+                    "id": exp.id,
+                    "title": exp.title,
+                    "company": exp.company,
+                    "description": exp.description,
+                    "start_date": exp.start_date.isoformat(),
+                    "end_date": exp.end_date.isoformat() if exp.end_date else None,
+                }
+                for exp in user.experiences
+            ] if user.experiences else [],
         },
     }
 

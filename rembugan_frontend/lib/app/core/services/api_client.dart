@@ -29,7 +29,7 @@ class ApiClient extends GetxService {
       _AuthInterceptor(_storage),
       _ErrorInterceptor(),
       if (kDebugMode)
-        PrettyDioLogger(requestBody: true, responseBody: true),
+        PrettyDioLogger(requestBody: true, responseBody: false),
     ]);
   }
 
