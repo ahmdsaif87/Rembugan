@@ -25,10 +25,14 @@ async def create_showcase(
 async def get_all_showcases(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
+    tab: str = Query("for-you", regex="^(for-you|following)$"),
     user_token: dict = Depends(verify_token),
     svc: ShowcaseService = Depends(),
 ):
-    data, total = await svc.get_feed(user_token["uid"], page, limit)
+    if tab == "following":
+        data, total = await svc.get_following_feed(user_token["uid"], page, limit)
+    else:
+        data, total = await svc.get_feed(user_token["uid"], page, limit)
     return response_paginated(data, total, page, limit)
 
 

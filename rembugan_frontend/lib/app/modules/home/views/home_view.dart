@@ -35,6 +35,7 @@ class HomeView extends GetView<HomeController> {
             Expanded(
               child: Obx(
                 () => ListView(
+                  controller: controller.scrollController,
                   padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
                   children: _buildMixedFeed(context),
                 ),
@@ -169,69 +170,35 @@ class HomeView extends GetView<HomeController> {
     if (controller.hasError.value) {
       return _buildErrorFeed(context);
     }
-    if (controller.activeTab.value == 1) {
-      // "Mengikuti" tab â€” empty state until user follows people
+    if (controller.activeTab.value == 1 && controller.showcases.isEmpty) {
       return [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 60),
           child: Column(
             children: [
               Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: c.primarySoft,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  FluentIcons.person_add_24_regular,
-                  size: 32,
-                  color: AppColors.primary,
-                ),
+                width: 72, height: 72,
+                decoration: BoxDecoration(color: c.primarySoft, shape: BoxShape.circle),
+                child: Icon(FluentIcons.person_add_24_regular, size: 32, color: AppColors.primary),
               ),
               const SizedBox(height: 20),
-              Text(
-                'Belum ada yang diikuti',
-                style: AppFonts.satoshiStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: c.textPrimary,
-                ),
+              Text('Belum ada yang diikuti',
+                style: AppFonts.satoshiStyle(fontSize: 18, fontWeight: FontWeight.w700, color: c.textPrimary),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Ikuti orang untuk melihat postingan mereka di sini.\nTemukan teman satu jurusan atau kolaborator baru!',
+              Text('Ikuti orang untuk melihat postingan mereka di sini.\nTemukan teman satu jurusan atau kolaborator baru!',
                 textAlign: TextAlign.center,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 14,
-                  color: c.textSecondary,
-                  height: 1.45,
-                ),
+                style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary, height: 1.45),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: 180,
-                height: 44,
+              SizedBox(width: 180, height: 44,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Get.find<HomeController>().setTab(0);
-                  },
+                  onPressed: () => Get.find<HomeController>().setTab(0),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
+                    backgroundColor: AppColors.primary, foregroundColor: AppColors.white,
+                    elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
                   ),
-                  child: Text(
-                    'Cari Orang',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
+                  child: Text('Cari Orang', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white)),
                 ),
               ),
             ],
@@ -240,84 +207,85 @@ class HomeView extends GetView<HomeController> {
       ];
     }
 
-    // "Untukmu" tab gets the mixed feed
-    return [
-      PostCardWidget(
-        avatarUrl: 'https://i.pravatar.cc/100?img=33',
-        name: 'Raka Pratama',
-        subtitle: 'D4 Teknik Informatika - 3 jam yang lalu',
-        content:
-            'Butuh 1 UI/UX Designer buat gabung tim ikut Lomba Inovasi Digital Kemendikbud 2026. Deadline pendaftaran 2 minggu lagi. UI udah jadi 60% pake Figma, kita perlu bantu polish dan bikin prototype interaktif. Yang minat chat ya!',
-        hasImage: true,
-        imageAssets: const [
-          'lib/assets/img/contoh poster1.jpeg',
-        ],
-        initialLikes: 87,
+    final widgets = <Widget>[];
+    final showcases = controller.showcases;
+
+    for (int i = 0; i < showcases.length; i++) {
+      final s = showcases[i];
+
+      // Insert recommendations after 3rd post
+      if (i == 3 && controller.recommendedProjects.isNotEmpty) {
+        widgets.add(_buildRecommendedProjectsSection(context));
+        widgets.add(const SizedBox(height: 24));
+      }
+
+      if (i == 6 && controller.recommendedCompetitions.isNotEmpty) {
+        widgets.add(_buildRecommendedCompetitionsSection(context));
+        widgets.add(const SizedBox(height: 24));
+      }
+
+      if (i == 9 && controller.recommendedPeople.isNotEmpty) {
+        widgets.add(_buildRecommendedPeopleSection(context));
+        widgets.add(const SizedBox(height: 10));
+      }
+
+      widgets.add(PostCardWidget(
+        key: ValueKey(s.id),
+        showcaseId: s.id,
+        authorId: s.authorId,
+        avatarUrl: s.authorPhoto ?? '',
+        name: s.authorName,
+        subtitle: s.subtitle,
+        content: s.content,
+        mediaUrls: s.mediaUrls.isEmpty ? null : s.mediaUrls,
+        initialLikes: s.likesCount,
+        initialComments: s.commentsCount,
+        isLiked: s.likedByMe,
+        connectionStatus: s.connectionStatus,
         showFollowButton: true,
-        onShowComments: () => showCommentsSheet(context),
+        onShowComments: () => showCommentsSheet(context, s.id),
         onShowShare: () => _showShareSheet(context),
-      ),
-      Divider(height: 1, color: c.border.withValues(alpha: 0.3)),
-      const SizedBox(height: 20),
+        onToggleLike: () => controller.toggleLike(s),
+        onTapProfile: () => Get.toNamed(Routes.otherProfileRoute(s.authorId)),
+      ));
+      widgets.add(Divider(height: 1, color: c.border.withValues(alpha: 0.3)));
+      widgets.add(const SizedBox(height: 16));
+    }
 
-      // Proyek Rekomendasi
-      _buildRecommendedProjectsSection(context),
-      const SizedBox(height: 24),
+    // Loading indicator for infinite scroll
+    if (controller.isLoadingMore.value) {
+      widgets.add(const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ));
+    }
 
-      PostCardWidget(
-        avatarUrl: 'https://i.pravatar.cc/100?img=47',
-        name: 'Sari Indah',
-        subtitle: 'S1 Sistem Informasi - 8 jam yang lalu',
-        content:
-            'Halo temen-temen! Aku lagi nyari 2 orang buat project aplikasi peminjaman alat laboratorium kampus. Butuh 1 Flutter dev (yang udah pernah pake GetX) & 1 backend (Node.js + PostgreSQL). Udah dapat dosen pembimbing, tinggal nunggu tim lengkap buat mulai. Ini buat tugas akhir sekalian lomba juga.',
-        hasImage: false,
-        initialLikes: 124,
-        showFollowButton: true,
-        onShowComments: () => showCommentsSheet(context),
-        onShowShare: () => _showShareSheet(context),
-      ),
-      Divider(height: 1, color: c.border.withValues(alpha: 0.3)),
-      const SizedBox(height: 16),
+    // If no showcases, show empty state
+    if (showcases.isEmpty) {
+      widgets.add(Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 60),
+        child: Column(
+          children: [
+            Container(
+              width: 72, height: 72,
+              decoration: BoxDecoration(color: c.primarySoft, shape: BoxShape.circle),
+              child: Icon(FluentIcons.document_24_regular, size: 32, color: AppColors.primary),
+            ),
+            const SizedBox(height: 20),
+            Text('Belum ada postingan',
+              style: AppFonts.satoshiStyle(fontSize: 18, fontWeight: FontWeight.w700, color: c.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Text('Jelajahi proyek dan lomba untuk memulai.',
+              textAlign: TextAlign.center,
+              style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary, height: 1.45),
+            ),
+          ],
+        ),
+      ));
+    }
 
-      PostCardWidget(
-        avatarUrl: 'https://i.pravatar.cc/100?img=55',
-        name: 'Dimas Prayoga',
-        subtitle: 'D3 Manajemen Informatika - 1 hari yang lalu',
-        content:
-            'Baru selesai ikut Gemastik 2026 kemaren, walau cuma dapet juara harapan tapi banyak banget pelajaran berharganya. Tips buat temen-temen yang mau ikut taun depan: (1) Pilih tim yang komit, bukan yang jago doang. (2) Siapin Pitching Deck dari H-1 bulan. (3) Jangan takut revisi besar di tengah jalan. Tim kami ganti tech stack 2 minggu sebelum submit dan tetep lolos.',
-        hasImage: false,
-        initialLikes: 231,
-        showFollowButton: true,
-        onShowComments: () => showCommentsSheet(context),
-        onShowShare: () => _showShareSheet(context),
-      ),
-      Divider(height: 1, color: c.border.withValues(alpha: 0.3)),
-      const SizedBox(height: 20),
-
-      // Lomba Rekomendasi
-      _buildRecommendedCompetitionsSection(context),
-      const SizedBox(height: 24),
-
-      PostCardWidget(
-        avatarUrl: 'https://i.pravatar.cc/100?img=60',
-        name: 'Fitriani Nurul',
-        subtitle: 'S1 Ilmu Komputer - 5 jam yang lalu',
-        content:
-            'Mencari tim untuk kompetisi Data Science UIC 2026 tingkat nasional. Butuh: 1 orang yg jago Python & pandas buat preprocessing, 1 orang paham statistik/modeling, 1 orang buat visualisasi & storytelling. Tim sudah ada 2 orang (termasuk aku). Target bikin solusi AI buat prediksi pola kemacetan di kota besar. Serius dan bisa komit sampe final ya!',
-        hasImage: true,
-        imageAssets: const ['lib/assets/img/contoh poster1.jpeg'],
-        initialLikes: 156,
-        showFollowButton: true,
-        onShowComments: () => showCommentsSheet(context),
-        onShowShare: () => _showShareSheet(context),
-      ),
-      Divider(height: 1, color: c.border.withValues(alpha: 0.3)),
-      const SizedBox(height: 20),
-
-      // Orang Rekomendasi
-      _buildRecommendedPeopleSection(context),
-      const SizedBox(height: 10),
-    ];
+    return widgets;
   }
 
   List<Widget> _buildSkeletonFeed(BuildContext context) {
@@ -347,26 +315,13 @@ class HomeView extends GetView<HomeController> {
         child: Column(
           children: [
             Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.danger50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                FluentIcons.wifi_off_24_regular,
-                size: 28,
-                color: AppColors.error,
-              ),
+              width: 64, height: 64,
+              decoration: BoxDecoration(color: AppColors.danger50, shape: BoxShape.circle),
+              child: Icon(FluentIcons.wifi_off_24_regular, size: 28, color: AppColors.error),
             ),
             const SizedBox(height: 20),
-            Text(
-              'Gagal memuat',
-              style: AppFonts.satoshiStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: c.textPrimary,
-              ),
+            Text('Gagal memuat',
+              style: AppFonts.satoshiStyle(fontSize: 18, fontWeight: FontWeight.w700, color: c.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
@@ -374,33 +329,19 @@ class HomeView extends GetView<HomeController> {
                   ? controller.errorMessage.value
                   : 'Terjadi kesalahan. Coba lagi.',
               textAlign: TextAlign.center,
-              style: AppFonts.satoshiStyle(
-                fontSize: 14,
-                color: c.textSecondary,
-                height: 1.45,
-              ),
+              style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary, height: 1.45),
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              height: 44,
+            SizedBox(height: 44,
               child: ElevatedButton(
                 onPressed: () => controller.loadRecommendations(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
+                  backgroundColor: AppColors.primary, foregroundColor: AppColors.white,
+                  elevation: 0, padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
                 ),
-                child: Text(
-                  'Coba Lagi',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.white,
-                  ),
+                child: Text('Coba Lagi',
+                  style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white),
                 ),
               ),
             ),
@@ -416,9 +357,7 @@ class HomeView extends GetView<HomeController> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          child: AppSectionHeader(
-            title: 'Rekomendasi Proyek',
-          ),
+          child: AppSectionHeader(title: 'Rekomendasi Proyek'),
         ),
         SizedBox(
           height: 214,
@@ -430,8 +369,7 @@ class HomeView extends GetView<HomeController> {
             itemBuilder: (context, index) {
               final project = controller.recommendedProjects[index];
               return RecommendedProjectCard(
-                project: project,
-                index: index,
+                project: project, index: index,
                 onTap: () => ExploreView.showProjectSheet(context, project),
               );
             },
@@ -447,9 +385,7 @@ class HomeView extends GetView<HomeController> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          child: AppSectionHeader(
-            title: 'Rekomendasi Lomba',
-          ),
+          child: AppSectionHeader(title: 'Rekomendasi Lomba'),
         ),
         SizedBox(
           height: 180,
@@ -461,13 +397,8 @@ class HomeView extends GetView<HomeController> {
             itemBuilder: (context, index) {
               final competition = controller.recommendedCompetitions[index];
               return RecommendedCompetitionCard(
-                competition: competition,
-                index: index,
-                onTap: () => ExploreView.showCompetitionSheet(
-                  context,
-                  competition,
-                  index,
-                ),
+                competition: competition, index: index,
+                onTap: () => ExploreView.showCompetitionSheet(context, competition, index),
               );
             },
           ),
@@ -482,9 +413,7 @@ class HomeView extends GetView<HomeController> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          child: AppSectionHeader(
-            title: 'Rekomendasi Orang',
-          ),
+          child: AppSectionHeader(title: 'Rekomendasi Orang'),
         ),
         SizedBox(
           height: 185,
@@ -505,5 +434,4 @@ class HomeView extends GetView<HomeController> {
       ],
     );
   }
-
 }

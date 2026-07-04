@@ -83,9 +83,9 @@ class RoomChatController extends GetxController {
     isLoading.value = true;
     try {
       final res = await _api.get('/chat/history/${room.roomId}?limit=50');
-      final body = res.data as Map<String, dynamic>? ?? {};
+      final body = (res.data as Map<String, dynamic>? ?? {})['data'] as Map<String, dynamic>? ?? {};
       otherUserOnline.value = body['other_user_online'] as bool? ?? false;
-      final data = body['data'] as List<dynamic>? ?? [];
+      final data = body['messages'] as List<dynamic>? ?? [];
       final myId = _myId;
       messages.assignAll(data.map((m) => ChatMessage(
         id: m['id'].toString(),

@@ -17,7 +17,6 @@ import '../modules/team/views/team_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_qr_view.dart';
 import '../modules/profile/views/profile_view.dart';
-import '../modules/social/views/comment_view.dart';
 import '../modules/social/views/create_post_view.dart';
 import '../modules/social/views/edit_profile_view.dart';
 import '../modules/social/views/empty_state_view.dart';
@@ -89,7 +88,6 @@ class AppPages {
     ),
     GetPage(name: _Paths.OTHER_PROFILE, page: () => const OtherProfileView()),
     GetPage(name: _Paths.SEARCH, page: () => const SearchView()),
-    GetPage(name: _Paths.COMMENTS, page: () => const CommentView()),
     GetPage(name: _Paths.CREATE_POST, page: () => const CreatePostView()),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfileView()),
     GetPage(name: _Paths.SETTINGS, page: () => const SettingsView()),

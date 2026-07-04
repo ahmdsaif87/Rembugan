@@ -1,64 +1,115 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/services/api_client.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_toast.dart';
-import '../../../../routes/app_pages.dart';
 import 'image_viewer.dart';
 
 class PostCardWidget extends StatefulWidget {
   const PostCardWidget({
+    required this.showcaseId,
+    required this.authorId,
     required this.avatarUrl,
     required this.name,
     required this.subtitle,
     required this.content,
-    required this.hasImage,
-    this.imageAssets,
+    this.mediaUrls,
+    this.initialLikes = 0,
+    this.initialComments = 0,
+    this.isLiked = false,
+    this.connectionStatus,
     this.showFollowButton = true,
-    this.initialLikes = 120,
     required this.onShowComments,
     required this.onShowShare,
+    this.onToggleLike,
+    this.onTapProfile,
     super.key,
   });
 
+  final String showcaseId;
+  final String authorId;
   final String avatarUrl;
   final String name;
   final String subtitle;
   final String content;
-  final bool hasImage;
-  final List<String>? imageAssets;
-  final bool showFollowButton;
+  final List<String>? mediaUrls;
   final int initialLikes;
+  final int initialComments;
+  final bool isLiked;
+  final String? connectionStatus;
+  final bool showFollowButton;
   final VoidCallback onShowComments;
   final VoidCallback onShowShare;
+  final VoidCallback? onToggleLike;
+  final VoidCallback? onTapProfile;
 
   @override
   State<PostCardWidget> createState() => _PostCardWidgetState();
 }
 
 class _PostCardWidgetState extends State<PostCardWidget> {
-  bool _isLiked = false;
+  late bool _isLiked;
   bool _isBookmarked = false;
-  bool _isFollowing = false;
+  late String? _connectionStatus;
+  bool _followingLoading = false;
   late int _likeCount;
+  late int _commentCount;
 
   @override
   void initState() {
     super.initState();
+    _isLiked = widget.isLiked;
     _likeCount = widget.initialLikes;
+    _commentCount = widget.initialComments;
+    _connectionStatus = widget.connectionStatus;
   }
 
-  void _toggleFollow() {
-    setState(() {
-      _isFollowing = !_isFollowing;
-    });
-    AppToast.info(
-      _isFollowing
-          ? 'Kamu sekarang mengikuti ${widget.name}.'
-          : 'Kamu berhenti mengikuti ${widget.name}.',
-      title: _isFollowing ? 'Mengikuti' : 'Batal Mengikuti',
-    );
+  @override
+  void didUpdateWidget(PostCardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isLiked != widget.isLiked) {
+      _isLiked = widget.isLiked;
+    }
+    if (oldWidget.initialLikes != widget.initialLikes) {
+      _likeCount = widget.initialLikes;
+    }
+    if (oldWidget.initialComments != widget.initialComments) {
+      _commentCount = widget.initialComments;
+    }
+    if (oldWidget.connectionStatus != widget.connectionStatus) {
+      _connectionStatus = widget.connectionStatus;
+    }
+  }
+
+  bool get _isConnected => _connectionStatus == 'accepted';
+  bool get _isPending => _connectionStatus == 'pending';
+
+  Future<void> _toggleFollow() async {
+    if (_followingLoading) return;
+    setState(() => _followingLoading = true);
+    try {
+      final api = Get.find<ApiClient>();
+      if (_isConnected) {
+        // Unfollow — delete connection (not implemented yet, just toast)
+        AppToast.info('Koneksi dengan ${widget.name} telah dihapus.',
+            title: 'Koneksi Dihapus');
+        setState(() => _connectionStatus = null);
+      } else if (_isPending) {
+        AppToast.info('Permintaan pertemanan sudah dikirim ke ${widget.name}.',
+            title: 'Tertunda');
+      } else {
+        await api.post('/connections/send/${widget.authorId}');
+        setState(() => _connectionStatus = 'pending');
+        AppToast.info('Permintaan pertemanan terkirim ke ${widget.name}.',
+            title: 'Permintaan Terkirim');
+      }
+    } catch (e) {
+      AppToast.error('Gagal mengirim permintaan. Coba lagi.');
+    } finally {
+      setState(() => _followingLoading = false);
+    }
   }
 
   void _toggleLike() {
@@ -70,6 +121,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
         _likeCount--;
       }
     });
+    widget.onToggleLike?.call();
   }
 
   void _toggleBookmark() {
@@ -82,6 +134,13 @@ class _PostCardWidgetState extends State<PostCardWidget> {
           : 'Postingan dihapus dari penanda kamu.',
       title: _isBookmarked ? 'Postingan disimpan' : 'Postingan dihapus',
     );
+  }
+
+  String get _followLabel {
+    if (_followingLoading) return '...';
+    if (_isConnected) return 'Teman';
+    if (_isPending) return 'Tertunda';
+    return 'Ikuti';
   }
 
   @override
@@ -103,7 +162,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                   Material(
                     color: AppColors.transparent,
                     child: InkWell(
-                      onTap: () {},
+                      onTap: widget.onTapProfile,
                       borderRadius: BorderRadius.circular(20),
                       child: AppAvatar(
                         photoUrl: widget.avatarUrl.startsWith('http') ? widget.avatarUrl : null,
@@ -116,39 +175,24 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     child: Material(
                       color: AppColors.transparent,
                       child: InkWell(
-                        onTap: () {},
+                        onTap: widget.onTapProfile,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    'Dede Fernanda',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppFonts.satoshiStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: c.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  '• 5 Menit',
-                                  style: AppFonts.satoshiStyle(
-                                    fontSize: 11,
-                                    color: c.grey500,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              widget.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppFonts.satoshiStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: c.textPrimary,
+                              ),
                             ),
                             const SizedBox(height: 1),
                             Text(
-                              'Teknik Informatika',
+                              widget.subtitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppFonts.satoshiStyle(
@@ -170,76 +214,93 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                       child: TextButton(
                         onPressed: _toggleFollow,
                         style: TextButton.styleFrom(
-                          backgroundColor: _isFollowing
+                          backgroundColor: _isConnected
                               ? c.grey100
-                              : AppColors.primary,
-                          foregroundColor: _isFollowing
+                              : _isPending
+                                  ? AppColors.warning50
+                                  : AppColors.primary,
+                          foregroundColor: _isConnected
                               ? c.textSecondary
-                              : AppColors.white,
+                              : _isPending
+                                  ? AppColors.warning700
+                                  : AppColors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
                         ),
-                        child: Text(
-                          _isFollowing ? 'Mengikuti' : 'Ikuti',
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: _isFollowing
-                                ? c.textSecondary
-                                : AppColors.white,
-                          ),
-                        ),
+                        child: _followingLoading
+                            ? SizedBox(
+                                width: 14, height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: _isConnected ? c.textSecondary : AppColors.white,
+                                ),
+                              )
+                            : Text(
+                                _followLabel,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: _isConnected
+                                      ? c.textSecondary
+                                      : _isPending
+                                          ? AppColors.warning700
+                                          : AppColors.white,
+                                ),
+                              ),
                       ),
                     ),
                 ],
               ),
               const SizedBox(height: 12),
-            Text(
-              widget.content,
-              maxLines: 8,
-              overflow: TextOverflow.ellipsis,
-              style: AppFonts.satoshiStyle(
-                fontSize: 14,
-                color: c.textPrimary,
-                height: 1.38,
+              Text(
+                widget.content,
+                maxLines: 8,
+                overflow: TextOverflow.ellipsis,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 14,
+                  color: c.textPrimary,
+                  height: 1.38,
+                ),
               ),
-            ),
-              if (widget.imageAssets != null &&
-                  widget.imageAssets!.isNotEmpty) ...[
+              if (widget.mediaUrls != null && widget.mediaUrls!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                if (widget.imageAssets!.length == 1)
+                if (widget.mediaUrls!.length == 1)
                   GestureDetector(
-                    onTap: () => showImageViewer(
-                      context,
-                      assetPath: widget.imageAssets!.first,
-                    ),
+                    onTap: () => showImageViewer(context, imageUrl: widget.mediaUrls!.first),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.asset(
-                        widget.imageAssets!.first,
+                      child: SizedBox(
                         width: double.infinity,
                         height: 373,
-                        fit: BoxFit.cover,
+                        child: Image.network(
+                          widget.mediaUrls!.first,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (_, child, progress) =>
+                              progress == null ? child : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                   )
-                else if (widget.imageAssets!.length == 2)
+                else if (widget.mediaUrls!.length == 2)
                   Row(
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => showImageViewer(
-                            context,
-                            assetPath: widget.imageAssets![0],
-                          ),
+                          onTap: () => showImageViewer(context, imageUrl: widget.mediaUrls![0]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: Image.asset(
-                              widget.imageAssets![0],
+                            child: SizedBox(
                               height: 236,
-                              fit: BoxFit.cover,
+                              child: Image.network(
+                                widget.mediaUrls![0],
+                                fit: BoxFit.cover,
+                                loadingBuilder: (_, child, progress) =>
+                                    progress == null ? child : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                              ),
                             ),
                           ),
                         ),
@@ -247,16 +308,18 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => showImageViewer(
-                            context,
-                            assetPath: widget.imageAssets![1],
-                          ),
+                          onTap: () => showImageViewer(context, imageUrl: widget.mediaUrls![1]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: Image.asset(
-                              widget.imageAssets![1],
+                            child: SizedBox(
                               height: 236,
-                              fit: BoxFit.cover,
+                              child: Image.network(
+                                widget.mediaUrls![1],
+                                fit: BoxFit.cover,
+                                loadingBuilder: (_, child, progress) =>
+                                    progress == null ? child : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                              ),
                             ),
                           ),
                         ),
@@ -264,10 +327,10 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     ],
                   ),
               ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _buildInteractionItem(
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildInteractionItem(
                     _isLiked
                         ? FluentIcons.heart_24_filled
                         : FluentIcons.heart_24_regular,
@@ -277,23 +340,23 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     onTap: _toggleLike,
                   ),
                   const SizedBox(width: 16),
-                _buildInteractionItem(
-                  FluentIcons.chat_24_regular,
-                  '20',
-                  'berkomentar',
-                  c.grey500,
-                  onTap: widget.onShowComments,
-                ),
-                const Spacer(),
-                _buildInteractionItem(
-                  FluentIcons.send_24_regular,
-                  '',
-                  'membagikan postingan',
-                  c.grey500,
-                  onTap: widget.onShowShare,
-                ),
-                const SizedBox(width: 16),
-                _buildInteractionItem(
+                  _buildInteractionItem(
+                    FluentIcons.chat_24_regular,
+                    '$_commentCount',
+                    'berkomentar',
+                    c.grey500,
+                    onTap: widget.onShowComments,
+                  ),
+                  const Spacer(),
+                  _buildInteractionItem(
+                    FluentIcons.send_24_regular,
+                    '',
+                    'membagikan postingan',
+                    c.grey500,
+                    onTap: widget.onShowShare,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildInteractionItem(
                     _isBookmarked
                         ? FluentIcons.bookmark_24_filled
                         : FluentIcons.bookmark_24_regular,

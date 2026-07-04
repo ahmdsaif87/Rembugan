@@ -905,6 +905,7 @@ class _DiscussionTabState extends State<_DiscussionTab> {
   final _scrollCtrl = ScrollController();
   final _userScrolledUp = false.obs;
   StreamSubscription? _discSub;
+  StreamSubscription? _loadingSub;
 
   @override
   void initState() {
@@ -916,6 +917,9 @@ class _DiscussionTabState extends State<_DiscussionTab> {
         final isNearBottom = _scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 50;
         if (isNearBottom) _afterFrame(_scrollToBottom);
       }
+    });
+    _loadingSub = _ctrl.isLoading.listen((loading) {
+      if (!loading) _afterFrame(_scrollToBottom);
     });
     _scrollCtrl.addListener(_onScrollChanged);
   }
@@ -941,6 +945,7 @@ class _DiscussionTabState extends State<_DiscussionTab> {
   @override
   void dispose() {
     _discSub?.cancel();
+    _loadingSub?.cancel();
     _scrollCtrl.removeListener(_onScrollChanged);
     _msgCtrl.dispose();
     _scrollCtrl.dispose();

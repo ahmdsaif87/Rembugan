@@ -199,8 +199,23 @@ class ProfileService(BaseService):
             for p in open_projects:
                 project_required_skills.update(p.required_skills or [])
 
+        connections = await self.db.connection.find_many(
+            where={
+                "status": "accepted",
+                "OR": [
+                    {"sender_id": user_id},
+                    {"receiver_id": user_id},
+                ],
+            },
+        )
+        connected_ids = set()
+        for c in connections:
+            other = c.receiver_id if c.sender_id == user_id else c.sender_id
+            connected_ids.add(other)
+
+        exclude_ids = [user_id, *connected_ids]
         others = await self.db.user.find_many(
-            where={"id": {"not": user_id}},
+            where={"id": {"notIn": exclude_ids}},
             take=100,
         )
 

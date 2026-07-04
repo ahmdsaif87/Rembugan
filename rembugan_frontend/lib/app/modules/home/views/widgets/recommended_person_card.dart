@@ -78,37 +78,49 @@ class RecommendedPersonCard extends StatelessWidget {
             ),
             const Spacer(),
             Obx(
-              () => AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOutCubic,
-                width: double.infinity,
-                height: 28,
-                child: TextButton(
-                  onPressed: onFollow,
-                  style: TextButton.styleFrom(
-                    backgroundColor: person.isFollowing.value
-                        ? c.grey100
-                        : AppColors.primary,
-                    foregroundColor: person.isFollowing.value
-                        ? c.textSecondary
-                        : AppColors.white,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
+              () {
+                final status = person.connectionStatus.value;
+                final isPending = status == 'pending';
+                final isConnected = status == 'accepted';
+                final bgColor = isConnected
+                    ? c.grey100
+                    : isPending
+                        ? Colors.orange.shade100
+                        : AppColors.primary;
+                final fgColor = isConnected || isPending
+                    ? c.textSecondary
+                    : AppColors.white;
+                final label = isConnected
+                    ? 'Teman'
+                    : isPending
+                        ? 'Tertunda'
+                        : 'Ikuti';
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  width: double.infinity,
+                  height: 28,
+                  child: TextButton(
+                    onPressed: isConnected || isPending ? null : onFollow,
+                    style: TextButton.styleFrom(
+                      backgroundColor: bgColor,
+                      foregroundColor: fgColor,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: fgColor,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    person.isFollowing.value ? 'Mengikuti' : 'Ikuti',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: person.isFollowing.value
-                          ? c.textSecondary
-                          : AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),

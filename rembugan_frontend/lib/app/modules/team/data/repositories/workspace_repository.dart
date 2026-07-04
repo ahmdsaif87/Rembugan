@@ -71,7 +71,7 @@ class WorkspaceRepository {
   Future<List<WorkspaceTask>> getTasks(int projectId) async {
     try {
       final response = await _api.get('/workspace/$projectId/tasks');
-      final data = response.data as Map<String, dynamic>;
+      final data = (response.data as Map<String, dynamic>? ?? {})['data'] as Map<String, dynamic>? ?? {};
       final board = data['board'] as Map<String, dynamic>? ?? {};
       final tasks = <WorkspaceTask>[];
       board.forEach((status, items) {

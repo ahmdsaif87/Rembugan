@@ -4,6 +4,7 @@ import '../../../../core/services/api_client.dart';
 import '../../domain/entities/color_seed.dart';
 import '../../domain/entities/competition.dart';
 import '../../domain/entities/explore_person.dart';
+import '../../domain/entities/feed_showcase.dart';
 import '../../domain/entities/project.dart';
 import '../../domain/repositories/explore_repository.dart';
 
@@ -30,6 +31,38 @@ class ApiExploreRepository implements ExploreRepository {
     } catch (e) {
       debugPrint('ApiExploreRepository.getProjects error: $e');
       return (projects: const <Project>[], total: 0);
+    }
+  }
+
+  @override
+  Future<({List<FeedShowcase> showcases, bool hasNext})> getShowcases({int page = 1, int limit = 10}) async {
+    try {
+      final response = await _api.get('/showcase/', queryParameters: {'page': page, 'limit': limit});
+      final data = response.data as Map<String, dynamic>;
+      final items = data['data'] as List<dynamic>? ?? [];
+      final hasNext = data['has_next'] as bool? ?? false;
+      final showcases = items.map((e) => _mapToShowcase(e as Map<String, dynamic>)).toList();
+      return (showcases: showcases.cast<FeedShowcase>(), hasNext: hasNext);
+    } catch (e) {
+      debugPrint('ApiExploreRepository.getShowcases error: $e');
+      return (showcases: const <FeedShowcase>[], hasNext: false);
+    }
+  }
+
+  @override
+  Future<({List<FeedShowcase> showcases, bool hasNext})> getFollowingShowcases({int page = 1, int limit = 10}) async {
+    try {
+      final response = await _api.get('/showcase/', queryParameters: {
+        'page': page, 'limit': limit, 'tab': 'following',
+      });
+      final data = response.data as Map<String, dynamic>;
+      final items = data['data'] as List<dynamic>? ?? [];
+      final hasNext = data['has_next'] as bool? ?? false;
+      final showcases = items.map((e) => _mapToShowcase(e as Map<String, dynamic>)).toList();
+      return (showcases: showcases.cast<FeedShowcase>(), hasNext: hasNext);
+    } catch (e) {
+      debugPrint('ApiExploreRepository.getFollowingShowcases error: $e');
+      return (showcases: const <FeedShowcase>[], hasNext: false);
     }
   }
 
@@ -214,6 +247,26 @@ class ApiExploreRepository implements ExploreRepository {
       avatarUrl: avatarUrl,
       tags: skills,
       matchLabel: 'Rekomendasi untukmu',
+    );
+  }
+
+  static FeedShowcase _mapToShowcase(Map<String, dynamic> raw) {
+    return FeedShowcase(
+      id: raw['id'] as String? ?? '',
+      authorId: raw['author_id'] as String? ?? '',
+      authorName: raw['author_name'] as String? ?? '',
+      authorPhoto: raw['author_photo'] as String?,
+      authorMajor: raw['author_major'] as String?,
+      authorFaculty: raw['author_faculty'] as String?,
+      content: raw['content'] as String? ?? '',
+      mediaUrls: (raw['media_urls'] as List<dynamic>?)?.cast<String>() ?? [],
+      tags: (raw['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      likesCount: raw['likes_count'] as int? ?? 0,
+      commentsCount: raw['comments_count'] as int? ?? 0,
+      likedByMe: raw['liked_by_me'] as bool? ?? false,
+      matchScore: raw['match_score'] as int? ?? 0,
+      connectionStatus: raw['connection_status'] as String?,
+      createdAt: raw['created_at'] as String? ?? '',
     );
   }
 

@@ -8,6 +8,15 @@ class RecommendedCompetitionCard extends StatelessWidget {
   final int index;
   final VoidCallback onTap;
 
+  String _fallbackAsset() {
+    return switch (index % 4) {
+      0 => 'lib/assets/img/contoh poster1.jpeg',
+      1 => 'lib/assets/img/contoh poster2.jpeg',
+      2 => 'lib/assets/img/contoh poster3.jpeg',
+      _ => 'lib/assets/img/contoh poster4.jpeg',
+    };
+  }
+
   const RecommendedCompetitionCard({
     required this.competition,
     required this.index,
@@ -17,22 +26,24 @@ class RecommendedCompetitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final posterAsset = switch (index % 4) {
-      0 => 'lib/assets/img/contoh poster1.jpeg',
-      1 => 'lib/assets/img/contoh poster2.jpeg',
-      2 => 'lib/assets/img/contoh poster3.jpeg',
-      _ => 'lib/assets/img/contoh poster4.jpeg',
-    };
+    final posterUrl = competition.posterUrl;
+    final posterWidget = posterUrl.isNotEmpty
+        ? DecorationImage(
+            image: NetworkImage(posterUrl),
+            fit: BoxFit.cover,
+            onError: (_, __) {},
+          )
+        : DecorationImage(
+            image: AssetImage(_fallbackAsset()),
+            fit: BoxFit.cover,
+          );
 
     return Container(
       width: 250,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.white.withValues(alpha: 0.15)),
-        image: DecorationImage(
-          image: AssetImage(posterAsset),
-          fit: BoxFit.cover,
-        ),
+        image: posterWidget,
       ),
       child: Material(
         color: AppColors.transparent,
