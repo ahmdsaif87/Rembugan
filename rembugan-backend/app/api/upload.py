@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from app.core.response import response_success
 from app.core.security import verify_token
 from app.services.storage import upload_image_to_cloudinary
 
@@ -13,7 +14,6 @@ async def upload_image(
     file: UploadFile = File(...),
     user_token: dict = Depends(verify_token),
 ):
-    """Upload gambar (jpeg, png, webp, gif). Validasi via ekstensi filename."""
     ext = (file.filename or "").lower()
     if not any(ext.endswith(e) for e in ALLOWED_IMAGE_EXTENSIONS):
         raise HTTPException(status_code=400, detail="File harus berupa gambar (jpeg/png/webp/gif)")
@@ -21,10 +21,7 @@ async def upload_image(
     image_bytes = await file.read()
     url = await upload_image_to_cloudinary(image_bytes, folder_name="rembugan_uploads")
 
-    return {
-        "status": "success",
-        "data": {"url": url, "filename": file.filename, "type": "image"},
-    }
+    return response_success({"url": url, "filename": file.filename, "type": "image"})
 
 
 @router.post("/file", summary="Upload Dokumen")
@@ -32,7 +29,6 @@ async def upload_document(
     file: UploadFile = File(...),
     user_token: dict = Depends(verify_token),
 ):
-    """Upload dokumen (pdf, doc, docx, txt, xls, xlsx). Validasi via ekstensi filename."""
     ext = (file.filename or "").lower()
     if not any(ext.endswith(e) for e in ALLOWED_DOC_EXTENSIONS):
         raise HTTPException(
@@ -46,12 +42,9 @@ async def upload_document(
     size_kb = len(content) / 1024
     size_str = f"{size_kb:.0f} KB" if size_kb < 1024 else f"{size_kb / 1024:.1f} MB"
 
-    return {
-        "status": "success",
-        "data": {
-            "url": url,
-            "filename": file.filename,
-            "size": size_str,
-            "type": "document",
-        },
-    }
+    return response_success({
+        "url": url,
+        "filename": file.filename,
+        "size": size_str,
+        "type": "document",
+    })

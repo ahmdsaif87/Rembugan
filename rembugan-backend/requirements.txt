@@ -20,10 +20,16 @@ cloudinary
 PyJWT
 bcrypt
 
-# 4. AI & PDF PROCESSING (Onboarding Module)
+# 4. AI & PDF PROCESSING & EMBEDDING
 PyMuPDF
 mistralai
-# 5. TESTING
+fastembed
+
+# 5. CACHE & RATE LIMIT
+redis
+slowapi
+
+# 6. TESTING
 pytest
 pytest-asyncio
 httpx

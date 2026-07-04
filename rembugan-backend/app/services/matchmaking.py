@@ -5,9 +5,8 @@ def calculate_match_score(
     project_interest: str = "",
 ) -> int:
     if not required_skills and not project_interest:
-        return 0
+        return 100
     if not user_skills and not user_interest:
-
         return 0
 
     user_set = {s.lower().strip() for s in user_skills}

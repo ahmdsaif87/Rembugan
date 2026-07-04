@@ -2,11 +2,16 @@ import os
 import time
 import uuid
 import asyncio
+import traceback
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.config import setup_cloudinary
 from app.core.database import db
+from app.core.cache import cache
+from app.core.tasks import fire_and_forget
 from app.core.rate_limit import limiter
 from app.core.logger import setup_logging, get_logger
 from app.services.embedding import preload_embedding_model
@@ -29,11 +34,13 @@ setup_cloudinary()
 async def lifespan(app: FastAPI):
     await db.connect()
     logger.info("Database terhubung!")
+    await cache.init()
+    logger.info(f"Cache backend: {cache.stats()['backend']}")
 
-    # Preload embedding model in background agar tidak nge-lambatin request pertama
-    asyncio.create_task(preload_embedding_model())
+    fire_and_forget(preload_embedding_model(), "preload_embedding_model")
 
     yield
+    await cache.disconnect()
     await db.disconnect()
     logger.info("Database terputus.")
 
@@ -51,6 +58,36 @@ app = FastAPI(
 # Daftarkan Rate Limiter
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+# ── Global Exception Handlers ──
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"status": "error", "detail": exc.detail},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    detail = errors[0]["msg"] if errors else "Input tidak valid"
+    return JSONResponse(
+        status_code=422,
+        content={"status": "error", "detail": detail, "errors": errors},
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error: {exc}\n{traceback.format_exc()}")
+    return JSONResponse(
+        status_code=500,
+        content={"status": "error", "detail": "Terjadi kesalahan internal server."},
+    )
+
 
 # Daftarkan Semua Endpoint
 app.include_router(auth.router)

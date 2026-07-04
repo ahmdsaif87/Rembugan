@@ -38,6 +38,9 @@ class MockUser:
             email_verified=True,
             password="$2b$12$hashedpassword",
             full_name=TEST_USER_FULL_NAME,
+            nim="1234567890",
+            faculty="Fakultas Teknik",
+            major="Informatika",
             handle=None,
             bio="A test bio",
             interest="Tech Enthusiast",
@@ -45,6 +48,7 @@ class MockUser:
             cover_url=None,
             social_links=None,
             is_onboarded=False,
+            embedding=None,
             connection_count=0,
             project_count=0,
             skills=[],
@@ -69,8 +73,10 @@ class MockProject:
             required_skills=["Python", "FastAPI"],
             status="open",
             interest="Tech Enthusiast",
+            category=None,
             deadline=None,
-            total_slots=None,
+            total_slots=5,
+            embedding=None,
             owner=MockUser(),
             members=[],
             tasks=[],
@@ -92,6 +98,7 @@ class MockTask:
             assignee=None,
             assignee_id=None,
             deadline=None,
+            assignees=[],
             created_at=NOW,
         )
         defaults.update(kwargs)
@@ -108,6 +115,7 @@ class MockShowcase:
             media_urls=[],
             tags=["test"],
             linked_project_id=None,
+            embedding=None,
             author=MockUser(),
             project=None,
             likes=[],
@@ -184,6 +192,57 @@ class MockExperience:
             setattr(self, k, v)
 
 
+class MockWorkspaceMessage:
+    def __init__(self, **kwargs):
+        defaults = dict(
+            id=1,
+            project_id=1,
+            content="Test message",
+            type="text",
+            sender_id=TEST_USER_ID,
+            sender=MockUser(),
+            attachment_url=None,
+            attachment_name=None,
+            attachment_size=None,
+            reply_to_id=None,
+            created_at=NOW,
+        )
+        defaults.update(kwargs)
+        for k, v in defaults.items():
+            setattr(self, k, v)
+
+
+class MockProjectFile:
+    def __init__(self, **kwargs):
+        defaults = dict(
+            id=1,
+            project_id=1,
+            user_id=TEST_USER_ID,
+            name="test_file.pdf",
+            url="https://example.com/file.pdf",
+            size=1024,
+            mime_type="application/pdf",
+            uploader=MockUser(),
+            created_at=NOW,
+        )
+        defaults.update(kwargs)
+        for k, v in defaults.items():
+            setattr(self, k, v)
+
+
+class MockTaskAssignee:
+    def __init__(self, **kwargs):
+        defaults = dict(
+            id=1,
+            task_id=1,
+            user_id=TEST_USER_ID,
+            user=MockUser(),
+        )
+        defaults.update(kwargs)
+        for k, v in defaults.items():
+            setattr(self, k, v)
+
+
 class MockProjectMember:
     def __init__(self, **kwargs):
         defaults = dict(
@@ -203,7 +262,7 @@ class MockPrisma:
         for model in [
             "user", "skill", "userskill", "project", "task",
             "showcase", "showcaselike", "showcasecomment",
-            "projectapplication", "projectmember", "message",
+            "projectapplication", "projectmember", "projectfile", "taskassignee", "message",
             "notification", "connection", "experience",
             "otpcode",
         ]:
@@ -296,13 +355,27 @@ def mock_jwt():
 
 
 @pytest.fixture(autouse=True)
+def mock_embeddings():
+    with patch("app.services.showcase_service.reembed_showcase"), \
+         patch("app.services.project_service.reembed_project"), \
+         patch("app.services.project_service.reembed_user"), \
+         patch("app.services.profile_service.reembed_user"), \
+         patch("app.services.competitions_service.generate", return_value=[0.1] * 384):
+        yield
+
+
+@pytest.fixture(autouse=True)
 def mock_mongodb():
     mock_collection = MagicMock()
-    mock_collection.find.return_value.to_list = AsyncMock(return_value=[])
+    mock_cursor = AsyncMock()
+    mock_cursor.to_list = AsyncMock(return_value=[])
+    mock_collection.find.return_value.limit.return_value = mock_cursor
     mock_collection.count_documents = AsyncMock(return_value=0)
-    with patch("app.api.competitions.collection", mock_collection):
-        with patch("app.api.admin.get_competition_collection", return_value=mock_collection):
-            yield mock_collection
+    mock_collection.delete_one = AsyncMock(return_value=MagicMock(deleted_count=1))
+    with patch("app.services.fyp_service.get_competition_collection", return_value=mock_collection), \
+         patch("app.services.competitions_service.get_competition_collection", return_value=mock_collection), \
+         patch("app.services.admin_service.get_competition_collection", return_value=mock_collection):
+        yield mock_collection
 
 
 @pytest.fixture
