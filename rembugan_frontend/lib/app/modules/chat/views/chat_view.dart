@@ -7,6 +7,7 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/chat_controller.dart';
 
@@ -143,7 +144,7 @@ class ChatView extends GetView<ChatController> {
                     ),
                   ),
                   if (snap.connectionState != ConnectionState.done)
-                    const Expanded(child: Center(child: CircularProgressIndicator()))
+                    const Expanded(child: SkeletonChatList())
                   else if (connections.isEmpty)
                     Expanded(
                       child: Center(
@@ -406,6 +407,6 @@ class _ChatShimmer extends StatelessWidget {
   const _ChatShimmer();
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    return const SkeletonChatList();
   }
 }

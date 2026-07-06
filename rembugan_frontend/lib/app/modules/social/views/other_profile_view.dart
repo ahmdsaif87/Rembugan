@@ -11,7 +11,10 @@ import '../../../core/theme/theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
+import '../../home/views/widgets/post_card_widget.dart';
+import 'comment_view.dart';
 
 class OtherProfileView extends StatefulWidget {
   const OtherProfileView({super.key});
@@ -28,6 +31,7 @@ class _OtherProfileViewState extends State<OtherProfileView> {
   bool _isIncoming = false;
   int _connectionCount = 0;
   int _projectCount = 0;
+  final Set<String> _likedShowcaseIds = {};
 
   final _api = Get.find<ApiClient>();
 
@@ -171,6 +175,16 @@ class _OtherProfileViewState extends State<OtherProfileView> {
     ));
   }
 
+  void _onToggleLike(String showcaseId) {
+    setState(() {
+      if (_likedShowcaseIds.contains(showcaseId)) {
+        _likedShowcaseIds.remove(showcaseId);
+      } else {
+        _likedShowcaseIds.add(showcaseId);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
@@ -178,7 +192,7 @@ class _OtherProfileViewState extends State<OtherProfileView> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: c.background,
-        body: const Center(child: CircularProgressIndicator()),
+        body: const SkeletonProfile(),
       );
     }
 
@@ -236,6 +250,9 @@ class _OtherProfileViewState extends State<OtherProfileView> {
                   experiences: _experiences,
                   portfolios: _portfolios,
                   projectHistory: _projectHistory,
+                  likedShowcaseIds: _likedShowcaseIds,
+                  onToggleLike: _onToggleLike,
+                  userId: _id,
                 ),
               ],
             ),
@@ -784,6 +801,9 @@ class _ProfileTabContent extends StatelessWidget {
     required this.experiences,
     required this.portfolios,
     required this.projectHistory,
+    required this.likedShowcaseIds,
+    required this.onToggleLike,
+    required this.userId,
   });
 
   final int activeIndex;
@@ -794,6 +814,9 @@ class _ProfileTabContent extends StatelessWidget {
   final List<ProfileExperience> experiences;
   final List<Map<String, dynamic>> portfolios;
   final List<Map<String, dynamic>> projectHistory;
+  final Set<String> likedShowcaseIds;
+  final void Function(String showcaseId) onToggleLike;
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
@@ -867,17 +890,28 @@ class _ProfileTabContent extends StatelessWidget {
       );
     }
 
-      return Column(
-        children: portfolios.map((p) {
-          return _PostCard(
-            avatarUrl: avatarUrl,
-            name: name,
-            subtitle: '$role - ${formatDate(p['created_at'] as String?)}',
-            content: p['content'] as String? ?? '',
-            likeCount: '${p['likes_count'] ?? 0}',
-            commentCount: '${p['comments_count'] ?? 0}',
-          );
-        }).toList(),
+    return Column(
+      children: portfolios.map((p) {
+        final showcaseId = p['id']?.toString() ?? '';
+        final isLiked = likedShowcaseIds.contains(showcaseId);
+        return PostCardWidget(
+          showcaseId: showcaseId,
+          authorId: userId,
+          avatarUrl: avatarUrl,
+          name: name,
+          subtitle: '$role - ${formatDate(p['created_at'] as String?)}',
+          content: p['content'] as String? ?? '',
+          mediaUrls: (p['media_urls'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+          initialLikes: p['likes_count'] as int? ?? 0,
+          initialComments: p['comments_count'] as int? ?? 0,
+          isLiked: isLiked,
+          showFollowButton: false,
+          onShowComments: () => showCommentsSheet(context, showcaseId),
+          onShowShare: () => AppToast.info('Bagikan fitur akan segera hadir', title: 'Bagikan'),
+          onToggleLike: () => onToggleLike(showcaseId),
+          onTapProfile: () {},
+        );
+      }).toList(),
     );
   }
 }
@@ -1063,199 +1097,6 @@ class _ProjectHistoryList extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _PostCard extends StatefulWidget {
-  const _PostCard({
-    this.avatarUrl,
-    required this.name,
-    required this.subtitle,
-    required this.content,
-    required this.likeCount,
-    required this.commentCount,
-  });
-
-  final String? avatarUrl;
-  final String name;
-  final String subtitle;
-  final String content;
-  final String likeCount;
-  final String commentCount;
-
-  @override
-  State<_PostCard> createState() => _PostCardState();
-}
-
-class _PostCardState extends State<_PostCard> {
-  bool _isLiked = false;
-  bool _isBookmarked = false;
-  late int _likeCount;
-
-  @override
-  void initState() {
-    super.initState();
-    _likeCount = int.tryParse(widget.likeCount) ?? 0;
-  }
-
-  void _toggleLike() {
-    setState(() {
-      _isLiked = !_isLiked;
-      if (_isLiked) {
-        _likeCount++;
-      } else {
-        _likeCount--;
-      }
-    });
-  }
-
-  void _toggleBookmark() {
-    setState(() {
-      _isBookmarked = !_isBookmarked;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppShadows.soft,
-      ),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AppAvatar(photoUrl: widget.avatarUrl, radius: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                          Text(
-                            widget.name,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w800,
-                              color: c.grey900,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppFonts.satoshiStyle(
-                              fontSize: 11.5,
-                              color: c.grey400,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    FluentIcons.more_vertical_24_regular,
-                    color: c.grey400,
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                widget.content,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 13.5,
-                  color: c.grey900,
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildInteractionItem(
-                    _isLiked
-                        ? FluentIcons.heart_24_filled
-                        : FluentIcons.heart_24_regular,
-                    '$_likeCount',
-                    _isLiked ? AppColors.error500 : c.grey500,
-                    onTap: _toggleLike,
-                  ),
-                  const SizedBox(width: 22),
-                  _buildInteractionItem(
-                    FluentIcons.chat_24_regular,
-                    widget.commentCount,
-                    c.grey500,
-                    onTap: () {},
-                  ),
-                  const Spacer(),
-                  _buildInteractionItem(
-                    FluentIcons.send_24_regular,
-                    '',
-                    c.grey500,
-                    onTap: () {},
-                  ),
-                  const SizedBox(width: 20),
-                  _buildInteractionItem(
-                    _isBookmarked
-                        ? FluentIcons.bookmark_24_filled
-                        : FluentIcons.bookmark_24_regular,
-                    '',
-                    _isBookmarked ? AppColors.warning500 : c.grey500,
-                    onTap: _toggleBookmark,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInteractionItem(
-    IconData icon,
-    String count,
-    Color activeColor, {
-    required VoidCallback onTap,
-  }) {
-    final c = AppC.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 2,
-          vertical: AppSpacing.xs,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: activeColor, size: 20),
-            if (count.isNotEmpty) ...[
-              const SizedBox(width: 6),
-              Text(
-                count,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 12,
-                  color: c.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

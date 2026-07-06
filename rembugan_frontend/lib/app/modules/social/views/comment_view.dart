@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../controllers/comment_controller.dart';
 
 void showCommentsSheet(BuildContext context, String showcaseId) {
@@ -79,7 +80,7 @@ class _CommentSheet extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SkeletonFeed();
                 }
                 if (controller.comments.isEmpty) {
                   return Center(
@@ -115,13 +116,9 @@ class _CommentSheet extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
+          AppAvatar(
+            photoUrl: comment.photoUrl,
             radius: 18,
-            backgroundImage: comment.photoUrl != null ? NetworkImage(comment.photoUrl!) : null,
-            child: comment.photoUrl == null ? Text(
-              comment.fullName.isNotEmpty ? comment.fullName[0].toUpperCase() : '?',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ) : null,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -187,13 +184,9 @@ class _CommentSheet extends StatelessWidget {
           const SizedBox(width: 10),
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: CircleAvatar(
+            child: AppAvatar(
+              photoUrl: reply.photoUrl,
               radius: 10,
-              backgroundImage: reply.photoUrl != null ? NetworkImage(reply.photoUrl!) : null,
-              child: reply.photoUrl == null ? Text(
-                reply.fullName.isNotEmpty ? reply.fullName[0].toUpperCase() : '?',
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600),
-              ) : null,
             ),
           ),
           const SizedBox(width: 6),

@@ -9,6 +9,7 @@ import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/explore_controller.dart';
 import '../domain/entities/competition.dart';
@@ -215,11 +216,7 @@ class ExploreView extends GetView<ExploreController> {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                  child: Skeleton(width: 24, height: 24),
                 ),
               );
             }

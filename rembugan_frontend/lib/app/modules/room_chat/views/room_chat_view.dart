@@ -6,6 +6,7 @@ import 'dart:async';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/preview_page.dart';
 
 import '../controllers/room_chat_controller.dart';
@@ -530,7 +531,6 @@ class _RoomChatViewState extends State<RoomChatView> {
                               return Container(
                                 width: 220, height: 160,
                                 color: c.surfaceSecondary,
-                                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                               );
                             },
                             errorBuilder: (_, __, ___) => _buildFileCard(c, msg),
@@ -726,6 +726,6 @@ class _ChatShimmer extends StatelessWidget {
   const _ChatShimmer();
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    return const SkeletonChatList();
   }
 }

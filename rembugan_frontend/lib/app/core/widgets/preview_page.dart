@@ -44,7 +44,7 @@ class ImagePreviewPage extends StatelessWidget {
             fit: BoxFit.contain,
             loadingBuilder: (_, child, progress) {
               if (progress == null) return child;
-              return const Center(child: CircularProgressIndicator(color: Colors.white));
+              return Container(color: Colors.grey.shade900);
             },
             errorBuilder: (_, __, ___) =>
                 const Icon(Icons.broken_image, color: Colors.white54, size: 64),
@@ -157,7 +157,15 @@ class _PdfPreviewPageState extends State<PdfPreviewPage> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+      return Center(
+        child: Container(
+          width: 200, height: 280,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade900,
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
     }
     if (_error != null || _localPath == null) {
       return Center(

@@ -69,18 +69,10 @@ class _PostCardWidgetState extends State<PostCardWidget> {
   @override
   void didUpdateWidget(PostCardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.isLiked != widget.isLiked) {
-      _isLiked = widget.isLiked;
-    }
-    if (oldWidget.initialLikes != widget.initialLikes) {
-      _likeCount = widget.initialLikes;
-    }
-    if (oldWidget.initialComments != widget.initialComments) {
-      _commentCount = widget.initialComments;
-    }
-    if (oldWidget.connectionStatus != widget.connectionStatus) {
-      _connectionStatus = widget.connectionStatus;
-    }
+    if (oldWidget.isLiked != widget.isLiked) _isLiked = widget.isLiked;
+    if (oldWidget.initialLikes != widget.initialLikes) _likeCount = widget.initialLikes;
+    if (oldWidget.initialComments != widget.initialComments) _commentCount = widget.initialComments;
+    if (oldWidget.connectionStatus != widget.connectionStatus) _connectionStatus = widget.connectionStatus;
   }
 
   bool get _isConnected => _connectionStatus == 'accepted';
@@ -92,18 +84,14 @@ class _PostCardWidgetState extends State<PostCardWidget> {
     try {
       final api = Get.find<ApiClient>();
       if (_isConnected) {
-        // Unfollow — delete connection (not implemented yet, just toast)
-        AppToast.info('Koneksi dengan ${widget.name} telah dihapus.',
-            title: 'Koneksi Dihapus');
+        AppToast.info('Koneksi dengan ${widget.name} telah dihapus.', title: 'Koneksi Dihapus');
         setState(() => _connectionStatus = null);
       } else if (_isPending) {
-        AppToast.info('Permintaan pertemanan sudah dikirim ke ${widget.name}.',
-            title: 'Tertunda');
+        AppToast.info('Permintaan pertemanan sudah dikirim ke ${widget.name}.', title: 'Tertunda');
       } else {
         await api.post('/connections/send/${widget.authorId}');
         setState(() => _connectionStatus = 'pending');
-        AppToast.info('Permintaan pertemanan terkirim ke ${widget.name}.',
-            title: 'Permintaan Terkirim');
+        AppToast.info('Permintaan pertemanan terkirim ke ${widget.name}.', title: 'Permintaan Terkirim');
       }
     } catch (e) {
       AppToast.error('Gagal mengirim permintaan. Coba lagi.');
@@ -115,23 +103,15 @@ class _PostCardWidgetState extends State<PostCardWidget> {
   void _toggleLike() {
     setState(() {
       _isLiked = !_isLiked;
-      if (_isLiked) {
-        _likeCount++;
-      } else {
-        _likeCount--;
-      }
+      _likeCount += _isLiked ? 1 : -1;
     });
     widget.onToggleLike?.call();
   }
 
   void _toggleBookmark() {
-    setState(() {
-      _isBookmarked = !_isBookmarked;
-    });
+    setState(() => _isBookmarked = !_isBookmarked);
     AppToast.info(
-      _isBookmarked
-          ? 'Postingan berhasil disimpan ke penanda kamu.'
-          : 'Postingan dihapus dari penanda kamu.',
+      _isBookmarked ? 'Postingan berhasil disimpan ke penanda kamu.' : 'Postingan dihapus dari penanda kamu.',
       title: _isBookmarked ? 'Postingan disimpan' : 'Postingan dihapus',
     );
   }
@@ -146,267 +126,287 @@ class _PostCardWidgetState extends State<PostCardWidget> {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
-        onTap: widget.onShowComments,
-        child: Container(
-          color: c.surface,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Material(
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
+            child: Row(
+              children: [
+                Material(
+                  color: AppColors.transparent,
+                  child: InkWell(
+                    onTap: widget.onTapProfile,
+                    borderRadius: BorderRadius.circular(20),
+                    child: AppAvatar(
+                      photoUrl: widget.avatarUrl.startsWith('http') ? widget.avatarUrl : null,
+                      radius: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Material(
                     color: AppColors.transparent,
                     child: InkWell(
                       onTap: widget.onTapProfile,
-                      borderRadius: BorderRadius.circular(20),
-                      child: AppAvatar(
-                        photoUrl: widget.avatarUrl.startsWith('http') ? widget.avatarUrl : null,
-                        radius: 20,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: c.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Row(
+                            children: [
+                              Text(
+                                widget.subtitle,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 11,
+                                  color: c.textTertiary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                FluentIcons.globe_24_regular,
+                                size: 11,
+                                color: c.textTertiary,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Material(
-                      color: AppColors.transparent,
-                      child: InkWell(
-                        onTap: widget.onTapProfile,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: c.textPrimary,
+                ),
+                if (widget.showFollowButton)
+                  SizedBox(
+                    height: 28,
+                    child: TextButton(
+                      onPressed: _toggleFollow,
+                      style: TextButton.styleFrom(
+                        backgroundColor: _isConnected
+                            ? c.grey100
+                            : _isPending
+                                ? AppColors.warning50
+                                : AppColors.primary,
+                        foregroundColor: _isConnected
+                            ? c.textSecondary
+                            : _isPending
+                                ? AppColors.warning700
+                                : AppColors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                        ),
+                      ),
+                      child: _followingLoading
+                          ? SizedBox(
+                              width: 14, height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _isConnected ? c.textSecondary : AppColors.white,
                               ),
-                            ),
-                            const SizedBox(height: 1),
-                            Text(
-                              widget.subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            )
+                          : Text(
+                              _followLabel,
                               style: AppFonts.satoshiStyle(
                                 fontSize: 12,
-                                color: c.grey500,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w700,
+                                color: _isConnected
+                                    ? c.textSecondary
+                                    : _isPending
+                                        ? AppColors.warning700
+                                        : AppColors.white,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
                     ),
                   ),
-                  if (widget.showFollowButton)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOutCubic,
-                      height: 28,
-                      child: TextButton(
-                        onPressed: _toggleFollow,
-                        style: TextButton.styleFrom(
-                          backgroundColor: _isConnected
-                              ? c.grey100
-                              : _isPending
-                                  ? AppColors.warning50
-                                  : AppColors.primary,
-                          foregroundColor: _isConnected
-                              ? c.textSecondary
-                              : _isPending
-                                  ? AppColors.warning700
-                                  : AppColors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.xs),
-                          ),
-                        ),
-                        child: _followingLoading
-                            ? SizedBox(
-                                width: 14, height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: _isConnected ? c.textSecondary : AppColors.white,
-                                ),
-                              )
-                            : Text(
-                                _followLabel,
-                                style: AppFonts.satoshiStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: _isConnected
-                                      ? c.textSecondary
-                                      : _isPending
-                                          ? AppColors.warning700
-                                          : AppColors.white,
-                                ),
-                              ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
+              ],
+            ),
+          ),
+
+          // ── Content ──
+          if (widget.content.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Text(
                 widget.content,
-                maxLines: 8,
-                overflow: TextOverflow.ellipsis,
                 style: AppFonts.satoshiStyle(
                   fontSize: 14,
                   color: c.textPrimary,
-                  height: 1.38,
+                  height: 1.45,
                 ),
               ),
-              if (widget.mediaUrls != null && widget.mediaUrls!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                if (widget.mediaUrls!.length == 1)
-                  GestureDetector(
-                    onTap: () => showImageViewer(context, imageUrl: widget.mediaUrls!.first),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: SizedBox(
+            ),
+
+          // ── Media ──
+          if (widget.mediaUrls != null && widget.mediaUrls!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: widget.mediaUrls!.length == 1 ? 373 : 236,
+              child: widget.mediaUrls!.length == 1
+                  ? GestureDetector(
+                      onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 0),
+                      child: Image.network(
+                        widget.mediaUrls!.first,
                         width: double.infinity,
                         height: 373,
-                        child: Image.network(
-                          widget.mediaUrls!.first,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (_, child, progress) =>
-                              progress == null ? child : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                        ),
+                        fit: BoxFit.cover,
+                        loadingBuilder: (_, child, progress) =>
+                            progress == null ? child : Container(color: c.surfaceSecondary),
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 0),
+                            child: Image.network(
+                              widget.mediaUrls![0],
+                              height: 236,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (_, child, progress) =>
+                                  progress == null ? child : Container(color: c.surfaceSecondary),
+                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 1),
+                            child: Image.network(
+                              widget.mediaUrls![1],
+                              height: 236,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (_, child, progress) =>
+                                  progress == null ? child : Container(color: c.surfaceSecondary),
+                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  )
-                else if (widget.mediaUrls!.length == 2)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => showImageViewer(context, imageUrl: widget.mediaUrls![0]),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: SizedBox(
-                              height: 236,
-                              child: Image.network(
-                                widget.mediaUrls![0],
-                                fit: BoxFit.cover,
-                                loadingBuilder: (_, child, progress) =>
-                                    progress == null ? child : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => showImageViewer(context, imageUrl: widget.mediaUrls![1]),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: SizedBox(
-                              height: 236,
-                              child: Image.network(
-                                widget.mediaUrls![1],
-                                fit: BoxFit.cover,
-                                loadingBuilder: (_, child, progress) =>
-                                    progress == null ? child : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            ),
+          ],
+
+          // ── Action Buttons ──
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE4E6EB))),
+            ),
+            child: Row(
+              children: [
+                _FeedActionButton(
+                  icon: FluentIcons.heart_24_regular,
+                  activeIcon: FluentIcons.heart_24_filled,
+                  count: '$_likeCount',
+                  isActive: _isLiked,
+                  activeColor: AppColors.error500,
+                  onTap: _toggleLike,
+                ),
+                _FeedActionButton(
+                  icon: FluentIcons.chat_24_regular,
+                  activeIcon: FluentIcons.chat_24_regular,
+                  count: '$_commentCount',
+                  isActive: false,
+                  activeColor: c.textSecondary,
+                  onTap: widget.onShowComments,
+                ),
+                _FeedActionButton(
+                  icon: FluentIcons.share_24_regular,
+                  activeIcon: FluentIcons.share_24_regular,
+                  count: '',
+                  isActive: false,
+                  activeColor: c.textSecondary,
+                  onTap: widget.onShowShare,
+                ),
               ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildInteractionItem(
-                    _isLiked
-                        ? FluentIcons.heart_24_filled
-                        : FluentIcons.heart_24_regular,
-                    '$_likeCount',
-                    'menyukai postingan',
-                    _isLiked ? AppColors.error500 : c.grey500,
-                    onTap: _toggleLike,
-                  ),
-                  const SizedBox(width: 16),
-                  _buildInteractionItem(
-                    FluentIcons.chat_24_regular,
-                    '$_commentCount',
-                    'berkomentar',
-                    c.grey500,
-                    onTap: widget.onShowComments,
-                  ),
-                  const Spacer(),
-                  _buildInteractionItem(
-                    FluentIcons.send_24_regular,
-                    '',
-                    'membagikan postingan',
-                    c.grey500,
-                    onTap: widget.onShowShare,
-                  ),
-                  const SizedBox(width: 16),
-                  _buildInteractionItem(
-                    _isBookmarked
-                        ? FluentIcons.bookmark_24_filled
-                        : FluentIcons.bookmark_24_regular,
-                    '',
-                    'menyimpan postingan',
-                    _isBookmarked ? AppColors.warning500 : c.grey500,
-                    onTap: _toggleBookmark,
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
+
+          const SizedBox(height: 6),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildInteractionItem(
-    IconData icon,
-    String count,
-    String feature,
-    Color activeColor, {
-    required VoidCallback onTap,
-  }) {
+class _FeedActionButton extends StatelessWidget {
+  const _FeedActionButton({
+    required this.icon,
+    required this.activeIcon,
+    required this.count,
+    required this.isActive,
+    required this.activeColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final IconData activeIcon;
+  final String count;
+  final bool isActive;
+  final Color activeColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 2,
-            vertical: AppSpacing.xs,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: activeColor, size: 22),
-              if (count.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Text(
-                  count,
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 12,
-                    color: c.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+    return Expanded(
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.xs),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isActive ? activeIcon : icon,
+                  size: 18,
+                  color: isActive ? activeColor : c.textSecondary,
                 ),
+                if (count.isNotEmpty) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    count,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isActive ? activeColor : c.textSecondary,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

@@ -28,6 +28,7 @@ docs/
 .cursor/
 .gemini/
 .impeccable/
+.opencode/
 
 # Build artifacts
 rembugan_frontend/android/build/

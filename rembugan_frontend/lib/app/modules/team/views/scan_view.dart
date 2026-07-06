@@ -7,6 +7,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/skeleton.dart';
 
 class ScanView extends StatefulWidget {
   const ScanView({super.key});
@@ -222,7 +223,7 @@ class _JoinPreviewState extends State<_JoinPreview> {
             if (_isLoading)
               const Padding(
                 padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
+                child: Skeleton(width: 200, height: 32),
               )
             else ...[
               Icon(

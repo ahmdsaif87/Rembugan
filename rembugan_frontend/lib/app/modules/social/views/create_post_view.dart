@@ -5,8 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/services/api_client.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/app_toast.dart';
 import 'social_components.dart';
 
 class CreatePostView extends StatefulWidget {
@@ -19,61 +23,64 @@ class CreatePostView extends StatefulWidget {
 class _CreatePostViewState extends State<CreatePostView> {
   bool _isOffer = false;
   bool _isLoading = false;
-  String? _selectedMajor;
+  String _uploadProgress = '';
   String? _selectedCategory;
   final _skills = <String>[];
+  final _tags = <String>[];
   final _images = <XFile>[];
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
   final _skillTextController = TextEditingController();
-  static const _majors = [
-    'Teknik Informatika',
-    'Sistem Informasi',
-    'Teknik Komputer',
-    'Teknik Elektro',
-    'Teknik Industri',
-    'Desain Komunikasi Visual',
-    'Manajemen',
-    'Akuntansi',
-    'Ilmu Komunikasi',
-    'Psikologi',
-    'Pendidikan Bahasa Inggris',
-    'Hukum',
-  ];
-  static const _skillOptions = [
-    'Flutter',
-    'Dart',
-    'Firebase',
-    'UI/UX',
-    'Figma',
-    'React',
-    'Node.js',
-    'Python',
-    'Laravel',
-    'REST API',
-    'Copywriting',
-    'Research',
-  ];
-  static const _categories = [
-    'Mobile App',
-    'Web App',
-    'AI / ML',
-    'UI / UX Design',
-    'Backend API',
-    'Data Science',
-    'IoT / Hardware',
-    'Game Development',
-    'DevOps',
-    'Research',
-    'Content Creation',
-    'Lainnya',
-  ];
+  final _contentController = TextEditingController();
+  final _projectNameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _slotsController = TextEditingController();
+  final _tagTextController = TextEditingController();
+
+  List<String> _skillOptions = [];
+  List<String> _categories = [];
+  List<String> _tagOptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSuggestions();
+  }
+
+  @override
+  void dispose() {
+    _contentController.dispose();
+    _projectNameController.dispose();
+    _descriptionController.dispose();
+    _slotsController.dispose();
+    _tagTextController.dispose();
+    _skillTextController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchSuggestions() async {
+    try {
+      final api = Get.find<ApiClient>();
+      final res = await api.get('/projects/suggestions');
+      final data = (res.data as Map<String, dynamic>?)?['data'] as Map<String, dynamic>?;
+      if (data != null) {
+        setState(() {
+          _categories = (data['categories'] as List<dynamic>?)?.cast<String>() ?? [];
+          _skillOptions = (data['skills'] as List<dynamic>?)?.cast<String>() ?? [];
+          _tagOptions = (data['tags'] as List<dynamic>?)?.cast<String>() ?? [];
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch suggestions: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     final user = Get.find<AuthService>().currentUser.value;
     final userName = user?.fullName ?? 'Pengguna';
+    final photoUrl = Get.find<ProfileService>().profile.value.photoUrl;
     return SocialScaffold(
       title: _isOffer ? 'Buat Tawaran' : 'Buat Postingan',
       child: Column(
@@ -85,17 +92,9 @@ class _CreatePostViewState extends State<CreatePostView> {
             ),
             child: Row(
               children: [
-                CircleAvatar(
+                AppAvatar(
+                  photoUrl: photoUrl,
                   radius: 18,
-                  backgroundColor: c.grey200,
-                  child: Text(
-                    userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: c.textPrimary,
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -139,13 +138,14 @@ class _CreatePostViewState extends State<CreatePostView> {
                       padding: const EdgeInsets.all(AppSpacing.md),
                       children: [
                         _OfferFormContent(
-                          selectedMajor: _selectedMajor,
                           selectedCategory: _selectedCategory,
                           skills: _skills,
-                          onMajorTap: _showMajorPicker,
                           onCategoryTap: _showCategoryPicker,
                           onSkillAdd: _showSkillPicker,
                           onSkillRemove: (s) => setState(() => _skills.remove(s)),
+                          projectNameController: _projectNameController,
+                          descriptionController: _descriptionController,
+                          slotsController: _slotsController,
                         ),
                       ],
                     )
@@ -158,6 +158,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                       ),
                       children: [
                         TextFormField(
+                          controller: _contentController,
                           autofocus: true,
                           minLines: 6,
                           maxLines: null,
@@ -192,6 +193,14 @@ class _CreatePostViewState extends State<CreatePostView> {
                           validator: (v) =>
                               v?.trim().isEmpty == true ? 'Postingan tidak boleh kosong' : null,
                         ),
+                        const SizedBox(height: AppSpacing.lg),
+                        const _FieldLabel('Tag'),
+                        const SizedBox(height: AppSpacing.xs),
+                        _SkillInput(
+                          skills: _tags,
+                          onAdd: _showTagPicker,
+                          onRemove: (t) => setState(() => _tags.remove(t)),
+                        ),
                       ],
                     ),
             ),
@@ -211,7 +220,7 @@ class _CreatePostViewState extends State<CreatePostView> {
             ),
             child: Row(
               children: [
-                if (!_isOffer) ...[
+                  if (!_isOffer) ...[
                   Material(
                     color: AppColors.transparent,
                     child: InkWell(
@@ -234,45 +243,50 @@ class _CreatePostViewState extends State<CreatePostView> {
                   ),
                   if (_images.isNotEmpty) ...[
                     const SizedBox(width: AppSpacing.sm),
-                    SizedBox(
-                      height: 44,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        shrinkWrap: true,
-                        itemCount: _images.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 6),
-                        itemBuilder: (_, i) => Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              child: Image.file(
-                                File(_images[i].path),
-                                width: 44,
-                                height: 44,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: () => setState(() => _images.removeAt(i)),
-                                child: Container(
-                                  width: 18,
-                                  height: 18,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.error500,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    FluentIcons.dismiss_24_filled,
-                                    size: 10,
-                                    color: AppColors.white,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: SizedBox(
+                          height: 36,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            shrinkWrap: true,
+                            itemCount: _images.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 6),
+                            itemBuilder: (_, i) => Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                  child: Image.file(
+                                    File(_images[i].path),
+                                    width: 36,
+                                    height: 36,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
-                              ),
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _images.removeAt(i)),
+                                    child: Container(
+                                      width: 16,
+                                      height: 16,
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.error500,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        FluentIcons.dismiss_24_filled,
+                                        size: 9,
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -282,13 +296,29 @@ class _CreatePostViewState extends State<CreatePostView> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handlePost,
                   child: _isLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.white,
-                          ),
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
+                            ),
+                            if (_uploadProgress.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Text(
+                                _uploadProgress,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ],
+                          ],
                         )
                       : Text(
                           _isOffer ? 'Kirim Tawaran' : 'Posting',
@@ -317,33 +347,25 @@ class _CreatePostViewState extends State<CreatePostView> {
     );
   }
 
-  void _showMajorPicker() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.transparent,
-      builder: (_) => _MajorPickerSheet(
-        majors: _majors,
-        selectedMajor: _selectedMajor,
-        onSelected: (major) {
-          setState(() => _selectedMajor = major);
-          Navigator.of(context).pop();
-        },
-      ),
-    );
-  }
-
   void _showCategoryPicker() {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (_) => _MajorPickerSheet(
+      builder: (_) => _SearchablePickerSheet(
         title: 'Pilih kategori',
-        majors: _categories,
-        selectedMajor: _selectedCategory,
+        searchHint: 'Cari kategori',
+        options: _categories,
+        selectedOptions: _selectedCategory != null ? [_selectedCategory!] : [],
+        skillTextController: _skillTextController,
+        singleSelect: true,
+        customInputHint: 'Tambah kategori custom',
         onSelected: (category) {
-          setState(() => _selectedCategory = category);
+          if (_selectedCategory == category) {
+            setState(() => _selectedCategory = null);
+          } else {
+            setState(() => _selectedCategory = category);
+          }
           Navigator.of(context).pop();
         },
       ),
@@ -361,6 +383,7 @@ class _CreatePostViewState extends State<CreatePostView> {
         options: _skillOptions,
         selectedOptions: _skills,
         skillTextController: _skillTextController,
+        customInputHint: 'Tambah skill custom',
         onSelected: (skill) {
           setState(() {
             if (_skills.contains(skill)) {
@@ -374,7 +397,32 @@ class _CreatePostViewState extends State<CreatePostView> {
     );
   }
 
-  void _handlePost() {
+  void _showTagPicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => _SearchablePickerSheet(
+        title: 'Tambah tag',
+        searchHint: 'Cari tag',
+        options: _tagOptions,
+        selectedOptions: _tags,
+        skillTextController: _tagTextController,
+        customInputHint: 'Tambah tag custom',
+        onSelected: (tag) {
+          setState(() {
+            if (_tags.contains(tag)) {
+              _tags.remove(tag);
+            } else {
+              _tags.add(tag);
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _handlePost() async {
     if (!_formKey.currentState!.validate()) return;
     if (_isOffer && _skills.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -386,19 +434,53 @@ class _CreatePostViewState extends State<CreatePostView> {
       );
       return;
     }
-    setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isOffer ? 'Tawaran berhasil dikirim' : 'Postingan berhasil diunggah'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
-        ),
-      );
-      Get.back();
+    setState(() {
+      _isLoading = true;
+      _uploadProgress = '';
     });
+    try {
+      final api = Get.find<ApiClient>();
+      if (_isOffer) {
+        await api.post('/posts/create', data: {
+          'type': 'offer',
+          'title': _projectNameController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'required_skills': _skills,
+          'category': _selectedCategory,
+          'total_slots': int.tryParse(_slotsController.text.trim()),
+        });
+        AppToast.success('Tawaran berhasil dikirim');
+      } else {
+        List<String> mediaUrls = [];
+        if (_images.isNotEmpty) {
+          for (var i = 0; i < _images.length; i++) {
+            if (!mounted) return;
+            setState(() => _uploadProgress = 'Mengupload ${i + 1}/${_images.length} gambar...');
+            final bytes = await File(_images[i].path).readAsBytes();
+            final result = await api.uploadImageBytes(
+              '/upload/image',
+              bytes,
+              filename: _images[i].name,
+            );
+            final url = (result is Map<String, dynamic> ? result['url'] : null) as String?;
+            if (url != null) mediaUrls.add(url);
+          }
+        }
+        await api.post('/posts/create', data: {
+          'type': 'post',
+          'content': _contentController.text.trim(),
+          'tags': _tags,
+          'media_urls': mediaUrls,
+        });
+        AppToast.success('Postingan berhasil diunggah');
+      }
+    } catch (e) {
+      AppToast.error('Gagal mengirim. Coba lagi.');
+      return;
+    } finally {
+      if (mounted) setState(() { _isLoading = false; _uploadProgress = ''; });
+    }
+    if (mounted) Navigator.of(context).pop();
   }
 
   Future<void> _showImagePicker() async {
@@ -536,138 +618,9 @@ class _LabeledPicker extends StatelessWidget {
   }
 }
 
-class _MajorPickerSheet extends StatefulWidget {
-  const _MajorPickerSheet({
-    this.title = 'Pilih jurusan',
-    required this.majors,
-    required this.selectedMajor,
-    required this.onSelected,
-  });
-
-  final String title;
-  final List<String> majors;
-  final String? selectedMajor;
-  final ValueChanged<String> onSelected;
-
-  @override
-  State<_MajorPickerSheet> createState() => _MajorPickerSheetState();
-}
-
-class _MajorPickerSheetState extends State<_MajorPickerSheet> {
-  String _query = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    final filtered = widget.majors
-        .where((major) => major.toLowerCase().contains(_query.toLowerCase()))
-        .toList();
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.78,
-        ),
-        padding: EdgeInsets.fromLTRB(
-          20,
-          12,
-          20,
-          MediaQuery.of(context).padding.bottom + 20,
-        ),
-        decoration: BoxDecoration(
-          color: c.surfaceElevated,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: c.borderStrong,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              widget.title,
-              style: AppFonts.satoshiStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: c.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              autofocus: true,
-              onChanged: (value) => setState(() => _query = value),
-              decoration: InputDecoration(
-                hintText: 'Cari jurusan',
-                prefixIcon: Icon(
-                  FluentIcons.search_24_regular,
-                  size: 18,
-                  color: c.textTertiary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: filtered.length,
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
-                itemBuilder: (context, index) {
-                  final major = filtered[index];
-                  final selected = major == widget.selectedMajor;
-
-                  return InkWell(
-                    onTap: () => widget.onSelected(major),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              major,
-                              style: AppFonts.satoshiStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w600,
-                                color: c.textPrimary,
-                              ),
-                            ),
-                          ),
-                          if (selected)
-                            const Icon(
-                              FluentIcons.checkmark_24_filled,
-                              size: 18,
-                              color: AppColors.primary500,
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _AppInput extends StatelessWidget {
   const _AppInput({
+    this.controller,
     required this.hintText,
     required this.icon,
     this.minLines = 1,
@@ -676,6 +629,7 @@ class _AppInput extends StatelessWidget {
     this.validator,
   });
 
+  final TextEditingController? controller;
   final String hintText;
   final IconData icon;
   final int minLines;
@@ -687,6 +641,7 @@ class _AppInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     return TextFormField(
+      controller: controller,
       minLines: minLines,
       maxLines: maxLines,
       keyboardType: keyboardType,
@@ -875,6 +830,8 @@ class _SearchablePickerSheet extends StatefulWidget {
     required this.selectedOptions,
     required this.onSelected,
     this.skillTextController,
+    this.singleSelect = false,
+    this.customInputHint = 'Tambah custom',
   });
 
   final String title;
@@ -883,6 +840,8 @@ class _SearchablePickerSheet extends StatefulWidget {
   final List<String> selectedOptions;
   final ValueChanged<String> onSelected;
   final TextEditingController? skillTextController;
+  final bool singleSelect;
+  final String customInputHint;
 
   @override
   State<_SearchablePickerSheet> createState() => _SearchablePickerSheetState();
@@ -982,7 +941,7 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
                     child: TextField(
                       controller: _customSkillController,
                       decoration: InputDecoration(
-                        hintText: 'Tambah skill custom',
+                        hintText: widget.customInputHint,
                         hintStyle: AppFonts.satoshiStyle(
                           fontSize: 13,
                           color: c.textTertiary,
@@ -1144,22 +1103,24 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
 
 class _OfferFormContent extends StatelessWidget {
   const _OfferFormContent({
-    required this.selectedMajor,
     required this.selectedCategory,
     required this.skills,
-    required this.onMajorTap,
     required this.onCategoryTap,
     required this.onSkillAdd,
     required this.onSkillRemove,
+    required this.projectNameController,
+    required this.descriptionController,
+    required this.slotsController,
   });
 
-  final String? selectedMajor;
   final String? selectedCategory;
   final List<String> skills;
-  final VoidCallback onMajorTap;
   final VoidCallback onCategoryTap;
   final VoidCallback onSkillAdd;
   final ValueChanged<String> onSkillRemove;
+  final TextEditingController projectNameController;
+  final TextEditingController descriptionController;
+  final TextEditingController slotsController;
 
   @override
   Widget build(BuildContext context) {
@@ -1169,38 +1130,24 @@ class _OfferFormContent extends StatelessWidget {
         const _FieldLabel('Nama proyek'),
         const SizedBox(height: AppSpacing.xs),
         _AppInput(
+          controller: projectNameController,
           hintText: 'Contoh: Mentoring Kampus App',
           icon: FluentIcons.briefcase_24_regular,
           validator: (v) => v?.trim().isEmpty == true ? 'Nama proyek wajib diisi' : null,
         ),
         const SizedBox(height: AppSpacing.md),
-        Row(
-          children: [
-            Expanded(
-              child: _LabeledPicker(
-                label: 'Jurusan',
-                value: selectedMajor,
-                hintText: 'Pilih jurusan',
-                icon: FluentIcons.hat_graduation_24_regular,
-                onTap: onMajorTap,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _LabeledPicker(
-                label: 'Kategori',
-                value: selectedCategory,
-                hintText: 'Pilih kategori',
-                icon: FluentIcons.tag_24_regular,
-                onTap: onCategoryTap,
-              ),
-            ),
-          ],
+        _LabeledPicker(
+          label: 'Kategori',
+          value: selectedCategory,
+          hintText: 'Pilih kategori',
+          icon: FluentIcons.tag_24_regular,
+          onTap: onCategoryTap,
         ),
         const SizedBox(height: AppSpacing.lg),
         const _FieldLabel('Deskripsi proyek'),
         const SizedBox(height: AppSpacing.xs),
         _AppInput(
+          controller: descriptionController,
           hintText:
               'Ceritakan tujuan proyek, progress saat ini, dan tipe kolaborator yang kamu cari.',
           icon: FluentIcons.text_description_24_regular,
@@ -1217,16 +1164,17 @@ class _OfferFormContent extends StatelessWidget {
           onRemove: onSkillRemove,
         ),
         const SizedBox(height: AppSpacing.lg),
-        const _FieldLabel('Slot tersisa'),
+        const _FieldLabel('Total anggota tim'),
         const SizedBox(height: AppSpacing.xs),
         _AppInput(
-          hintText: 'Contoh: 2',
+          controller: slotsController,
+          hintText: 'Contoh: 4',
           icon: FluentIcons.people_24_regular,
           keyboardType: TextInputType.number,
           validator: (v) {
-            if (v?.trim().isEmpty == true) return 'Slot wajib diisi';
+            if (v?.trim().isEmpty == true) return 'Jumlah anggota wajib diisi';
             final n = int.tryParse(v!.trim());
-            if (n == null || n < 1) return 'Minimal 1 slot';
+            if (n == null || n < 1) return 'Minimal 1 anggota';
             return null;
           },
         ),

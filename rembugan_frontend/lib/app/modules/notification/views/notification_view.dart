@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../../social/views/social_components.dart';
 import '../../team/controllers/team_controller.dart';
@@ -258,7 +259,7 @@ class _NotificationViewState extends State<NotificationView> {
           ),
         ],
         child: _ctrl.isLoading.value
-            ? const Center(child: CircularProgressIndicator())
+            ? const SkeletonNotificationList()
             : ListView(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
                 children: [

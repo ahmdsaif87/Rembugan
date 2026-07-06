@@ -7,6 +7,7 @@ import '../../../core/services/api_client.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import 'social_components.dart';
 
@@ -55,7 +56,7 @@ class _ConnectionsListViewState extends State<ConnectionsListView> {
       title: 'Koneksi $_userName',
       subtitle: '${_connections.length} koneksi',
       child: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonChatList()
           : _connections.isEmpty
               ? Center(
                   child: Padding(

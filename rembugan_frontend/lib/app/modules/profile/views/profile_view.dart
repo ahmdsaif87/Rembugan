@@ -8,7 +8,10 @@ import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
+import '../../home/views/widgets/post_card_widget.dart';
+import '../../social/views/comment_view.dart';
 import '../controllers/profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -22,7 +25,7 @@ class ProfileView extends GetView<ProfileController> {
       body: Obx(() {
         final svc = controller.profileService;
         if (svc.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const SkeletonProfile();
         }
         if (svc.errorMessage.value != null) {
           return Center(
@@ -81,6 +84,11 @@ class ProfileView extends GetView<ProfileController> {
                   _ProfileTabContent(
                     activeIndex: controller.selectedTabIndex.value,
                     profile: profile,
+                    showcases: controller.showcases,
+                    isShowcasesLoading: controller.isShowcasesLoading.value,
+                    avatarUrl: profile.photoUrl,
+                    authorName: profile.name,
+                    authorId: profile.id ?? '',
                   ),
                 ],
               ),
@@ -490,16 +498,84 @@ class _ProfileTabs extends StatelessWidget {
   }
 }
 
-class _ProfileTabContent extends StatelessWidget {
-  const _ProfileTabContent({required this.activeIndex, required this.profile});
+class _ProfileTabContent extends StatefulWidget {
+  const _ProfileTabContent({
+    required this.activeIndex,
+    required this.profile,
+    required this.showcases,
+    required this.isShowcasesLoading,
+    required this.avatarUrl,
+    required this.authorName,
+    required this.authorId,
+  });
 
   final int activeIndex;
   final ProfileData profile;
+  final List<Map<String, dynamic>> showcases;
+  final bool isShowcasesLoading;
+  final String avatarUrl;
+  final String authorName;
+  final String authorId;
 
   @override
+  State<_ProfileTabContent> createState() => _ProfileTabContentState();
+}
+
+class _ProfileTabContentState extends State<_ProfileTabContent> {
+  @override
   Widget build(BuildContext context) {
-    if (activeIndex == 1) {
-      if (profile.experiences.isEmpty) {
+    final pc = Get.find<ProfileController>();
+    if (widget.activeIndex == 0) {
+      if (widget.isShowcasesLoading) {
+        return const SkeletonShowcaseList();
+      }
+      if (widget.showcases.isEmpty) {
+        return _EmptyTabState(
+          icon: FluentIcons.document_24_regular,
+          title: 'Belum ada postingan',
+          message:
+              'Bagikan aktivitas atau proyekmu agar terlihat oleh orang lain dan membangun portofolio yang menarik.',
+          actionLabel: 'Buat Postingan',
+          onAction: () => Get.toNamed(Routes.CREATE_POST),
+        );
+      }
+      return Column(
+        children: widget.showcases.map((s) {
+          final createdAt = s['created_at'] as String? ?? '';
+          final showcaseId = s['id'] as String? ?? '';
+          String timeAgo = '';
+          try {
+            final dt = DateTime.parse(createdAt).toLocal();
+            final diff = DateTime.now().difference(dt);
+            if (diff.inMinutes < 1) timeAgo = 'Baru saja';
+            else if (diff.inMinutes < 60) timeAgo = '${diff.inMinutes}m lalu';
+            else if (diff.inHours < 24) timeAgo = '${diff.inHours}j lalu';
+            else if (diff.inDays < 7) timeAgo = '${diff.inDays}h lalu';
+            else timeAgo = '${(diff.inDays / 7).floor()}mg lalu';
+          } catch (_) {}
+
+          return PostCardWidget(
+            showcaseId: showcaseId,
+            authorId: widget.authorId,
+            avatarUrl: widget.avatarUrl,
+            name: widget.authorName,
+            subtitle: timeAgo,
+            content: s['content'] as String? ?? '',
+            mediaUrls: (s['media_urls'] as List<dynamic>?)?.cast<String>(),
+            isLiked: pc.likedShowcaseIds.contains(showcaseId),
+            initialLikes: s['likes_count'] as int? ?? 0,
+            initialComments: s['comments_count'] as int? ?? 0,
+            showFollowButton: false,
+            onShowComments: () => showCommentsSheet(context, showcaseId),
+            onShowShare: () {},
+            onToggleLike: () => pc.toggleLike(showcaseId),
+          );
+        }).toList(),
+      );
+    }
+
+    if (widget.activeIndex == 1) {
+      if (widget.profile.experiences.isEmpty) {
         return _EmptyTabState(
           icon: FluentIcons.document_24_regular,
           title: 'Belum ada pengalaman',
@@ -510,14 +586,14 @@ class _ProfileTabContent extends StatelessWidget {
         );
       }
       return Column(
-        children: profile.experiences
+        children: widget.profile.experiences
             .map((experience) => _ExperienceCard(item: experience))
             .toList(),
       );
     }
 
-    if (activeIndex == 2) {
-      if (profile.skills.isEmpty) {
+    if (widget.activeIndex == 2) {
+      if (widget.profile.skills.isEmpty) {
         return _EmptyTabState(
           icon: FluentIcons.hat_graduation_24_regular,
           title: 'Belum ada keahlian',
@@ -527,11 +603,11 @@ class _ProfileTabContent extends StatelessWidget {
           onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
         );
       }
-      return _SkillWrap(skills: profile.skills);
+      return _SkillWrap(skills: widget.profile.skills);
     }
 
-    if (activeIndex == 3) {
-      final collaborations = profile.collaborationHistory
+    if (widget.activeIndex == 3) {
+      final collaborations = widget.profile.collaborationHistory
           .where((item) => item.visible)
           .toList();
 
@@ -552,14 +628,7 @@ class _ProfileTabContent extends StatelessWidget {
       );
     }
 
-      return _EmptyTabState(
-        icon: FluentIcons.document_24_regular,
-        title: 'Belum ada postingan',
-        message:
-            'Bagikan aktivitas atau proyekmu agar terlihat oleh orang lain dan membangun portofolio yang menarik.',
-        actionLabel: 'Buat Postingan',
-        onAction: () => Get.toNamed(Routes.CREATE_POST),
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -937,5 +1006,3 @@ class _ProfileTab extends StatelessWidget {
     );
   }
 }
-
-

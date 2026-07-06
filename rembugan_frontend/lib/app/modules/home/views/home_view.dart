@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../../social/views/comment_view.dart';
 import '../controllers/home_controller.dart';
@@ -254,9 +255,9 @@ class HomeView extends GetView<HomeController> {
 
     // Loading indicator for infinite scroll
     if (controller.isLoadingMore.value) {
-      widgets.add(const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      widgets.add(Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: SkeletonFeed(),
       ));
     }
 

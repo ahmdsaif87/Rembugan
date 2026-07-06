@@ -1601,7 +1601,6 @@ class _Bubble extends StatelessWidget {
                               return Container(
                                 width: 200, height: 140,
                                 color: c.surfaceSecondary,
-                                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                               );
                             },
                             errorBuilder: (_, __, ___) => _buildFileCard(context, c, msg),

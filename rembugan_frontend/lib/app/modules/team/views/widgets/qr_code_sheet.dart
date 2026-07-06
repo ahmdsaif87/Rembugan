@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/services/api_client.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/skeleton.dart';
 
 class QrCodeSheet extends StatefulWidget {
   const QrCodeSheet({
@@ -110,7 +111,7 @@ class _QrCodeSheetState extends State<QrCodeSheet> {
             if (_isLoading)
               const Padding(
                 padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(),
+                child: Skeleton(width: double.infinity, height: 220, borderRadius: 12),
               )
             else
               Container(

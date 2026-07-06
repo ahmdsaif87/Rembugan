@@ -34,6 +34,15 @@ async def get_all_projects(
     return response_paginated(**result)
 
 
+@router.get("/suggestions", summary="Saran Kategori & Skill dari Proyek yang Ada")
+async def get_project_suggestions(
+    user_token: dict = Depends(verify_token),
+    service: ProjectService = Depends(ProjectService),
+):
+    data = await service.get_suggestions()
+    return response_success(data)
+
+
 @router.get("/my-projects", summary="Lihat Proyek Milik Saya")
 async def get_my_projects(
     user_token: dict = Depends(verify_token),

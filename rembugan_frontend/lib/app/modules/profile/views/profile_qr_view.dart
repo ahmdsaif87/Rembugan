@@ -9,6 +9,7 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_toast.dart';
+import '../../../core/widgets/skeleton.dart';
 
 class ProfileQrView extends StatefulWidget {
   const ProfileQrView({super.key});
@@ -105,7 +106,7 @@ class _ProfileQrViewState extends State<ProfileQrView> {
               child: _qrData == null
                   ? const SizedBox(
                       width: 220, height: 220,
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Skeleton(width: 220, height: 220, borderRadius: 12),
                     )
                   : QrImageView(
                       data: _qrData!,

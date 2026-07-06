@@ -12,11 +12,14 @@ class NotificationRepository {
         'page': page.toString(),
         'limit': limit.toString(),
       });
+      debugPrint('NotificationRepository.getNotifications response: ${response.data}');
       final data = response.data as Map<String, dynamic>;
-      final items = data['data'] as List<dynamic>? ?? [];
+      final pagination = data['data'] as Map<String, dynamic>;
+      final items = pagination['data'] as List<dynamic>? ?? [];
       return items.map((e) => NotificationModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
       debugPrint('NotificationRepository.getNotifications error: $e');
+      debugPrintStack();
       return [];
     }
   }

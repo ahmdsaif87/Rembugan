@@ -220,6 +220,26 @@ class ProjectService(BaseService):
             "created_at": tz_iso(project.created_at),
         }
 
+    async def get_suggestions(self) -> dict:
+        projects = await self.db.project.find_many(
+            where={"status": PJ_OPEN},
+        )
+        categories = sorted({p.category for p in projects if p.category})
+        skills = sorted({
+            s for p in projects
+            for s in (p.required_skills or [])
+            if s
+        })
+
+        showcases = await self.db.showcase.find_many()
+        tags = sorted({
+            t for s in showcases
+            for t in (s.tags or [])
+            if t
+        })
+
+        return {"categories": categories, "skills": skills, "tags": tags}
+
     async def archive_project(self, project_id: int, user_id: str) -> ProjectData:
         project = await self.db.project.find_unique(
             where={"id": project_id},
