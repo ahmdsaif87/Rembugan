@@ -1,16 +1,45 @@
-# rembugan_frontend
+# Rembugan Mobile App
 
-A new Flutter project.
+The mobile application for the Rembugan ("LinkedIn for Students") platform, built using **Flutter** and **GetX** for state management.
 
-## Getting Started
+## App Features
+- Authentication (Login, Register, OTP Verification)
+- User Profile & Portfolio (Showcase)
+- Project Exploration & AI-based Matchmaking
+- Workspace & Task Management (Kanban)
+- Chat Feature (Direct Message & Group)
+- Competitions Exploration
 
-This project is a starting point for a Flutter application.
+## Prerequisites
+- Flutter SDK (latest stable version)
+- Dart SDK
+- Android Studio / Xcode (to run on emulator/simulator)
 
-A few resources to get you started if this is your first Flutter project:
+## Local Setup
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+1. Clone the repository and navigate to the frontend directory:
+   ```bash
+   cd rembugan_frontend
+   ```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+3. Setup Environment Variables (if there is an API base URL configuration):
+   Ensure the base URL points to the local or staging backend according to your environment (`lib/app/core/utils` or config file).
+
+4. Run the App:
+   ```bash
+   flutter run
+   ```
+
+## Main Directory Structure
+This project uses the GetX pattern architecture:
+- `lib/app/data/` : Models, providers, API services (Dio).
+- `lib/app/modules/` : Pages, controllers, and bindings (View & Logic).
+- `lib/app/core/` : Utilities, themes, colors, routing.
+
+## Important Note
+Avoid placing heavy logic in the View. Use Controllers (GetX) to manage state and business logic.
