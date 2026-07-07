@@ -155,7 +155,7 @@ Tunggu beberapa saat (pertama kali ~2-3 menit karena download dependencies & mod
 
 | Email | Password |
 |-------|----------|
-| `admin@rembugan.com` | `katasandi98` |
+| `admin@rembugan.com` | (lihat di pengelola tim) |
 
 > Akun admin dibuat otomatis saat pertama kali seed.
 
@@ -178,18 +178,6 @@ Data yang di-seed:
 - **15 project** + **30 project tambahan** open
 - **30 showcase** (postingan)
 - Connections, likes, comments
-
-### Akun Mahasiswa untuk Login Mobile
-
-Password default semua akun: **`uhn2025`**
-
-| NIM | Nama | Fakultas |
-|-----|------|----------|
-| 23090101 | Ahmad Maulana | Sekolah Vokasi — D4 Teknik Informatika |
-| 23090102 | Siti Nurjanah | Sekolah Vokasi — D4 Teknik Informatika |
-| 23350101 | Umi Kalsum | Fakultas Sains & Teknologi — S1 Teknik Informatika |
-| 23450101 | Erwin Pratama | Fakultas Sosial Humaniora — S1 Akuntansi |
-| ... | dan seterusnya | |
 
 ---
 

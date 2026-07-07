@@ -51,13 +51,6 @@ docker compose up
 - **QR Code:** Undangan proyek via QR, scan profile
 - **Admin Dashboard:** CRUD users, projects, showcases, tasks, applications
 
-## Akun Default
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@rembugan.com | katasandi98 |
-| Mahasiswa | (NIM masing-masing) | uhn2025 |
-
 ## Dokumentasi
 
 - [Panduan Setup Lokal](SETUP.md)
