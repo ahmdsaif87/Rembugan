@@ -73,69 +73,7 @@ cp rembugan-dashboard/.env.example rembugan-dashboard/.env.local
 
 ---
 
-## 4. Dapatkan API Keys (GRATIS)
-
-### a. Database PostgreSQL — [Neon](https://neon.tech)
-
-1. Daftar/login dengan Google/GitHub
-2. Create project → pilih region terdekat
-3. Copy **Connection string** (`.env` → `DATABASE_URL`)
-4. Contoh: `postgresql://user:pass@ep-xxx.region.neon.tech/neondb?sslmode=require`
-
-### b. File Storage — [Cloudinary](https://cloudinary.com)
-
-1. Daftar → verifikasi email
-2. Dashboard → copy **Cloud name**, **API Key**, **API Secret**
-3. Isi di `.env`:
-   ```
-   CLOUDINARY_CLOUD_NAME=your_cloud_name
-   CLOUDINARY_API_KEY=123456789
-   CLOUDINARY_API_SECRET=abc123def
-   ```
-
-### c. Email OTP — [Resend](https://resend.com)
-
-1. Daftar → verifikasi domain (Email Sender)
-2. Buat API Key → copy ke `.env`:
-   ```
-   RESEND_API_KEY=re_xxxxx
-   RESEND_FROM=Rembugan <noreply@domainmu.com>
-   ```
-
-### d. AI OCR — [Mistral AI](https://console.mistral.ai)
-
-1. Daftar → Generate API Key (free trial)
-2. `.env` → `MISTRAL_API_KEY=xxxxx`
-
-### e. AI Resume — [Groq](https://console.groq.com)
-
-1. Daftar → Buat API Key (free)
-2. `.env` → `GROQ_API_KEY=gsk_xxxxx`
-
-### f. MongoDB — [MongoDB Atlas](https://www.mongodb.com/atlas)
-
-1. Daftar → Create cluster (free M0)
-2. Network Access → Allow access from anywhere (`0.0.0.0/0`)
-3. Database Access → Create user
-4. Connect → Drivers → copy URI
-5. `.env` → `MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/`
-
-### g. JWT Secret
-
-```bash
-openssl rand -hex 32
-# atau kalo ga punya openssl, isi manual 32 karakter random
-```
-
-`.env` → `JWT_SECRET_KEY=hasil_diatas`
-
-### h. Redis — LEWATI
-
-Biarkan `REDIS_URL` kosong. Docker compose akan otomatis menyediakan Redis.
-
----
-
-## 5. Jalankan Semua Service
+## 4. Jalankan Semua Service
 
 ```bash
 docker compose up
@@ -157,31 +95,9 @@ Tunggu beberapa saat (pertama kali ~2-3 menit karena download dependencies & mod
 |-------|----------|
 | `admin@rembugan.com` | (lihat di pengelola tim) |
 
-> Akun admin dibuat otomatis saat pertama kali seed.
-
 ---
 
-## 6. Seed Database
-
-Setelah service berjalan, buka terminal baru dan jalankan:
-
-```bash
-# Seed data mahasiswa & proyek
-docker compose exec backend python scripts/seed_campus.py
-
-# Seed tambahan proyek open
-docker compose exec backend python seed_projects.py
-```
-
-Data yang di-seed:
-- **51 user** (50 mahasiswa real dari berbagai fakultas + 1 admin)
-- **15 project** + **30 project tambahan** open
-- **30 showcase** (postingan)
-- Connections, likes, comments
-
----
-
-## 7. Flutter Mobile App (Optional)
+## 5. Flutter Mobile App (Optional)
 
 Kalau mau jalanin aplikasi Flutter juga:
 
@@ -217,7 +133,7 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.xx:8000
 
 ---
 
-## 8. Berhenti
+## 6. Berhenti
 
 ```bash
 # Matikan semua container
