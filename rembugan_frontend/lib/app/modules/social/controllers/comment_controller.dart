@@ -46,6 +46,7 @@ class Reply {
   final String? photoUrl;
   final String content;
   final String createdAt;
+  final String? replyToName;
 
   Reply({
     required this.id,
@@ -54,6 +55,7 @@ class Reply {
     this.photoUrl,
     required this.content,
     required this.createdAt,
+    this.replyToName,
   });
 
   String get timeAgo => Comment._timeAgo(createdAt);
@@ -69,6 +71,7 @@ class CommentController extends GetxController {
   final focusNode = FocusNode();
   final replyingTo = RxnInt();
   final replyTargetName = ''.obs;
+  final canSubmit = false.obs;
 
   final String showcaseId;
 
@@ -78,6 +81,9 @@ class CommentController extends GetxController {
   void onInit() {
     super.onInit();
     fetchComments();
+    contentCtrl.addListener(() {
+      canSubmit.value = contentCtrl.text.trim().isNotEmpty;
+    });
   }
 
   @override
@@ -124,6 +130,7 @@ class CommentController extends GetxController {
               photoUrl: rr['photo_url'] as String?,
               content: rr['content'] as String? ?? '',
               createdAt: rr['created_at'] as String? ?? '',
+              replyToName: rr['reply_to_name'] as String?,
             );
           }).toList(),
         );

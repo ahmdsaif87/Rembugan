@@ -158,7 +158,7 @@ class TeamView extends GetView<TeamController> {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            FilledButton.icon(
+                            OutlinedButton.icon(
                               onPressed: () {},
                               icon: Icon(
                                 controller.workspaceTabIndex.value == 0
@@ -170,6 +170,13 @@ class TeamView extends GetView<TeamController> {
                                 controller.workspaceTabIndex.value == 0
                                     ? 'Buat Workspace'
                                     : 'Gabung Workspace',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: AppC.of(context).border),
+                                foregroundColor: AppC.of(context).textPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                ),
                               ),
                             ),
                           ],

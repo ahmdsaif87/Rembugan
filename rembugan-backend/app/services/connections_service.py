@@ -124,11 +124,23 @@ class ConnectionsService(BaseService):
             }
         )
         if existing:
-            raise HTTPException(status_code=400, detail=f"Koneksi sudah ada dengan status: {existing.status}")
-
-        conn = await self.db.connection.create(
-            data={"sender_id": sender_id, "receiver_id": receiver_id, "status": CON_PENDING}
-        )
+            if existing.status == CON_REJECTED:
+                conn = await self.db.connection.update(
+                    where={"id": existing.id},
+                    data={"status": CON_PENDING, "sender_id": sender_id, "receiver_id": receiver_id},
+                )
+            elif existing.status == CON_PENDING and existing.receiver_id == sender_id:
+                # Penerima ingin connect balik → jadikan accepted
+                conn = await self.db.connection.update(
+                    where={"id": existing.id},
+                    data={"status": CON_ACCEPTED},
+                )
+            else:
+                raise HTTPException(status_code=400, detail=f"Koneksi sudah ada dengan status: {existing.status}")
+        else:
+            conn = await self.db.connection.create(
+                data={"sender_id": sender_id, "receiver_id": receiver_id, "status": CON_PENDING}
+            )
 
         sender = await self.db.user.find_unique(where={"id": sender_id})
         await notify(
@@ -183,3 +195,32 @@ class ConnectionsService(BaseService):
         )
 
         return {"message": "Koneksi ditolak"}
+
+    async def cancel_request(self, user_id: str, receiver_id: str):
+        conn = await self.db.connection.find_first(
+            where={
+                "sender_id": user_id,
+                "receiver_id": receiver_id,
+                "status": CON_PENDING,
+            }
+        )
+        if not conn:
+            raise HTTPException(status_code=404, detail="Permintaan tidak ditemukan")
+
+        await self.db.connection.delete(where={"id": conn.id})
+        return {"message": "Permintaan dibatalkan"}
+
+    async def remove_connection(self, user_id: str, other_user_id: str):
+        conn = await self.db.connection.find_first(
+            where={
+                "OR": [
+                    {"sender_id": user_id, "receiver_id": other_user_id, "status": CON_ACCEPTED},
+                    {"sender_id": other_user_id, "receiver_id": user_id, "status": CON_ACCEPTED},
+                ]
+            }
+        )
+        if not conn:
+            raise HTTPException(status_code=404, detail="Koneksi tidak ditemukan")
+
+        await self.db.connection.delete(where={"id": conn.id})
+        return {"message": "Koneksi dihapus"}

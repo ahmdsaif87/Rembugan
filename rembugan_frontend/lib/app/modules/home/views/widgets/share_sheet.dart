@@ -140,6 +140,7 @@ class _ShareSheetState extends State<ShareSheet> {
                           style: AppFonts.satoshiStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
+                            color: friend['sent'] ? c.textTertiary : AppColors.white,
                           ),
                         ),
                       ),

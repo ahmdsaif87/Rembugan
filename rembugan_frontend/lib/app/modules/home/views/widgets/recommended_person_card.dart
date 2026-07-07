@@ -7,13 +7,19 @@ import '../../controllers/home_controller.dart';
 class RecommendedPersonCard extends StatelessWidget {
   final RecommendedPerson person;
   final VoidCallback onFollow;
+  final VoidCallback? onTapProfile;
 
-  const RecommendedPersonCard({required this.person, required this.onFollow, super.key});
+  const RecommendedPersonCard({required this.person, required this.onFollow, this.onTapProfile, super.key});
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Container(
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTapProfile,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Container(
       width: 165,
       decoration: BoxDecoration(
         color: c.surface,
@@ -82,30 +88,29 @@ class RecommendedPersonCard extends StatelessWidget {
                 final status = person.connectionStatus.value;
                 final isPending = status == 'pending';
                 final isConnected = status == 'accepted';
-                final bgColor = isConnected
-                    ? c.grey100
-                    : isPending
-                        ? Colors.orange.shade100
-                        : AppColors.primary;
-                final fgColor = isConnected || isPending
-                    ? c.textSecondary
-                    : AppColors.white;
                 final label = isConnected
-                    ? 'Teman'
+                    ? 'Terhubung'
                     : isPending
                         ? 'Tertunda'
-                        : 'Ikuti';
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
+                        : 'Hubungkan';
+                final borderColor = isConnected || isPending
+                    ? c.grey300
+                    : AppColors.primary;
+                final textColor = isConnected || isPending
+                    ? c.textSecondary
+                    : AppColors.primary;
+                return SizedBox(
                   width: double.infinity,
                   height: 28,
-                  child: TextButton(
-                    onPressed: isConnected || isPending ? null : onFollow,
-                    style: TextButton.styleFrom(
-                      backgroundColor: bgColor,
-                      foregroundColor: fgColor,
+                  child: OutlinedButton(
+                    onPressed: onFollow,
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: c.surface,
+                      foregroundColor: textColor,
+                      side: BorderSide(color: borderColor),
                       padding: EdgeInsets.zero,
+                      minimumSize: Size(0, 28),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.xs),
                       ),
@@ -115,7 +120,7 @@ class RecommendedPersonCard extends StatelessWidget {
                       style: AppFonts.satoshiStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: fgColor,
+                        color: textColor,
                       ),
                     ),
                   ),
@@ -125,6 +130,8 @@ class RecommendedPersonCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+      ),
+    ),
+  );
   }
 }

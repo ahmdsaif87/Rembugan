@@ -5,6 +5,7 @@ class ExplorePerson {
   final String avatarUrl;
   final List<String> tags;
   final String matchLabel;
+  final String? connectionStatus;
 
   const ExplorePerson({
     required this.id,
@@ -13,5 +14,6 @@ class ExplorePerson {
     required this.avatarUrl,
     required this.tags,
     required this.matchLabel,
+    this.connectionStatus,
   });
 }

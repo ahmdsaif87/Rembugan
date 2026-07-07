@@ -1,5 +1,6 @@
 ﻿import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
@@ -50,7 +51,6 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    final c = AppC.of(context);
     final notifCtrl = Get.isRegistered<NotificationController>()
         ? Get.find<NotificationController>()
         : Get.put(NotificationController());
@@ -62,14 +62,11 @@ class HomeView extends GetView<HomeController> {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              'Rembugan.',
-              style: AppFonts.headingStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.w800,
-                color: c.grey900,
-                height: 1.1,
-              ),
+            child: SvgPicture.asset(
+              'lib/assets/img/logo.svg',
+              width: 36,
+              height: 36,
+              alignment: Alignment.centerLeft,
             ),
           ),
           Obx(
@@ -101,20 +98,14 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildTabs(BuildContext context) {
-    final c = AppC.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.border)),
-        ),
-        child: Obx(
-          () => Row(
-            children: [
-              _buildTabButton('Untukmu', controller.activeTab.value == 0, 0, context),
-              _buildTabButton('Mengikuti', controller.activeTab.value == 1, 1, context),
-            ],
-          ),
+      child: Obx(
+        () => Row(
+          children: [
+            _buildTabButton('Untukmu', controller.activeTab.value == 0, 0, context),
+            _buildTabButton('Koneksi', controller.activeTab.value == 1, 1, context),
+          ],
         ),
       ),
     );
@@ -130,12 +121,11 @@ class HomeView extends GetView<HomeController> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             height: 40,
-            alignment: Alignment.bottomCenter,
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: active ? AppColors.primary500 : AppColors.transparent,
+                  color: active ? AppColors.primary500 : c.border,
                   width: 2.0,
                 ),
               ),
@@ -143,8 +133,8 @@ class HomeView extends GetView<HomeController> {
             child: Text(
               label,
               style: AppFonts.satoshiStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
                 color: active ? c.textPrimary : c.grey500,
               ),
             ),
@@ -183,23 +173,24 @@ class HomeView extends GetView<HomeController> {
                 child: Icon(FluentIcons.person_add_24_regular, size: 32, color: AppColors.primary),
               ),
               const SizedBox(height: 20),
-              Text('Belum ada yang diikuti',
+              Text('Belum ada koneksi',
                 style: AppFonts.satoshiStyle(fontSize: 18, fontWeight: FontWeight.w700, color: c.textPrimary),
               ),
               const SizedBox(height: 8),
-              Text('Ikuti orang untuk melihat postingan mereka di sini.\nTemukan teman satu jurusan atau kolaborator baru!',
+              Text('Hubungi orang untuk melihat postingan mereka di sini.\nTemukan teman satu jurusan atau kolaborator baru!',
                 textAlign: TextAlign.center,
                 style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary, height: 1.45),
               ),
               const SizedBox(height: 24),
               SizedBox(width: 180, height: 44,
-                child: ElevatedButton(
+                child: OutlinedButton(
                   onPressed: () => Get.find<HomeController>().setTab(0),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, foregroundColor: AppColors.white,
-                    elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: c.textPrimary,
+                    side: BorderSide(color: c.border),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
                   ),
-                  child: Text('Cari Orang', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white)),
+                  child: Text('Cari Orang', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
                 ),
               ),
             ],
@@ -249,8 +240,10 @@ class HomeView extends GetView<HomeController> {
         onToggleLike: () => controller.toggleLike(s),
         onTapProfile: () => Get.toNamed(Routes.otherProfileRoute(s.authorId)),
       ));
-      widgets.add(Divider(height: 1, color: c.border.withValues(alpha: 0.3)));
-      widgets.add(const SizedBox(height: 16));
+      widgets.add(Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Divider(height: 1, color: c.border.withValues(alpha: 0.3)),
+      ));
     }
 
     // Loading indicator for infinite scroll
@@ -334,15 +327,16 @@ class HomeView extends GetView<HomeController> {
             ),
             const SizedBox(height: 24),
             SizedBox(height: 44,
-              child: ElevatedButton(
+              child: OutlinedButton(
                 onPressed: () => controller.loadRecommendations(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary, foregroundColor: AppColors.white,
-                  elevation: 0, padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: c.textPrimary,
+                  side: BorderSide(color: c.border),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
                 ),
                 child: Text('Coba Lagi',
-                  style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white),
+                  style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary),
                 ),
               ),
             ),
@@ -428,6 +422,7 @@ class HomeView extends GetView<HomeController> {
               return RecommendedPersonCard(
                 person: person,
                 onFollow: () => controller.toggleFollowPerson(person),
+                onTapProfile: () => Get.toNamed(Routes.otherProfileRoute(person.id)),
               );
             },
           ),

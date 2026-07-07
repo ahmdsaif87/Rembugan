@@ -77,3 +77,23 @@ async def reject_connection(
 ):
     result = await svc.reject_request(connection_id, user_token["uid"])
     return response_success(result, "Koneksi ditolak")
+
+
+@router.put("/cancel/{receiver_id}", summary="Batalkan Permintaan Koneksi")
+async def cancel_connection(
+    receiver_id: str,
+    user_token: dict = Depends(verify_token),
+    svc: ConnectionsService = Depends(),
+):
+    result = await svc.cancel_request(user_token["uid"], receiver_id)
+    return response_success(result, "Permintaan dibatalkan")
+
+
+@router.put("/remove/{user_id}", summary="Putus Koneksi")
+async def remove_connection(
+    user_id: str,
+    user_token: dict = Depends(verify_token),
+    svc: ConnectionsService = Depends(),
+):
+    result = await svc.remove_connection(user_token["uid"], user_id)
+    return response_success(result, "Koneksi dihapus")

@@ -232,6 +232,14 @@ class ProfileService(BaseService):
 
         result = []
         for score, u in scored:
+            conn = await self.db.connection.find_first(
+                where={
+                    "OR": [
+                        {"sender_id": user_id, "receiver_id": u.id},
+                        {"sender_id": u.id, "receiver_id": user_id},
+                    ]
+                }
+            )
             result.append({
                 "id": u.id,
                 "full_name": u.full_name,
@@ -241,6 +249,7 @@ class ProfileService(BaseService):
                 "bio": u.bio,
                 "photo_url": u.photo_url,
                 "skills": [s.skill.name for s in u.skills] if u.skills else [],
+                "connection_status": conn.status if conn else None,
             })
 
         return result

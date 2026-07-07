@@ -126,7 +126,7 @@ class ApiExploreRepository implements ExploreRepository {
 
   @override
   Future<void> applyToProject(int projectId) async {
-    await _api.post('/collaboration/apply', data: {'project_id': projectId});
+    await _api.post('/collaboration/$projectId/apply', data: {});
   }
 
   @override
@@ -240,6 +240,8 @@ class ApiExploreRepository implements ExploreRepository {
             .toList() ??
         [];
 
+    final connectionStatus = raw['connection_status'] as String?;
+
     return ExplorePerson(
       id: id,
       name: name,
@@ -247,6 +249,7 @@ class ApiExploreRepository implements ExploreRepository {
       avatarUrl: avatarUrl,
       tags: skills,
       matchLabel: 'Rekomendasi untukmu',
+      connectionStatus: connectionStatus,
     );
   }
 

@@ -37,7 +37,7 @@ class OnboardingView extends GetView<OnboardingController> {
                 totalPages: controller.onboardingData.length,
               ),
             ),
-            const SizedBox(height: 80),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.06),
             Obx(() {
               final data =
                   controller.onboardingData[controller.currentPage.value];
@@ -69,7 +69,7 @@ class OnboardingView extends GetView<OnboardingController> {
                 ),
               );
             }),
-            const SizedBox(height: 42),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.04),
           ],
         ),
       ),

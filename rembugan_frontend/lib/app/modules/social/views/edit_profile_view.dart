@@ -300,9 +300,9 @@ class _EditProfileViewState extends State<EditProfileView> {
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Batal'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Keluar'),
+            child: Text('Keluar', style: TextStyle(color: AppC.of(context).textSecondary)),
           ),
         ],
       ),
@@ -566,6 +566,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                         style: AppFonts.interStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
+                          color: _isSaving ? null : AppColors.white,
                         ),
                       ),
               ),
@@ -689,13 +690,20 @@ class _EditProfileViewState extends State<EditProfileView> {
               ],
             ),
           ),
-          // Form fields
+          // AI Personalize (before form fields)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
+            child: _AiPersonalizeCard(
+              onTap: () => Get.toNamed(Routes.PERSONALIZATION),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Form fields
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
                 _Field(
                   label: 'Nama',
                   controller: nameController,
@@ -829,13 +837,6 @@ class _EditProfileViewState extends State<EditProfileView> {
                   );
                 }).toList(),
               ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _AiPersonalizeCard(
-              onTap: () => Get.toNamed(Routes.PERSONALIZATION),
             ),
           ),
           const SizedBox(height: 32),
@@ -1521,6 +1522,14 @@ class _ConfirmSheet extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: onConfirm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: AppColors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
                     child: const Text('Hapus'),
                   ),
                 ),

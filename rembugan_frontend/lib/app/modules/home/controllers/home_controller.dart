@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/api_client.dart';
+import '../../../core/widgets/app_toast.dart';
 import '../../explore/domain/entities/competition.dart';
 import '../../explore/domain/entities/feed_showcase.dart';
 import '../../explore/domain/entities/project.dart';
@@ -127,6 +128,7 @@ class HomeController extends GetxController {
         avatarUrl: p.avatarUrl,
         tags: p.tags,
         matchLabel: p.matchLabel,
+        connectionStatus: p.connectionStatus,
       )));
       showcases.assignAll(showcaseResult.showcases);
       _showcasePage = 1;
@@ -170,13 +172,23 @@ class HomeController extends GetxController {
   }
 
   void toggleFollowPerson(RecommendedPerson person) async {
-    if (person.connectionStatus.value != null) return;
     try {
       final api = Get.find<ApiClient>();
-      await api.post('/connections/send/${person.id}');
-      person.connectionStatus.value = 'pending';
+      final status = person.connectionStatus.value;
+      if (status == 'accepted') {
+        await api.put('/connections/remove/${person.id}');
+        person.connectionStatus.value = null;
+      } else if (status == 'pending') {
+        await api.put('/connections/cancel/${person.id}');
+        person.connectionStatus.value = null;
+      } else {
+        await api.post('/connections/send/${person.id}');
+        person.connectionStatus.value = 'pending';
+      }
       recommendedPeople.refresh();
-    } catch (_) {}
+    } catch (e) {
+      AppToast.error('Gagal: $e');
+    }
   }
 
   Future<void> toggleLike(FeedShowcase showcase) async {

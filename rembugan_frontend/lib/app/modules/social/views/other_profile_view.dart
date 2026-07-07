@@ -161,6 +161,38 @@ class _OtherProfileViewState extends State<OtherProfileView> {
     }
   }
 
+  Future<void> _removeConnection() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus koneksi?'),
+        content: const Text('Apakah kamu yakin ingin menghapus koneksi ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _api.put('/connections/remove/$_id');
+      setState(() {
+        _connectionStatus = null;
+        _connectionId = null;
+      });
+      AppToast.success('Koneksi berhasil dihapus');
+    } catch (_) {
+      AppToast.error('Gagal menghapus koneksi');
+    }
+  }
+
   void _navigateToChat() {
     final currentUid = Get.find<AuthService>().currentUser.value?.id;
     if (currentUid == null || _id.isEmpty) return;
@@ -223,14 +255,15 @@ class _OtherProfileViewState extends State<OtherProfileView> {
                   projectHistory: _projectHistory,
                 ),
                 const SizedBox(height: 14),
-                _ProfileActions(
-                  connectionStatus: _connectionStatus,
-                  isIncoming: _isIncoming,
-                  onConnect: _sendConnection,
-                  onAccept: _acceptConnection,
-                  onReject: _rejectConnection,
-                  onChat: _navigateToChat,
-                ),
+                  _ProfileActions(
+                    connectionStatus: _connectionStatus,
+                    isIncoming: _isIncoming,
+                    onConnect: _sendConnection,
+                    onAccept: _acceptConnection,
+                    onReject: _rejectConnection,
+                    onRemove: _removeConnection,
+                    onChat: _navigateToChat,
+                  ),
                 const SizedBox(height: 16),
                 _ProfileTabs(
                   activeIndex: selectedTabIndex,
@@ -549,6 +582,7 @@ class _ProfileActions extends StatelessWidget {
     required this.onConnect,
     required this.onAccept,
     required this.onReject,
+    required this.onRemove,
     required this.onChat,
   });
 
@@ -557,6 +591,7 @@ class _ProfileActions extends StatelessWidget {
   final VoidCallback onConnect;
   final VoidCallback onAccept;
   final VoidCallback onReject;
+  final VoidCallback onRemove;
   final VoidCallback onChat;
 
   bool get _isConnected => connectionStatus == 'accepted';
@@ -572,28 +607,31 @@ class _ProfileActions extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Container(
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: c.grey100,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: c.border),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(FluentIcons.person_24_regular, size: 16, color: c.textSecondary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Terhubung',
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: c.textSecondary,
+              child: GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.grey100,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: c.border),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(FluentIcons.person_24_regular, size: 16, color: c.textSecondary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Terhubung',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: c.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -671,7 +709,7 @@ class _ProfileActions extends StatelessWidget {
                 border: _isPending ? Border.all(color: c.border) : null,
               ),
               child: Text(
-                _isPending ? 'Tertunda' : 'Terhubung',
+                _isPending ? 'Tertunda' : 'Hubungkan',
                 style: AppFonts.satoshiStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

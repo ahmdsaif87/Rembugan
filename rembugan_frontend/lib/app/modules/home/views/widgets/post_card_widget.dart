@@ -51,7 +51,6 @@ class PostCardWidget extends StatefulWidget {
 
 class _PostCardWidgetState extends State<PostCardWidget> {
   late bool _isLiked;
-  bool _isBookmarked = false;
   late String? _connectionStatus;
   bool _followingLoading = false;
   late int _likeCount;
@@ -84,17 +83,20 @@ class _PostCardWidgetState extends State<PostCardWidget> {
     try {
       final api = Get.find<ApiClient>();
       if (_isConnected) {
-        AppToast.info('Koneksi dengan ${widget.name} telah dihapus.', title: 'Koneksi Dihapus');
+        await api.put('/connections/remove/${widget.authorId}');
         setState(() => _connectionStatus = null);
+        AppToast.info('Koneksi dengan ${widget.name} telah dihapus.', title: 'Koneksi Dihapus');
       } else if (_isPending) {
-        AppToast.info('Permintaan pertemanan sudah dikirim ke ${widget.name}.', title: 'Tertunda');
+        await api.put('/connections/cancel/${widget.authorId}');
+        setState(() => _connectionStatus = null);
+        AppToast.info('Permintaan ke ${widget.name} dibatalkan.', title: 'Permintaan Dibatalkan');
       } else {
         await api.post('/connections/send/${widget.authorId}');
         setState(() => _connectionStatus = 'pending');
-        AppToast.info('Permintaan pertemanan terkirim ke ${widget.name}.', title: 'Permintaan Terkirim');
+        AppToast.info('Permintaan koneksi terkirim ke ${widget.name}.', title: 'Permintaan Terkirim');
       }
     } catch (e) {
-      AppToast.error('Gagal mengirim permintaan. Coba lagi.');
+      AppToast.error('Gagal memproses. Coba lagi.');
     } finally {
       setState(() => _followingLoading = false);
     }
@@ -108,19 +110,11 @@ class _PostCardWidgetState extends State<PostCardWidget> {
     widget.onToggleLike?.call();
   }
 
-  void _toggleBookmark() {
-    setState(() => _isBookmarked = !_isBookmarked);
-    AppToast.info(
-      _isBookmarked ? 'Postingan berhasil disimpan ke penanda kamu.' : 'Postingan dihapus dari penanda kamu.',
-      title: _isBookmarked ? 'Postingan disimpan' : 'Postingan dihapus',
-    );
-  }
-
   String get _followLabel {
     if (_followingLoading) return '...';
-    if (_isConnected) return 'Teman';
+    if (_isConnected) return 'Terhubung';
     if (_isPending) return 'Tertunda';
-    return 'Ikuti';
+    return 'Hubungkan';
   }
 
   @override
@@ -130,23 +124,16 @@ class _PostCardWidgetState extends State<PostCardWidget> {
     return Container(
       margin: const EdgeInsets.fromLTRB(0, 0, 0, 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
-            child: Row(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──
+            Row(
               children: [
                 Material(
                   color: AppColors.transparent,
@@ -159,7 +146,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Material(
                     color: AppColors.transparent,
@@ -179,7 +166,6 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                               color: c.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 1),
                           Row(
                             children: [
                               Text(
@@ -204,23 +190,24 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                 ),
                 if (widget.showFollowButton)
                   SizedBox(
-                    height: 28,
-                    child: TextButton(
+                    height: 24,
+                    child: OutlinedButton(
                       onPressed: _toggleFollow,
-                      style: TextButton.styleFrom(
-                        backgroundColor: _isConnected
-                            ? c.grey100
-                            : _isPending
-                                ? AppColors.warning50
-                                : AppColors.primary,
-                        foregroundColor: _isConnected
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: c.surface,
+                        foregroundColor: _isConnected || _isPending
                             ? c.textSecondary
-                            : _isPending
-                                ? AppColors.warning700
-                                : AppColors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                            : AppColors.primary,
+                        side: BorderSide(
+                          color: _isConnected || _isPending
+                              ? c.grey300
+                              : AppColors.primary,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: _followingLoading
@@ -228,138 +215,147 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                               width: 14, height: 14,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: _isConnected ? c.textSecondary : AppColors.white,
+                                color: c.textSecondary,
                               ),
                             )
                           : Text(
                               _followLabel,
                               style: AppFonts.satoshiStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: _isConnected
+                                fontWeight: FontWeight.w600,
+                                color: _isConnected || _isPending
                                     ? c.textSecondary
-                                    : _isPending
-                                        ? AppColors.warning700
-                                        : AppColors.white,
+                                    : AppColors.primary,
                               ),
                             ),
                     ),
                   ),
               ],
             ),
-          ),
 
-          // ── Content ──
-          if (widget.content.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Text(
-                widget.content,
-                style: AppFonts.satoshiStyle(
-                  fontSize: 14,
-                  color: c.textPrimary,
-                  height: 1.45,
+            // ── Content ──
+            if (widget.content.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Text(
+                  widget.content,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 14,
+                    color: c.textPrimary,
+                    height: 1.45,
+                  ),
                 ),
               ),
-            ),
 
-          // ── Media ──
-          if (widget.mediaUrls != null && widget.mediaUrls!.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              height: widget.mediaUrls!.length == 1 ? 373 : 236,
-              child: widget.mediaUrls!.length == 1
-                  ? GestureDetector(
-                      onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 0),
-                      child: Image.network(
-                        widget.mediaUrls!.first,
-                        width: double.infinity,
-                        height: 373,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (_, child, progress) =>
-                            progress == null ? child : Container(color: c.surfaceSecondary),
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            // ── Media ──
+            if (widget.mediaUrls != null && widget.mediaUrls!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: SizedBox(
+                  height: widget.mediaUrls!.length == 1 ? 373 : 236,
+                  child: widget.mediaUrls!.length == 1
+                      ? GestureDetector(
+                          onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              widget.mediaUrls!.first,
+                              width: double.infinity,
+                              height: 373,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (_, child, progress) =>
+                                  progress == null ? child : Container(color: c.surfaceSecondary),
+                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                            ),
+                          ),
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.network(
+                                    widget.mediaUrls![0],
+                                    height: 236,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (_, child, progress) =>
+                                        progress == null ? child : Container(color: c.surfaceSecondary),
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 1),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.network(
+                                    widget.mediaUrls![1],
+                                    height: 236,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (_, child, progress) =>
+                                        progress == null ? child : Container(color: c.surfaceSecondary),
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+
+            // ── Action Buttons ──
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      _ActionButton(
+                        icon: FluentIcons.heart_24_regular,
+                        activeIcon: FluentIcons.heart_24_filled,
+                        count: '$_likeCount',
+                        isActive: _isLiked,
+                        activeColor: AppColors.error500,
+                        onTap: _toggleLike,
                       ),
-                    )
-                  : Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 0),
-                            child: Image.network(
-                              widget.mediaUrls![0],
-                              height: 236,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (_, child, progress) =>
-                                  progress == null ? child : Container(color: c.surfaceSecondary),
-                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => showMediaViewer(context, widget.mediaUrls!, initialPage: 1),
-                            child: Image.network(
-                              widget.mediaUrls![1],
-                              height: 236,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (_, child, progress) =>
-                                  progress == null ? child : Container(color: c.surfaceSecondary),
-                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                            ),
-                          ),
-                        ),
-                      ],
+                      const SizedBox(width: 16),
+                      _ActionButton(
+                        icon: FluentIcons.chat_24_regular,
+                        activeIcon: FluentIcons.chat_24_regular,
+                        count: '$_commentCount',
+                        isActive: false,
+                        activeColor: c.textSecondary,
+                        onTap: widget.onShowComments,
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: widget.onShowShare,
+                    child: Icon(
+                      FluentIcons.share_24_regular,
+                      size: 24,
+                      color: c.textSecondary,
                     ),
+                  ),
+                ],
+              ),
             ),
           ],
-
-          // ── Action Buttons ──
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFE4E6EB))),
-            ),
-            child: Row(
-              children: [
-                _FeedActionButton(
-                  icon: FluentIcons.heart_24_regular,
-                  activeIcon: FluentIcons.heart_24_filled,
-                  count: '$_likeCount',
-                  isActive: _isLiked,
-                  activeColor: AppColors.error500,
-                  onTap: _toggleLike,
-                ),
-                _FeedActionButton(
-                  icon: FluentIcons.chat_24_regular,
-                  activeIcon: FluentIcons.chat_24_regular,
-                  count: '$_commentCount',
-                  isActive: false,
-                  activeColor: c.textSecondary,
-                  onTap: widget.onShowComments,
-                ),
-                _FeedActionButton(
-                  icon: FluentIcons.share_24_regular,
-                  activeIcon: FluentIcons.share_24_regular,
-                  count: '',
-                  isActive: false,
-                  activeColor: c.textSecondary,
-                  onTap: widget.onShowShare,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 6),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _FeedActionButton extends StatelessWidget {
-  const _FeedActionButton({
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
     required this.icon,
     required this.activeIcon,
     required this.count,
@@ -378,37 +374,27 @@ class _FeedActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    return Expanded(
-      child: Material(
-        color: AppColors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.xs),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isActive ? activeIcon : icon,
-                  size: 18,
-                  color: isActive ? activeColor : c.textSecondary,
-                ),
-                if (count.isNotEmpty) ...[
-                  const SizedBox(width: 4),
-                  Text(
-                    count,
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isActive ? activeColor : c.textSecondary,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(
+            isActive ? activeIcon : icon,
+            size: 24,
+            color: isActive ? activeColor : c.textSecondary,
           ),
-        ),
+          if (count.isNotEmpty) ...[
+            const SizedBox(width: 4),
+            Text(
+              count,
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isActive ? activeColor : c.textSecondary,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

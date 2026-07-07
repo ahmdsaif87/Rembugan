@@ -37,8 +37,9 @@ class _CommentSheet extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // ── Header ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Column(
                 children: [
                   Container(
@@ -49,28 +50,28 @@ class _CommentSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  Row(
+                  const SizedBox(height: 12),
+                  Stack(
+                    alignment: Alignment.center,
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          Get.delete<CommentController>(tag: controller.showcaseId);
-                          Navigator.of(context).pop();
-                        },
-                        icon: const Icon(FluentIcons.chevron_down_24_regular),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Komentar',
-                          textAlign: TextAlign.center,
-                          style: AppFonts.headingStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: c.textPrimary,
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(FluentIcons.dismiss_24_regular, size: 22, color: c.textSecondary),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48),
+                      Text(
+                        'Komentar',
+                        style: AppFonts.headingStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -80,7 +81,10 @@ class _CommentSheet extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const SkeletonFeed();
+                  return const SingleChildScrollView(
+                    physics: NeverScrollableScrollPhysics(),
+                    child: SkeletonFeed(),
+                  );
                 }
                 if (controller.comments.isEmpty) {
                   return Center(
@@ -97,7 +101,7 @@ class _CommentSheet extends StatelessWidget {
                   );
                 }
                 return ListView(
-                  padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   children: controller.comments.map((comment) => _buildCommentTile(context, comment)).toList(),
                 );
               }),
@@ -112,55 +116,59 @@ class _CommentSheet extends StatelessWidget {
   Widget _buildCommentTile(BuildContext context, Comment comment) {
     final c = AppC.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppAvatar(
             photoUrl: comment.photoUrl,
-            radius: 18,
+            radius: 16,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                RichText(
+                  text: TextSpan(
+                    style: AppFonts.satoshiStyle(fontSize: 13, color: c.textPrimary),
+                    children: [
+                      TextSpan(
+                        text: '${comment.fullName}  ',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      TextSpan(text: comment.content),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    Text(
-                      comment.fullName,
-                      style: AppFonts.satoshiStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: c.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
                     Text(
                       comment.timeAgo,
-                      style: AppFonts.satoshiStyle(fontSize: 12, color: c.textTertiary),
+                      style: AppFonts.satoshiStyle(fontSize: 11, color: c.textTertiary),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  comment.content,
-                  style: AppFonts.satoshiStyle(fontSize: 13, height: 1.45, color: c.textPrimary),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _CommentAction(
-                      icon: FluentIcons.arrow_reply_24_regular,
-                      label: 'Balas',
-                      onTap: () {
-                        controller.setReplyingTo(comment.id, fullName: comment.fullName);
-                      },
+                    const SizedBox(width: 14),
+                    InkWell(
+                      onTap: () => controller.setReplyingTo(comment.id, fullName: comment.fullName),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Text(
+                          'Balas',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600, color: c.textTertiary,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 if (comment.replies.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  ...comment.replies.map((reply) => _buildReplyTile(context, reply)),
+                  const SizedBox(height: 4),
+                  ...comment.replies.map((reply) => _buildReplyTile(context, reply, comment.id)),
                 ],
+                const SizedBox(height: 2),
               ],
             ),
           ),
@@ -169,78 +177,66 @@ class _CommentSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildReplyTile(BuildContext context, Reply reply) {
+  Widget _buildReplyTile(BuildContext context, Reply reply, int parentCommentId) {
     final c = AppC.of(context);
     return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.sm, top: 6),
+      padding: const EdgeInsets.only(left: 12, top: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 2, height: 44,
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(color: c.border, borderRadius: BorderRadius.circular(1)),
-          ),
-          const SizedBox(width: 10),
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: AppAvatar(
-              photoUrl: reply.photoUrl,
-              radius: 10,
-            ),
+            child: AppAvatar(photoUrl: reply.photoUrl, radius: 12),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text.rich(
-                TextSpan(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: AppFonts.satoshiStyle(fontSize: 12, color: c.textPrimary, height: 1.35),
+                    children: [
+                      TextSpan(
+                        text: '${reply.fullName}  ',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      if (reply.replyToName != null)
+                        TextSpan(
+                          text: '${reply.replyToName} ',
+                          style: TextStyle(color: AppColors.primary500, fontWeight: FontWeight.w500),
+                        ),
+                      TextSpan(text: reply.content),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    TextSpan(
-                      text: '${reply.fullName} ',
-                      style: AppFonts.satoshiStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.textPrimary),
+                    Text(
+                      reply.timeAgo,
+                      style: AppFonts.satoshiStyle(fontSize: 11, color: c.textTertiary),
                     ),
-                    TextSpan(
-                      text: reply.content,
-                      style: AppFonts.satoshiStyle(fontSize: 12, color: c.textSecondary, height: 1.4),
+                    const SizedBox(width: 14),
+                    InkWell(
+                      onTap: () => controller.setReplyingTo(parentCommentId, fullName: reply.fullName),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Text(
+                          'Balas',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600, color: c.textTertiary,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CommentAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _CommentAction({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppC.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: AppSpacing.xxs),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: c.textSecondary),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: AppFonts.satoshiStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.textSecondary),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -254,30 +250,44 @@ class _ReplyComposer extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
-      decoration: BoxDecoration(color: c.surface),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border.withValues(alpha: 0.4))),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Obx(() {
             if (controller.replyingTo.value == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primary500.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Row(
                 children: [
-                  Icon(FluentIcons.arrow_reply_24_regular, size: 14, color: c.textSecondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Membalas ${controller.replyTargetName.value}',
-                    style: AppFonts.satoshiStyle(fontSize: 12, color: c.textSecondary),
+                  Icon(FluentIcons.arrow_reply_24_regular, size: 14, color: AppColors.primary500),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Membalas ${controller.replyTargetName.value}',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  const Spacer(),
                   InkWell(
                     onTap: controller.cancelReply,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: Icon(FluentIcons.dismiss_24_regular, size: 16, color: c.textSecondary),
+                      child: Icon(FluentIcons.dismiss_24_regular, size: 16, color: AppColors.primary500),
                     ),
                   ),
                 ],
@@ -286,57 +296,57 @@ class _ReplyComposer extends StatelessWidget {
           }),
           Row(
             children: [
-              const AppAvatar(radius: 18),
+              const AppAvatar(radius: 16),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: controller.contentCtrl,
                   focusNode: controller.focusNode,
                   decoration: InputDecoration(
+                    hintText: controller.replyingTo.value != null
+                        ? 'Tulis balasan...'
+                        : 'Tulis komentar...',
+                    hintStyle: AppFonts.satoshiStyle(fontSize: 14, color: c.textTertiary),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     filled: true,
                     fillColor: c.surfaceSecondary,
-                    hintText: 'Tulis komentar...',
-                    hintStyle: AppFonts.satoshiStyle(fontSize: 13.5, color: c.textTertiary),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 13.5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(color: c.border.withValues(alpha: 0.8), width: 1.0),
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(color: c.textPrimary.withValues(alpha: 0.4), width: 1.2),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(color: c.border.withValues(alpha: 0.8), width: 1.0),
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide(color: c.primarySoft, width: 1),
                     ),
                   ),
-                  style: AppFonts.satoshiStyle(fontSize: 13.5, color: c.textPrimary),
+                  style: AppFonts.satoshiStyle(fontSize: 14, color: c.textPrimary),
+                  minLines: 1,
+                  maxLines: 4,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Obx(
-                () => Material(
-                  color: AppColors.transparent,
-                  child: InkWell(
-                    onTap: controller.isSubmitting.value ? null : controller.submitComment,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    child: Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(
-                        color: controller.isSubmitting.value
-                            ? c.grey300
-                            : AppColors.primary500,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Center(
-                        child: controller.isSubmitting.value
-                            ? SizedBox(
-                                width: 18, height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: c.textSecondary),
-                              )
-                            : Icon(FluentIcons.send_24_filled, size: 16, color: c.surface),
-                      ),
+                () => GestureDetector(
+                  onTap: !controller.canSubmit.value || controller.isSubmitting.value
+                      ? null
+                      : controller.submitComment,
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: controller.canSubmit.value ? AppColors.primary500 : c.grey200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: controller.isSubmitting.value
+                          ? SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: c.surface),
+                            )
+                          : Icon(Icons.send_rounded, size: 16, color: c.surface),
                     ),
                   ),
                 ),

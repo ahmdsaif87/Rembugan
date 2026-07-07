@@ -89,14 +89,13 @@ class _SavedViewState extends State<SavedView> {
                     const SizedBox(height: 28),
                     SizedBox(
                       height: 44,
-                      child: ElevatedButton.icon(
+                      child: OutlinedButton.icon(
                         onPressed: () => Get.toNamed(Routes.EXPLORE),
                         icon: const Icon(FluentIcons.search_24_regular, size: 16),
                         label: const Text('Jelajahi Postingan'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.white,
-                          elevation: 0,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppC.of(context).border),
+                          foregroundColor: AppC.of(context).textPrimary,
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg,
                           ),

@@ -140,12 +140,11 @@ class ExploreView extends GetView<ExploreController> {
             const SizedBox(height: 24),
             SizedBox(
               height: 44,
-              child: ElevatedButton(
+              child: OutlinedButton(
                 onPressed: () => controller.retry(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
-                  elevation: 0,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: c.border),
+                  foregroundColor: c.textPrimary,
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -155,8 +154,8 @@ class ExploreView extends GetView<ExploreController> {
                   'Coba Lagi',
                   style: AppFonts.satoshiStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.white,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary,
                   ),
                 ),
               ),
@@ -370,14 +369,13 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 24),
               SizedBox(
                 height: 44,
-                child: ElevatedButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: onAction,
-                  icon: const Icon(FluentIcons.edit_24_regular, size: 16),
+                  icon: Icon(FluentIcons.edit_24_regular, size: 16, color: c.textPrimary),
                   label: Text(actionLabel),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: c.border),
+                    foregroundColor: c.textPrimary,
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.sm),

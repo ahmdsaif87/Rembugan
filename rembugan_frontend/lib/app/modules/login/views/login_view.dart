@@ -1,9 +1,11 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -19,7 +21,7 @@ class LoginView extends GetView<LoginController> {
           padding: const EdgeInsets.fromLTRB(14, 24, 14, AppSpacing.xl),
           children: [
             _buildBackButton(),
-            const SizedBox(height: 38),
+            const SizedBox(height: 8),
             _buildHeader(c),
             const SizedBox(height: 50),
             _buildFormContent(c),
@@ -33,7 +35,7 @@ class LoginView extends GetView<LoginController> {
     return Align(
       alignment: Alignment.centerLeft,
       child: GestureDetector(
-        onTap: () => Get.back(),
+        onTap: () => Get.offNamed(Routes.ONBOARDING),
         child: const SizedBox(
           width: 40,
           height: 40,
@@ -51,6 +53,12 @@ class LoginView extends GetView<LoginController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        SvgPicture.asset(
+          'lib/assets/img/logo.svg',
+          width: 80,
+          height: 80,
+        ),
+        const SizedBox(height: 8),
         Text.rich(
           TextSpan(
             text: 'Selamat Datang di\n',

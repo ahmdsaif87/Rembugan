@@ -330,6 +330,15 @@ class AppTheme {
       foregroundColor: const WidgetStatePropertyAll(
         AppTextColors.textPrimaryWhite,
       ),
+      overlayColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.pressed)) {
+          return AppColors.primary700.withValues(alpha: 0.2);
+        }
+        if (states.contains(WidgetState.hovered)) {
+          return AppColors.white.withValues(alpha: 0.08);
+        }
+        return AppColors.transparent;
+      }),
       textStyle: WidgetStatePropertyAll(AppTextStyles.button(fontSize: 16)),
     );
   }

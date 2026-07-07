@@ -180,14 +180,22 @@ class ShowcaseService:
         comments_data = []
         for c in top_level:
             replies = sorted(c.replies, key=lambda r: r.created_at)
-            replies_data = [{
-                "id": r.id,
-                "user_id": r.user_id,
-                "full_name": r.user.full_name if r.user else None,
-                "photo_url": r.user.photo_url if r.user else None,
-                "content": r.content,
-                "created_at": r.created_at.isoformat(),
-            } for r in replies]
+            replies_data = []
+            for i, r in enumerate(replies):
+                reply_to_name = c.user.full_name if c.user else None
+                if i > 0:
+                    prev = replies[i - 1]
+                    if prev.user_id != r.user_id:
+                        reply_to_name = prev.user.full_name if prev.user else None
+                replies_data.append({
+                    "id": r.id,
+                    "user_id": r.user_id,
+                    "full_name": r.user.full_name if r.user else None,
+                    "photo_url": r.user.photo_url if r.user else None,
+                    "content": r.content,
+                    "created_at": r.created_at.isoformat(),
+                    "reply_to_name": reply_to_name,
+                })
             comments_data.append({
                 "id": c.id,
                 "user_id": c.user_id,

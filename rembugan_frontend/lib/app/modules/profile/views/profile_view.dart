@@ -42,9 +42,18 @@ class ProfileView extends GetView<ProfileController> {
                     style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary),
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
+                  OutlinedButton(
                     onPressed: svc.fetchProfile,
-                    child: const Text('Coba Lagi'),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppC.of(context).border),
+                      foregroundColor: AppC.of(context).textPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                    child: Text('Coba Lagi',
+                      style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppC.of(context).textPrimary),
+                    ),
                   ),
                 ],
               ),
@@ -691,14 +700,13 @@ class _EmptyTabState extends StatelessWidget {
               const SizedBox(height: 28),
               SizedBox(
                 height: 44,
-                child: ElevatedButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: onAction,
-                  icon: const Icon(FluentIcons.edit_24_regular, size: 16),
+                  icon: Icon(FluentIcons.edit_24_regular, size: 16, color: c.textPrimary),
                   label: Text(actionLabel!),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: c.border),
+                    foregroundColor: c.textPrimary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.lg,
                     ),
