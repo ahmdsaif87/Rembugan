@@ -534,6 +534,17 @@ class WorkspaceService:
             raise HTTPException(status_code=403, detail="Kamu bukan member proyek ini.")
 
         deadline_dt = datetime.fromisoformat(deadline) if deadline else None
+
+        valid_assignee_ids = []
+        if assignee_ids:
+            existing_users = await self.db.user.find_many(
+                where={"id": {"in": assignee_ids}}
+            )
+            valid_ids = {u.id for u in existing_users}
+            for uid in assignee_ids:
+                if uid in valid_ids:
+                    valid_assignee_ids.append(uid)
+
         task = await self.db.task.create(
             data={
                 "project_id": project_id,
@@ -542,9 +553,9 @@ class WorkspaceService:
                 "deadline": deadline_dt,
                 "assignees": {
                     "create": [
-                        {"user_id": uid} for uid in assignee_ids
+                        {"user_id": uid} for uid in valid_assignee_ids
                     ]
-                } if assignee_ids else {},
+                } if valid_assignee_ids else {},
             },
             include={"assignees": {"include": {"user": True}}},
         )
@@ -572,10 +583,17 @@ class WorkspaceService:
             "created_at": tz_iso(task.created_at),
         }
 
-    async def move_task(self, task_id: int, status: str) -> dict:
+    async def move_task(self, task_id: int, status: str, user_id: str) -> dict:
         task = await self.db.task.find_unique(where={"id": task_id})
         if not task:
             raise HTTPException(status_code=404, detail="Tugas tidak ditemukan.")
+
+        # Check membership
+        is_member = await self.db.projectmember.find_first(
+            where={"project_id": task.project_id, "user_id": user_id}
+        )
+        if not is_member:
+            raise HTTPException(status_code=403, detail="Akses ditolak. Anda bukan anggota proyek ini.")
 
         updated = await self.db.task.update(
             where={"id": task_id},

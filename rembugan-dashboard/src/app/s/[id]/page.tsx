@@ -31,7 +31,7 @@ export default function ShowcasePublicPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     async function fetchShowcase() {
       try {
-        const res = await fetch(`${API_BASE_URL}/showcase/${id}`, { headers: { "ngrok-skip-browser-warning": "true" } })
+        const res = await fetch(`${API_BASE_URL}/showcase/${id}`)
         const data = await res.json()
         if (data.status === "success" && data.data) {
           setShowcase(data.data)

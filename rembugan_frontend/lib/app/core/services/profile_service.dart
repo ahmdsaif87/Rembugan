@@ -97,6 +97,7 @@ class ProfileData {
   final String bio;
   final String interest;
   final String major;
+  final String faculty;
   final Map<String, String> socialLinks;
   final String photoUrl;
   final String coverUrl;
@@ -115,6 +116,7 @@ class ProfileData {
     required this.bio,
     this.interest = '',
     required this.major,
+    this.faculty = '',
     this.socialLinks = const {},
     this.photoUrl = '',
     this.coverUrl = '',
@@ -146,6 +148,7 @@ class ProfileData {
       bio: json['bio'] as String? ?? '',
       interest: json['interest'] as String? ?? '',
       major: json['major'] as String? ?? '',
+      faculty: json['faculty'] as String? ?? '',
       socialLinks: parsedLinks,
       photoUrl: json['photo_url'] as String? ?? '',
       coverUrl: json['cover_url'] as String? ?? '',
@@ -171,6 +174,7 @@ class ProfileData {
     String? bio,
     String? interest,
     String? major,
+    String? faculty,
     Map<String, String>? socialLinks,
     String? photoUrl,
     String? coverUrl,
@@ -189,6 +193,7 @@ class ProfileData {
       bio: bio ?? this.bio,
       interest: interest ?? this.interest,
       major: major ?? this.major,
+      faculty: faculty ?? this.faculty,
       socialLinks: socialLinks ?? this.socialLinks,
       photoUrl: photoUrl ?? this.photoUrl,
       coverUrl: coverUrl ?? this.coverUrl,

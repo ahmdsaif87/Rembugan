@@ -144,12 +144,12 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  void _showShareSheet(BuildContext context) {
+  void _showShareSheet(BuildContext context, String showCaseId, String postType) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (context) => const ShareSheet(),
+      builder: (context) => ShareSheet(postId: showCaseId, postType: postType),
     );
   }
 
@@ -230,13 +230,14 @@ class HomeView extends GetView<HomeController> {
         subtitle: s.subtitle,
         content: s.content,
         mediaUrls: s.mediaUrls.isEmpty ? null : s.mediaUrls,
+        tags: s.tags.isEmpty ? null : s.tags,
         initialLikes: s.likesCount,
         initialComments: s.commentsCount,
         isLiked: s.likedByMe,
         connectionStatus: s.connectionStatus,
         showFollowButton: true,
         onShowComments: () => showCommentsSheet(context, s.id),
-        onShowShare: () => _showShareSheet(context),
+        onShowShare: () => _showShareSheet(context, s.id, 'post'),
         onToggleLike: () => controller.toggleLike(s),
         onTapProfile: () => Get.toNamed(Routes.otherProfileRoute(s.authorId)),
       ));

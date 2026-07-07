@@ -4,6 +4,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import bcrypt
+from prisma import Prisma
+from app.core.database import get_db
+
 security = HTTPBearer()
 
 # ==========================================
@@ -15,11 +18,6 @@ if not JWT_SECRET:
 
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 7
-
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
-if not ADMIN_EMAIL or not ADMIN_PASSWORD:
-    raise RuntimeError("ADMIN_EMAIL dan ADMIN_PASSWORD wajib diset di environment variable!")
 
 
 # ==========================================
@@ -82,12 +80,15 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
 
 
 # ==========================================
-# ADMIN TOKEN VERIFIER
+# ADMIN TOKEN VERIFIER (checks DB for is_admin)
 # ==========================================
-def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+async def verify_admin_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Prisma = Depends(get_db),
+) -> dict:
     """
     Verifikasi token admin dari header Authorization.
-    Hanya menerima JWT dengan role: "admin".
+    Hanya menerima JWT dengan role: "admin" DAN user.is_admin = true di DB.
     """
     token = credentials.credentials
 
@@ -103,6 +104,14 @@ def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(secur
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Akses ditolak. Hanya admin yang dapat mengakses resource ini.",
+        )
+
+    # Double-check di DB
+    user = await db.user.find_unique(where={"id": payload["uid"]})
+    if not user or not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akses ditolak. Admin tidak ditemukan atau tidak aktif.",
         )
 
     return payload
@@ -127,11 +136,3 @@ def verify_token_optional(
         return _verify_jwt(token)
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
         return None
-
-
-# ==========================================
-# ADMIN CREDENTIAL VERIFIER
-# ==========================================
-def verify_admin_credentials(email: str, password: str) -> bool:
-    """Verifikasi kredensial admin terhadap env var."""
-    return email == ADMIN_EMAIL and password == ADMIN_PASSWORD

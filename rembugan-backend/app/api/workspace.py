@@ -118,7 +118,7 @@ async def move_task(
     user_token: dict = Depends(verify_token),
     svc: WorkspaceService = Depends(),
 ):
-    result = await svc.move_task(task_id, data.status)
+    result = await svc.move_task(task_id, data.status, user_token["uid"])
     return response_success(
         result,
         f"Tugas berhasil dipindah ke kolom '{result['status']}'.",

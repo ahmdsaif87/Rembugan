@@ -1,45 +1,56 @@
 # Rembugan Mobile App
 
-The mobile application for the Rembugan ("LinkedIn for Students") platform, built using **Flutter** and **GetX** for state management.
+Aplikasi mobile Flutter untuk platform Rembugan.
 
-## App Features
-- Authentication (Login, Register, OTP Verification)
-- User Profile & Portfolio (Showcase)
-- Project Exploration & AI-based Matchmaking
-- Workspace & Task Management (Kanban)
-- Chat Feature (Direct Message & Group)
-- Competitions Exploration
+## Tech Stack
 
-## Prerequisites
-- Flutter SDK (latest stable version)
-- Dart SDK
-- Android Studio / Xcode (to run on emulator/simulator)
+- **Framework:** Flutter + GetX
+- **HTTP:** Dio
+- **Storage:** flutter_secure_storage
+- **WebSocket:** web_socket_channel
+- **QR:** mobile_scanner, qr_flutter
+- **File:** file_picker, image_picker
 
-## Local Setup
+## Setup
 
-1. Clone the repository and navigate to the frontend directory:
-   ```bash
-   cd rembugan_frontend
-   ```
+```bash
+cd rembugan_frontend
+flutter pub get
+flutter run
+```
 
-2. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
+API URL bisa dikustomisasi saat build:
 
-3. Setup Environment Variables (if there is an API base URL configuration):
-   Ensure the base URL points to the local or staging backend according to your environment (`lib/app/core/utils` or config file).
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.1.17:8000
+```
 
-4. Run the App:
-   ```bash
-   flutter run
-   ```
+Untuk Android emulator:
 
-## Main Directory Structure
-This project uses the GetX pattern architecture:
-- `lib/app/data/` : Models, providers, API services (Dio).
-- `lib/app/modules/` : Pages, controllers, and bindings (View & Logic).
-- `lib/app/core/` : Utilities, themes, colors, routing.
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+```
 
-## Important Note
-Avoid placing heavy logic in the View. Use Controllers (GetX) to manage state and business logic.
+## Struktur (GetX Pattern)
+
+```
+lib/
+├── app/
+│   ├── core/
+│   │   ├── config/        # API config, env
+│   │   ├── models/        # Data models
+│   │   ├── services/      # API client, Auth, Profile, Chat, Theme
+│   │   ├── theme/         # Colors, fonts, spacing
+│   │   └── widgets/       # Shared widgets
+│   ├── modules/           # Feature modules
+│   │   ├── home/          # Beranda, feed
+│   │   ├── chat/          # Chat list
+│   │   ├── room_chat/     # Chat room
+│   │   ├── explore/       # Explore proyek
+│   │   ├── team/          # Workspace
+│   │   ├── profile/       # Profile
+│   │   ├── social/        # Posts, comments, search
+│   │   └── notification/  # Notifications
+│   └── routes/            # Route definitions
+└── main.dart
+```

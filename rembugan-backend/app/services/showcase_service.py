@@ -32,10 +32,11 @@ class ShowcaseService:
         if cached is not None:
             return cached["data"], cached["total"]
 
-        total = await self.db.showcase.count()
+        total = await self.db.showcase.count(where={"author_id": {"not": user_id}})
         showslimit = min(total, 100)
         offset = (page - 1) * limit
         showcases = await self.db.showcase.find_many(
+            where={"author_id": {"not": user_id}},
             order={"created_at": "desc"},
             skip=offset,
             take=showslimit,

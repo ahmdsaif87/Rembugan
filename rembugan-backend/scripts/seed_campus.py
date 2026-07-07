@@ -191,6 +191,17 @@ async def seed():
         created_users[u["nim"]] = user
         print(f"  ✓ {user.nim} - {user.full_name}")
 
+    print("👑 Membuat Admin User...")
+    admin_pw = bcrypt.hashpw(b"katasandi98", bcrypt.gensalt()).decode("utf-8")
+    await db.user.create(data={
+        "email": "admin@rembugan.com",
+        "email_verified": True,
+        "password": admin_pw,
+        "full_name": "Admin Rembugan",
+        "is_admin": True,
+        "is_onboarded": True,
+    })
+
     user_list = list(created_users.values())
 
     print("📁 Membuat 15 project & anggota...")
@@ -204,7 +215,6 @@ async def seed():
             "required_skills": p["required_skills"],
             "status": p["status"],
             "category": p["category"],
-            "interest": p["interest"],
             "total_slots": p["total_slots"],
         })
         created_projects.append(project)
@@ -222,18 +232,24 @@ async def seed():
         for t in range(num_tasks):
             assignee = owner
             status = random.choice(task_statuses)
-            await db.task.create(data={
+            task = await db.task.create(data={
                 "project_id": project.id,
-                "assignee_id": assignee.id,
                 "title": f"Task {t+1} - {p['title'][:20]}",
                 "status": status,
                 "deadline": (NOW + timedelta(days=random.randint(1, 30))),
             })
+            await db.taskassignee.create(data={
+                "task_id": task.id,
+                "user_id": assignee.id,
+            })
 
         # Add applications for open projects
         if p["status"] == "open":
+            potential_candidates = [u for u in user_list if u.id != owner.id]
             for _ in range(random.randint(1, 2)):
-                applicant = random.choice(candidates)
+                if not potential_candidates:
+                    break
+                applicant = random.choice(potential_candidates)
                 existing = await db.projectapplication.find_first(where={
                     "project_id": project.id,
                     "applicant_id": applicant.id,

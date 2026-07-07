@@ -105,6 +105,16 @@ class RoomChatController extends GetxController {
   }
 
   void _receiveMessage(Map<String, dynamic> data) {
+    debugPrint('=== RECEIVED WS MESSAGE (ctrl: $hashCode): ${data['id']} - ${data['text']}');
+    final msgRoomId = data['_room_id'] as String?;
+    if (msgRoomId != null && msgRoomId != room.roomId) return;
+
+    final id = data['id']?.toString() ?? '';
+    if (id.isNotEmpty && messages.any((m) => m.id == id)) {
+      debugPrint('=== IGNORED DUPLICATE MESSAGE ID: $id');
+      return;
+    }
+
     final senderId = data['sender_id'] as String? ?? '';
     final isMe = senderId == _myId;
     messages.add(ChatMessage(
@@ -127,6 +137,17 @@ class RoomChatController extends GetxController {
     if (text.isEmpty || !isWsConnected.value) return;
     _socket.send(room.roomId, text);
     messageController.clear();
+  }
+
+  @override
+  void onClose() {
+    _wsSub?.cancel();
+    _socket.disconnect(room.roomId);
+    messageController.dispose();
+    if (Get.isRegistered<ChatController>()) {
+      Get.find<ChatController>().fetchRooms();
+    }
+    super.onClose();
   }
 
   Future<void> uploadAndSendFile() async {

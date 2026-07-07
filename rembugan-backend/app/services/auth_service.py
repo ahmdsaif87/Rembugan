@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException
 from prisma import Prisma
 from app.core.database import get_db
-from app.core.security import hash_password, verify_password, create_jwt_token, verify_admin_credentials
+from app.core.security import hash_password, verify_password, create_jwt_token
 from app.core.constants import ROLE_ADMIN
 from app.core.types import AuthData
 from app.services.otp import send_otp_to_email, verify_otp_code
@@ -76,15 +76,16 @@ class AuthService:
             "email": user.email,
         }
 
-    def admin_login(self, email: str, password: str) -> AuthData:
-        if not verify_admin_credentials(email, password):
+    async def admin_login(self, email: str, password: str) -> AuthData:
+        user = await self.db.user.find_unique(where={"email": email})
+        if not user or not user.is_admin or not verify_password(password, user.password):
             raise HTTPException(status_code=401, detail="Email atau password admin salah.")
-        token = create_jwt_token("admin", email, role=ROLE_ADMIN)
+        token = create_jwt_token(user.id, email, role=ROLE_ADMIN)
         return {
             "access_token": token,
             "token_type": "bearer",
-            "user_id": "admin",
-            "full_name": "Admin",
+            "user_id": user.id,
+            "full_name": user.full_name,
         }
 
     async def send_otp(self, user_id: str, email: str):

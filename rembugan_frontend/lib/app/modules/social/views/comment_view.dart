@@ -7,9 +7,9 @@ import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../controllers/comment_controller.dart';
 
-void showCommentsSheet(BuildContext context, String showcaseId) {
+Future<void> showCommentsSheet(BuildContext context, String showcaseId) {
   final controller = Get.put(CommentController(showcaseId), tag: showcaseId);
-  showModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.transparent,
@@ -50,35 +50,35 @@ class _CommentSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: () => Navigator.of(context).pop(),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(FluentIcons.dismiss_24_regular, size: 22, color: c.textSecondary),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'Komentar',
-                        style: AppFonts.headingStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: c.textPrimary,
-                        ),
-                      ),
-                    ],
+            const SizedBox(height: 12),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(FluentIcons.dismiss_24_regular, size: 22, color: c.textSecondary),
+                    ),
                   ),
-                ],
-              ),
+                ),
+                Text(
+                  'Komentar',
+                  style: AppFonts.headingStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ],
             ),
-            Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
-            Expanded(
+          ],
+        ),
+      ),
+      Divider(height: 1, color: c.border.withValues(alpha: 0.4)),
+      Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
                   return const SingleChildScrollView(

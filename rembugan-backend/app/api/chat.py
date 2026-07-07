@@ -38,6 +38,23 @@ async def websocket_chat(
         return
 
     db = await get_db()
+
+    # Verify project membership or DM room authorization
+    if room_id.isdigit():
+        project_id = int(room_id)
+        is_member = await db.projectmember.find_first(
+            where={"project_id": project_id, "user_id": user_id}
+        )
+        if not is_member:
+            await websocket.close(code=4003, reason="Bukan anggota proyek ini")
+            return
+    elif room_id.startswith("dm_"):
+        parts = room_id.split("_")
+        if len(parts) >= 3:
+            if user_id not in (parts[1], parts[2]):
+                await websocket.close(code=4003, reason="Tidak diizinkan masuk room DM ini")
+                return
+
     await manager.connect(websocket, room_id, user_id)
 
     try:
@@ -70,6 +87,8 @@ async def websocket_chat(
                 attachment_name = None
                 attachment_size = None
                 reply_to_id = None
+
+            logger.info(f"=== WS RECEIVED from {user_id} in {room_id} ({msg_type}, {len(text)} chars)")
 
             pesan = {
                 "sender_id": user_id,

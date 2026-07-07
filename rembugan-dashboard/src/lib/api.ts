@@ -4,7 +4,7 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000
 
 function getAuthHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
@@ -95,6 +95,7 @@ export async function createUser(data: { email?: string; full_name: string; inte
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
     })
+    if (!response.ok) throw new Error('Failed to create user')
     return response.json()
   } catch (error) {
     console.error('Error creating user:', error)
@@ -109,6 +110,7 @@ export async function importUsers(data: { users: Array<{ nim: string; full_name:
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
     })
+    if (!response.ok) throw new Error('Failed to import users')
     return response.json()
   } catch (error) {
     console.error('Error importing users:', error)

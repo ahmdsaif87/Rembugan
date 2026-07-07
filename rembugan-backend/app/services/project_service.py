@@ -56,7 +56,15 @@ class ProjectService(BaseService):
             "created_at": tz_iso(project.created_at),
         }
 
-    async def get_explore(self, user_id: str, page_params) -> dict:
+    async def get_explore(
+        self,
+        user_id: str,
+        page_params,
+        category: str = None,
+        min_slots: int = None,
+        max_slots: int = None,
+        deadline_before: str = None,
+    ) -> dict:
         user = await self.db.user.find_unique(
             where={"id": user_id},
             include={"skills": {"include": {"skill": True}}},
@@ -64,7 +72,7 @@ class ProjectService(BaseService):
         if not user:
             raise HTTPException(status_code=404, detail="User belum terdaftar.")
 
-        cache_key = f"explore:{user_id}:{page_params.page}:{page_params.limit}"
+        cache_key = f"explore:{user_id}:{page_params.page}:{page_params.limit}:{category}:{min_slots}:{max_slots}:{deadline_before}"
         cached = await cache.get(cache_key)
         if cached is not None:
             return cached
@@ -74,6 +82,22 @@ class ProjectService(BaseService):
         user_has_skills = bool(user_skill_names)
 
         where = {"status": PJ_OPEN, "owner_id": {"not": user_id}}
+        if category:
+            where["category"] = category
+        if min_slots is not None or max_slots is not None:
+            slots_filter = {}
+            if min_slots is not None:
+                slots_filter["gte"] = min_slots
+            if max_slots is not None:
+                slots_filter["lte"] = max_slots
+            where["total_slots"] = slots_filter
+        if deadline_before:
+            from datetime import datetime
+            try:
+                dt = datetime.fromisoformat(deadline_before)
+                where["deadline"] = {"lte": dt}
+            except ValueError:
+                pass
 
         total = await self.db.project.count(where=where)
         fetch_limit = min(total, EXPLORE_MAX_ROWS)

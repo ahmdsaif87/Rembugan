@@ -16,6 +16,7 @@ class PostCardWidget extends StatefulWidget {
     required this.subtitle,
     required this.content,
     this.mediaUrls,
+    this.tags,
     this.initialLikes = 0,
     this.initialComments = 0,
     this.isLiked = false,
@@ -35,6 +36,7 @@ class PostCardWidget extends StatefulWidget {
   final String subtitle;
   final String content;
   final List<String>? mediaUrls;
+  final List<String>? tags;
   final int initialLikes;
   final int initialComments;
   final bool isLiked;
@@ -244,6 +246,29 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     color: c.textPrimary,
                     height: 1.45,
                   ),
+                ),
+              ),
+
+            // ── Tags ──
+            if (widget.tags != null && widget.tags!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: widget.tags!.map((t) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: c.primarySoft,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      '#$t',
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primary500,
+                      ),
+                    ),
+                  )).toList(),
                 ),
               ),
 

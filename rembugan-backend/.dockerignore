@@ -1,0 +1,30 @@
+# Git & IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+venv/
+.pytest_cache/
+htmlcov/
+
+# Env & secrets
+.env
+.env.example
+
+# Docs & misc
+README.md
+*.md
+seed*.py
+tmp_check.py
+test_task.py
+
+# Tests (tidak perlu di production image)
+tests/
+
+# Prisma generated (akan di-generate ulang)
+prisma/__pycache__

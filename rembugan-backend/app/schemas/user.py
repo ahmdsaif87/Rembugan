@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -9,6 +10,8 @@ class ExperienceInput(BaseModel):
     duration: str = ""
     description: str = ""
     tech_stack: List[str] = []
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
 
 
 class UserProfileInput(BaseModel):

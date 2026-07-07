@@ -36,7 +36,7 @@ async def login(request: Request, data: LoginInput, svc: AuthService = Depends()
 @router.post("/admin-login", summary="Login Admin Dashboard")
 @limiter.limit("10/minute")
 async def admin_login(request: Request, data: AdminLoginInput, svc: AuthService = Depends()):
-    result = svc.admin_login(data.email, data.password)
+    result = await svc.admin_login(data.email, data.password)
     return response_success(result, "Login admin berhasil!")
 
 

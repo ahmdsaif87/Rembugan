@@ -46,14 +46,23 @@ class NotificationController extends GetxController {
 
   Future<void> fetchNotifications() async {
     isLoading.value = true;
-    final items = await _repo.getNotifications();
-    notifications.assignAll(items);
-    isLoading.value = false;
+    try {
+      final items = await _repo.getNotifications();
+      notifications.assignAll(items);
+    } catch (e) {
+      debugPrint('Error fetching notifications: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> fetchUnreadCount() async {
-    final count = await _repo.getUnreadCount();
-    unreadCount.value = count;
+    try {
+      final count = await _repo.getUnreadCount();
+      unreadCount.value = count;
+    } catch (e) {
+      debugPrint('Error fetching unread count: $e');
+    }
   }
 
   int get collabCount =>
@@ -104,7 +113,19 @@ class NotificationController extends GetxController {
     final ok = await _repo.acceptConnection(connectionId);
     if (ok) {
       await markAsRead(notificationId);
-      fetchNotifications();
+      final idx = notifications.indexWhere((n) => n.id == notificationId);
+      if (idx != -1) {
+        notifications[idx] = NotificationModel(
+          id: notifications[idx].id,
+          type: 'connection_accepted',
+          title: 'Permintaan koneksi diterima',
+          content: 'Kamu sekarang terhubung dengan teman ini.',
+          isRead: true,
+          link: null,
+          createdAt: notifications[idx].createdAt,
+        );
+        notifications.refresh();
+      }
     }
     return ok;
   }
@@ -113,7 +134,19 @@ class NotificationController extends GetxController {
     final ok = await _repo.rejectConnection(connectionId);
     if (ok) {
       await markAsRead(notificationId);
-      fetchNotifications();
+      final idx = notifications.indexWhere((n) => n.id == notificationId);
+      if (idx != -1) {
+        notifications[idx] = NotificationModel(
+          id: notifications[idx].id,
+          type: 'connection_rejected',
+          title: 'Permintaan koneksi ditolak',
+          content: 'Kamu menolak permintaan koneksi.',
+          isRead: true,
+          link: null,
+          createdAt: notifications[idx].createdAt,
+        );
+        notifications.refresh();
+      }
     }
     return ok;
   }

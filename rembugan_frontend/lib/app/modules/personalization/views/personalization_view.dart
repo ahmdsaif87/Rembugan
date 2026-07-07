@@ -500,11 +500,14 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
               labelText: 'Nama',
             ),
             const SizedBox(height: 12),
-            AppTextField(
-              initialValue: profile.major,
-              onChanged: widget.controller.updateMajor,
-              labelText: 'Jurusan',
-              hintText: 'Contoh: Teknik Informatika',
+            _ReadonlyField(
+              label: 'Jurusan',
+              value: Get.find<ProfileService>().profile.value.major,
+            ),
+            const SizedBox(height: 12),
+            _ReadonlyField(
+              label: 'Fakultas',
+              value: Get.find<ProfileService>().profile.value.faculty,
             ),
             const SizedBox(height: 12),
             AppTextField(
@@ -1073,6 +1076,51 @@ class _SuccessMark extends StatelessWidget {
         color: AppColors.white,
         size: 22,
       ),
+    );
+  }
+}
+
+class _ReadonlyField extends StatelessWidget {
+  const _ReadonlyField({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppFonts.satoshiStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: c.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: c.card,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: c.border.withValues(alpha: 0.5)),
+          ),
+          child: Text(
+            value.isNotEmpty ? value : 'Belum diatur oleh admin',
+            style: AppFonts.satoshiStyle(
+              fontSize: 14,
+              color: value.isNotEmpty ? c.textPrimary : c.textTertiary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

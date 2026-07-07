@@ -56,8 +56,9 @@ class AuthService extends GetxService {
 
       return null;
     } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Terjadi kesalahan. Coba lagi.';
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail']?.toString() : data?.toString();
+      return detail ?? 'Terjadi kesalahan. Coba lagi.';
     } finally {
       isLoading.value = false;
     }
@@ -69,8 +70,9 @@ class AuthService extends GetxService {
       await _api.post('/auth/email/send-otp', data: {'email': email});
       return null;
     } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Gagal mengirim OTP.';
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail']?.toString() : data?.toString();
+      return detail ?? 'Gagal mengirim OTP.';
     } finally {
       isLoading.value = false;
     }
@@ -89,8 +91,9 @@ class AuthService extends GetxService {
       );
       return null;
     } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Verifikasi gagal.';
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail']?.toString() : data?.toString();
+      return detail ?? 'Verifikasi gagal.';
     } finally {
       isLoading.value = false;
     }
@@ -102,8 +105,9 @@ class AuthService extends GetxService {
       await _api.post('/auth/forgot-password/send-otp', data: {'nim': nim});
       return null;
     } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Gagal mengirim OTP.';
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail']?.toString() : data?.toString();
+      return detail ?? 'Gagal mengirim OTP.';
     } finally {
       isLoading.value = false;
     }
@@ -123,8 +127,9 @@ class AuthService extends GetxService {
       });
       return null;
     } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Reset password gagal.';
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail']?.toString() : data?.toString();
+      return detail ?? 'Reset password gagal.';
     } finally {
       isLoading.value = false;
     }
@@ -144,8 +149,9 @@ class AuthService extends GetxService {
       });
       return null;
     } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Registrasi gagal.';
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail']?.toString() : data?.toString();
+      return detail ?? 'Registrasi gagal.';
     } finally {
       isLoading.value = false;
     }
@@ -164,8 +170,9 @@ class AuthService extends GetxService {
       await login(identifier: email, password: '');
       return null;
     } on DioException catch (e) {
-      final detail = e.response?.data['detail'];
-      return detail?.toString() ?? 'Verifikasi OTP gagal.';
+      final data = e.response?.data;
+      final detail = data is Map ? data['detail']?.toString() : data?.toString();
+      return detail ?? 'Verifikasi OTP gagal.';
     } finally {
       isLoading.value = false;
     }

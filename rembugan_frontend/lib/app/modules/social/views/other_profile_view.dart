@@ -14,6 +14,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../../home/views/widgets/post_card_widget.dart';
+import '../../home/views/widgets/share_sheet.dart';
 import 'comment_view.dart';
 
 class OtherProfileView extends StatefulWidget {
@@ -71,7 +72,8 @@ class _OtherProfileViewState extends State<OtherProfileView> {
   Future<void> _fetchProfile() async {
     try {
       final res = await _api.get('/profile/$_id');
-      final data = res.data['data'] as Map<String, dynamic>?;
+      final resData = res.data;
+      final data = resData is Map ? resData['data'] as Map<String, dynamic>? : null;
       if (data != null) {
         final skills = (data['skills'] as List<dynamic>?)
                 ?.map((e) => e.toString())
@@ -945,7 +947,14 @@ class _ProfileTabContent extends StatelessWidget {
           isLiked: isLiked,
           showFollowButton: false,
           onShowComments: () => showCommentsSheet(context, showcaseId),
-          onShowShare: () => AppToast.info('Bagikan fitur akan segera hadir', title: 'Bagikan'),
+          onShowShare: () {
+            showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppColors.transparent,
+              builder: (_) => ShareSheet(postId: showcaseId, postType: 'post'),
+            );
+          },
           onToggleLike: () => onToggleLike(showcaseId),
           onTapProfile: () {},
         );

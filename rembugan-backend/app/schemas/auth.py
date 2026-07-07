@@ -58,6 +58,9 @@ class AdminCreateUserInput(BaseModel):
     password: str = Field(..., min_length=6, description="Password minimal 6 karakter")
     full_name: str = Field(..., min_length=2, description="Nama lengkap")
     major: str = Field(..., min_length=2, description="Program studi / jurusan")
+    email: Optional[str] = Field(None, description="Email mahasiswa")
+    faculty: Optional[str] = Field(None, description="Fakultas")
+    interest: Optional[str] = Field(None, description="Minat / interest")
 
 
 

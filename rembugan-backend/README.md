@@ -1,42 +1,64 @@
 # Rembugan Backend
 
-The backend API for the Rembugan platform, built with **FastAPI**, **Prisma (PostgreSQL)**, **MongoDB**, and powered by AI services like **Gemini AI**.
+Backend API untuk platform Rembugan — FastAPI + Prisma (PostgreSQL) + MongoDB + AI Services.
 
-## Prerequisites
-- Python 3.9+
-- PostgreSQL
-- MongoDB
-- Cloudinary Account (for media storage)
-- Resend Account (for email services)
+## Tech Stack
 
-## Local Setup
+- **Framework:** FastAPI
+- **ORM:** Prisma (PostgreSQL)
+- **NoSQL:** MongoDB (competitions)
+- **AI:** Mistral AI, Groq, FastEmbed (BGE-small)
+- **Storage:** Cloudinary
+- **Email:** Resend
+- **Cache:** Redis (fallback MemoryCache)
+- **Auth:** JWT + bcrypt
 
-1. Create a virtual environment & install dependencies:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+## API Endpoints
 
-2. Setup Environment Variables:
-   Create a `.env` file in the root backend folder and add the following configurations:
-   - `DATABASE_URL` (PostgreSQL)
-   - `MONGODB_URL`
-   - `CLOUDINARY_URL`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
-   - `GEMINI_API_KEY`
-   - Other credentials as needed.
-   
-   *Note:* Ensure the `firebase-admin.json` file is also placed in the root backend folder for notification/authentication services.
+| Prefix | Fitur |
+|--------|-------|
+| `/auth` | Register, Login, OTP, Admin Login |
+| `/onboarding` | Scan CV, Save Profile |
+| `/profile` | Settings, Recommended Users, Search |
+| `/projects` | CRUD, Explore (Match Score), Suggestions |
+| `/showcase` | CRUD, Like, Comment, Feed |
+| `/collaboration` | Apply, Accept/Reject Application |
+| `/workspace` | Tasks, Kanban, Files, Members |
+| `/chat` | WebSocket Chat, DM, Group, History |
+| `/notifications` | List, Mark Read |
+| `/connections` | Send, Accept, Reject, List |
+| `/competitions` | All, Relevant, Stats |
+| `/posts` | Create, Share |
+| `/admin` | Stats, Users, Projects, Showcases, Tasks |
+| `/qr` | Profile QR, Project Invite, Join |
+| `/upload` | Image Upload to Cloudinary |
 
-3. Database Synchronization (Prisma):
-   ```bash
-   prisma generate
-   prisma db push
-   ```
+## Local Development (tanpa Docker)
 
-4. Run the Server:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-   
-Access the API documentation (Swagger UI) at: `http://127.0.0.1:8000/docs`
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Isi .env
+prisma generate
+prisma db push
+python scripts/seed_campus.py
+python seed_projects.py
+uvicorn app.main:app --reload
+```
+
+## Environment Variables
+
+| Variable | Keterangan |
+|----------|-----------|
+| `DATABASE_URL` | PostgreSQL (Neon) |
+| `JWT_SECRET_KEY` | `openssl rand -hex 32` |
+| `CLOUDINARY_*` | Cloudinary credentials |
+| `RESEND_API_KEY` | Email OTP |
+| `MISTRAL_API_KEY` | AI OCR / NLP |
+| `GROQ_API_KEY` | AI resume processing |
+| `MONGO_URI` | MongoDB Atlas |
+| `REDIS_URL` | Optional (fallback MemoryCache) |
+| `ALLOWED_ORIGINS` | CORS whitelist (comma separated) |
+| `APP_URL` | Public URL untuk QR code & share link |

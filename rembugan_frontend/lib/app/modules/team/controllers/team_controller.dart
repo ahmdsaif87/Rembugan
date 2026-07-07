@@ -305,8 +305,13 @@ class TeamController extends GetxController {
 
   Future<void> fetchWorkspaces() async {
     isLoading.value = true;
-    workspaces.assignAll(await _repo.getWorkspaces());
-    isLoading.value = false;
+    try {
+      workspaces.assignAll(await _repo.getWorkspaces());
+    } catch (e) {
+      debugPrint('Error fetching workspaces: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   List<WorkspaceApplicant> applicantsFor(String workspaceId) =>

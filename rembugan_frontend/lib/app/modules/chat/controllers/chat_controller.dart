@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../core/services/api_client.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/chat_socket_service.dart';
 
 class ChatRoom {
@@ -64,12 +65,28 @@ class ChatController extends GetxController {
     final roomId = data['room_id'] as String?;
     if (roomId == null) return;
     final idx = rooms.indexWhere((r) => r.roomId == roomId);
-    if (idx == -1) return;
-    rooms[idx] = rooms[idx].copyWith(
-      lastMessage: data['text'] as String? ?? '',
+    
+    if (idx == -1) {
+      // Room baru, fetch ulang seluruh list
+      fetchRooms();
+      return;
+    }
+
+    final myId = Get.find<AuthService>().currentUser.value?.id;
+    final senderId = data['sender_id'] as String?;
+    final isMe = senderId != null && senderId == myId;
+
+    final lastMsg = data['attachment_name'] as String? ?? data['text'] as String? ?? '';
+
+    final updatedRoom = rooms[idx].copyWith(
+      lastMessage: lastMsg,
       lastTime: data['timestamp'] as String? ?? '',
-      unread: rooms[idx].unread + 1,
+      unread: isMe ? rooms[idx].unread : rooms[idx].unread + 1,
     );
+
+    // Hapus dari posisi lama dan taruh paling atas
+    rooms.removeAt(idx);
+    rooms.insert(0, updatedRoom);
   }
 
   int get totalUnread => rooms.fold(0, (sum, r) => sum + r.unread);
@@ -92,7 +109,7 @@ class ChatController extends GetxController {
   }
 
   Future<void> fetchRooms() async {
-    isLoading.value = true;
+    isLoading.value = rooms.isEmpty;
     try {
       final res = await _api.get('/chat/rooms');
       final body = res.data as Map<String, dynamic>? ?? {};

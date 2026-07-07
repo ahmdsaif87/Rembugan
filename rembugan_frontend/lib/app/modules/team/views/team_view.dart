@@ -58,25 +58,27 @@ class TeamView extends GetView<TeamController> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: _green,
-                            shape: BoxShape.circle,
+                    Obx(
+                      () => Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: _green,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${controller.workspaces.length} workspace',
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 12,
-                            color: c.textSecondary,
+                          const SizedBox(width: 8),
+                          Text(
+                            '${controller.workspaces.length} workspace',
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 12,
+                              color: c.textSecondary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),

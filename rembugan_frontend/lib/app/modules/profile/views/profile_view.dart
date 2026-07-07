@@ -11,6 +11,7 @@ import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../../home/views/widgets/post_card_widget.dart';
+import '../../home/views/widgets/share_sheet.dart';
 import '../../social/views/comment_view.dart';
 import '../controllers/profile_controller.dart';
 
@@ -531,6 +532,15 @@ class _ProfileTabContent extends StatefulWidget {
 }
 
 class _ProfileTabContentState extends State<_ProfileTabContent> {
+  void _showShareSheet(BuildContext context, String showcaseId, String postType) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (context) => ShareSheet(postId: showcaseId, postType: postType),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pc = Get.find<ProfileController>();
@@ -576,7 +586,7 @@ class _ProfileTabContentState extends State<_ProfileTabContent> {
             initialComments: s['comments_count'] as int? ?? 0,
             showFollowButton: false,
             onShowComments: () => showCommentsSheet(context, showcaseId),
-            onShowShare: () {},
+            onShowShare: () => _showShareSheet(context, showcaseId, 'post'),
             onToggleLike: () => pc.toggleLike(showcaseId),
           );
         }).toList(),

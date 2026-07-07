@@ -16,3 +16,9 @@ class CreatePostInput(BaseModel):
     interest: Optional[str] = Field(None, description="Minat terkait proyek")
     total_slots: Optional[int] = Field(None, ge=1, description="Slot anggota tersisa")
     deadline: Optional[str] = Field(None, description="Batas waktu pendaftaran (ISO datetime)")
+
+
+class SharePostInput(BaseModel):
+    post_id: str = Field(..., description="ID dari showcase atau project")
+    post_type: str = Field(..., pattern="^(post|offer)$", description="'post' atau 'offer'")
+    friend_ids: List[str] = Field(..., description="Daftar user ID teman untuk dikirimi DM")

@@ -192,6 +192,18 @@ async def main():
     skill_map = {s.name: s.id for s in skill_records}
     print(f"   {len(skill_records)} skills created")
 
+    # Seed Admin User
+    print("1b. Membuat Admin User...")
+    admin_pw = bcrypt.hashpw("katasandi98".encode(), bcrypt.gensalt()).decode()
+    await db.user.create(data={
+        "email": "admin@rembugan.com",
+        "email_verified": True,
+        "password": admin_pw,
+        "full_name": "Admin Rembugan",
+        "is_admin": True,
+        "is_onboarded": True,
+    })
+
     print("2. Membuat Users...")
     user_records = []
     interest_keys = list(INTERESTS.keys())
@@ -340,13 +352,17 @@ async def main():
             )[0]
             assignee = random.choice(member_ids) if member_ids else None
             deadline = datetime.now() + timedelta(days=random.randint(1, 30)) if status != "done" else None
-            await db.task.create(data={
+            task = await db.task.create(data={
                 "project_id": project.id,
-                "assignee_id": assignee,
                 "title": task_title,
                 "status": status,
                 "deadline": deadline,
             })
+            if assignee:
+                await db.taskassignee.create(data={
+                    "task_id": task.id,
+                    "user_id": assignee,
+                })
     print(f"   Tasks created")
 
     await db.disconnect()

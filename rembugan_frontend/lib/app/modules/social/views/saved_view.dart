@@ -6,6 +6,8 @@ import '../../../core/theme/theme.dart';
 import '../../../routes/app_pages.dart';
 import 'social_components.dart';
 
+import 'comment_view.dart';
+
 class SavedView extends StatefulWidget {
   const SavedView({super.key});
 
@@ -14,7 +16,7 @@ class SavedView extends StatefulWidget {
 }
 
 class _SavedViewState extends State<SavedView> {
-  bool _showDemo = false;
+  bool _showDemo = true;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,7 @@ class _SavedViewState extends State<SavedView> {
                   avatarUrl: 'https://i.pravatar.cc/100?img=33',
                   body:
                       'Mencari Flutter developer untuk memperhalus chat experience dan notification flow.',
-                  onTap: () => Get.toNamed(Routes.COMMENTS),
+                  onTap: () => showCommentsSheet(context, 'demo-cameron'),
                 ),
                 const SizedBox(height: 12),
                 SocialPostCard(
@@ -41,7 +43,7 @@ class _SavedViewState extends State<SavedView> {
                   avatarUrl: 'https://i.pravatar.cc/100?img=47',
                   body:
                       'Checklist design review: hierarchy, tap target, empty state, loading state, dan copy yang jelas.',
-                  onTap: () => Get.toNamed(Routes.COMMENTS),
+                  onTap: () => showCommentsSheet(context, 'demo-raka'),
                 ),
               ],
             )

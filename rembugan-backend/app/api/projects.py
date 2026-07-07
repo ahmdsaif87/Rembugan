@@ -30,7 +30,14 @@ async def get_all_projects(
     service: ProjectService = Depends(ProjectService),
 ):
     uid = user_token.get("uid")
-    result = await service.get_explore(uid, page_params)
+    result = await service.get_explore(
+        uid,
+        page_params,
+        category=category,
+        min_slots=min_slots,
+        max_slots=max_slots,
+        deadline_before=deadline_before,
+    )
     return response_paginated(**result)
 
 

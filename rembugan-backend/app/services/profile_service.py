@@ -230,16 +230,33 @@ class ProfileService(BaseService):
         scored.sort(key=lambda x: x[0], reverse=True)
         scored = scored[:limit]
 
+        other_ids = [u.id for _, u in scored]
+
+        # Batch fetch connections to avoid N+1 queries
+        all_conns = await self.db.connection.find_many(
+            where={
+                "OR": [
+                    {"sender_id": user_id, "receiver_id": {"in": other_ids}},
+                    {"sender_id": {"in": other_ids}, "receiver_id": user_id},
+                ]
+            }
+        )
+        conn_map = {}
+        for conn in all_conns:
+            other = conn.receiver_id if conn.sender_id == user_id else conn.sender_id
+            conn_map[other] = conn.status
+
+        # Batch fetch users with skills
+        users_with_skills = await self.db.user.find_many(
+            where={"id": {"in": other_ids}},
+            include={"skills": {"include": {"skill": True}}}
+        )
+        skills_map = {u.id: u.skills for u in users_with_skills}
+
         result = []
         for score, u in scored:
-            conn = await self.db.connection.find_first(
-                where={
-                    "OR": [
-                        {"sender_id": user_id, "receiver_id": u.id},
-                        {"sender_id": u.id, "receiver_id": user_id},
-                    ]
-                }
-            )
+            u_skills = skills_map.get(u.id, [])
+            conn_status = conn_map.get(u.id)
             result.append({
                 "id": u.id,
                 "full_name": u.full_name,
@@ -248,8 +265,8 @@ class ProfileService(BaseService):
                 "major": u.major,
                 "bio": u.bio,
                 "photo_url": u.photo_url,
-                "skills": [s.skill.name for s in u.skills] if u.skills else [],
-                "connection_status": conn.status if conn else None,
+                "skills": [s.skill.name for s in u_skills] if u_skills else [],
+                "connection_status": conn_status,
             })
 
         return result

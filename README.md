@@ -1,38 +1,65 @@
 # Rembugan
 
-"LinkedIn for Students" — Collaboration, Project Matchmaking, and Portfolio Platform.
-
-Rembugan is an integrated platform designed to help students and young professionals discover projects, build connections, and manage their portfolios through an AI-based matchmaking system.
+"LinkedIn for Students" — Platform Kolaborasi, Matchmaking Proyek, dan Portofolio.
 
 ## Repository Structure
 
-This project uses a monorepo structure consisting of three main parts:
+```
+rembugan/
+├── rembugan-backend/       # FastAPI backend (Python, Prisma, PostgreSQL, MongoDB)
+├── rembugan_frontend/      # Flutter mobile app (GetX State Management)
+├── rembugan-dashboard/     # Next.js admin dashboard (Shadcn UI, Tailwind CSS)
+├── docker-compose.yml      # One-command setup for local development
+├── SETUP.md                # Panduan setup lokal (Wajib baca!)
+└── README.md
+```
 
-- [**`rembugan-backend/`**](./rembugan-backend/README.md) — FastAPI API service (Python, Prisma ORM, PostgreSQL + MongoDB).
-- [**`rembugan_frontend/`**](./rembugan_frontend/README.md) — Flutter-based mobile app (GetX State Management).
-- [**`rembugan-dashboard/`**](./rembugan-dashboard/README.md) — Next.js admin dashboard (Shadcn UI, Tailwind CSS).
+## Quick Start
 
-## Main Technologies
+```bash
+# 1. Clone & masuk direktori
+git clone <url-repo> && cd rembugan
 
-| Layer | Technology |
+# 2. Setup env files
+cp rembugan-backend/.env.example rembugan-backend/.env
+cp rembugan-dashboard/.env.example rembugan-dashboard/.env.local
+
+# 3. Isi .env dengan credentials (Neon, Cloudinary, dll)
+# 4. Jalankan semua service
+docker compose up
+```
+
+- Backend API: http://localhost:8000
+- Dashboard Admin: http://localhost:3000
+- Docs API: http://localhost:8000/docs
+
+> **Pertama kali?** Baca [SETUP.md](./SETUP.md) untuk panduan lengkap dari instalasi Docker sampai isi API keys.
+
+## Teknologi
+
+| Layer | Teknologi |
 |-------|-----------|
-| **Backend** | Python, FastAPI, Prisma (PostgreSQL), MongoDB, Gemini AI, Mistral AI, Groq, Cloudinary, Resend |
-| **Frontend** | Flutter, GetX, Dio, forui, Lottie, flutter_secure_storage |
-| **Dashboard** | Next.js 16 (App Router), TypeScript, Shadcn UI, Tailwind CSS v4, TanStack Query, Recharts |
+| **Backend** | Python, FastAPI, Prisma (PostgreSQL), MongoDB, Mistral AI, Groq, Cloudinary, Resend |
+| **Mobile** | Flutter, GetX, Dio, Lottie, flutter_secure_storage |
+| **Dashboard** | Next.js 16 (App Router), TypeScript, Shadcn UI, Tailwind CSS v4, TanStack Query |
 
-## Key Features
+## Fitur Utama
 
-- **AI Matchmaking:** User-project recommendations using embedding/cosine similarity.
-- **Social Networking:** Posts, portfolio showcases, connections, and chat (DM & group).
-- **Project Management:** Kanban-style workspace & task management.
-- **Security & Verification:** OTP email verification, QR code project invitations.
-- **Competition Exploration:** Scraping and scoring competition data (Lomba).
-- **Admin Dashboard:** CRUD management (users, projects, showcases, tasks, applications).
+- **AI Matchmaking:** Rekomendasi user-project berdasarkan embedding/cosine similarity
+- **Social Networking:** Posts, showcase portofolio, koneksi, dan chat (DM & grup)
+- **Project Management:** Workspace Kanban & task management
+- **QR Code:** Undangan proyek via QR, scan profile
+- **Admin Dashboard:** CRUD users, projects, showcases, tasks, applications
 
-## Documentation & Rules
+## Akun Default
 
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@rembugan.com | katasandi98 |
+| Mahasiswa | (NIM masing-masing) | uhn2025 |
+
+## Dokumentasi
+
+- [Panduan Setup Lokal](SETUP.md)
 - [Product Vision](PRODUCT.md)
 - [Design System](DESIGN.md)
-- [Agent Guidelines](AGENTS.md)
-
-Please see the `README.md` inside each directory for specific installation guides and instructions on running the services locally.

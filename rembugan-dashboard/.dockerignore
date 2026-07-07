@@ -1,0 +1,17 @@
+# Git & IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Build output (akan di-build ulang)
+.next
+
+# Env
+.env.local
+.env.example
+
+# Misc
+README.md
+tsconfig.tsbuildinfo
+node_modules

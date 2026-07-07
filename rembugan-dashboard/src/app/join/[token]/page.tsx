@@ -53,7 +53,7 @@ export default function JoinProjectPage({ params }: { params: Promise<{ token: s
   useEffect(() => {
     async function verifyToken() {
       try {
-        const res = await fetch(`${API_BASE_URL}/qr/project/join/${token}`, { headers: { "ngrok-skip-browser-warning": "true" } })
+        const res = await fetch(`${API_BASE_URL}/qr/project/join/${token}`)
         const data = await res.json()
         if (data.status === "success") {
           setInvite(data.data)

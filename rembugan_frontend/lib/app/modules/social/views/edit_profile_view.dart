@@ -722,6 +722,11 @@ class _EditProfileViewState extends State<EditProfileView> {
                   value: draft.major,
                 ),
                 const SizedBox(height: 16),
+                _ReadonlyField(
+                  label: 'Fakultas',
+                  value: draft.faculty,
+                ),
+                const SizedBox(height: 16),
                 _Field(
                   label: 'Minat',
                   controller: interestController,

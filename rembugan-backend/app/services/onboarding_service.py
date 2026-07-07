@@ -92,8 +92,11 @@ class OnboardingService:
 
         await self.db.experience.delete_many(where={"user_id": uid})
 
+        from datetime import datetime, timezone
+
         for exp in data.experiences:
-            start_date, end_date = exp.start_date, exp.end_date
+            start_date = exp.start_date or datetime.now(timezone.utc)
+            end_date = exp.end_date
             await self.db.experience.create(data={
                 "user_id": uid,
                 "title": exp.title,

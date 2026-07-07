@@ -69,6 +69,39 @@ interface User {
   memberships?: Array<any>
 }
 
+const FACULTIES_AND_MAJORS: Record<string, string[]> = {
+  "Sekolah Vokasi": [
+    "D-4 Teknik Informatika",
+    "D-4 Akuntansi Sektor Publik",
+    "D-4 Kebidanan",
+    "D-3 Akuntansi",
+    "D-3 DKV",
+    "D-3 Farmasi",
+    "D-3 Keperawatan",
+    "D-3 Perhotelan",
+    "D-3 Teknik Elektronika",
+    "D-3 Teknik Komputer",
+    "D-3 Teknik Mesin",
+    "Profesi Bidan"
+  ],
+  "Fakultas Sains & Teknologi": [
+    "S-1 Teknik Informatika",
+    "S-1 Sistem Informasi",
+    "S-1 Sains Data",
+    "S-1 Teknik Mesin"
+  ],
+  "Fakultas Sosial Humaniora": [
+    "S-1 Akuntansi",
+    "S-1 Hukum",
+    "S-1 Ilmu Komunikasi",
+    "S-1 Manajemen"
+  ],
+  "Fakultas Psikologi & Pendidikan": [
+    "S-1 Psikologi",
+    "S-1 PGSD"
+  ]
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
@@ -79,11 +112,11 @@ export default function UsersPage() {
   const [onboardFilter, setOnboardFilter] = useState<string>("all")
   const [addOpen, setAddOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
-  const [form, setForm] = useState({ email: "", full_name: "", interest: "", password: "", nim: "", faculty: "", major: "" })
+  const [form, setForm] = useState({ full_name: "", password: "", nim: "", faculty: "Sekolah Vokasi", major: "D-4 Teknik Informatika" })
   const [qrUser, setQrUser] = useState<User | null>(null)
   const [qrOpen, setQrOpen] = useState(false)
   const [importPreview, setImportPreview] = useState<Array<{ nim: string; full_name: string; faculty: string; major: string }> | null>(null)
-  const [defaultPassword, setDefaultPassword] = useState("uhn2025")
+  const [defaultPassword, setDefaultPassword] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: users = [], isLoading: loading } = useQuery({
@@ -100,7 +133,7 @@ export default function UsersPage() {
       if (response.status === 'success') {
         toast.success(`User ${form.full_name} berhasil dibuat`)
         setAddOpen(false)
-        setForm({ email: "", full_name: "", interest: "", password: "", nim: "", faculty: "", major: "" })
+        setForm({ full_name: "", password: "", nim: "", faculty: "Sekolah Vokasi", major: "D-4 Teknik Informatika" })
         queryClient.invalidateQueries({ queryKey: ['users'] })
       } else {
         toast.error(response.detail || "Gagal membuat user")
@@ -373,6 +406,7 @@ export default function UsersPage() {
                       placeholder="23090101"
                       value={form.nim}
                       onChange={(e) => setForm({ ...form, nim: e.target.value })}
+                      required
                     />
                   </div>
                   <div className="grid gap-2">
@@ -387,40 +421,37 @@ export default function UsersPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="faculty">Fakultas</Label>
-                    <Input
+                    <select
                       id="faculty"
-                      placeholder="Sekolah Vokasi"
                       value={form.faculty}
-                      onChange={(e) => setForm({ ...form, faculty: e.target.value })}
-                    />
+                      onChange={(e) => {
+                        const nextFaculty = e.target.value
+                        const nextMajor = FACULTIES_AND_MAJORS[nextFaculty]?.[0] || ""
+                        setForm({ ...form, faculty: nextFaculty, major: nextMajor })
+                      }}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      {Object.keys(FACULTIES_AND_MAJORS).map((f) => (
+                        <option key={f} value={f}>
+                          {f}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="major">Jurusan</Label>
-                    <Input
+                    <select
                       id="major"
-                      placeholder="D-4 Teknik Informatika"
                       value={form.major}
                       onChange={(e) => setForm({ ...form, major: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="user@example.com"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="interest">Interest</Label>
-                    <Input
-                      id="interest"
-                      placeholder="Mobile Development"
-                      value={form.interest}
-                      onChange={(e) => setForm({ ...form, interest: e.target.value })}
-                    />
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      {(FACULTIES_AND_MAJORS[form.faculty] || []).map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="password">Password</Label>

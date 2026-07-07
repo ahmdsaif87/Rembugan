@@ -3,7 +3,7 @@ class ApiConfig {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://precaudal-intraspinal-russel.ngrok-free.dev',
+    defaultValue: 'http://localhost:8000',
   );
 
   static const Duration connectTimeout = Duration(seconds: 10);

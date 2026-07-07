@@ -8,6 +8,9 @@ import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/preview_page.dart';
+import '../../../routes/app_pages.dart';
+import '../../social/views/comment_view.dart';
+import '../../social/views/post_detail_view.dart';
 
 import '../controllers/room_chat_controller.dart';
 
@@ -387,6 +390,107 @@ class _RoomChatViewState extends State<RoomChatView> {
     );
   }
 
+  Widget _buildShareCard({required AppC c, required ChatMessage msg}) {
+    final title = msg.attachmentName ?? 'Lihat postingan';
+    return Container(
+      width: 240,
+      decoration: BoxDecoration(
+        color: msg.isMe ? c.surface.withValues(alpha: 0.15) : c.surfaceSecondary,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: msg.isMe ? c.surface.withValues(alpha: 0.2) : c.border),
+      ),
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: () {
+            final url = msg.attachmentUrl;
+            if (url != null && url.isNotEmpty) {
+              try {
+                final uri = Uri.parse(url);
+                final segments = uri.pathSegments;
+                if (segments.length >= 2) {
+                  final itemType = segments[0];
+                  final itemId = segments[1];
+                  if (itemType == 's') {
+                    Navigator.of(Get.context!).push(MaterialPageRoute(
+                      builder: (_) => PostDetailView(showcaseId: itemId),
+                    ));
+                  } else if (itemType == 'p') {
+                    Get.toNamed(Routes.EXPLORE);
+                  }
+                }
+              } catch (_) {}
+            }
+          },
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(FluentIcons.share_24_regular, size: 16, color: msg.isMe ? AppColors.white70 : AppColors.primary500),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Membagikan Postingan',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: msg.isMe ? AppColors.white70 : AppColors.primary500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: msg.isMe ? AppColors.white : c.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: msg.isMe ? AppColors.white.withValues(alpha: 0.15) : c.grey100,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        FluentIcons.open_24_regular,
+                        size: 12,
+                        color: msg.isMe ? AppColors.white : c.textSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Buka',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: msg.isMe ? AppColors.white : c.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   BorderRadius _bubbleRadius(bool isMe, bool first, bool last) {
     if (isMe) {
       if (first && last) {
@@ -506,14 +610,16 @@ class _RoomChatViewState extends State<RoomChatView> {
                         ),
                       ),
                     ),
-                  if (msg.text.isNotEmpty && msg.type != 'file')
+                  if (msg.type == 'share')
+                    _buildShareCard(c: c, msg: msg)
+                  else if (msg.text.isNotEmpty && msg.type != 'file')
                     Text(
                       msg.text,
                       style: AppFonts.satoshiStyle(
                         fontSize: 14, color: msg.isMe ? AppColors.white : c.textPrimary, height: 1.4,
                       ),
                     ),
-                  if (msg.attachmentUrl != null) ...[
+                  if (msg.attachmentUrl != null && msg.type != 'share') ...[
                     if (msg.text.isNotEmpty || msg.type == 'file') const SizedBox(height: 8),
                     if (isImageUrl(msg.attachmentUrl!))
                       GestureDetector(

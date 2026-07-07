@@ -47,6 +47,7 @@ class _NotificationViewState extends State<NotificationView> {
       'comment' => FluentIcons.comment_24_regular,
       'connection_request' => FluentIcons.person_add_24_regular,
       'connection_accepted' => FluentIcons.person_12_regular,
+      'connection_rejected' => FluentIcons.dismiss_24_regular,
       'application_received' => FluentIcons.person_add_24_regular,
       'application_accepted' => FluentIcons.checkmark_24_regular,
       'application_rejected' => FluentIcons.dismiss_24_regular,
@@ -147,7 +148,7 @@ class _NotificationViewState extends State<NotificationView> {
   void _onTapNotification(NotificationModel item) {
     if (!item.isRead) _ctrl.markAsRead(item.id);
 
-    if (item.type == 'connection_request' || item.type == 'connection_accepted') {
+    if (item.type == 'connection_request' || item.type == 'connection_accepted' || item.type == 'connection_rejected') {
       final profileId = item.profileUserId;
       if (profileId != null) {
         Get.toNamed(Routes.otherProfileRoute(profileId));

@@ -689,7 +689,7 @@ ${competition.registrationLink}
                             ? Image.network(
                                 posterUrl,
                                 fit: BoxFit.contain,
-                                headers: const {'ngrok-skip-browser-warning': 'true'},
+                                
                                 errorBuilder: (_, __, ___) => Image.asset(
                                   'lib/assets/img/contoh poster1.jpeg',
                                   fit: BoxFit.contain,
@@ -1778,7 +1778,7 @@ class _CompetitionCard extends StatelessWidget {
                     ? Image.network(
                         posterUrl,
                         fit: BoxFit.cover,
-                        headers: const {'ngrok-skip-browser-warning': 'true'},
+                        
                         errorBuilder: (_, __, ___) => Image.asset(
                           'lib/assets/img/contoh poster1.jpeg',
                           fit: BoxFit.cover,
@@ -2462,7 +2462,7 @@ void _showImageViewer(
                       : Image.network(
                           imageUrl!,
                           fit: BoxFit.contain,
-                          headers: const {'ngrok-skip-browser-warning': 'true'},
+                          
                         ),
                 ),
               ),

@@ -44,7 +44,7 @@ export function NavUser({
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token")
-    document.cookie = "admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax"
+    document.cookie = "admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure"
     router.push("/login")
   }
 

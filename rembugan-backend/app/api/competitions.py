@@ -20,6 +20,7 @@ async def get_all_competitions(
 
 @router.get("/stats", summary="Statistik Lomba")
 async def get_competition_stats(
+    user_token: dict = Depends(verify_token),
     svc: CompetitionsService = Depends(),
 ):
     return response_success(await svc.get_stats())

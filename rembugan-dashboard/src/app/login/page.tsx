@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/auth/admin-login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
 
@@ -39,7 +39,7 @@ export default function LoginPage() {
 
       const token = data.data.access_token
       localStorage.setItem("admin_token", token)
-      document.cookie = `admin_token=${token}; path=/; max-age=86400; SameSite=Lax`
+      document.cookie = `admin_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`
       router.push("/")
     } catch {
       setError("Network error. Please check your connection.")

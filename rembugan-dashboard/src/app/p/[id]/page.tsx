@@ -37,7 +37,7 @@ export default function ProjectPublicPage({ params }: { params: Promise<{ id: st
   useEffect(() => {
     async function fetchProject() {
       try {
-        const res = await fetch(`${API_BASE_URL}/projects/${id}`, { headers: { "ngrok-skip-browser-warning": "true" } })
+        const res = await fetch(`${API_BASE_URL}/projects/${id}`)
         const data = await res.json()
         if (data.status === "success") {
           setProject(data.data)

@@ -59,9 +59,11 @@ class ChatSocketService extends GetxService {
           try {
                 final parsed = jsonDecode(data as String) as Map<String, dynamic>;
                 parsed['_room_id'] = roomId;
-                if (parsed['event'] != 'new_notification') {
-                  _messageController.add(parsed);
+                final event = parsed['event'] as String?;
+                if (event == 'new_notification' || event == 'feed_message') {
+                  return;
                 }
+                _messageController.add(parsed);
           } catch (_) {
             _messageController.add({'text': data.toString(), 'type': 'text'});
           }

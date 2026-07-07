@@ -21,6 +21,7 @@ interface AnalyticsChartProps {
   dataKey: string
   nameKey: string
   height?: number
+  className?: string
 }
 
 export function AnalyticsChart({ 
@@ -31,10 +32,11 @@ export function AnalyticsChart({
   type, 
   dataKey, 
   nameKey,
-  height = 300 
+  height = 300,
+  className 
 }: AnalyticsChartProps) {
   return (
-    <Card className="rounded-2xl border border-border/50 shadow-sm">
+    <Card className={`rounded-2xl border border-border/50 shadow-sm ${className ?? ''}`.trim()}>
       <CardHeader className="flex flex-row items-center gap-4 pb-4">
         <div className="rounded-lg bg-primary/10 p-2">
           <Icon className="h-5 w-5 text-primary" />

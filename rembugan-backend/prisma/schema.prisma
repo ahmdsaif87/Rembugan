@@ -33,6 +33,7 @@ model User {
   cover_url     String?
   social_links  Json?
   is_onboarded  Boolean   @default(false)
+  is_admin      Boolean   @default(false)
   
   // Relasi ke Data Lain
   skills        UserSkill[]
@@ -114,6 +115,8 @@ model Experience {
   end_date    DateTime? // Jika Null berarti "Masih Berlangsung"
   
   user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
 }
 
 // 3. ENTITAS PROYEK & MATCHING
@@ -130,7 +133,7 @@ model Project {
   deadline        DateTime?            // Batas waktu pendaftaran
   total_slots     Int?                 // Total slot anggota yang dibutuhkan
   
-  owner           User                 @relation("ProjectOwner", fields: [owner_id], references: [id])
+  owner           User                 @relation("ProjectOwner", fields: [owner_id], references: [id], onDelete: Cascade)
   members         ProjectMember[]
   applications    ProjectApplication[]
   tasks           Task[]
@@ -204,6 +207,7 @@ model SavedItem {
 
   @@unique([user_id, project_id])
   @@unique([user_id, showcase_id])
+  @@index([user_id])
 }
 
 // 4. ENTITAS WORKSPACE (KANBAN & CHAT)
@@ -244,7 +248,7 @@ model Message {
   
   // Reply ke pesan lain
   reply_to_id     Int?
-  reply_to        Message? @relation("MessageReplies", fields: [reply_to_id], references: [id])
+  reply_to        Message? @relation("MessageReplies", fields: [reply_to_id], references: [id], onDelete: SetNull)
   replies         Message[] @relation("MessageReplies")
   
   // Fleksibilitas Chat: DM atau Group
@@ -310,6 +314,9 @@ model ShowcaseComment {
   user        User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
   parent      ShowcaseComment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
   replies     ShowcaseComment[] @relation("CommentReplies")
+
+  @@index([showcase_id])
+  @@index([user_id])
 }
 
 // 6b. WORKSPACE FILES
@@ -325,6 +332,9 @@ model ProjectFile {
 
   project    Project  @relation(fields: [project_id], references: [id], onDelete: Cascade)
   uploader   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([project_id])
+  @@index([user_id])
 }
 
 // 7. KONEKSI & NOTIFIKASI
@@ -339,6 +349,8 @@ model Connection {
   receiver    User     @relation("ReceivedConnections", fields: [receiver_id], references: [id], onDelete: Cascade)
 
   @@unique([sender_id, receiver_id])
+  @@index([receiver_id])
+  @@index([status])
 }
 
 model Notification {

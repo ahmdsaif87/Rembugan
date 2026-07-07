@@ -1,39 +1,48 @@
 # Rembugan Dashboard
 
-An interactive admin dashboard to monitor and manage the Rembugan platform. Built with **Next.js (App Router)**, **TypeScript**, and components from **Shadcn UI**.
+Admin dashboard untuk platform Rembugan — Next.js 16 + TypeScript + Shadcn UI.
 
-## Key Features
-- Realtime platform statistics and metrics.
-- User Management
-- Project and Application Management
-- Showcase (Portfolio) Management
-- Light/Dark mode display with persistence.
+## Tech Stack
 
-## Prerequisites
-- Node.js (LTS version recommended)
-- npm or yarn
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript (strict)
+- **UI:** Shadcn UI + Radix Primitives
+- **Styling:** Tailwind CSS v4
+- **Data Fetching:** TanStack Query
+- **Table:** TanStack Table
+- **Chart:** Recharts
 
-## Local Setup
+## Fitur
 
-1. Navigate to the dashboard directory and install dependencies:
-   ```bash
-   cd rembugan-dashboard
-   npm install
-   ```
+- Dashboard Statistik (users, projects, showcases, tasks)
+- Manajemen Users (CRUD, Import CSV)
+- Manajemen Projects + Applications
+- Manajemen Showcases
+- Manajemen Tasks
+- Manajemen Competitions
+- Profile QR, Project QR
+- Public pages: `/p/:id`, `/s/:id`, `/u/:id`, `/join/:token`
 
-2. Setup Environment Variables:
-   Create a `.env.local` file in the root dashboard folder and enter the following credentials:
-   ```env
-   NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-   NEXT_PUBLIC_ADMIN_USERNAME=admin
-   NEXT_PUBLIC_ADMIN_PASSWORD=admin123
-   ```
-   *(Adjust `NEXT_PUBLIC_API_BASE_URL` if the backend is running on a different port or host).*
+## Setup
 
-3. Run the Development Server:
-   ```bash
-   npm run dev
-   ```
+```bash
+cd rembugan-dashboard
+cp .env.example .env.local
+# Isi NEXT_PUBLIC_API_BASE_URL dengan URL backend
+npm install
+npm run dev
+```
 
-Access the dashboard via your browser at: `http://localhost:3000`. 
-If you haven't logged in, you will be redirected to the `/login` page. Use the admin username and password configured in your env file.
+## Build Production
+
+```bash
+npm run build
+npm start
+```
+
+## Environment Variables
+
+| Variable | Keterangan |
+|----------|-----------|
+| `NEXT_PUBLIC_API_BASE_URL` | Backend API URL |
+| `NEXT_PUBLIC_APP_URL` | Dashboard public URL |

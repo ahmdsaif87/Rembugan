@@ -113,7 +113,7 @@ class ChatService:
                     "name": other.full_name if other else "User",
                     "other_user_id": other_id,
                     "photo_url": other.photo_url if other else None,
-                    "last_message": m.content[:80] if m.content else "",
+                    "last_message": m.attachment_name if m.type == "share" and m.attachment_name else (m.content[:80] if m.content else ""),
                     "last_time": tz_iso(m.created_at),
                     "unread": unread,
                     "is_online": manager.is_online(other_id),
@@ -214,8 +214,7 @@ class ChatService:
                 "timestamp": now.isoformat(),
             }
             for m in members:
-                if m.user_id != sender_id:
-                    await manager.send_to_user(m.user_id, feed)
+                await manager.send_to_user(m.user_id, feed)
         except Exception as e:
             logger.error(f"Gagal broadcast feed group: {e}")
 
@@ -230,6 +229,7 @@ class ChatService:
                 "timestamp": now.isoformat(),
             }
             await manager.send_to_user(receiver_id, feed)
+            await manager.send_to_user(sender_id, feed)
         except Exception as e:
             logger.error(f"Gagal broadcast feed DM: {e}")
 

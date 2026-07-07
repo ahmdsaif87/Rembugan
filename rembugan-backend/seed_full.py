@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from prisma import Prisma
 from app.core.security import hash_password
 
-PASSWORD_HASH = hash_password("00000000")
+PASSWORD_HASH = hash_password("uhn2025")
 
 INTERESTS = [
     "Machine Learning",
@@ -346,7 +346,18 @@ async def main():
     print(f"   {len(skill_records)} skills created\n")
 
     # ── 3. Users – 60 user dengan email dan interest ──
-    print("3. Membuat 60 Users (email user1@example.com s/d user60@example.com)...")
+    print("3. Membuat Admin User...")
+    admin_pw = hash_password("katasandi98")
+    await db.user.create(data={
+        "email": "admin@rembugan.com",
+        "email_verified": True,
+        "password": admin_pw,
+        "full_name": "Admin Rembugan",
+        "is_admin": True,
+        "is_onboarded": True,
+    })
+
+    print("3b. Membuat 60 Users (email user1@example.com s/d user60@example.com)...")
     user_records = []
     photo_idx = 0
     all_cover_urls = [
@@ -507,7 +518,7 @@ async def main():
                 f"Dibangun dengan pendekatan kolaboratif menggunakan teknologi terkini."
             ),
             "required_skills": skills,
-            "interest": interest,
+            "category": interest,
             "status": "open",
             "deadline": deadline,
             "total_slots": total_slots,
@@ -567,13 +578,17 @@ async def main():
             status = random.choices(["todo", "doing", "done"], weights=[0.3, 0.3, 0.4])[0]
             assignee = random.choice(member_ids) if member_ids else None
             deadline = datetime.now() + timedelta(days=random.randint(1, 30)) if status != "done" else None
-            await db.task.create(data={
+            task = await db.task.create(data={
                 "project_id": project.id,
-                "assignee_id": assignee,
                 "title": task_title,
                 "status": status,
                 "deadline": deadline,
             })
+            if assignee:
+                await db.taskassignee.create(data={
+                    "task_id": task.id,
+                    "user_id": assignee,
+                })
     print(f"   Tasks created\n")
 
     # ── 9. Messages ──

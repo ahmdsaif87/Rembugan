@@ -8,6 +8,7 @@ import '../../../core/theme/theme.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton.dart';
+import '../../../routes/app_pages.dart';
 
 class ScanView extends StatefulWidget {
   const ScanView({super.key});
@@ -55,8 +56,18 @@ class _ScanViewState extends State<ScanView> {
       return;
     }
 
-    // Extract invite token from URL path: /join/{token}
     final segments = uri.pathSegments;
+
+    // Profile QR: /u/{userId}
+    if (segments.length == 2 && segments[0] == 'u') {
+      final userId = segments[1];
+      _controller?.stop();
+      Get.back();
+      Get.toNamed(Routes.otherProfileRoute(userId));
+      return;
+    }
+
+    // Project Invite QR: /join/{token}
     final joinIdx = segments.indexOf('join');
     final token = joinIdx != -1 && joinIdx < segments.length - 1
         ? segments[joinIdx + 1]
@@ -174,7 +185,7 @@ class _JoinPreviewState extends State<_JoinPreview> {
     setState(() => _isLoading = false);
   }
 
-  Future<void> _join() async {
+  Future<void> _accept() async {
     if (_projectId == null || widget.token == null) return;
     setState(() => _isJoining = true);
     try {
@@ -189,6 +200,13 @@ class _JoinPreviewState extends State<_JoinPreview> {
       }
     }
     setState(() => _isJoining = false);
+  }
+
+  void _reject() {
+    Navigator.pop(context);
+    if (_projectTitle != null) {
+      AppToast.info('Undangan ${_projectTitle ?? "proyek"} ditolak.', title: 'Ditolak');
+    }
   }
 
   @override
@@ -228,45 +246,111 @@ class _JoinPreviewState extends State<_JoinPreview> {
             else ...[
               Icon(
                 projectTitle != null
-                    ? FluentIcons.checkmark_circle_24_filled
+                    ? FluentIcons.people_team_24_regular
                     : FluentIcons.error_circle_24_regular,
                 size: 48,
                 color: projectTitle != null
-                    ? AppColors.success500
+                    ? AppColors.primary500
                     : AppColors.danger500,
               ),
               const SizedBox(height: 16),
-              Text(
-                projectTitle ?? (_error ?? 'Proyek Tidak Ditemukan'),
-                style: AppFonts.interStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: c.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed: projectTitle != null && !_isJoining
-                      ? _join
-                      : () => Navigator.pop(context),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary500,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
+              if (projectTitle != null) ...[
+                Text(
+                  'Undangan Proyek',
+                  style: AppFonts.interStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
                   ),
-                  child: _isJoining
-                      ? const SizedBox(
-                          width: 20, height: 20,
-                          child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
-                        )
-                      : Text(projectTitle != null ? 'Gabung' : 'Tutup'),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  projectTitle,
+                  style: AppFonts.interStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Apakah kamu menerima undangan\nmasuk ke proyek kolaborasi ini?',
+                  textAlign: TextAlign.center,
+                  style: AppFonts.interStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: c.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton(
+                          onPressed: _isJoining ? null : _reject,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.danger500,
+                            side: BorderSide(color: AppColors.danger200),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                          ),
+                          child: const Text('Tolak'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: FilledButton(
+                          onPressed: _isJoining ? null : _accept,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.primary500,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                          ),
+                          child: _isJoining
+                              ? const SizedBox(
+                                  width: 20, height: 20,
+                                  child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
+                                )
+                              : const Text('Terima'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Text(
+                  _error ?? 'Proyek Tidak Ditemukan',
+                  style: AppFonts.interStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary500,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                    child: const Text('Tutup'),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
