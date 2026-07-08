@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 const routeLabels: Record<string, string> = {
-  "/": "Overview",
+  "/dashboard": "Overview",
   "/users": "Users",
   "/projects": "Projects",
   "/showcases": "Showcases",
@@ -53,10 +53,10 @@ export function SiteHeader({ onToggleSidebar }: SiteHeaderProps) {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/">Rembugan</Link>
+                <Link href="/dashboard">Rembugan</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
-            {pathname !== "/" && (
+            {pathname !== "/dashboard" && (
               <>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>

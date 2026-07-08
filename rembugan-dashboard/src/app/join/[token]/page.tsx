@@ -93,7 +93,8 @@ export default function JoinProjectPage({ params }: { params: Promise<{ token: s
           <CardContent className="flex flex-col items-center gap-4 py-12">
             <AlertCircle className="h-12 w-12 text-destructive/50" />
             <p className="text-lg font-medium text-muted-foreground text-center">{error}</p>
-            <Button variant="outline" onClick={() => router.push("/")}>
+            <Button variant="outline" onClick={() => router.push("/dashboard")}>
+              Go to Dashboard
               Go to Rembugan
             </Button>
           </CardContent>

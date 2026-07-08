@@ -40,7 +40,7 @@ export default function LoginPage() {
       const token = data.data.access_token
       localStorage.setItem("admin_token", token)
       document.cookie = `admin_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`
-      router.push("/")
+      router.push("/dashboard")
     } catch {
       setError("Network error. Please check your connection.")
       setIsLoading(false)
