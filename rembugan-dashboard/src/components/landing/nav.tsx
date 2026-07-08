@@ -18,7 +18,7 @@ export function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link href="/dashboard">
+          <Link href="/login">
             <Button size="sm" className="h-8 bg-[#6366F1] text-white hover:bg-[#6366F1]/90">
               Dashboard Admin
             </Button>

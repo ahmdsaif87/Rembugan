@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   React.useEffect(() => {
     const token = sessionStorage.getItem("admin_token");
     if (!token) {
-      router.push("/login");
+      router.replace("/login");
     } else {
       setIsAuthenticated(true);
     }
