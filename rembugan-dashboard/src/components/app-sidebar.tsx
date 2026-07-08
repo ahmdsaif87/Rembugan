@@ -28,12 +28,12 @@ import {
 
 const navItems = [
   { title: "Overview", url: "/dashboard", icon: BarChart3 },
-  { title: "Competitions", url: "/competitions", icon: Trophy },
-  { title: "Users", url: "/users", icon: Users },
-  { title: "Projects", url: "/projects", icon: FolderKanban },
-  { title: "Showcases", url: "/showcases", icon: Sparkles },
-  { title: "Tasks", url: "/tasks", icon: ListChecks },
-  { title: "Applications", url: "/applications", icon: FileText },
+  { title: "Competitions", url: "/dashboard/competitions", icon: Trophy },
+  { title: "Users", url: "/dashboard/users", icon: Users },
+  { title: "Projects", url: "/dashboard/projects", icon: FolderKanban },
+  { title: "Showcases", url: "/dashboard/showcases", icon: Sparkles },
+  { title: "Tasks", url: "/dashboard/tasks", icon: ListChecks },
+  { title: "Applications", url: "/dashboard/applications", icon: FileText },
 ]
 
 const adminUser = {
