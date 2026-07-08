@@ -11,7 +11,9 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error(error)
+    console.error('Dashboard Error:', error)
+    console.error('Error message:', error.message)
+    console.error('Error digest:', error.digest)
   }, [error])
 
   return (

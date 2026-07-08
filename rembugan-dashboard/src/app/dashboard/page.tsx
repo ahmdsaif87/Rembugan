@@ -108,7 +108,9 @@ export default function Overview() {
     queryKey: ['competitions'],
     queryFn: async () => {
       const res = await fetchCompetitions()
-      return (res.status === 'success' ? res.data : []) as Competition[]
+      if (res.status !== 'success') return []
+      const raw = res.data
+      return (Array.isArray(raw) ? raw : raw?.data ?? raw?.items ?? []) as Competition[]
     },
   })
 
@@ -116,7 +118,9 @@ export default function Overview() {
     queryKey: ['users'],
     queryFn: async () => {
       const res = await fetchUsers(0, 200)
-      return (res.status === 'success' ? res.data : []) as User[]
+      if (res.status !== 'success') return []
+      const raw = res.data
+      return (Array.isArray(raw) ? raw : raw?.users ?? raw?.items ?? []) as User[]
     },
   })
 
