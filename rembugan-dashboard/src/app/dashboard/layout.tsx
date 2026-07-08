@@ -4,27 +4,18 @@ import * as React from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   React.useEffect(() => {
-    const token = sessionStorage.getItem("admin_token");
-    if (!token) {
-      router.replace("/login");
-    } else {
-      setIsAuthenticated(true);
-    }
     const saved = localStorage.getItem("sidebar_state");
     if (saved !== null) setSidebarOpen(saved === "true");
-  }, [router]);
+  }, []);
 
   const toggleSidebar = React.useCallback(() => {
     setSidebarOpen((prev) => {
@@ -33,8 +24,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       return next;
     });
   }, []);
-
-  if (!isAuthenticated) return null;
 
   return (
     <SidebarProvider
