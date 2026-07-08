@@ -1,32 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const router = useRouter();
-  const [mounted, setMounted] = React.useState(false);
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   React.useEffect(() => {
-    const token = sessionStorage.getItem("admin_token");
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-    setMounted(true);
     const saved = localStorage.getItem("sidebar_state");
     if (saved !== null) setSidebarOpen(saved === "true");
-  }, [router]);
-
-  if (!mounted) return null;
+  }, []);
 
   const toggleSidebar = React.useCallback(() => {
     setSidebarOpen((prev) => {
@@ -60,7 +45,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         >
           <AppSidebar />
         </div>
-
         <div className="flex flex-1 min-w-0 flex-col">
           <SiteHeader onToggleSidebar={toggleSidebar} />
           <div className="flex-1 flex flex-col">
