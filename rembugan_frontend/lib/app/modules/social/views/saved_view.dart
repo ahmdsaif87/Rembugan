@@ -92,7 +92,7 @@ class _SavedViewState extends State<SavedView> {
                     SizedBox(
                       height: 44,
                       child: OutlinedButton.icon(
-                        onPressed: () => Get.toNamed(Routes.EXPLORE),
+                        onPressed: () => Get.offAllNamed(Routes.EXPLORE),
                         icon: const Icon(FluentIcons.search_24_regular, size: 16),
                         label: const Text('Jelajahi Postingan'),
                         style: OutlinedButton.styleFrom(

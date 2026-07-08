@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/services/auth_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_toast.dart';
-import '../../../core/widgets/app_chrome.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/explore_controller.dart';
@@ -90,9 +90,7 @@ class ExploreView extends GetView<ExploreController> {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(
-        current: AppNavDestination.explore,
-      ),
+
     );
   }
 
@@ -170,6 +168,7 @@ class ExploreView extends GetView<ExploreController> {
     return Obx(
       () {
         if (!controller.isLoading.value &&
+            !controller.isRefreshing.value &&
             controller.filteredProjects.isEmpty &&
             !controller.isLoadingMore.value) {
           final isOnboarded = Get.find<AuthService>()
@@ -183,10 +182,10 @@ class ExploreView extends GetView<ExploreController> {
             message: isOnboarded == false
                 ? 'Lengkapi profil untuk mendapatkan rekomendasi proyek yang sesuai dengan minatmu.'
                 : 'Coba ubah kata kunci atau filter pencarian kamu.',
-            actionLabel: isOnboarded == false ? 'Lengkapi Profil' : null,
+            actionLabel: isOnboarded == false ? 'Lengkapi Profil' : 'Reset Filter',
             onAction: isOnboarded == false
                 ? () => Get.toNamed(Routes.PERSONALIZATION)
-                : null,
+                : controller.clearAllFilters,
           );
         }
         final showBanner = Get.find<AuthService>()
@@ -198,41 +197,47 @@ class ExploreView extends GetView<ExploreController> {
             controller.filteredProjects.length + (showBanner ? 1 : 0);
         final hasMore = controller.hasMoreProjects;
         final itemCount = listCount + (hasMore ? 1 : 0);
-        return ListView.separated(
-          controller: controller.projectScrollController,
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-          itemCount: itemCount,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            if (showBanner && index == 0) {
-              return _CompleteProfileBanner(
-                onTap: () => Get.toNamed(Routes.PERSONALIZATION),
-              );
-            }
+        return RefreshIndicator(
+          onRefresh: controller.refreshProjects,
+          displacement: 50,
+          edgeOffset: 20,
+          child: ListView.separated(
+            controller: controller.projectScrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+            itemCount: itemCount,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              if (showBanner && index == 0) {
+                return _CompleteProfileBanner(
+                  onTap: () => Get.toNamed(Routes.PERSONALIZATION),
+                );
+              }
 
-            final dataIndex = index - (showBanner ? 1 : 0);
-            if (dataIndex >= controller.filteredProjects.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Skeleton(width: 24, height: 24),
+              final dataIndex = index - (showBanner ? 1 : 0);
+              if (dataIndex >= controller.filteredProjects.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: Skeleton(width: 24, height: 24),
+                  ),
+                );
+              }
+
+              final project = controller.filteredProjects[dataIndex];
+              return _ProjectCard(
+                project: project,
+                matchLabel: dataIndex == 0
+                    ? 'Paling cocok untuk kamu'
+                    : 'Skill yang sama',
+                onDetail: () => ExploreView.showProjectSheet(
+                  context,
+                  project,
+                  onApply: controller.applyToProject,
                 ),
               );
-            }
-
-            final project = controller.filteredProjects[dataIndex];
-            return _ProjectCard(
-              project: project,
-              matchLabel: dataIndex == 0
-                  ? 'Paling cocok untuk kamu'
-                  : 'Skill yang sama',
-              onDetail: () => ExploreView.showProjectSheet(
-                context,
-                project,
-                onApply: controller.applyToProject,
-              ),
-            );
-          },
+            },
+          ),
         );
       },
     );
@@ -247,6 +252,8 @@ class ExploreView extends GetView<ExploreController> {
             icon: FluentIcons.search_24_regular,
             title: 'Lomba tidak ditemukan',
             message: 'Belum ada lomba yang cocok dengan filter saat ini. Coba ubah kategori atau atur ulang filter.',
+            actionLabel: 'Reset Filter',
+            onAction: controller.clearAllFilters,
           );
         }
         return CustomScrollView(
@@ -290,8 +297,8 @@ class ExploreView extends GetView<ExploreController> {
             icon: FluentIcons.person_search_24_regular,
             title: 'Orang tidak ditemukan',
             message: 'Coba ubah kata kunci atau filter untuk menemukan pengguna lain.',
-            actionLabel: 'Edit Profil',
-            onAction: () => Get.toNamed(Routes.EDIT_PROFILE),
+            actionLabel: 'Reset Filter',
+            onAction: controller.clearAllFilters,
           );
         }
         return ListView.separated(
@@ -586,15 +593,19 @@ class ExploreView extends GetView<ExploreController> {
                       Expanded(
                         flex: 2,
                         child: _PrimaryAction(
-                          label: project.isMember
-                              ? 'Bergabung'
-                              : (project.hasApplied
-                                  ? 'Menunggu'
-                                  : (applying ? 'Mengirim...' : 'Minta Bergabung')),
-                          onTap: project.isMember || project.hasApplied || applying
+                          label: project.isOwner
+                              ? 'Punya Saya'
+                              : (project.isMember
+                                  ? 'Bergabung'
+                                  : (project.hasApplied
+                                      ? 'Menunggu'
+                                      : (applying ? 'Mengirim...' : 'Minta Bergabung'))),
+                          onTap: project.isOwner || project.isMember || project.hasApplied || applying
                               ? null
                               : () async {
                                   if (onApply == null) return;
+                                  final confirmed = await _confirmProjectApplication(context, project);
+                                  if (confirmed != true || !context.mounted) return;
                                   setSheetState(() => applying = true);
                                   final err = await onApply(project.projectId);
                                   if (!context.mounted) return;
@@ -626,6 +637,48 @@ class ExploreView extends GetView<ExploreController> {
           },
         );
       },
+    );
+  }
+
+  static Future<bool?> _confirmProjectApplication(
+    BuildContext context,
+    Project project,
+  ) {
+    final c = AppC.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        title: Text(
+          'Kirim permintaan bergabung?',
+          style: AppFonts.satoshiStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: c.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Owner proyek "${project.title}" akan melihat profil dan skill kamu sebelum menerima permintaan.',
+          style: AppFonts.satoshiStyle(
+            fontSize: 13,
+            height: 1.45,
+            color: c.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Kirim Permintaan'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -792,7 +845,7 @@ ${competition.registrationLink}
                   Expanded(
                     flex: 2,
                     child: _PrimaryAction(
-                      label: 'Daftar Lomba',
+                      label: 'Buka Link',
                           onTap: () => openRegistrationLink(competition),
                         ),
                       ),
@@ -808,9 +861,21 @@ ${competition.registrationLink}
   }
 
   static Future<void> openRegistrationLink(Competition competition) async {
-    await Clipboard.setData(ClipboardData(text: competition.registrationLink));
-    Get.back<void>();
-    AppToast.success(competition.registrationLink, title: 'Link pendaftaran siap');
+    final rawLink = competition.registrationLink.trim();
+    if (rawLink.isEmpty) {
+      AppToast.error('Link pendaftaran belum tersedia.');
+      return;
+    }
+
+    final normalizedLink = rawLink.startsWith('http') ? rawLink : 'https://$rawLink';
+    final uri = Uri.tryParse(normalizedLink);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: rawLink));
+    AppToast.success(rawLink, title: 'Link disalin');
   }
 }
 
@@ -1610,7 +1675,9 @@ class _ProjectCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (project.isMember)
+              if (project.isOwner)
+                _MatchBadge(label: 'Punya Saya')
+              else if (project.isMember)
                 _MatchBadge(label: 'Anggota')
               else if (project.hasApplied)
                 _MatchBadge(label: 'Menunggu')

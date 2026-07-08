@@ -223,6 +223,41 @@ class WorkspaceRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> createProject({
+    required String title,
+    required String description,
+    required List<String> requiredSkills,
+    String? category,
+    String? deadline,
+    int? totalSlots,
+  }) async {
+    try {
+      final response = await _api.post('/projects/create', data: {
+        'title': title,
+        'description': description,
+        'required_skills': requiredSkills,
+        if (category != null) 'category': category,
+        if (deadline != null) 'deadline': deadline,
+        if (totalSlots != null) 'total_slots': totalSlots,
+      });
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>?;
+    } catch (e) {
+      debugPrint('WorkspaceRepository.createProject error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> joinProject(String token) async {
+    try {
+      await _api.post('/qr/project/join/$token');
+      return true;
+    } catch (e) {
+      debugPrint('WorkspaceRepository.joinProject error: $e');
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>?> applyToProject(int projectId) async {
     try {
       final response = await _api.post('/collaboration/apply', data: {

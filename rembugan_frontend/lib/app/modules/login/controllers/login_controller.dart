@@ -11,33 +11,49 @@ class LoginController extends GetxController {
   final emailOrNimController = TextEditingController();
   final passwordController = TextEditingController();
   final isPasswordHidden = true.obs;
+  final isLoading = false.obs;
+  final errorMessage = Rxn<String>();
   final formKey = GlobalKey<FormState>();
 
   void togglePasswordVisibility() {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
+  void clearError() {
+    errorMessage.value = null;
+  }
+
   void onLogin() async {
     if (!formKey.currentState!.validate()) return;
+    errorMessage.value = null;
+    isLoading.value = true;
 
-    final error = await _auth.login(
-      identifier: emailOrNimController.text.trim(),
-      password: passwordController.text,
-    );
+    try {
+      final error = await _auth.login(
+        identifier: emailOrNimController.text.trim(),
+        password: passwordController.text,
+      );
 
-    if (error != null) {
-      AppToast.error(error, title: 'Login Gagal');
-      return;
-    }
+      if (error != null) {
+        errorMessage.value = error;
+        return;
+      }
 
-    final userName = _auth.currentUser.value?.fullName ?? '';
-    AppToast.success('Selamat datang kembali${userName.isNotEmpty ? ', $userName' : ''} 👋');
+      final userName = _auth.currentUser.value?.fullName ?? '';
+      AppToast.success(
+        'Selamat datang kembali${userName.isNotEmpty ? ', $userName' : ''}',
+      );
 
-    final user = _auth.currentUser.value;
-    if (user != null && !user.isOnboarded) {
-      Get.offAllNamed(Routes.PERSONALIZATION);
-    } else {
-      Get.offAllNamed(Routes.HOME);
+      final user = _auth.currentUser.value;
+      if (user != null && !user.isOnboarded) {
+        Get.offAllNamed(Routes.PERSONALIZATION);
+      } else {
+        Get.offAllNamed(Routes.HOME);
+      }
+    } catch (e) {
+      errorMessage.value = 'Terjadi kesalahan. Coba lagi.';
+    } finally {
+      isLoading.value = false;
     }
   }
 

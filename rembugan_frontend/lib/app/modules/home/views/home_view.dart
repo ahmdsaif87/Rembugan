@@ -11,6 +11,7 @@ import '../../social/views/comment_view.dart';
 import '../controllers/home_controller.dart';
 import '../../chat/controllers/chat_controller.dart';
 import '../../explore/views/explore_view.dart';
+import '../../main_shell/controllers/main_shell_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
 import 'widgets/header_icon.dart';
 import 'widgets/post_card_widget.dart';
@@ -36,17 +37,21 @@ class HomeView extends GetView<HomeController> {
             _buildTabs(context),
             Expanded(
               child: Obx(
-                () => ListView(
-                  controller: controller.scrollController,
-                  padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
-                  children: _buildMixedFeed(context),
+                () => RefreshIndicator(
+                  onRefresh: controller.refreshFeed,
+                  displacement: 50,
+                  child: ListView(
+                    controller: controller.scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
+                    children: _buildMixedFeed(context),
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppNavDestination.home),
     );
   }
 
@@ -184,13 +189,13 @@ class HomeView extends GetView<HomeController> {
               const SizedBox(height: 24),
               SizedBox(width: 180, height: 44,
                 child: OutlinedButton(
-                  onPressed: () => Get.find<HomeController>().setTab(0),
+                    onPressed: () => Get.find<MainShellController>().changeTab(1),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: c.textPrimary,
                     side: BorderSide(color: c.border),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
                   ),
-                  child: Text('Cari Orang', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
+                    child: Text('Cari Orang', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
                 ),
               ),
             ],
@@ -274,6 +279,18 @@ class HomeView extends GetView<HomeController> {
             Text('Jelajahi proyek dan lomba untuk memulai.',
               textAlign: TextAlign.center,
               style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary, height: 1.45),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(width: 180, height: 44,
+              child: OutlinedButton(
+                onPressed: () => Get.find<MainShellController>().changeTab(1),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: c.textPrimary,
+                  side: BorderSide(color: c.border),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
+                ),
+                child: Text('Jelajahi Proyek', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
+              ),
             ),
           ],
         ),

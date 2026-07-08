@@ -102,6 +102,51 @@ class LoginView extends GetView<LoginController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Obx(() {
+            if (controller.errorMessage.value == null) {
+              return const SizedBox.shrink();
+            }
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.danger50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.error500.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    FluentIcons.error_circle_24_filled,
+                    size: 18,
+                    color: AppColors.error500,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      controller.errorMessage.value!,
+                      style: AppFonts.satoshiStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.error500,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: controller.clearError,
+                    child: Icon(
+                      FluentIcons.dismiss_24_regular,
+                      size: 16,
+                      color: AppColors.error500,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
           AppTextField(
             controller: controller.emailOrNimController,
             labelText: 'Email atau NIM',
@@ -160,6 +205,22 @@ class LoginView extends GetView<LoginController> {
   }
 
   Widget _buildActionButtons() {
-    return AppButton(label: 'Masuk', onTap: controller.onLogin);
+    return Obx(() {
+      final loading = controller.isLoading.value;
+      return AppButton(
+        label: loading ? '' : 'Masuk',
+        onTap: loading ? null : controller.onLogin,
+        child: loading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.white,
+                ),
+              )
+            : null,
+      );
+    });
   }
 }

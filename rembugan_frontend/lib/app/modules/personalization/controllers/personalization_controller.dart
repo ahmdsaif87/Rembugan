@@ -12,6 +12,7 @@ import '../../../core/config/api_config.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/profile_service.dart';
+import '../../../routes/app_pages.dart';
 import 'package:rembugan/app/core/widgets/app_toast.dart';
 
 class PersonalizationController extends GetxController {
@@ -333,11 +334,44 @@ class PersonalizationController extends GetxController {
         _auth.currentUser.refresh();
       }
 
-      Get.offAllNamed('/home');
+      Get.offAllNamed(Routes.HOME);
     } on DioException catch (e) {
       final detail = e.response?.data['detail'];
       AppToast.error(detail?.toString() ?? 'Gagal menyimpan profil.', title: 'Gagal');
     }
+  }
+
+  Future<void> skipProfile() async {
+    final profile = extractedProfile.value;
+    try {
+      await _api.put('/onboarding/save-profile', data: {
+        'full_name': profile.name.isNotEmpty
+            ? profile.name
+            : (_auth.currentUser.value?.fullName ?? 'User'),
+        'bio': profile.bio,
+        'photo_url': _photoUrl,
+        'skills': profile.skills,
+        'social_links': profile.socialLinks.isNotEmpty
+            ? profile.socialLinks
+            : null,
+        'experiences': profile.experiences
+            .map((e) => {
+                  'title': e.title,
+                  'organization': e.organization,
+                  'duration': e.duration,
+                  'description': e.description,
+                  'tech_stack': e.techStack,
+                })
+            .toList(),
+      });
+    } catch (_) {}
+
+    final user = _auth.currentUser.value;
+    if (user != null) {
+      _auth.currentUser.value = user.copyWith(isOnboarded: true);
+      _auth.currentUser.refresh();
+    }
+    Get.offAllNamed(Routes.HOME);
   }
 
   void reset() {

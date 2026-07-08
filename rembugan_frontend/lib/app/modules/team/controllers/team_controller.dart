@@ -209,7 +209,7 @@ class TeamController extends GetxController {
   StreamSubscription? _wsSub;
 
   var detailTabIndex = 0.obs;
-  var workspaceTabIndex = 0.obs;
+  var workspaceFilter = 0.obs; // 0=all, 1=owned, 2=joined
   final isLoading = true.obs;
   final selectedWorkspace = Rxn<WorkspaceModel>();
 
@@ -233,6 +233,14 @@ class TeamController extends GetxController {
       workspaces.where((w) => w.isOwned).toList();
   List<WorkspaceModel> get joinedWorkspaces =>
       workspaces.where((w) => !w.isOwned).toList();
+
+  List<WorkspaceModel> get filteredWorkspaces {
+    switch (workspaceFilter.value) {
+      case 1: return ownedWorkspaces;
+      case 2: return joinedWorkspaces;
+      default: return workspaces;
+    }
+  }
 
   final workspaceHistory = <WorkspaceHistory>[].obs;
   final applicants = <WorkspaceApplicant>[].obs;
@@ -481,6 +489,38 @@ class TeamController extends GetxController {
     final pid = int.tryParse(ws.id);
     if (pid == null) return;
     tasks.assignAll(await _repo.getTasks(pid));
+  }
+
+  Future<bool> createProject({
+    required String title,
+    required String description,
+    required List<String> requiredSkills,
+    String? category,
+    String? deadline,
+    int? totalSlots,
+  }) async {
+    final result = await _repo.createProject(
+      title: title,
+      description: description,
+      requiredSkills: requiredSkills,
+      category: category,
+      deadline: deadline,
+      totalSlots: totalSlots,
+    );
+    if (result != null) {
+      await fetchWorkspaces();
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> joinProject(String token) async {
+    final ok = await _repo.joinProject(token);
+    if (ok) {
+      await fetchWorkspaces();
+      return true;
+    }
+    return false;
   }
 
   Future<bool> kickMemberLocal(int projectId, String userId) async {

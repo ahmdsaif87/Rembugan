@@ -177,6 +177,7 @@ class ApiExploreRepository implements ExploreRepository {
     final matchScore = raw['match_score'] as int? ?? 0;
     final hasApplied = raw['has_applied'] as bool? ?? false;
     final isMember = raw['is_member'] as bool? ?? false;
+    final isOwner = raw['is_owner'] as bool? ?? false;
     final projectId = raw['id'] as int? ?? 0;
 
     return Project(
@@ -195,6 +196,7 @@ class ApiExploreRepository implements ExploreRepository {
       matchScore: matchScore,
       hasApplied: hasApplied,
       isMember: isMember,
+      isOwner: isOwner,
       skills: skills,
       memberAvatars: memberAvatars,
       memberNames: memberNames,

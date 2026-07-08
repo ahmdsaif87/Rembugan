@@ -81,7 +81,7 @@ class ProjectService(BaseService):
         user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
         user_has_skills = bool(user_skill_names)
 
-        where = {"status": PJ_OPEN, "owner_id": {"not": user_id}}
+        where = {"status": PJ_OPEN}
         if category:
             where["category"] = category
         if min_slots is not None or max_slots is not None:
@@ -154,6 +154,7 @@ class ProjectService(BaseService):
                 "match_score": score,
                 "has_applied": p.id in applied_ids,
                 "is_member": p.id in member_ids,
+                "is_owner": p.owner_id == user_id,
                 "created_at": tz_iso(p.created_at),
             })
 

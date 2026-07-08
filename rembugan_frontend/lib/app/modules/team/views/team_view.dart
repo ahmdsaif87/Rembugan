@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
 import '../../../routes/app_pages.dart';
+import '../../main_shell/controllers/main_shell_controller.dart';
 import '../controllers/team_controller.dart';
 import 'workspace_detail_view.dart';
 
@@ -86,18 +87,19 @@ class TeamView extends GetView<TeamController> {
 
               const SizedBox(height: 16),
 
-              // ── Tab Buttons ──
+              // ── Chip Filters ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: c.border)),
-                  ),
-                  child: Obx(
-                    () => Row(
+                child: Obx(
+                  () => SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
                       children: [
-                        _buildTabButton(c, 'Workspace Saya', controller.workspaceTabIndex.value == 0, 0),
-                        _buildTabButton(c, 'Diikuti', controller.workspaceTabIndex.value == 1, 1),
+                        _buildFilterChip(c, 'Semua', 0),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(c, 'Punya Saya', 1),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(c, 'Diikuti', 2),
                       ],
                     ),
                   ),
@@ -107,9 +109,7 @@ class TeamView extends GetView<TeamController> {
               // ── Content ──
               Expanded(
                 child: Obx(() {
-                  final list = controller.workspaceTabIndex.value == 0
-                      ? controller.ownedWorkspaces
-                      : controller.joinedWorkspaces;
+                  final list = controller.filteredWorkspaces;
 
                   if (list.isEmpty) {
                     return Center(
@@ -129,7 +129,7 @@ class TeamView extends GetView<TeamController> {
                               ),
                               alignment: Alignment.center,
                               child: Icon(
-                                controller.workspaceTabIndex.value == 0
+                                controller.workspaceFilter.value == 1
                                     ? FluentIcons.briefcase_24_regular
                                     : FluentIcons.people_team_24_regular,
                                 size: 32,
@@ -138,9 +138,11 @@ class TeamView extends GetView<TeamController> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              controller.workspaceTabIndex.value == 0
+                              controller.workspaceFilter.value == 1
                                   ? 'Belum ada workspace'
-                                  : 'Belum mengikuti workspace',
+                                  : controller.workspaceFilter.value == 2
+                                      ? 'Belum mengikuti workspace'
+                                      : 'Belum ada workspace',
                               style: AppFonts.satoshiStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -149,9 +151,11 @@ class TeamView extends GetView<TeamController> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              controller.workspaceTabIndex.value == 0
-                                  ? 'Buat workspace baru untuk\nmemulai kolaborasi.'
-                                  : 'Gabung ke workspace tim untuk\nberkolaborasi.',
+                              controller.workspaceFilter.value == 1
+                                  ? 'Buat tawaran lewat tombol +\ndi Jelajah untuk memulai.'
+                                  : controller.workspaceFilter.value == 2
+                                      ? 'Apply ke tawaran di Jelajah\natau scan QR untuk bergabung.'
+                                      : 'Buat tawaran lewat tombol + di Jelajah\natau apply untuk bergabung.',
                               textAlign: TextAlign.center,
                               style: AppFonts.satoshiStyle(
                                 fontSize: 13,
@@ -159,25 +163,28 @@ class TeamView extends GetView<TeamController> {
                                 height: 1.4,
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            OutlinedButton.icon(
-                              onPressed: () {},
-                              icon: Icon(
-                                controller.workspaceTabIndex.value == 0
-                                    ? FluentIcons.add_24_regular
-                                    : FluentIcons.link_24_regular,
-                                size: 16,
-                              ),
-                              label: Text(
-                                controller.workspaceTabIndex.value == 0
-                                    ? 'Buat Workspace'
-                                    : 'Gabung Workspace',
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: AppC.of(context).border),
-                                foregroundColor: AppC.of(context).textPrimary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                            const SizedBox(height: 22),
+                            SizedBox(
+                              width: 180,
+                              height: 42,
+                              child: ElevatedButton.icon(
+                                onPressed: () => Get.find<MainShellController>().changeTab(1),
+                                icon: const Icon(FluentIcons.search_24_regular, size: 16),
+                                label: Text(
+                                  'Jelajahi Proyek',
+                                  style: AppFonts.satoshiStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary500,
+                                  foregroundColor: AppColors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                                  ),
                                 ),
                               ),
                             ),
@@ -201,7 +208,7 @@ class TeamView extends GetView<TeamController> {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: AppNavDestination.team),
+
     );
   }
 
@@ -210,59 +217,56 @@ class TeamView extends GetView<TeamController> {
     Get.to<void>(() => const WorkspaceDetailView());
   }
 
-  Widget _buildTabButton(AppC c, String label, bool active, int index) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => controller.workspaceTabIndex.value = index,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: 40,
-          alignment: Alignment.bottomCenter,
-          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: active ? AppColors.primary500 : AppColors.transparent,
-                width: 2.0,
+  Widget _buildFilterChip(AppC c, String label, int filter) {
+    final active = controller.workspaceFilter.value == filter;
+    int count;
+    switch (filter) {
+      case 1: count = controller.ownedWorkspaces.length;
+      case 2: count = controller.joinedWorkspaces.length;
+      default: count = controller.workspaces.length;
+    }
+    return GestureDetector(
+      onTap: () => controller.workspaceFilter.value = filter,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary500 : c.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: active ? AppColors.primary500 : c.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: AppFonts.satoshiStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: active ? AppColors.white : c.textPrimary,
               ),
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: active
+                    ? AppColors.white.withValues(alpha: 0.2)
+                    : c.grey100,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                '$count',
                 style: AppFonts.satoshiStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
-                  color: active ? c.grey900 : c.grey500,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: active ? AppColors.white : c.grey500,
                 ),
               ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: active
-                      ? c.primarySoft
-                      : c.grey100,
-                  borderRadius: BorderRadius.circular(AppRadius.xxs),
-                ),
-                child: Text(
-                  index == 0
-                      ? '${controller.ownedWorkspaces.length}'
-                      : '${controller.joinedWorkspaces.length}',
-                  style: AppFonts.satoshiStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                    color: active ? AppColors.primary500 : c.grey500,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -123,12 +123,12 @@ class _NotificationViewState extends State<NotificationView> {
           }
         });
       } else {
-        Get.toNamed(Routes.TEAM);
+        Get.offAllNamed(Routes.TEAM);
       }
     } else {
       final wsId = item.workspaceId;
       if (wsId != null) {
-        Get.toNamed(Routes.TEAM);
+        Get.offAllNamed(Routes.TEAM);
       } else {
         final profileId = item.profileUserId;
         if (profileId != null) {
@@ -172,22 +172,22 @@ class _NotificationViewState extends State<NotificationView> {
           teamCtrl.openWorkspace(ws);
           Get.to<void>(() => const WorkspaceDetailView());
         } else {
-          Get.toNamed(Routes.TEAM);
+          Get.offAllNamed(Routes.TEAM);
         }
       } else {
-        Get.toNamed(Routes.TEAM);
+        Get.offAllNamed(Routes.TEAM);
       }
       return;
     }
 
     if (item.type == 'application_accepted' || item.type == 'application_rejected') {
-      Get.toNamed(Routes.TEAM);
+      Get.offAllNamed(Routes.TEAM);
       return;
     }
 
     final wsId = item.workspaceId;
     if (wsId != null) {
-      Get.toNamed(Routes.TEAM);
+      Get.offAllNamed(Routes.TEAM);
       return;
     }
   }

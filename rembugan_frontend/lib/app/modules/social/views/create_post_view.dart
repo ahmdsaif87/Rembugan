@@ -134,9 +134,11 @@ class _CreatePostViewState extends State<CreatePostView> {
             child: Form(
               key: _formKey,
               child: _isOffer
-                  ? ListView(
+                   ? ListView(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       children: [
+                        _OfferInfoBanner(),
+                        const SizedBox(height: AppSpacing.md),
                         _OfferFormContent(
                           selectedCategory: _selectedCategory,
                           skills: _skills,
@@ -434,6 +436,10 @@ class _CreatePostViewState extends State<CreatePostView> {
       );
       return;
     }
+    if (_isOffer) {
+      final confirmed = await _confirmOfferPost();
+      if (confirmed != true) return;
+    }
     setState(() {
       _isLoading = true;
       _uploadProgress = '';
@@ -481,6 +487,68 @@ class _CreatePostViewState extends State<CreatePostView> {
       if (mounted) setState(() { _isLoading = false; _uploadProgress = ''; });
     }
     if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<bool?> _confirmOfferPost() {
+    final c = AppC.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        title: Text(
+          'Terbitkan tawaran proyek?',
+          style: AppFonts.satoshiStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: c.textPrimary,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _projectNameController.text.trim(),
+              style: AppFonts.satoshiStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${_skills.length} skill dibutuhkan • ${_slotsController.text.trim()} anggota',
+              style: AppFonts.satoshiStyle(
+                fontSize: 12.5,
+                color: c.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Workspace akan dibuat otomatis setelah tawaran diterbitkan.',
+              style: AppFonts.satoshiStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: c.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Terbitkan'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showImagePicker() async {
@@ -1096,6 +1164,42 @@ class _SearchablePickerSheetState extends State<_SearchablePickerSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OfferInfoBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: c.primarySoft,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            FluentIcons.info_24_regular,
+            size: 20,
+            color: AppColors.primary500,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Tawaran akan tampil di Jelajah dan membuat workspace otomatis untuk tim kamu.',
+              style: AppFonts.satoshiStyle(
+                fontSize: 12.5,
+                height: 1.4,
+                color: c.textSecondary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

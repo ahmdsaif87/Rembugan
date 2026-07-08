@@ -34,10 +34,12 @@ class ChatView extends GetView<ChatController> {
                   }
                   final chats = controller.filteredRooms;
                   if (chats.isEmpty) {
-                    return const AppEmptyState(
+                    return AppEmptyState(
                       icon: FluentIcons.chat_empty_24_regular,
                       title: 'Belum ada pesan',
-                      message: 'Percakapan baru akan muncul di sini setelah Anda mulai berkolaborasi.',
+                      message: 'Percakapan baru akan muncul di sini setelah kamu mulai berkolaborasi.',
+                      actionLabel: 'Cari Kolaborator',
+                      onAction: () => Get.offAllNamed(Routes.EXPLORE),
                     );
                   }
                   return RefreshIndicator(

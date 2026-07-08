@@ -10,6 +10,7 @@ import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton.dart';
+import '../../../routes/app_pages.dart';
 
 class ProfileQrView extends StatefulWidget {
   const ProfileQrView({super.key});
@@ -183,7 +184,7 @@ class _ProfileQrViewState extends State<ProfileQrView> {
               if (segments.isNotEmpty) {
                 final userId = segments.last;
                 if (userId.isNotEmpty) {
-                  Get.offNamed('/other-profile/$userId');
+                  Get.offNamed(Routes.otherProfileRoute(userId));
                   return;
                 }
               }

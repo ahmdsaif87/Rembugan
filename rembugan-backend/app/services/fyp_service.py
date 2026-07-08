@@ -60,7 +60,7 @@ class FypService:
             })
 
         projects = await self.db.project.find_many(
-            where={"status": PJ_OPEN, "owner_id": {"not": user_id}},
+            where={"status": PJ_OPEN},
             include={"owner": True},
             take=FYP_MAX_ROWS,
         )

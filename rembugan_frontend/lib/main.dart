@@ -40,7 +40,9 @@ class RembuganApp extends StatelessWidget {
         transitionDuration: const Duration(milliseconds: 260),
         initialRoute: Get.find<AuthService>().isLoggedIn.value
             ? Routes.HOME
-            : Routes.ONBOARDING,
+            : (Get.find<AuthService>().hasSeenOnboarding.value
+                ? Routes.LOGIN
+                : Routes.ONBOARDING),
         getPages: AppPages.routes,
       ),
     );

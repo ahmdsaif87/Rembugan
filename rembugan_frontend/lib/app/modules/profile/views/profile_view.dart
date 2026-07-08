@@ -6,12 +6,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
-import '../../../core/widgets/app_chrome.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../routes/app_pages.dart';
 import '../../home/views/widgets/post_card_widget.dart';
 import '../../home/views/widgets/share_sheet.dart';
+import '../../main_shell/controllers/main_shell_controller.dart';
 import '../../social/views/comment_view.dart';
 import '../controllers/profile_controller.dart';
 
@@ -85,6 +85,7 @@ class ProfileView extends GetView<ProfileController> {
                     onTap: () => Get.toNamed(Routes.EDIT_PROFILE),
                     primary: true,
                   ),
+                  _ProfileCompletionCard(profile: profile),
                   const SizedBox(height: 16),
                   _ProfileTabs(
                     activeIndex: controller.selectedTabIndex.value,
@@ -106,9 +107,7 @@ class ProfileView extends GetView<ProfileController> {
           ],
         );
       }),
-      bottomNavigationBar: const AppBottomNav(
-        current: AppNavDestination.profile,
-      ),
+
     );
   }
 }
@@ -478,6 +477,83 @@ class _ProfileActionButton extends StatelessWidget {
   }
 }
 
+class _ProfileCompletionCard extends StatelessWidget {
+  const _ProfileCompletionCard({required this.profile});
+
+  final ProfileData profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    final hasSocialLinks = profile.socialLinks.values.any((value) => value.trim().isNotEmpty);
+    final hasExperience = profile.experiences.any(
+      (experience) => experience.title.trim().isNotEmpty && experience.organization.trim().isNotEmpty,
+    );
+    final checks = <bool>[
+      profile.photoUrl.trim().isNotEmpty,
+      profile.bio.trim().isNotEmpty,
+      profile.skills.any((skill) => skill.trim().isNotEmpty),
+      hasExperience,
+      hasSocialLinks,
+    ];
+    final completed = checks.where((done) => done).length;
+    if (completed == checks.length) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: c.primarySoft,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '$completed dari ${checks.length} bagian profil lengkap',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Get.toNamed(Routes.EDIT_PROFILE),
+                child: const Text('Lengkapi'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: LinearProgressIndicator(
+              value: completed / checks.length,
+              minHeight: 6,
+              backgroundColor: c.surface,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary500),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Profil lengkap bikin rekomendasi proyek dan kolaborator lebih akurat.',
+            style: AppFonts.satoshiStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: c.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProfileTabs extends StatelessWidget {
   const _ProfileTabs({required this.activeIndex, required this.onChanged});
 
@@ -637,7 +713,7 @@ class _ProfileTabContentState extends State<_ProfileTabContent> {
           message:
               'Mulai berkolaborasi dengan teman atau ikut kompetisi untuk membangun portofoliomu.',
           actionLabel: 'Jelajahi',
-          onAction: () => Get.toNamed(Routes.EXPLORE),
+          onAction: () => Get.find<MainShellController>().changeTab(1),
         );
       }
       return Column(

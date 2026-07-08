@@ -14,6 +14,7 @@ class Project {
   final int matchScore;
   final bool hasApplied;
   final bool isMember;
+  final bool isOwner;
   final List<String> skills;
   final List<String> memberAvatars;
   final List<String> memberNames;
@@ -34,6 +35,7 @@ class Project {
     this.matchScore = 0,
     this.hasApplied = false,
     this.isMember = false,
+    this.isOwner = false,
     required this.skills,
     required this.memberAvatars,
     required this.memberNames,

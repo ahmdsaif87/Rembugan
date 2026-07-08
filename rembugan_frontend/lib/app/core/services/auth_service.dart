@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../models/user_model.dart';
+import '../config/api_config.dart';
 import '../../modules/home/controllers/home_controller.dart';
 import '../../modules/notification/controllers/notification_controller.dart';
+import '../../routes/app_pages.dart';
 import 'api_client.dart';
 import 'chat_socket_service.dart';
 
@@ -13,8 +15,12 @@ class AuthService extends GetxService {
   final isLoggedIn = false.obs;
   final currentUser = Rxn<UserModel>();
   final isLoading = false.obs;
+  final hasSeenOnboarding = false.obs;
 
   Future<void> init() async {
+    hasSeenOnboarding.value =
+        await _api.readValue(ApiConfig.onboardingSeenKey) == 'true';
+
     final token = await _api.getToken();
     if (token == null || token.isEmpty) return;
 
@@ -28,6 +34,11 @@ class AuthService extends GetxService {
     } on DioException {
       await _api.clearToken();
     }
+  }
+
+  Future<void> markOnboardingSeen() async {
+    hasSeenOnboarding.value = true;
+    await _api.writeValue(ApiConfig.onboardingSeenKey, 'true');
   }
 
   Future<String?> login({
@@ -191,6 +202,6 @@ class AuthService extends GetxService {
     if (Get.isRegistered<HomeController>()) {
       Get.delete<HomeController>(force: true);
     }
-    Get.offAllNamed('/onboarding');
+    Get.offAllNamed(Routes.ONBOARDING);
   }
 }

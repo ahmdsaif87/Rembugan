@@ -1,11 +1,16 @@
+import 'dart:convert';
 import 'dart:ui';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/config/api_config.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
@@ -131,6 +136,75 @@ class _EditProfileViewState extends State<EditProfileView> {
     }
   }
 
+  Future<void> _scanAndFillCv() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    AppToast.info('Menganalisis CV...');
+
+    try {
+      final token = await api.getToken();
+      final uri = Uri.parse('${ApiConfig.baseUrl}/onboarding/extract-cv');
+
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      if (kIsWeb) {
+        final bytes = result.files.first.bytes;
+        if (bytes == null) throw Exception('Gagal membaca file');
+        request.files.add(http.MultipartFile.fromBytes(
+          'file', bytes,
+          filename: result.files.first.name,
+          contentType: MediaType('application', 'pdf'),
+        ));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath(
+          'file', result.files.first.path!,
+          filename: result.files.first.name,
+          contentType: MediaType('application', 'pdf'),
+        ));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        AppToast.error('Gagal menganalisis CV.', title: 'Gagal');
+        return;
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = json['data'] as Map<String, dynamic>;
+      final nama = data['nama'] as String? ?? '';
+      final skills = (data['skills_terdeteksi'] as List?)
+              ?.map((s) => s.toString())
+              .toList() ?? [];
+      final bio = data['bio_suggestion'] as String? ?? '';
+
+      setState(() {
+        if (nama.isNotEmpty) {
+          nameController.text = nama;
+          draft = draft.copyWith(name: nama);
+        }
+        if (bio.isNotEmpty) {
+          bioController.text = bio;
+          draft = draft.copyWith(bio: bio);
+        }
+        if (skills.isNotEmpty) {
+          draft = draft.copyWith(skills: skills);
+        }
+      });
+
+      AppToast.success('Data CV berisi, silakan periksa kembali.');
+    } catch (e) {
+      debugPrint('EditProfileView._scanAndFillCv error: $e');
+      AppToast.error('Gagal memproses CV. Coba lagi.', title: 'Gagal');
+    }
+  }
+
   bool _experiencesChanged(List<ProfileExperience> a, List<ProfileExperience> b) {
     if (a.length != b.length) return true;
     for (var i = 0; i < a.length; i++) {
@@ -190,74 +264,91 @@ class _EditProfileViewState extends State<EditProfileView> {
     }
 
     setState(() => _isSaving = true);
+    await Future<void>.delayed(Duration.zero);
+    try {
+      final old = profileService.profile.value;
+      final newSocialLinks = <String, String>{};
+      if (instagramController.text.trim().isNotEmpty) newSocialLinks['instagram'] = instagramController.text.trim();
+      if (linkedinController.text.trim().isNotEmpty) newSocialLinks['linkedin'] = linkedinController.text.trim();
+      if (externalController.text.trim().isNotEmpty) newSocialLinks['website'] = externalController.text.trim();
 
-    final old = profileService.profile.value;
-    final newSocialLinks = <String, String>{};
-    if (instagramController.text.trim().isNotEmpty) newSocialLinks['instagram'] = instagramController.text.trim();
-    if (linkedinController.text.trim().isNotEmpty) newSocialLinks['linkedin'] = linkedinController.text.trim();
-    if (externalController.text.trim().isNotEmpty) newSocialLinks['website'] = externalController.text.trim();
+      final newDraft = draft.copyWith(
+        name: nameController.text.trim(),
+        bio: bioController.text.trim(),
+        interest: interestController.text.trim(),
+        socialLinks: newSocialLinks,
+        skills: draft.skills.map((skill) => skill.trim()).where((skill) => skill.isNotEmpty).toList(),
+        experiences: draft.experiences
+            .where((exp) => exp.title.trim().isNotEmpty && exp.organization.trim().isNotEmpty)
+            .toList(),
+      );
 
-    final newDraft = draft.copyWith(
-      name: nameController.text.trim(),
-      bio: bioController.text.trim(),
-      interest: interestController.text.trim(),
-      socialLinks: newSocialLinks,
-    );
+      final settings = <String, dynamic>{};
+      if (newDraft.name != old.name) settings['full_name'] = newDraft.name;
+      if (newDraft.bio != old.bio) settings['bio'] = newDraft.bio;
+      if (newDraft.interest != old.interest) settings['interest'] = newDraft.interest;
+      if (newDraft.photoUrl != old.photoUrl) settings['photo_url'] = newDraft.photoUrl;
+      if (newDraft.coverUrl != old.coverUrl) settings['cover_url'] = newDraft.coverUrl;
+      if (!mapEquals(newDraft.socialLinks, old.socialLinks)) {
+        settings['social_links'] = newSocialLinks;
+      }
+      if (!listEquals(newDraft.skills, old.skills)) settings['skills'] = newDraft.skills;
+      if (_experiencesChanged(newDraft.experiences, old.experiences)) {
+        settings['experiences'] = newDraft.experiences.map((e) => {
+          'title': e.title,
+          'organization': e.organization,
+          'duration': e.duration,
+          'description': e.description,
+          'tech_stack': e.techStack,
+        }).toList();
+      }
 
-    final settings = <String, dynamic>{};
-    if (newDraft.name != old.name) settings['full_name'] = newDraft.name;
-    if (newDraft.bio != old.bio) settings['bio'] = newDraft.bio;
-    if (newDraft.interest != old.interest) settings['interest'] = newDraft.interest;
-    if (newDraft.photoUrl != old.photoUrl) settings['photo_url'] = newDraft.photoUrl;
-    if (newDraft.coverUrl != old.coverUrl) settings['cover_url'] = newDraft.coverUrl;
-    if (!mapEquals(newDraft.socialLinks, old.socialLinks)) {
-      settings['social_links'] = newSocialLinks;
-    }
-    if (!listEquals(newDraft.skills, old.skills)) settings['skills'] = newDraft.skills;
-    if (_experiencesChanged(newDraft.experiences, old.experiences)) {
-      settings['experiences'] = newDraft.experiences.map((e) => {
-        'title': e.title,
-        'organization': e.organization,
-        'duration': e.duration,
-        'description': e.description,
-        'tech_stack': e.techStack,
-      }).toList();
-    }
+      final hasBackendChanges = settings.isNotEmpty;
+      final hasLocalOnlyChanges = _hasLocalOnlyCollaborationChanges;
 
-    final hasBackendChanges = settings.isNotEmpty;
-    final hasLocalOnlyChanges = _hasLocalOnlyCollaborationChanges;
+      if (hasBackendChanges) {
+        final err = await profileService.updateSettings(settings);
+        if (err != null) {
+          AppToast.error(err, title: 'Error');
+          return;
+        }
+      }
 
-    if (hasBackendChanges) {
-      final err = await profileService.updateSettings(settings);
-      if (err != null) {
-        AppToast.error(err, title: 'Error');
-        if (mounted) setState(() => _isSaving = false);
+      profileService.updateProfile(newDraft);
+
+      if (!mounted) return;
+
+      setState(() {
+        draft = newDraft;
+        _hasLocalOnlyCollaborationChanges = false;
+      });
+
+      if (!hasBackendChanges && !hasLocalOnlyChanges) {
+        AppToast.info('Tidak ada perubahan.');
+        _returnToProfile();
         return;
       }
+
+      AppToast.success(
+        hasLocalOnlyChanges
+            ? 'Profil utama tersimpan. Riwayat kolaborasi belum tersimpan permanen.'
+            : 'Profil berhasil diperbarui.',
+      );
+      _returnToProfile();
+    } catch (e) {
+      debugPrint('EditProfileView._save error: $e');
+      AppToast.error('Gagal menyimpan profil. Coba lagi.', title: 'Error');
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
+  }
 
-    profileService.updateProfile(newDraft);
-
-    if (!mounted) return;
-
-    setState(() {
-      draft = newDraft;
-      _isSaving = false;
-      _hasLocalOnlyCollaborationChanges = false;
-    });
-
-    if (!hasBackendChanges && !hasLocalOnlyChanges) {
-      AppToast.info('Tidak ada perubahan.');
-      Get.offNamed(Routes.PROFILE);
+  void _returnToProfile() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
       return;
     }
-
-    AppToast.success(
-      hasLocalOnlyChanges
-          ? 'Profil utama tersimpan. Riwayat kolaborasi belum tersimpan permanen.'
-          : 'Profil berhasil diperbarui.',
-    );
-    Get.offNamed(Routes.PROFILE);
+    Get.offAllNamed(Routes.PROFILE);
   }
 
   bool get _hasUnsavedChanges {
@@ -694,7 +785,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
             child: _AiPersonalizeCard(
-              onTap: () => Get.toNamed(Routes.PERSONALIZATION),
+              onTap: _scanAndFillCv,
             ),
           ),
           const SizedBox(height: 16),

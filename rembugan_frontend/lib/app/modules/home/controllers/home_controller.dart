@@ -30,6 +30,7 @@ class RecommendedPerson {
 class HomeController extends GetxController {
   final activeTab = 0.obs;
   final isLoading = true.obs;
+  final isRefreshing = false.obs;
   final hasError = false.obs;
   final errorMessage = ''.obs;
 
@@ -105,6 +106,19 @@ class HomeController extends GetxController {
     } finally {
       isLoadingMore.value = false;
     }
+  }
+
+  Future<void> refreshFeed() async {
+    isRefreshing.value = true;
+    _showcasePage = 1;
+    _hasNextPage = true;
+    try {
+      final repo = Get.find<ExploreRepository>();
+      final result = await repo.getShowcases(page: 1, limit: 10);
+      showcases.assignAll(result.showcases);
+      _hasNextPage = result.hasNext;
+    } catch (_) {}
+    isRefreshing.value = false;
   }
 
   void loadRecommendations() async {

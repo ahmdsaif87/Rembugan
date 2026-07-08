@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../routes/app_pages.dart';
 
 class OnboardingController extends GetxController {
@@ -23,15 +24,21 @@ class OnboardingController extends GetxController {
     },
   ];
 
-  void nextPage() {
+  Future<void> nextPage() async {
     if (currentPage.value < onboardingData.length - 1) {
       pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     } else {
+      await Get.find<AuthService>().markOnboardingSeen();
       Get.offAllNamed(Routes.LOGIN);
     }
+  }
+
+  Future<void> skipOnboarding() async {
+    await Get.find<AuthService>().markOnboardingSeen();
+    Get.offAllNamed(Routes.LOGIN);
   }
 
   void onPageChanged(int index) {

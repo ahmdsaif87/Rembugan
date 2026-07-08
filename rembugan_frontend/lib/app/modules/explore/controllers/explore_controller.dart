@@ -14,6 +14,7 @@ class ExploreController extends GetxController {
   final searchTextController = TextEditingController();
   final projectScrollController = ScrollController();
   final isLoading = true.obs;
+  final isRefreshing = false.obs;
   final isLoadingMore = false.obs;
   final hasError = false.obs;
   final errorMessage = ''.obs;
@@ -100,6 +101,22 @@ class ExploreController extends GetxController {
       applyFilters();
     } catch (_) {
       applyFilters();
+    }
+  }
+
+  Future<void> refreshProjects() async {
+    isRefreshing.value = true;
+    projectPage = 1;
+    try {
+      final result = await _repository.getProjects(page: 1, limit: 15);
+      projects.assignAll(result.projects);
+      filteredProjects.assignAll(result.projects);
+      projectTotalAvailable = result.total;
+      applyFilters();
+    } catch (_) {
+      applyFilters();
+    } finally {
+      isRefreshing.value = false;
     }
   }
 

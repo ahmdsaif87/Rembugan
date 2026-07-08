@@ -9,7 +9,6 @@ import 'package:lottie/lottie.dart';
 import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_chrome.dart';
-import '../../../routes/app_pages.dart';
 import '../controllers/personalization_controller.dart';
 
 class PersonalizationView extends GetView<PersonalizationController> {
@@ -92,7 +91,7 @@ class _UploadState extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         TextButton(
-          onPressed: () => Get.offAllNamed(Routes.HOME),
+          onPressed: controller.skipProfile,
           child: Text(
             'Lewati dulu',
             style: AppFonts.satoshiStyle(
@@ -382,9 +381,8 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
     setState(() {});
   }
 
-  void _finish() {
-    widget.controller.generateProfile();
-    Get.offAllNamed(Routes.HOME);
+  Future<void> _finish() async {
+    await widget.controller.generateProfile();
   }
 
   @override
@@ -685,7 +683,7 @@ class _PersonalizationWizardState extends State<_PersonalizationWizard> {
           child: OutlinedButton(
             onPressed: _step == 0
                 ? (widget.isManual
-                      ? () => Get.offAllNamed(Routes.HOME)
+                      ? widget.controller.skipProfile
                       : widget.controller.reset)
                 : () => _goToStep(_step - 1),
             child: Text(

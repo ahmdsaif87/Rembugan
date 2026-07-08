@@ -249,12 +249,16 @@ class AppEmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
+    this.actionLabel,
+    this.onAction,
     super.key,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -304,6 +308,15 @@ class AppEmptyState extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(height: 18),
+                AppButton(
+                  label: actionLabel!,
+                  onTap: onAction,
+                  width: 180,
+                  height: 42,
+                ),
+              ],
             ],
           ),
         ),
@@ -313,9 +326,10 @@ class AppEmptyState extends StatelessWidget {
 }
 
 class AppBottomNav extends StatelessWidget {
-  const AppBottomNav({required this.current, super.key});
+  const AppBottomNav({required this.current, this.onTap, super.key});
 
   final AppNavDestination current;
+  final ValueChanged<int>? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -343,7 +357,7 @@ class AppBottomNav extends StatelessWidget {
                 : FluentIcons.home_24_regular,
             label: 'Beranda',
             active: current == AppNavDestination.home,
-            onTap: () => _go(Routes.HOME),
+            onTap: () => onTap?.call(0),
           ),
           _NavItem(
             icon: current == AppNavDestination.explore
@@ -351,7 +365,7 @@ class AppBottomNav extends StatelessWidget {
                 : FluentIcons.globe_24_regular,
             label: 'Jelajah',
             active: current == AppNavDestination.explore,
-            onTap: () => _go(Routes.EXPLORE),
+            onTap: () => onTap?.call(1),
           ),
           _CreateButton(),
           _NavItem(
@@ -360,7 +374,7 @@ class AppBottomNav extends StatelessWidget {
                 : FluentIcons.apps_24_regular,
             label: 'Proyek',
             active: current == AppNavDestination.team,
-            onTap: () => _go(Routes.TEAM),
+            onTap: () => onTap?.call(2),
           ),
           _NavItem(
             icon: current == AppNavDestination.profile
@@ -368,16 +382,11 @@ class AppBottomNav extends StatelessWidget {
                 : FluentIcons.person_24_regular,
             label: 'Profil',
             active: current == AppNavDestination.profile,
-            onTap: () => _go(Routes.PROFILE),
+            onTap: () => onTap?.call(3),
           ),
         ],
       ),
     );
-  }
-
-  void _go(String route) {
-    if (Get.currentRoute == route) return;
-    Get.offAllNamed(route);
   }
 }
 
@@ -467,6 +476,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.width = double.infinity,
     this.height = 48,
+    this.child,
     super.key,
   });
 
@@ -477,6 +487,7 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final double width;
   final double height;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -511,7 +522,7 @@ class AppButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: border,
         ),
-        child: Row(
+        child: child ?? Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [

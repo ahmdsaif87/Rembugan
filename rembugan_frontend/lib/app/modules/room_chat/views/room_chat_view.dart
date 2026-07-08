@@ -412,11 +412,11 @@ class _RoomChatViewState extends State<RoomChatView> {
                   final itemType = segments[0];
                   final itemId = segments[1];
                   if (itemType == 's') {
-                    Navigator.of(Get.context!).push(MaterialPageRoute(
+                    Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => PostDetailView(showcaseId: itemId),
                     ));
                   } else if (itemType == 'p') {
-                    Get.toNamed(Routes.EXPLORE);
+                    Get.offAllNamed(Routes.EXPLORE);
                   }
                 }
               } catch (_) {}

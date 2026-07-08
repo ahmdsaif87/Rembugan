@@ -6,6 +6,7 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../config/api_config.dart';
 import '../widgets/app_toast.dart';
+import '../../routes/app_pages.dart';
 
 class ApiClient extends GetxService {
   late final dio.Dio _dio;
@@ -38,6 +39,11 @@ class ApiClient extends GetxService {
 
   Future<void> saveToken(String token) =>
       _storage.write(key: ApiConfig.tokenKey, value: token);
+
+  Future<String?> readValue(String key) => _storage.read(key: key);
+
+  Future<void> writeValue(String key, String value) =>
+      _storage.write(key: key, value: value);
 
   Future<void> clearToken() => _storage.delete(key: ApiConfig.tokenKey);
 
@@ -88,7 +94,7 @@ class _AuthInterceptor extends dio.Interceptor {
   void onError(dio.DioException err, dio.ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
       await _storage.delete(key: ApiConfig.tokenKey);
-      Get.offAllNamed('/onboarding');
+      Get.offAllNamed(Routes.ONBOARDING);
       AppToast.warning('Silakan login kembali.', title: 'Sesi Berakhir');
       return;
     }
