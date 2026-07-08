@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: rembugan-backend
+    runtime: docker
+    repo: https://github.com/your-username/rembugan
+    branch: main
+    rootDir: rembugan-backend
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: APP_URL
+        value: https://rembugan-dashboard.vercel.app
+      - key: ALLOWED_ORIGINS
+        value: https://rembugan-dashboard.vercel.app,http://localhost:3000

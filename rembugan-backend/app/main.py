@@ -164,6 +164,11 @@ async def root():
     return {"message": "REMBUGAN API Aktif!", "version": "1.0.0"}
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return JSONResponse(content=None, status_code=204)
+
+
 @app.get("/healthz", tags=["0. Root"])
 async def healthz():
     db_ok = False
