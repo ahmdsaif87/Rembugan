@@ -39,7 +39,7 @@ class FypService:
         user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
         user_skills_lower = list(user_skill_names)
 
-        # Showcases: pgvector scoring langsung di DB (10 teratas dari SEMUA data)
+        # Showcases: pgvector scoring langsung di DB (10 teratas)
         showcases_data = []
         if user_embedding:
             vec = f'[{",".join(str(x) for x in user_embedding)}]'
@@ -50,32 +50,39 @@ class FypService:
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, user_id
             )
-            if rows:
-                s_ids = [r["id"] for r in rows]
-                s_map = {r["id"]: r for r in rows}
-                showcases = await self.db.showcase.find_many(
-                    where={"id": {"in": s_ids}},
-                    include={"author": True, "project": True, "likes": True, "comments": True},
-                )
-                by_id = {s.id: s for s in showcases}
-                for sid in s_ids:
-                    s = by_id.get(sid)
-                    if not s:
-                        continue
-                    row = s_map[sid]
-                    showcases_data.append({
-                        "id": s.id,
-                        "type": "showcase",
-                        "content": s.content,
-                        "media_urls": s.media_urls,
-                        "tags": s.tags,
-                        "author_name": s.author.full_name if s.author else None,
-                        "author_photo": s.author.photo_url if s.author else None,
-                        "likes_count": len(s.likes) if s.likes else 0,
-                        "comments_count": len(s.comments) if s.comments else 0,
-                        "match_score": int(float(row["match_score"]) * 100),
-                        "created_at": s.created_at.isoformat(),
-                    })
+        else:
+            rows = await self.db.query_raw(
+                'SELECT id, content, media_urls, tags, author_id, created_at, 0 AS match_score '
+                'FROM "Showcase" WHERE author_id != $1 '
+                'ORDER BY created_at DESC LIMIT 10',
+                user_id
+            )
+        if rows:
+            s_ids = [r["id"] for r in rows]
+            s_map = {r["id"]: r for r in rows}
+            showcases = await self.db.showcase.find_many(
+                where={"id": {"in": s_ids}},
+                include={"author": True, "project": True, "likes": True, "comments": True},
+            )
+            by_id = {s.id: s for s in showcases}
+            for sid in s_ids:
+                s = by_id.get(sid)
+                if not s:
+                    continue
+                row = s_map[sid]
+                showcases_data.append({
+                    "id": s.id,
+                    "type": "showcase",
+                    "content": s.content,
+                    "media_urls": s.media_urls,
+                    "tags": s.tags,
+                    "author_name": s.author.full_name if s.author else None,
+                    "author_photo": s.author.photo_url if s.author else None,
+                    "likes_count": len(s.likes) if s.likes else 0,
+                    "comments_count": len(s.comments) if s.comments else 0,
+                    "match_score": int(float(row["match_score"]) * 100),
+                    "created_at": s.created_at.isoformat(),
+                })
 
         # Projects: pgvector scoring
         projects_data = []
@@ -88,7 +95,14 @@ class FypService:
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, PJ_OPEN
             )
-            if rows:
+        else:
+            rows = await self.db.query_raw(
+                'SELECT id, title, description, required_skills, owner_id, created_at, 0 AS match_score '
+                'FROM "Project" WHERE status = $1 '
+                'ORDER BY created_at DESC LIMIT 10',
+                PJ_OPEN
+            )
+        if rows:
                 p_ids = [r["id"] for r in rows]
                 p_map = {r["id"]: r for r in rows}
                 projects = await self.db.project.find_many(

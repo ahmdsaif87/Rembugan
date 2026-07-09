@@ -56,12 +56,19 @@ class ShowcaseService:
             ids = []
             score_map = {}
 
-        showcases = await self.db.showcase.find_many(
-            where={"id": {"in": ids}} if ids else {"author_id": user_id},
-            order={"created_at": "desc"},
-            take=limit if not ids else None,
-            include={"author": True, "likes": True, "comments": True},
-        ) if ids else []
+        if not ids:
+            showcases = [] if user_emb else await self.db.showcase.find_many(
+                where={"author_id": {"not": user_id}},
+                order={"created_at": "desc"},
+                skip=(page - 1) * limit,
+                take=limit,
+                include={"author": True, "likes": True, "comments": True},
+            )
+        else:
+            showcases = await self.db.showcase.find_many(
+                where={"id": {"in": ids}},
+                include={"author": True, "likes": True, "comments": True},
+            )
 
         # Batch query connection status for all authors
         author_ids = list(set(s.author_id for s in showcases))
