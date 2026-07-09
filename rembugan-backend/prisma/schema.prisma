@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [vector extension]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // 1. ENTITAS UTAMA (USER & PROFIL)
