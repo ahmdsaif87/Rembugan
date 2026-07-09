@@ -69,8 +69,8 @@ class CompetitionsService:
             if cached is not None:
                 data = cached
             else:
-                cursor = collection.find({}).limit(50)
-                data = await cursor.to_list(length=50)
+                cursor = collection.find({}).limit(20)
+                data = await cursor.to_list(length=20)
                 for item in data:
                     item["_id"] = str(item["_id"])
                     poster = item.get("poster", "")
@@ -124,8 +124,8 @@ class CompetitionsService:
             if collection is None:
                 return {"by_source": [], "by_deadline": [], "by_kategori": []}
 
-            cursor = collection.find({}).limit(50)
-            data = await cursor.to_list(length=50)
+            cursor = collection.find({}).limit(20)
+            data = await cursor.to_list(length=20)
 
             source_counts: dict[str, int] = {}
             deadline_counts: dict[str, int] = {}
@@ -176,8 +176,8 @@ class CompetitionsService:
             if collection is None:
                 return []
 
-            cursor = collection.find({}).limit(50)
-            data = await cursor.to_list(length=50)
+            cursor = collection.find({}).limit(20)
+            data = await cursor.to_list(length=20)
             for item in data:
                 item["_id"] = str(item["_id"])
         except Exception as e:

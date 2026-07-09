@@ -51,6 +51,6 @@ OTP_MAX_ATTEMPTS: Final = 3
 
 # ── Limits ──
 EXPLORE_MAX_ROWS: Final = 1000
-FYP_MAX_ROWS: Final = 500
+FYP_MAX_ROWS: Final = 50
 CHAT_HISTORY_MAX: Final = 200
 MAX_BODY_SIZE: Final = 10 * 1024 * 1024  # 10 MB

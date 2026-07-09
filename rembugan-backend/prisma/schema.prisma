@@ -69,6 +69,8 @@ model User {
   // Timestamps
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
+
+  @@index([created_at])
 }
 
 // 1b. ENTITAS OTP (Verifikasi Email)
@@ -151,6 +153,7 @@ model Project {
   @@index([owner_id])
   @@index([category])
   @@index([deadline])
+  @@index([created_at])
 }
 
 model ProjectApplication {
@@ -287,6 +290,7 @@ model Showcase {
   savedBy           SavedItem[]
 
   @@index([author_id])
+  @@index([created_at])
 }
 
 // 6. INTERAKSI SHOWCASE (LIKE & KOMENTAR)
@@ -300,6 +304,7 @@ model ShowcaseLike {
   user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([showcase_id, user_id])
+  @@index([showcase_id])
 }
 
 model ShowcaseComment {

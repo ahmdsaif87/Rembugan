@@ -117,7 +117,7 @@ export default function Overview() {
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const res = await fetchUsers(0, 200)
+      const res = await fetchUsers(0, 10)
       if (res.status !== 'success') return []
       const raw = res.data
       return (Array.isArray(raw) ? raw : raw?.users ?? raw?.items ?? []) as User[]

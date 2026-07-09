@@ -79,13 +79,6 @@ class AdminService:
         users = await self.db.user.find_many(
             skip=skip,
             take=limit,
-            include={
-                "skills": {"include": {"skill": True}},
-                "experiences": True,
-                "showcases": True,
-                "ownedProjects": True,
-                "memberships": True,
-            },
             order={"created_at": "desc"},
         )
         total = await self.db.user.count()
