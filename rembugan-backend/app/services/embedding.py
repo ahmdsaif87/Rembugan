@@ -17,21 +17,28 @@ async def generate(text: str) -> list[float]:
     cached = _embedding_cache.get(text)
     if cached is not None:
         return cached
+    if not HF_TOKEN:
+        logger.warning("HF_TOKEN tidak diset — embedding tidak bisa digenerate")
+        return []
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     payload = {"inputs": text, "options": {"wait_for_model": True}}
-    try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(HF_API_URL, json=payload, headers=headers)
-            resp.raise_for_status()
-            data = resp.json()
-            emb = data[0] if isinstance(data, list) and isinstance(data[0], list) else data
-            result = [float(v) for v in emb]
-            if len(text) < 500:
-                _embedding_cache[text] = result
-            return result
-    except Exception as e:
-        logger.error(f"HuggingFace API error: {e}")
-        return []
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.post(HF_API_URL, json=payload, headers=headers)
+                resp.raise_for_status()
+                data = resp.json()
+                emb = data[0] if isinstance(data, list) and isinstance(data[0], list) else data
+                result = [float(v) for v in emb]
+                if len(text) < 500:
+                    _embedding_cache[text] = result
+                return result
+        except Exception as e:
+            if attempt == 0:
+                logger.warning(f"HuggingFace API error (retry): {e}")
+                continue
+            logger.warning(f"HuggingFace API error (fallback ke empty): {e}")
+            return []
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
