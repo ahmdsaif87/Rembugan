@@ -56,7 +56,12 @@ class CompetitionsService:
             where={"id": user_id},
             include={"skills": {"include": {"skill": True}}},
         )
-        user_embedding = user.embedding if user else None
+        user_embedding = None
+        if user:
+            emb_row = await self.db.query_raw('SELECT embedding::text FROM "User" WHERE id = $1', user_id)
+            if emb_row and emb_row[0]["embedding"]:
+                import json
+                user_embedding = json.loads(emb_row[0]["embedding"])
         user_skill_names = {s.skill.name.lower() for s in user.skills} if user and user.skills else set()
 
         try:
@@ -168,7 +173,11 @@ class CompetitionsService:
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
-        user_embedding = user.embedding
+        user_embedding = None
+        emb_row = await self.db.query_raw('SELECT embedding::text FROM "User" WHERE id = $1', user_id)
+        if emb_row and emb_row[0]["embedding"]:
+            import json
+            user_embedding = json.loads(emb_row[0]["embedding"])
         user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
 
         try:

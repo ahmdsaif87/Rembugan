@@ -77,7 +77,11 @@ class ProjectService(BaseService):
         if cached is not None:
             return cached
 
-        user_embedding = user.embedding
+        user_embedding = None
+        emb_row = await self.db.query_raw('SELECT embedding::text FROM "User" WHERE id = $1', user_id)
+        if emb_row and emb_row[0]["embedding"]:
+            import json
+            user_embedding = json.loads(emb_row[0]["embedding"])
         user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
         user_has_skills = bool(user_skill_names)
 
