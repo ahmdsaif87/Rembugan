@@ -41,8 +41,7 @@ async def lifespan(app: FastAPI):
     await cache.init()
     logger.info(f"Cache backend: {cache.stats()['backend']}")
 
-    fire_and_forget(preload_embedding_model(), "preload_embedding_model")
-
+    # Model embedding di-load lazy saat generate() pertama — hindari OOM di startup
     yield
     await cache.disconnect()
     await db.disconnect()
