@@ -128,9 +128,9 @@ class ProjectService(BaseService):
 
         # Batch fetch embeddings untuk scoring
         project_ids = [p.id for p in projects]
+        ids_str = ", ".join(str(i) for i in project_ids)
         emb_rows = await self.db.query_raw(
-            'SELECT id, embedding::text FROM "Project" WHERE id = ANY($1::int[])',
-            project_ids
+            f'SELECT id, embedding::text FROM "Project" WHERE id IN ({ids_str})'
         ) if project_ids else []
         project_embeddings = {}
         for r in emb_rows:
