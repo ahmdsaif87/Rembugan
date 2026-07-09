@@ -25,9 +25,14 @@ class ShowcaseService:
 
     async def get_feed(self, user_id: str, page: int, limit: int) -> tuple[list[ShowcaseData], int]:
         user = await self.db.user.find_unique(where={"id": user_id})
-        user_emb = (await self.db.query_raw(
-            'SELECT embedding FROM "User" WHERE id = $1', user_id
-        ))[0]["embedding"] if user else None
+        user_emb = None
+        if user:
+            row = await self.db.query_raw(
+                'SELECT embedding::text FROM "User" WHERE id = $1', user_id
+            )
+            if row and row[0]["embedding"]:
+                import json
+                user_emb = json.loads(row[0]["embedding"])
 
         cache_key = f"feed:{user_id}:{page}:{limit}"
         cached = await cache.get(cache_key)

@@ -14,10 +14,13 @@ class FypService:
         self.db = db
 
     async def _get_user_embedding(self, user_id: str):
+        import json
         row = await self.db.query_raw(
-            'SELECT embedding FROM "User" WHERE id = $1', user_id
+            'SELECT embedding::text FROM "User" WHERE id = $1', user_id
         )
-        return row[0]["embedding"] if row else None
+        if row and row[0]["embedding"]:
+            return json.loads(row[0]["embedding"])
+        return None
 
     async def get_fyp(self, user_id: str) -> dict:
         cache_key = f"fyp:{user_id}"

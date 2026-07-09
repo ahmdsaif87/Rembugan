@@ -192,10 +192,11 @@ class ProfileService(BaseService):
 
         user_embedding = None
         emb_row = await self.db.query_raw(
-            'SELECT embedding FROM "User" WHERE id = $1', user_id
+            'SELECT embedding::text FROM "User" WHERE id = $1', user_id
         )
-        if emb_row:
-            user_embedding = emb_row[0]["embedding"]
+        if emb_row and emb_row[0]["embedding"]:
+            import json
+            user_embedding = json.loads(emb_row[0]["embedding"])
 
         open_projects = [p for p in (current_user.ownedProjects or []) if p.status == PJ_OPEN]
         has_open_offerings = len(open_projects) > 0
