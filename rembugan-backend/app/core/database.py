@@ -16,8 +16,8 @@ if "sslmode" not in _DATABASE_URL:
 
 os.environ["DATABASE_URL"] = _DATABASE_URL
 
-# Singleton instance — pool size dibatasi biar nggak overload Neon free (max 5)
-db = Prisma(pool_size=5)
+# Singleton instance
+db = Prisma()
 
 async def get_db() -> Prisma:
     return db
