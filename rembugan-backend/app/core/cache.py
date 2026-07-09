@@ -45,7 +45,8 @@ class RedisCache:
                 return None
             return json.loads(val)
         except Exception as e:
-            logger.warning(f"Redis get error: {e}")
+            logger.warning(f"Redis get error ({e}) — fallback ke MemoryCache")
+            self._connected = False
             return None
 
     async def set(self, key: str, value: Any, ttl: int = TTL_DEFAULT):
@@ -54,7 +55,8 @@ class RedisCache:
         try:
             await self._redis.setex(key, ttl, json.dumps(value))
         except Exception as e:
-            logger.warning(f"Redis set error: {e}")
+            logger.warning(f"Redis set error ({e}) — fallback ke MemoryCache")
+            self._connected = False
 
     async def invalidate(self, pattern: str = ""):
         if not self._connected:
@@ -71,7 +73,8 @@ class RedisCache:
                     if cursor == 0:
                         break
         except Exception as e:
-            logger.warning(f"Redis invalidate error: {e}")
+            logger.warning(f"Redis invalidate error ({e}) — fallback ke MemoryCache")
+            self._connected = False
 
     def is_connected(self) -> bool:
         return self._connected
