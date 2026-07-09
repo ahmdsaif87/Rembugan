@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/widgets/app_toast.dart';
 import '../../explore/domain/entities/competition.dart';
+import '../../explore/domain/entities/explore_person.dart';
 import '../../explore/domain/entities/feed_showcase.dart';
 import '../../explore/domain/entities/project.dart';
 import '../../explore/domain/repositories/explore_repository.dart';
@@ -137,12 +138,12 @@ class HomeController extends GetxController {
 
       final projectResult = results[0] as ({List<Project> projects, int total});
       final competitions = results[1] as List<Competition>;
-      final people = results[2] as List<ExplorePerson>;
+      final people = results[2] as List;
       final showcaseResult = results[3] as ({List<FeedShowcase> showcases, bool hasNext});
 
       recommendedProjects.assignAll(projectResult.projects);
       recommendedCompetitions.assignAll(competitions);
-      recommendedPeople.assignAll(people.map((p) => RecommendedPerson(
+      recommendedPeople.assignAll(people.cast<ExplorePerson>().map((p) => RecommendedPerson(
         id: p.id,
         name: p.name,
         role: p.role,
