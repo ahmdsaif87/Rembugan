@@ -12,9 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY prisma/schema.prisma ./prisma/
 RUN prisma generate
 
-# Pre-cache embedding model di build time (biar ga download tiap startup)
-RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')"
-
 COPY . .
 
 EXPOSE 8000

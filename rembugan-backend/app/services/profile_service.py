@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.constants import PJ_OPEN, ROLE_KETUA, ROLE_ADMIN
 from app.schemas.profile import SettingsUpdateInput
 from app.schemas.user import ExperienceInput
-from app.services.embedding import cosine_similarity, reembed_user
+from app.services.embedding import reembed_user
 from app.services.base import BaseService
 
 
@@ -190,7 +190,13 @@ class ProfileService(BaseService):
         if not current_user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
-        user_embedding = current_user.embedding
+        user_embedding = None
+        emb_row = await self.db.query_raw(
+            'SELECT embedding FROM "User" WHERE id = $1', user_id
+        )
+        if emb_row:
+            user_embedding = emb_row[0]["embedding"]
+
         open_projects = [p for p in (current_user.ownedProjects or []) if p.status == PJ_OPEN]
         has_open_offerings = len(open_projects) > 0
 
@@ -214,25 +220,24 @@ class ProfileService(BaseService):
             connected_ids.add(other)
 
         exclude_ids = [user_id, *connected_ids]
-        others = await self.db.user.find_many(
-            where={"id": {"notIn": exclude_ids}},
-            take=20,
-        )
+        exclude_list = ", ".join(f"'{e}'" for e in exclude_ids)
 
-        scored = []
-        for u in others:
-            u_emb = u.embedding
-            score = 0
-            if user_embedding and u_emb:
-                score = int(cosine_similarity(user_embedding, u_emb) * 100)
-            scored.append((score, u))
+        if user_embedding:
+            vec = f'[{",".join(str(x) for x in user_embedding)}]'
+            rows = await self.db.query_raw(
+                f'SELECT id, full_name, photo_url, major, bio, '
+                '1 - (embedding <=> $1::vector) AS match_score '
+                f'FROM "User" WHERE id NOT IN ({exclude_list}) '
+                'AND embedding IS NOT NULL '
+                'ORDER BY embedding <=> $1::vector LIMIT $2',
+                vec, limit
+            )
+        else:
+            rows = []
 
-        scored.sort(key=lambda x: x[0], reverse=True)
-        scored = scored[:limit]
+        other_ids = [r["id"] for r in rows]
 
-        other_ids = [u.id for _, u in scored]
-
-        # Batch fetch connections to avoid N+1 queries
+        # Batch fetch connections
         all_conns = await self.db.connection.find_many(
             where={
                 "OR": [
@@ -254,17 +259,18 @@ class ProfileService(BaseService):
         skills_map = {u.id: u.skills for u in users_with_skills}
 
         result = []
-        for score, u in scored:
-            u_skills = skills_map.get(u.id, [])
-            conn_status = conn_map.get(u.id)
+        for r in rows:
+            uid = r["id"]
+            u_skills = skills_map.get(uid, [])
+            conn_status = conn_map.get(uid)
             result.append({
-                "id": u.id,
-                "full_name": u.full_name,
-                "handle": u.handle,
-                "nim": u.nim,
-                "major": u.major,
-                "bio": u.bio,
-                "photo_url": u.photo_url,
+                "id": uid,
+                "full_name": r["full_name"],
+                "handle": None,
+                "nim": None,
+                "major": r["major"],
+                "bio": r["bio"],
+                "photo_url": r["photo_url"],
                 "skills": [s.skill.name for s in u_skills] if u_skills else [],
                 "connection_status": conn_status,
             })

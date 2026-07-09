@@ -5,7 +5,7 @@ from app.core.constants import NOTIF_LIKE, NOTIF_COMMENT, NOTIF_CHAT
 from app.core.types import ShowcaseData
 from app.services.notification import notify
 from app.core.cache import cache
-from app.services.embedding import cosine_similarity, reembed_showcase
+from app.services.embedding import reembed_showcase
 
 
 class ShowcaseService:
@@ -25,7 +25,9 @@ class ShowcaseService:
 
     async def get_feed(self, user_id: str, page: int, limit: int) -> tuple[list[ShowcaseData], int]:
         user = await self.db.user.find_unique(where={"id": user_id})
-        user_emb = user.embedding if user else None
+        user_emb = (await self.db.query_raw(
+            'SELECT embedding FROM "User" WHERE id = $1', user_id
+        ))[0]["embedding"] if user else None
 
         cache_key = f"feed:{user_id}:{page}:{limit}"
         cached = await cache.get(cache_key)
@@ -33,27 +35,31 @@ class ShowcaseService:
             return cached["data"], cached["total"]
 
         total = await self.db.showcase.count(where={"author_id": {"not": user_id}})
-        pool_size = min(total, 50)
+
+        if user_emb:
+            vec = f'[{",".join(str(x) for x in user_emb)}]'
+            rows = await self.db.query_raw(
+                'SELECT id, 1 - (embedding <=> $1::vector) AS match_score '
+                'FROM "Showcase" WHERE author_id != $2 '
+                'ORDER BY embedding <=> $1::vector '
+                'OFFSET $3 LIMIT $4',
+                vec, user_id, (page - 1) * limit, limit
+            )
+            ids = [r["id"] for r in rows]
+            score_map = {r["id"]: float(r["match_score"]) for r in rows}
+        else:
+            ids = []
+            score_map = {}
+
         showcases = await self.db.showcase.find_many(
-            where={"author_id": {"not": user_id}},
+            where={"id": {"in": ids}} if ids else {"author_id": user_id},
             order={"created_at": "desc"},
-            take=pool_size,
+            take=limit if not ids else None,
             include={"author": True, "likes": True, "comments": True},
-        )
+        ) if ids else []
 
-        scored = []
-        for s in showcases:
-            s_emb = s.embedding
-            score = cosine_similarity(user_emb, s_emb) if user_emb and s_emb else 0.0
-            scored.append((score, s))
-
-        scored.sort(key=lambda x: x[0], reverse=True)
-
-        start = (page - 1) * limit
-        page_scored = scored[start:start + limit]
-
-        # Batch query connection status for all authors in this page
-        author_ids = list(set(s.author_id for _, s in page_scored))
+        # Batch query connection status for all authors
+        author_ids = list(set(s.author_id for s in showcases))
         conns = await self.db.connection.find_many(
             where={
                 "OR": [
@@ -68,7 +74,7 @@ class ShowcaseService:
             conn_map[other_id] = conn.status
 
         data = []
-        for score, s in page_scored:
+        for s in showcases:
             liked = any(l.user_id == user_id for l in s.likes)
             data.append({
                 "id": s.id,
@@ -84,7 +90,7 @@ class ShowcaseService:
                 "likes_count": len(s.likes),
                 "comments_count": len(s.comments),
                 "liked_by_me": liked,
-                "match_score": int(score * 100),
+                "match_score": int(score_map.get(s.id, 0) * 100),
                 "created_at": s.created_at.isoformat(),
             })
 

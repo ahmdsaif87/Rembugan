@@ -1,10 +1,9 @@
 from fastapi import Depends, HTTPException
 from prisma import Prisma
 from app.core.database import get_db
-from app.core.constants import PJ_OPEN, FYP_MAX_ROWS
+from app.core.constants import PJ_OPEN
 from app.core.logger import get_logger
 from app.core.cache import cache
-from app.services.embedding import cosine_similarity
 from app.services.competitions import get_competition_collection
 
 logger = get_logger(__name__)
@@ -13,6 +12,12 @@ logger = get_logger(__name__)
 class FypService:
     def __init__(self, db: Prisma = Depends(get_db)):
         self.db = db
+
+    async def _get_user_embedding(self, user_id: str):
+        row = await self.db.query_raw(
+            'SELECT embedding FROM "User" WHERE id = $1', user_id
+        )
+        return row[0]["embedding"] if row else None
 
     async def get_fyp(self, user_id: str) -> dict:
         cache_key = f"fyp:{user_id}"
@@ -27,65 +32,89 @@ class FypService:
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
-        user_embedding = user.embedding
+        user_embedding = await self._get_user_embedding(user_id)
         user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
         user_skills_lower = list(user_skill_names)
 
-        showcases = await self.db.showcase.find_many(
-            take=50,
-            order={"created_at": "desc"},
-            include={"author": True, "project": True, "likes": True, "comments": True},
-        )
-        scored_showcases = []
-        for s in showcases:
-            s_emb = s.embedding
-            score = cosine_similarity(user_embedding, s_emb) if user_embedding and s_emb else 0
-            scored_showcases.append((score, s))
-        scored_showcases.sort(key=lambda x: x[0], reverse=True)
+        # Showcases: pgvector scoring langsung di DB (10 teratas dari SEMUA data)
+        showcases_data = []
+        if user_embedding:
+            vec = f'[{",".join(str(x) for x in user_embedding)}]'
+            rows = await self.db.query_raw(
+                'SELECT id, content, media_urls, tags, author_id, created_at, '
+                '1 - (embedding <=> $1::vector) AS match_score '
+                'FROM "Showcase" WHERE author_id != $2 '
+                'ORDER BY embedding <=> $1::vector LIMIT 10',
+                vec, user_id
+            )
+            if rows:
+                s_ids = [r["id"] for r in rows]
+                s_map = {r["id"]: r for r in rows}
+                showcases = await self.db.showcase.find_many(
+                    where={"id": {"in": s_ids}},
+                    include={"author": True, "project": True, "likes": True, "comments": True},
+                )
+                by_id = {s.id: s for s in showcases}
+                for sid in s_ids:
+                    s = by_id.get(sid)
+                    if not s:
+                        continue
+                    row = s_map[sid]
+                    showcases_data.append({
+                        "id": s.id,
+                        "type": "showcase",
+                        "content": s.content,
+                        "media_urls": s.media_urls,
+                        "tags": s.tags,
+                        "author_name": s.author.full_name if s.author else None,
+                        "author_photo": s.author.photo_url if s.author else None,
+                        "likes_count": len(s.likes) if s.likes else 0,
+                        "comments_count": len(s.comments) if s.comments else 0,
+                        "match_score": int(float(row["match_score"]) * 100),
+                        "created_at": s.created_at.isoformat(),
+                    })
 
-        showcase_data = []
-        for score, s in scored_showcases[:10]:
-            showcase_data.append({
-                "id": s.id,
-                "type": "showcase",
-                "content": s.content,
-                "media_urls": s.media_urls,
-                "tags": s.tags,
-                "author_name": s.author.full_name if s.author else None,
-                "author_photo": s.author.photo_url if s.author else None,
-                "likes_count": len(s.likes) if s.likes else 0,
-                "comments_count": len(s.comments) if s.comments else 0,
-                "match_score": int(score * 100),
-                "created_at": s.created_at.isoformat(),
-            })
+        # Projects: pgvector scoring
+        projects_data = []
+        if user_embedding:
+            vec = f'[{",".join(str(x) for x in user_embedding)}]'
+            rows = await self.db.query_raw(
+                'SELECT id, title, description, required_skills, owner_id, created_at, '
+                '1 - (embedding <=> $1::vector) AS match_score '
+                'FROM "Project" WHERE status = $2 '
+                'ORDER BY embedding <=> $1::vector LIMIT 10',
+                vec, PJ_OPEN
+            )
+            if rows:
+                p_ids = [r["id"] for r in rows]
+                p_map = {r["id"]: r for r in rows}
+                projects = await self.db.project.find_many(
+                    where={"id": {"in": p_ids}},
+                    include={"owner": True},
+                )
+                by_id = {p.id: p for p in projects}
+                for pid in p_ids:
+                    p = by_id.get(pid)
+                    if not p:
+                        continue
+                    row = p_map[pid]
+                    projects_data.append({
+                        "id": p.id,
+                        "type": "project",
+                        "title": p.title,
+                        "description": p.description,
+                        "required_skills": p.required_skills,
+                        "owner_name": p.owner.full_name if p.owner else None,
+                        "match_score": float(row["match_score"]),
+                        "created_at": p.created_at.isoformat(),
+                    })
 
-        projects = await self.db.project.find_many(
-            where={"status": PJ_OPEN},
-            include={"owner": True},
-            take=FYP_MAX_ROWS,
-        )
-        scored_projects = []
-        for p in projects:
-            p_emb = p.embedding
-            score = cosine_similarity(user_embedding, p_emb) if user_embedding and p_emb else 0
-            scored_projects.append({
-                "id": p.id,
-                "type": "project",
-                "title": p.title,
-                "description": p.description,
-                "required_skills": p.required_skills,
-                "owner_name": p.owner.full_name if p.owner else None,
-                "match_score": score,
-                "created_at": p.created_at.isoformat(),
-            })
-        scored_projects.sort(key=lambda x: x["match_score"], reverse=True)
-        project_data = scored_projects[:10]
-
+        # Competitions tetap pake MongoDB
         competition_data = []
         try:
             coll = get_competition_collection()
-            cursor = coll.find({}).limit(50)
-            lomba_data = await cursor.to_list(length=50)
+            cursor = coll.find({}).limit(20)
+            lomba_data = await cursor.to_list(length=20)
             for item in lomba_data:
                 item["_id"] = str(item["_id"])
                 score = 0
@@ -93,7 +122,7 @@ class FypService:
                 for us in user_skills_lower:
                     if us in text_to_search:
                         score += 1
-                if score > 0 or len(user_skills_lower) == 0:
+                if score > 0 or not user_skills_lower:
                     c_item = dict(item)
                     c_item["type"] = "competition"
                     c_item["match_score"] = score
@@ -104,8 +133,8 @@ class FypService:
             logger.exception("Error fetching lomba")
 
         result = {
-            "showcases": showcase_data,
-            "projects": project_data,
+            "showcases": showcases_data,
+            "projects": projects_data,
             "competitions": competition_data,
         }
         await cache.set(cache_key, result, ttl=60)

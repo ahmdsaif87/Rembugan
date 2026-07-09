@@ -1,38 +1,37 @@
 import asyncio
-from fastembed import TextEmbedding
+import os
+import httpx
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-_model: TextEmbedding | None = None
-_model_ready = asyncio.Event()
+HF_TOKEN = os.getenv("HF_TOKEN", "")
+HF_MODEL = "BAAI/bge-small-en-v1.5"
+HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{HF_MODEL}"
+_embedding_cache: dict[str, list[float]] = {}
 
 
-async def preload_embedding_model():
-    """Preload embedding model di background agar request pertama tidak lambat."""
-    logger.info("Preloading embedding model...")
-    loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, _get_model)
-    _model_ready.set()
-    logger.info("Embedding model siap!")
-
-
-async def wait_for_model():
-    await _model_ready.wait()
-
-
-def _get_model() -> TextEmbedding:
-    global _model
-    if _model is None:
-        _model = TextEmbedding("BAAI/bge-small-en-v1.5")
-    return _model
-
-
-def generate(text: str) -> list[float]:
+async def generate(text: str) -> list[float]:
     if not text.strip():
         text = " "
-    emb = list(_get_model().embed(text))[0]
-    return [float(v) for v in emb]
+    cached = _embedding_cache.get(text)
+    if cached is not None:
+        return cached
+    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+    payload = {"inputs": text, "options": {"wait_for_model": True}}
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(HF_API_URL, json=payload, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+            emb = data[0] if isinstance(data, list) and isinstance(data[0], list) else data
+            result = [float(v) for v in emb]
+            if len(text) < 500:
+                _embedding_cache[text] = result
+            return result
+    except Exception as e:
+        logger.error(f"HuggingFace API error: {e}")
+        return []
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -72,30 +71,42 @@ def text_for_showcase(content: str, tags: list[str]) -> str:
 
 
 async def reembed_user(db, user_id: str):
-    from prisma import Json
     user = await db.user.find_unique(
         where={"id": user_id},
         include={"skills": {"include": {"skill": True}}},
     )
     if user:
         txt = text_for_user(user)
-        emb = generate(txt)
-        await db.user.update(where={"id": user_id}, data={"embedding": Json(emb)})
+        emb = await generate(txt)
+        if emb:
+            vec = f'[{",".join(str(x) for x in emb)}]'
+            await db.query_raw(
+                'UPDATE "User" SET embedding = $1::vector WHERE id = $2',
+                vec, user_id
+            )
 
 
 async def reembed_project(db, project_id: int):
-    from prisma import Json
     project = await db.project.find_unique(where={"id": project_id})
     if project:
         txt = text_for_project(project.title, project.description, project.required_skills or [])
-        emb = generate(txt)
-        await db.project.update(where={"id": project_id}, data={"embedding": Json(emb)})
+        emb = await generate(txt)
+        if emb:
+            vec = f'[{",".join(str(x) for x in emb)}]'
+            await db.query_raw(
+                'UPDATE "Project" SET embedding = $1::vector WHERE id = $2',
+                vec, project_id
+            )
 
 
 async def reembed_showcase(db, showcase_id: str):
-    from prisma import Json
     showcase = await db.showcase.find_unique(where={"id": showcase_id})
     if showcase:
         txt = text_for_showcase(showcase.content, showcase.tags or [])
-        emb = generate(txt)
-        await db.showcase.update(where={"id": showcase_id}, data={"embedding": Json(emb)})
+        emb = await generate(txt)
+        if emb:
+            vec = f'[{",".join(str(x) for x in emb)}]'
+            await db.query_raw(
+                'UPDATE "Showcase" SET embedding = $1::vector WHERE id = $2',
+                vec, showcase_id
+            )

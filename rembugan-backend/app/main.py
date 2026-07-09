@@ -14,7 +14,6 @@ from app.core.cache import cache
 from app.core.tasks import fire_and_forget
 from app.core.rate_limit import limiter
 from app.core.logger import setup_logging, get_logger
-from app.services.embedding import preload_embedding_model
 
 logger = get_logger("main")
 setup_logging()
