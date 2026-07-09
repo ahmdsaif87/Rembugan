@@ -1,44 +1,36 @@
 import asyncio
-import os
-import httpx
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-HF_TOKEN = os.getenv("HF_TOKEN", "")
-HF_MODEL = "BAAI/bge-small-en-v1.5"
-HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{HF_MODEL}"
-_embedding_cache: dict[str, list[float]] = {}
+_model = None
+_model_lock = asyncio.Lock()
+
+
+async def _get_model():
+    global _model
+    if _model is None:
+        async with _model_lock:
+            if _model is None:
+                from fastembed import TextEmbedding
+                loop = asyncio.get_running_loop()
+                _model = await loop.run_in_executor(
+                    None, lambda: TextEmbedding("BAAI/bge-small-en-v1.5")
+                )
+    return _model
 
 
 async def generate(text: str) -> list[float]:
     if not text.strip():
         text = " "
-    cached = _embedding_cache.get(text)
-    if cached is not None:
-        return cached
-    if not HF_TOKEN:
-        logger.warning("HF_TOKEN tidak diset — embedding tidak bisa digenerate")
+    try:
+        model = await _get_model()
+        loop = asyncio.get_running_loop()
+        emb = await loop.run_in_executor(None, lambda: list(model.embed(text))[0])
+        return [float(v) for v in emb]
+    except Exception as e:
+        logger.warning(f"fastembed error: {e}")
         return []
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    payload = {"inputs": text, "options": {"wait_for_model": True}}
-    for attempt in range(2):
-        try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                resp = await client.post(HF_API_URL, json=payload, headers=headers)
-                resp.raise_for_status()
-                data = resp.json()
-                emb = data[0] if isinstance(data, list) and isinstance(data[0], list) else data
-                result = [float(v) for v in emb]
-                if len(text) < 500:
-                    _embedding_cache[text] = result
-                return result
-        except Exception as e:
-            if attempt == 0:
-                logger.warning(f"HuggingFace API error (retry): {e}")
-                continue
-            logger.warning(f"HuggingFace API error (fallback ke empty): {e}")
-            return []
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
