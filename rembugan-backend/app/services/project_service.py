@@ -126,11 +126,24 @@ class ProjectService(BaseService):
         )
         member_ids = {m.project_id for m in my_memberships}
 
+        # Batch fetch embeddings untuk scoring
+        project_ids = [p.id for p in projects]
+        emb_rows = await self.db.query_raw(
+            'SELECT id, embedding::text FROM "Project" WHERE id = ANY($1::int[])',
+            project_ids
+        ) if project_ids else []
+        project_embeddings = {}
+        for r in emb_rows:
+            if r["embedding"]:
+                import json
+                project_embeddings[r["id"]] = json.loads(r["embedding"])
+
         scored = []
         for p in projects:
             score = 0
-            if user_embedding and p.embedding:
-                score = int(cosine_similarity(user_embedding, p.embedding) * 100)
+            p_emb = project_embeddings.get(p.id)
+            if user_embedding and p_emb:
+                score = int(cosine_similarity(user_embedding, p_emb) * 100)
 
             if user_has_skills:
                 req_skills = {s.lower() for s in (p.required_skills or [])} - {""}

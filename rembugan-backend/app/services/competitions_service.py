@@ -42,7 +42,7 @@ class CompetitionsService:
         try:
             for item in items:
                 txt = self._full_text(item)
-                emb = generate(txt)
+                emb = await generate(txt)
                 if emb:
                     await collection.update_one(
                         {"_id": item["_id"]},
