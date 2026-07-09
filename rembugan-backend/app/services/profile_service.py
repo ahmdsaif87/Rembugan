@@ -216,7 +216,7 @@ class ProfileService(BaseService):
         exclude_ids = [user_id, *connected_ids]
         others = await self.db.user.find_many(
             where={"id": {"notIn": exclude_ids}},
-            take=100,
+            take=20,
         )
 
         scored = []

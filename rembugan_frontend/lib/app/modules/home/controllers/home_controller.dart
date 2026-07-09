@@ -128,10 +128,17 @@ class HomeController extends GetxController {
     try {
       final repo = Get.find<ExploreRepository>();
 
-      final projectResult = await repo.getProjects();
-      final competitions = await repo.getCompetitions();
-      final people = await repo.getRecommendedPeople();
-      final showcaseResult = await repo.getShowcases(page: 1, limit: 10);
+      final results = await Future.wait([
+        repo.getProjects(),
+        repo.getCompetitions(),
+        repo.getRecommendedPeople(),
+        repo.getShowcases(page: 1, limit: 10),
+      ]);
+
+      final projectResult = results[0] as ({List<Project> projects, int total});
+      final competitions = results[1] as List<Competition>;
+      final people = results[2] as List<ExplorePerson>;
+      final showcaseResult = results[3] as ({List<FeedShowcase> showcases, bool hasNext});
 
       recommendedProjects.assignAll(projectResult.projects);
       recommendedCompetitions.assignAll(competitions);

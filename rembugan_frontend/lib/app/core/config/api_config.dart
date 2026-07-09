@@ -13,8 +13,8 @@ class ApiConfig {
   static String get baseUrl =>
       kReleaseMode ? remoteBaseUrl : _compileTimeBaseUrl;
 
-  static const Duration connectTimeout = Duration(seconds: 10);
-  static const Duration receiveTimeout = Duration(seconds: 15);
+  static const Duration connectTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 45);
 
   static const String tokenKey = 'access_token';
   static const String onboardingSeenKey = 'onboarding_seen';
