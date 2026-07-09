@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.config import setup_cloudinary
-from app.core.database import db
+from app.core.database import db, connect_db_with_retry
 from app.core.cache import cache
 from app.core.tasks import fire_and_forget
 from app.core.rate_limit import limiter
@@ -32,8 +32,12 @@ setup_cloudinary()
 # Lifecycle: Connect & Disconnect Database
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await db.connect()
-    logger.info("Database terhubung!")
+    try:
+        await connect_db_with_retry(retries=3, delay=2.0)
+        logger.info("Database terhubung!")
+    except Exception as e:
+        logger.error(f"Gagal konek database setelah retry: {e}")
+        raise
     await cache.init()
     logger.info(f"Cache backend: {cache.stats()['backend']}")
 
