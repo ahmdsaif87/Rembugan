@@ -57,13 +57,14 @@ class ShowcaseService:
             score_map = {}
 
         if not ids:
-            showcases = [] if user_emb else await self.db.showcase.find_many(
+            showcases = await self.db.showcase.find_many(
                 where={"author_id": {"not": user_id}},
                 order={"created_at": "desc"},
                 skip=(page - 1) * limit,
                 take=limit,
                 include={"author": True, "likes": True, "comments": True},
             )
+            score_map = {}
         else:
             showcases = await self.db.showcase.find_many(
                 where={"id": {"in": ids}},

@@ -39,10 +39,10 @@ class FypService:
         user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
         user_skills_lower = list(user_skill_names)
 
-        # Showcases: pgvector scoring langsung di DB (10 teratas)
+        # Showcases: pgvector scoring, fallback ke created_at desc kalo kosong
         showcases_data = []
-        if user_embedding:
-            vec = f'[{",".join(str(x) for x in user_embedding)}]'
+        vec = f'[{",".join(str(x) for x in user_embedding)}]' if user_embedding else None
+        if vec:
             rows = await self.db.query_raw(
                 'SELECT id, content, media_urls, tags, author_id, created_at, '
                 '1 - (embedding <=> $1::vector) AS match_score '
@@ -50,7 +50,7 @@ class FypService:
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, user_id
             )
-        else:
+        if not vec or not rows:
             rows = await self.db.query_raw(
                 'SELECT id, content, media_urls, tags, author_id, created_at, 0 AS match_score '
                 'FROM "Showcase" WHERE author_id != $1 '
@@ -84,10 +84,10 @@ class FypService:
                     "created_at": s.created_at.isoformat(),
                 })
 
-        # Projects: pgvector scoring
+        # Projects: pgvector scoring, fallback ke created_at desc kalo kosong
         projects_data = []
-        if user_embedding:
-            vec = f'[{",".join(str(x) for x in user_embedding)}]'
+        vec = f'[{",".join(str(x) for x in user_embedding)}]' if user_embedding else None
+        if vec:
             rows = await self.db.query_raw(
                 'SELECT id, title, description, required_skills, owner_id, created_at, '
                 '1 - (embedding <=> $1::vector) AS match_score '
@@ -95,7 +95,7 @@ class FypService:
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, PJ_OPEN
             )
-        else:
+        if not vec or not rows:
             rows = await self.db.query_raw(
                 'SELECT id, title, description, required_skills, owner_id, created_at, 0 AS match_score '
                 'FROM "Project" WHERE status = $1 '
