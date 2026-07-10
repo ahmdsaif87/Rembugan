@@ -12,11 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY prisma/schema.prisma ./prisma/
 RUN prisma generate
 
-# Pre-cache embedding model di build time (biar ga download pas runtime)
-RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')"
-
 COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "prisma generate && prisma db push --accept-data-loss && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

@@ -10,52 +10,8 @@ function PhoneMockup() {
     <div className="relative mx-auto w-[280px]">
       <div className="relative rounded-[2.5rem] border-[3px] border-[#2D2D2D] bg-white shadow-xl">
         <div className="mx-auto h-5 w-[120px] rounded-b-xl bg-[#2D2D2D]" />
-        <div className="aspect-[9/19] overflow-hidden rounded-b-[2.35rem] bg-gray-50">
-          <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between bg-[#6366F1] px-4 pb-3 pt-6">
-              <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-white/20 text-white">
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </div>
-                <p className="text-xs font-medium text-white/90">Rembugan</p>
-              </div>
-              <div className="flex h-6 w-6 items-center justify-center">
-                <svg className="h-4 w-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex-1 p-3">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Proyek</p>
-                <div className="rounded-md bg-[#6366F1]/10 px-2 py-0.5 text-[9px] font-medium text-[#6366F1]">
-                  + Baru
-                </div>
-              </div>
-              {[
-                { name: "UX Research", members: 4, color: "#6366F1" },
-                { name: "AI Study Buddy", members: 3, color: "#10B981" },
-                { name: "Campus Market", members: 5, color: "#F59E0B" },
-              ].map((p) => (
-                <div key={p.name} className="mb-1.5 rounded-lg border border-gray-100 bg-white p-2.5">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
-                    <span className="text-[10px] font-medium text-gray-700">{p.name}</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 text-[8px] text-gray-400">
-                    <span>{p.members} anggota</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-gray-100 p-3">
-              <div className="flex items-center gap-2 rounded-lg bg-[#6366F1] px-3 py-2 text-center">
-                <span className="w-full text-[10px] font-medium text-white">+ Gabung Proyek</span>
-              </div>
-            </div>
-          </div>
+        <div className="aspect-[9/19] overflow-hidden rounded-b-[2.35rem]">
+          <img src="/Hero.png" alt="Rembugan App" className="h-full w-full object-cover" />
         </div>
       </div>
     </div>

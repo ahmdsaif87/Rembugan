@@ -20,7 +20,7 @@ setup_logging()
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload, qr, saved, posts
 from app.api.admin import router as admin_router
@@ -62,33 +62,30 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
-# ── Global Exception Handlers ──
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"status": "error", "detail": exc.detail},
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    errors = exc.errors()
-    detail = errors[0]["msg"] if errors else "Input tidak valid"
-    return JSONResponse(
-        status_code=422,
-        content={"status": "error", "detail": detail, "errors": errors},
-    )
-
+# ── Global Exception Handler (single) ──
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled error: {exc}\n{traceback.format_exc()}")
-    return JSONResponse(
-        status_code=500,
-        content={"status": "error", "detail": "Terjadi kesalahan internal server."},
-    )
+async def unified_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, (StarletteHTTPException, HTTPException)):
+        status = exc.status_code
+        detail = exc.detail
+    elif isinstance(exc, RequestValidationError):
+        errors = exc.errors()
+        return JSONResponse(
+            status_code=422,
+            content={"status": "error", "detail": errors[0]["msg"] if errors else "Input tidak valid", "errors": errors},
+        )
+    elif isinstance(exc, RateLimitExceeded):
+        return JSONResponse(
+            status_code=429,
+            content={"status": "error", "detail": "Terlalu banyak permintaan. Silakan coba lagi nanti."},
+        )
+    else:
+        status = 500
+        detail = "Terjadi kesalahan internal server."
+        logger.error(f"Unhandled: {exc}\n{traceback.format_exc()}")
+
+    return JSONResponse(status_code=status, content={"status": "error", "detail": detail})
 
 
 # Daftarkan Semua Endpoint
@@ -138,6 +135,9 @@ app.add_middleware(
     ],
     expose_headers=["X-Request-ID"],
 )
+
+# Kompresi respons (gzip) — hemat bandwidth
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Request body size limit — 10MB
 MAX_BODY_SIZE = 10 * 1024 * 1024

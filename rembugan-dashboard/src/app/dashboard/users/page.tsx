@@ -102,7 +102,6 @@ const FACULTIES_AND_MAJORS: Record<string, string[]> = {
   ]
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
 export default function UsersPage() {
@@ -169,6 +168,9 @@ export default function UsersPage() {
       } else {
         toast.error("Gagal menghapus user")
       }
+    },
+    onError: () => {
+      toast.error("Gagal menghapus user")
     },
   })
 

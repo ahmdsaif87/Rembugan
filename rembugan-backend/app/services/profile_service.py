@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.constants import PJ_OPEN, ROLE_KETUA, ROLE_ADMIN
 from app.schemas.profile import SettingsUpdateInput
 from app.schemas.user import ExperienceInput
+from app.core.cache import cache
 from app.services.embedding import reembed_user
 from app.services.base import BaseService
 
@@ -183,6 +184,11 @@ class ProfileService(BaseService):
         }
 
     async def get_recommended(self, user_id: str, limit: int) -> list[dict]:
+        cache_key = f"recommended:{user_id}:{limit}"
+        cached = await cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         current_user = await self.db.user.find_unique(
             where={"id": user_id},
             include={"skills": {"include": {"skill": True}}, "ownedProjects": True},
@@ -276,6 +282,7 @@ class ProfileService(BaseService):
                 "connection_status": conn_status,
             })
 
+        await cache.set(cache_key, result, ttl=60)
         return result
 
     async def search(self, query: str) -> list[dict]:

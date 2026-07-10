@@ -77,6 +77,30 @@ export async function fetchApplications(skip = 0, limit = 50) {
   }
 }
 
+export async function fetchAnalytics(params?: {
+  start_date?: string
+  end_date?: string
+  faculty?: string
+  category?: string
+  granularity?: string
+}) {
+  try {
+    const query = new URLSearchParams()
+    if (params?.start_date) query.set('start_date', params.start_date)
+    if (params?.end_date) query.set('end_date', params.end_date)
+    if (params?.faculty) query.set('faculty', params.faculty)
+    if (params?.category) query.set('category', params.category)
+    if (params?.granularity) query.set('granularity', params.granularity)
+    const qs = query.toString()
+    const response = await fetch(`${API_BASE_URL}/admin/analytics${qs ? `?${qs}` : ''}`, { headers: getAuthHeaders() })
+    if (!response.ok) throw new Error('Failed to fetch analytics')
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching analytics:', error)
+    return { status: 'error', data: null }
+  }
+}
+
 export async function fetchCompetitions() {
   try {
     const response = await fetch(`${API_BASE_URL}/competitions/all`, { headers: getAuthHeaders() })

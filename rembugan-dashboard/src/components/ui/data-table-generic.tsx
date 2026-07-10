@@ -3,13 +3,10 @@
 import * as React from "react"
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -75,17 +72,16 @@ export function DataTableGeneric<TData>({
   emptyIcon,
   filters,
 }: DataTableProps<TData>) {
-  const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = React.useState("")
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
   })
+
+  const debouncedFilter = React.useDeferredValue(globalFilter)
 
   const table = useReactTable({
     data,
@@ -93,22 +89,17 @@ export function DataTableGeneric<TData>({
     state: {
       sorting,
       columnVisibility,
-      rowSelection,
-      columnFilters,
       pagination,
+      globalFilter: debouncedFilter,
     },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
   return (
@@ -122,11 +113,9 @@ export function DataTableGeneric<TData>({
               <Input
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
-                value={
-                  (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
-                }
+                value={globalFilter}
                 onChange={(event) =>
-                  table.getColumn(searchKey)?.setFilterValue(event.target.value)
+                  setGlobalFilter(event.target.value)
                 }
                 className="h-9 w-64 pl-9"
               />
@@ -136,7 +125,7 @@ export function DataTableGeneric<TData>({
         </div>
         <div className="flex items-center gap-2">
           {totalLabel && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs whitespace-nowrap">
               {totalLabel}
             </Badge>
           )}
@@ -144,8 +133,8 @@ export function DataTableGeneric<TData>({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <ColumnsIcon />
-                <span className="ml-1 hidden lg:inline">Customize Columns</span>
-                <span className="ml-1 lg:hidden">Columns</span>
+                <span className="ml-1 hidden lg:inline">Sembunyikan Kolom</span>
+                <span className="ml-1 lg:hidden">Kolom</span>
                 <ChevronDownIcon />
               </Button>
             </DropdownMenuTrigger>
@@ -159,10 +148,10 @@ export function DataTableGeneric<TData>({
                 )
                 .map((column) => {
                   const header = column.columnDef.header
-                  const label =
-                    typeof header === "function"
-                      ? (header as any)({ column, table, header: undefined as any })
-                      : header
+                  const meta = (column.columnDef as any).meta
+                  const label = meta?.label
+                    ?? (typeof header === "string" ? header : null)
+                    ?? column.id
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -172,7 +161,7 @@ export function DataTableGeneric<TData>({
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {typeof label === "string" ? label : column.id}
+                      {label}
                     </DropdownMenuCheckboxItem>
                   )
                 })}
@@ -244,14 +233,10 @@ export function DataTableGeneric<TData>({
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-1">
-        <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
         <div className="flex w-full items-center gap-8 lg:w-fit">
           <div className="hidden items-center gap-2 lg:flex">
             <Label htmlFor="rows-per-page" className="text-sm font-medium">
-              Rows per page
+              Baris per halaman
             </Label>
             <Select
               value={`${table.getState().pagination.pageSize}`}
@@ -274,7 +259,7 @@ export function DataTableGeneric<TData>({
             </Select>
           </div>
           <div className="flex w-fit items-center justify-center text-sm font-medium">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            Halaman {table.getState().pagination.pageIndex + 1} dari{" "}
             {table.getPageCount()}
           </div>
           <div className="ml-auto flex items-center gap-2 lg:ml-0">
@@ -284,7 +269,7 @@ export function DataTableGeneric<TData>({
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
-              <span className="sr-only">Go to first page</span>
+              <span className="sr-only">Ke halaman pertama</span>
               <ChevronsLeftIcon />
             </Button>
             <Button
@@ -294,7 +279,7 @@ export function DataTableGeneric<TData>({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              <span className="sr-only">Go to previous page</span>
+              <span className="sr-only">Ke halaman sebelumnya</span>
               <ChevronLeftIcon />
             </Button>
             <Button
@@ -304,7 +289,7 @@ export function DataTableGeneric<TData>({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              <span className="sr-only">Go to next page</span>
+              <span className="sr-only">Ke halaman berikutnya</span>
               <ChevronRightIcon />
             </Button>
             <Button
@@ -314,7 +299,7 @@ export function DataTableGeneric<TData>({
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
-              <span className="sr-only">Go to last page</span>
+              <span className="sr-only">Ke halaman terakhir</span>
               <ChevronsRightIcon />
             </Button>
           </div>

@@ -12,6 +12,7 @@ import { DataTableGeneric } from "@/components/ui/data-table-generic"
 import { RowActions } from "@/components/ui/row-actions"
 import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchShowcases, deleteShowcase } from "@/lib/api"
+import { toast } from "sonner"
 
 interface Showcase {
   id: string

@@ -53,14 +53,14 @@ export function RowActions({
             size="icon"
           >
             <MoreVerticalIcon />
-            <span className="sr-only">Open menu</span>
+            <span className="sr-only">Buka menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
           {onView && (
             <DropdownMenuItem onClick={onView}>
               <EyeIcon />
-              View Details
+              Lihat Detail
             </DropdownMenuItem>
           )}
           {extraItems?.map((item, i) => (
@@ -77,7 +77,7 @@ export function RowActions({
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive">
                 <Trash2Icon />
-                Delete
+                Hapus
               </DropdownMenuItem>
             </AlertDialogTrigger>
           )}
@@ -85,18 +85,18 @@ export function RowActions({
       </DropdownMenu>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Yakin ingin menghapus?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete {deleteLabel}. This action cannot be undone.
+            Ini akan menghapus {deleteLabel} secara permanen. Tindakan ini tidak bisa dibatalkan.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction
             onClick={onDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete
+            Hapus
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

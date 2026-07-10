@@ -19,6 +19,7 @@ import { DataTableGeneric } from "@/components/ui/data-table-generic"
 import { RowActions } from "@/components/ui/row-actions"
 import { DetailSheet } from "@/components/ui/detail-sheet"
 import { fetchTasks, deleteTask } from "@/lib/api"
+import { toast } from "sonner"
 
 interface Task {
   id: number
@@ -58,7 +59,11 @@ export default function TasksPage() {
         queryClient.setQueryData<Task[]>(['tasks'], (old) =>
           old?.filter(t => String(t.id) !== id) ?? []
         )
+        toast.success("Tugas berhasil dihapus")
       }
+    },
+    onError: () => {
+      toast.error("Gagal menghapus tugas")
     },
   })
 

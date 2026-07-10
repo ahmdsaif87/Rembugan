@@ -5,6 +5,7 @@ from app.core.constants import NOTIF_LIKE, NOTIF_COMMENT, NOTIF_CHAT
 from app.core.types import ShowcaseData
 from app.services.notification import notify
 from app.core.cache import cache
+from app.core.tasks import fire_and_forget
 from app.services.embedding import reembed_showcase
 
 
@@ -20,10 +21,15 @@ class ShowcaseService:
             "tags": tags,
             "linked_project_id": linked_project_id,
         })
-        await reembed_showcase(self.db, showcase.id)
+        fire_and_forget(reembed_showcase(self.db, showcase.id), name="reembed_showcase")
         return showcase
 
     async def get_feed(self, user_id: str, page: int, limit: int) -> tuple[list[ShowcaseData], int]:
+        cache_key = f"feed:{user_id}:{page}:{limit}"
+        cached = await cache.get(cache_key)
+        if cached is not None:
+            return cached["data"], cached["total"]
+
         user = await self.db.user.find_unique(where={"id": user_id})
         user_emb = None
         if user:
@@ -33,11 +39,6 @@ class ShowcaseService:
             if row and row[0]["embedding"]:
                 import json
                 user_emb = json.loads(row[0]["embedding"])
-
-        cache_key = f"feed:{user_id}:{page}:{limit}"
-        cached = await cache.get(cache_key)
-        if cached is not None:
-            return cached["data"], cached["total"]
 
         total = await self.db.showcase.count(where={"author_id": {"not": user_id}})
 
@@ -66,10 +67,6 @@ class ShowcaseService:
                 include={"author": True, "likes": True, "comments": True},
             )
         else:
-            showcases = await self.db.showcase.find_many(
-                where={"id": {"in": ids}},
-                include={"author": True, "likes": True, "comments": True},
-            )
             showcases = await self.db.showcase.find_many(
                 where={"id": {"in": ids}},
                 include={"author": True, "likes": True, "comments": True},

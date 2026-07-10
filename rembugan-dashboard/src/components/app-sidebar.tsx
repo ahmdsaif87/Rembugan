@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BarChart3,
+  TrendingUp,
   Users,
   FolderKanban,
   Sparkles,
@@ -28,6 +29,7 @@ import {
 
 const navItems = [
   { title: "Overview", url: "/dashboard", icon: BarChart3 },
+  { title: "Analytics", url: "/dashboard/analytics", icon: TrendingUp },
   { title: "Competitions", url: "/dashboard/competitions", icon: Trophy },
   { title: "Users", url: "/dashboard/users", icon: Users },
   { title: "Projects", url: "/dashboard/projects", icon: FolderKanban },

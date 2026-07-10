@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from app.core.response import response_success
 from app.core.security import verify_token
+from app.core.rate_limit import limiter
 from app.services.storage import upload_image_to_cloudinary
 
 router = APIRouter(prefix="/upload", tags=["Upload Media"])
@@ -10,7 +11,9 @@ ALLOWED_DOC_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt", ".xls", ".xlsx"}
 
 
 @router.post("/image", summary="Upload Gambar")
+@limiter.limit("5/minute")
 async def upload_image(
+    request: Request,
     file: UploadFile = File(...),
     user_token: dict = Depends(verify_token),
 ):
@@ -25,7 +28,9 @@ async def upload_image(
 
 
 @router.post("/file", summary="Upload Dokumen")
+@limiter.limit("5/minute")
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
     user_token: dict = Depends(verify_token),
 ):

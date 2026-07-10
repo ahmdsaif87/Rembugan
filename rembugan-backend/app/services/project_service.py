@@ -7,6 +7,7 @@ from app.core.constants import PJ_OPEN, PJ_COMPLETED, ROLE_KETUA, EXPLORE_MAX_RO
 from app.core.types import ProjectData
 from app.services.base import BaseService
 from app.core.cache import cache
+from app.core.tasks import fire_and_forget
 from app.services.embedding import cosine_similarity, reembed_project, reembed_user
 
 
@@ -38,8 +39,8 @@ class ProjectService(BaseService):
             include={"owner": True, "members": True},
         )
 
-        await reembed_project(self.db, project.id)
-        await reembed_user(self.db, user_id)
+        fire_and_forget(reembed_project(self.db, project.id), name="reembed_project")
+        fire_and_forget(reembed_user(self.db, user_id), name="reembed_user")
 
         await cache.invalidate("explore:")
         return {

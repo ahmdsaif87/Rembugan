@@ -100,7 +100,11 @@ export default function ProjectsPage() {
         queryClient.setQueryData<Project[]>(['projects'], (old) =>
           old?.filter(p => String(p.id) !== id) ?? []
         )
+        toast.success("Proyek berhasil dihapus")
       }
+    },
+    onError: () => {
+      toast.error("Gagal menghapus proyek")
     },
   })
 
@@ -113,6 +117,7 @@ export default function ProjectsPage() {
     {
       id: "qr",
       header: "QR",
+      meta: { label: "QR" },
       cell: ({ row }) => {
         const project = row.original
         return (
@@ -134,13 +139,15 @@ export default function ProjectsPage() {
     {
       accessorKey: "id",
       header: "ID",
+      meta: { label: "ID" },
       cell: ({ row }) => (
         <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>
       ),
     },
     {
       accessorKey: "title",
-      header: "Title",
+      header: "Judul",
+      meta: { label: "Judul" },
       cell: ({ row }) => (
         <div>
           <p className="table-primary">{row.original.title}</p>
@@ -153,6 +160,7 @@ export default function ProjectsPage() {
     {
       accessorKey: "status",
       header: "Status",
+      meta: { label: "Status" },
       cell: ({ row }) => (
         <Badge
           variant="outline"
@@ -164,7 +172,8 @@ export default function ProjectsPage() {
     },
     {
       accessorKey: "owner",
-      header: "Owner",
+      header: "Pemilik",
+      meta: { label: "Pemilik" },
       cell: ({ row }) => (
         <span className="text-muted-foreground">
           {row.original.owner?.full_name || "—"}
@@ -173,7 +182,8 @@ export default function ProjectsPage() {
     },
     {
       accessorKey: "required_skills",
-      header: "Skills",
+      header: "Skill",
+      meta: { label: "Skill" },
       cell: ({ row }) => {
         const skills = row.original.required_skills
         return (
@@ -194,21 +204,24 @@ export default function ProjectsPage() {
     },
     {
       accessorKey: "members",
-      header: "Members",
+      header: "Anggota",
+      meta: { label: "Anggota" },
       cell: ({ row }) => (
         <span className="text-muted-foreground">{row.original.members?.length || 0}</span>
       ),
     },
     {
       accessorKey: "tasks",
-      header: "Tasks",
+      header: "Tugas",
+      meta: { label: "Tugas" },
       cell: ({ row }) => (
         <span className="text-muted-foreground">{row.original.tasks?.length || 0}</span>
       ),
     },
     {
       accessorKey: "created_at",
-      header: "Created",
+      header: "Dibuat",
+      meta: { label: "Dibuat" },
       cell: ({ row }) => (
         <span className="text-muted-foreground">
           {new Date(row.original.created_at).toLocaleDateString()}
@@ -241,9 +254,9 @@ export default function ProjectsPage() {
     <div className="flex flex-col gap-4">
       <div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Proyek</h1>
           <p className="text-sm text-muted-foreground">
-            All collaborative projects on the platform
+            Semua proyek kolaborasi di platform
           </p>
         </div>
       </div>
@@ -252,10 +265,10 @@ export default function ProjectsPage() {
         columns={columns}
         data={filteredProjects}
         searchKey="title"
-        searchPlaceholder="Search projects..."
+        searchPlaceholder="Cari proyek..."
         loading={loading}
         totalLabel={`${filteredProjects.length} total`}
-        emptyMessage="No projects found"
+        emptyMessage="Tidak ada proyek"
         emptyIcon={<FolderX className="h-8 w-8 opacity-30" />}
         filters={
           <Select
@@ -266,10 +279,10 @@ export default function ProjectsPage() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="ongoing">Ongoing</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="open">Terbuka</SelectItem>
+              <SelectItem value="ongoing">Berjalan</SelectItem>
+              <SelectItem value="completed">Selesai</SelectItem>
             </SelectContent>
           </Select>
         }
@@ -278,56 +291,56 @@ export default function ProjectsPage() {
       <DetailSheet
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        title={detailProject?.title || "Project Details"}
+        title={detailProject?.title || "Detail Proyek"}
         fields={[
-          { label: "Title", value: detailProject?.title },
-          { label: "Description", value: detailProject?.description, variant: "bio" },
+          { label: "Judul", value: detailProject?.title },
+          { label: "Deskripsi", value: detailProject?.description, variant: "bio" },
           { label: "Status", value: detailProject?.status },
-          { label: "Owner", value: detailProject?.owner?.full_name },
-          { label: "Required Skills", value: detailProject?.required_skills?.join(", "), variant: "badge" },
-          { label: "Members", value: String(detailProject?.members?.length ?? 0) },
-          { label: "Tasks", value: String(detailProject?.tasks?.length ?? 0) },
-          { label: "Created", value: detailProject?.created_at ? new Date(detailProject.created_at).toLocaleDateString() : "—" },
+          { label: "Pemilik", value: detailProject?.owner?.full_name },
+          { label: "Skill Dibutuhkan", value: detailProject?.required_skills?.join(", "), variant: "badge" },
+          { label: "Anggota", value: String(detailProject?.members?.length ?? 0) },
+          { label: "Tugas", value: String(detailProject?.tasks?.length ?? 0) },
+          { label: "Dibuat", value: detailProject?.created_at ? new Date(detailProject.created_at).toLocaleDateString() : "—" },
         ]}
-        />
-
-        <div className="flex gap-2 px-6 pb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 gap-2"
-            onClick={() => {
-              if (detailProject) {
-                setQrData(`${APP_URL}/p/${detailProject.id}`)
-                setQrInviteData("")
-                setQrProject(detailProject)
-                setQrOpen(true)
-              }
-            }}
-          >
-            <QrCodeIcon className="h-4 w-4" />
-            Project QR
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 gap-2"
-            onClick={() => {
-              if (detailProject) handleGenerateQr(detailProject)
-            }}
-            disabled={qrLoading}
-          >
-            {qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCodeIcon className="h-4 w-4" />}
-            {qrLoading ? "Generating..." : "Invite QR"}
-          </Button>
-        </div>
-
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={() => {
+                if (detailProject) {
+                  setQrData(`${APP_URL}/p/${detailProject.id}`)
+                  setQrInviteData("")
+                  setQrProject(detailProject)
+                  setQrOpen(true)
+                }
+              }}
+            >
+              <QrCodeIcon className="h-4 w-4" />
+              QR Proyek
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-2"
+              onClick={() => {
+                if (detailProject) handleGenerateQr(detailProject)
+              }}
+              disabled={qrLoading}
+            >
+              {qrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCodeIcon className="h-4 w-4" />}
+              {qrLoading ? "Memproses..." : "QR Undangan"}
+            </Button>
+          </div>
+        }
+      />
       <QrCodeDialog
         open={qrOpen}
         onOpenChange={setQrOpen}
         data={qrData}
-        title={qrProject ? (qrInviteData ? `Invite: ${qrProject.title}` : `Project: ${qrProject.title}`) : "QR"}
-        description={qrInviteData ? "Scan to join this project" : "Scan to view project details"}
+        title={qrProject ? (qrInviteData ? `Undangan: ${qrProject.title}` : `Proyek: ${qrProject.title}`) : "QR"}
+        description={qrInviteData ? "Scan untuk bergabung ke proyek" : "Scan untuk lihat detail proyek"}
       />
     </div>
   )

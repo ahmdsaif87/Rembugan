@@ -1,11 +1,8 @@
 "use client"
 
 import {
-  BellIcon,
-  CreditCardIcon,
   LogOutIcon,
   MoreVerticalIcon,
-  UserCircleIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -17,7 +14,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -43,8 +39,8 @@ export function NavUser({
   const router = useRouter()
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_token")
-    document.cookie = "admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure"
+    sessionStorage.removeItem("admin_token")
+    document.cookie = "admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax"
     router.push("/login")
   }
 
@@ -91,24 +87,9 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <UserCircleIcon />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
               <LogOutIcon />
-              Log out
+              Keluar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

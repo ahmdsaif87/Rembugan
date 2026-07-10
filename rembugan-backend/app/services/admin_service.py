@@ -224,6 +224,158 @@ class AdminService:
         except Exception:
             return False
 
+    async def get_analytics(self, start_date: str | None, end_date: str | None, faculty: str | None, category: str | None, granularity: str) -> dict:
+        fmt = "YYYY-MM" if granularity == "monthly" else ("YYYY-MM-DD" if granularity == "daily" else "IYYY\"-\"IW")
+        if granularity == "yearly":
+            fmt = "YYYY"
+
+        # ── Build filter clauses per query group ──
+        def build_where(params: list, *clauses: tuple[str, str]) -> str:
+            where = ""
+            for col, val in clauses:
+                if val:
+                    where += f" AND {col} = ${len(params) + 1}"
+                    params.append(val)
+            return where
+
+        user_p, user_w = [], ""
+        if start_date:
+            user_w += f" AND created_at >= ${len(user_p) + 1}::date"
+            user_p.append(start_date)
+        if end_date:
+            user_w += f" AND created_at <= ${len(user_p) + 1}::date"
+            user_p.append(end_date)
+        if faculty:
+            user_w += f" AND faculty = ${len(user_p) + 1}"
+            user_p.append(faculty)
+
+        proj_p, proj_w, proj_j = [], "", ""
+        if start_date:
+            proj_w += f" AND p.created_at >= ${len(proj_p) + 1}::date"
+            proj_p.append(start_date)
+        if end_date:
+            proj_w += f" AND p.created_at <= ${len(proj_p) + 1}::date"
+            proj_p.append(end_date)
+        if category:
+            proj_w += f" AND p.category = ${len(proj_p) + 1}"
+            proj_p.append(category)
+        if faculty:
+            proj_j = ' JOIN "User" u_own ON u_own.id = p.owner_id'
+            proj_w += f" AND u_own.faculty = ${len(proj_p) + 1}"
+            proj_p.append(faculty)
+
+        task_p, task_w, task_j = [], "", ""
+        if start_date:
+            task_w += f" AND p.created_at >= ${len(task_p) + 1}::date"
+            task_p.append(start_date)
+        if end_date:
+            task_w += f" AND p.created_at <= ${len(task_p) + 1}::date"
+            task_p.append(end_date)
+        if category:
+            task_w += f" AND p.category = ${len(task_p) + 1}"
+            task_p.append(category)
+        if faculty:
+            task_j = ' JOIN "User" u_ta ON u_ta.id = ta.user_id'
+            task_w += f" AND u_ta.faculty = ${len(task_p) + 1}"
+            task_p.append(faculty)
+
+        show_p, show_w = [], ""
+        if start_date:
+            show_w += f" AND s.created_at >= ${len(show_p) + 1}::date"
+            show_p.append(start_date)
+        if end_date:
+            show_w += f" AND s.created_at <= ${len(show_p) + 1}::date"
+            show_p.append(end_date)
+        if faculty:
+            show_w += f" AND u.faculty = ${len(show_p) + 1}"
+            show_p.append(faculty)
+
+        # ── 7 queries total, all run in parallel ──
+        user_regs_q = self.db.query_raw(
+            f"""SELECT to_char(created_at, '{fmt}') AS period, COUNT(*)::int AS total,
+                SUM(COUNT(*)) OVER ()::int AS grand_total
+                FROM "User" WHERE 1=1{user_w} GROUP BY period ORDER BY period""",
+            *user_p,
+        )
+        users_by_fac_q = self.db.query_raw(
+            f"""SELECT faculty, COUNT(*)::int AS total
+                FROM "User" WHERE faculty IS NOT NULL{user_w} GROUP BY faculty ORDER BY total DESC""",
+            *user_p,
+        )
+        proj_creations_q = self.db.query_raw(
+            f"""SELECT to_char(p.created_at, '{fmt}') AS period, COUNT(*)::int AS total,
+                SUM(COUNT(*)) OVER ()::int AS grand_total
+                FROM "Project" p{proj_j} WHERE 1=1{proj_w} GROUP BY period ORDER BY period""",
+            *proj_p,
+        )
+        proj_by_cat_q = self.db.query_raw(
+            f"""SELECT p.category, COUNT(*)::int AS total
+                FROM "Project" p{proj_j} WHERE p.category IS NOT NULL{proj_w} GROUP BY p.category ORDER BY total DESC""",
+            *proj_p,
+        )
+        proj_by_status_q = self.db.query_raw(
+            f"""SELECT p.status, COUNT(*)::int AS total
+                FROM "Project" p{proj_j} WHERE 1=1{proj_w} GROUP BY p.status""",
+            *proj_p,
+        )
+        task_dist_q = self.db.query_raw(
+            f"""SELECT t.status, COUNT(*)::int AS total
+                FROM "Task" t
+                JOIN "TaskAssignee" ta ON ta.task_id = t.id
+                JOIN "Project" p ON p.id = t.project_id{task_j}
+                WHERE 1=1{task_w}
+                GROUP BY t.status""",
+            *task_p,
+        )
+        showcase_q = self.db.query_raw(
+            f"""SELECT
+                COALESCE((SELECT COUNT(*)::int FROM "ShowcaseLike" sl
+                          JOIN "Showcase" s ON s.id = sl.showcase_id
+                          LEFT JOIN "User" u ON u.id = s.author_id WHERE 1=1{show_w}), 0) AS total_likes,
+                COALESCE((SELECT COUNT(*)::int FROM "ShowcaseComment" sc
+                          JOIN "Showcase" s ON s.id = sc.showcase_id
+                          LEFT JOIN "User" u ON u.id = s.author_id WHERE 1=1{show_w}), 0) AS total_comments,
+                COALESCE((SELECT COUNT(*)::int FROM "Showcase" s
+                          LEFT JOIN "User" u ON u.id = s.author_id WHERE 1=1{show_w}), 0) AS total_showcases""",
+            *show_p,
+        )
+        faculties_q = self.db.query_raw(
+            """SELECT DISTINCT faculty FROM "User" WHERE faculty IS NOT NULL AND faculty != '' ORDER BY faculty""",
+        )
+        categories_q = self.db.query_raw(
+            """SELECT DISTINCT category FROM "Project" WHERE category IS NOT NULL AND category != '' ORDER BY category""",
+        )
+
+        (user_regs, users_by_faculty, proj_creations, proj_by_cat, proj_by_status,
+         task_dist, showcase_res, fac_raw, cat_raw) = await asyncio.gather(
+            user_regs_q, users_by_fac_q, proj_creations_q, proj_by_cat_q, proj_by_status_q,
+            task_dist_q, showcase_q, faculties_q, categories_q,
+        )
+
+        total_users = user_regs[0]["grand_total"] if user_regs else 0
+        total_projects = proj_creations[0]["grand_total"] if proj_creations else 0
+        showcase_res = showcase_res[0] if showcase_res else {}
+        available_faculties = [r["faculty"] for r in (fac_raw or [])]
+        available_categories = [r["category"] for r in (cat_raw or [])]
+
+        return {
+            "user_registrations": user_regs or [],
+            "project_creations": proj_creations or [],
+            "users_by_faculty": users_by_faculty or [],
+            "projects_by_category": proj_by_cat or [],
+            "projects_by_status": proj_by_status or [],
+            "task_distribution": task_dist or [],
+            "showcase_engagement": {
+                "total_likes": showcase_res.get("total_likes", 0),
+                "total_comments": showcase_res.get("total_comments", 0),
+                "total_showcases": showcase_res.get("total_showcases", 0),
+            },
+            "total_users": total_users,
+            "total_projects": total_projects,
+            "available_faculties": available_faculties,
+            "available_categories": available_categories,
+        }
+
     async def _count_competitions(self) -> int:
         try:
             coll = get_competition_collection()

@@ -2,47 +2,24 @@
 
 import { motion } from "framer-motion"
 
-const phones = [
-  {
-    color: "#6366F1",
-    title: "Frontend",
-    items: ["Next.js 16", "TypeScript", "Tailwind CSS", "Shadcn UI"],
-  },
-  {
-    color: "#10B981",
-    title: "Backend & Database",
-    items: ["FastAPI", "Python 3.12", "Prisma ORM", "PostgreSQL", "MongoDB", "Redis"],
-  },
-  {
-    color: "#F59E0B",
-    title: "AI & Services",
-    items: ["Mistral AI", "Groq", "FastEmbed", "Cloudinary"],
-  },
-]
-
-function PhoneMockup({ color, title, items }: { color: string; title: string; items: string[] }) {
+function PhoneMockup({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="mx-auto w-full max-w-[260px]">
       <div className="relative rounded-[2.5rem] border-[3px] border-[#2D2D2D] bg-white shadow-lg">
         <div className="mx-auto h-5 w-[110px] rounded-b-xl bg-[#2D2D2D]" />
-        <div className="aspect-[9/19] overflow-hidden rounded-b-[2.35rem] bg-gray-50">
-          <div className="flex h-full flex-col">
-            <div className="px-4 pb-3 pt-6" style={{ backgroundColor: color }}>
-              <p className="text-center text-sm font-semibold text-white/90">{title}</p>
-            </div>
-            <div className="flex flex-1 flex-col justify-center gap-2 px-4">
-              {items.map((item) => (
-                <div key={item} className="rounded-lg border border-gray-100 bg-white px-3 py-2 text-center">
-                  <span className="text-xs font-medium text-gray-700">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="aspect-[9/19] overflow-hidden rounded-b-[2.35rem]">
+          <img src={src} alt={alt} className="h-full w-full object-cover" />
         </div>
       </div>
     </div>
   )
 }
+
+const works = [
+  { src: "/work1.png", alt: "Workspace 1" },
+  { src: "/work2.png", alt: "Workspace 2" },
+  { src: "/work3.png", alt: "Workspace 3" },
+]
 
 export function ProductPreview() {
   return (
@@ -58,16 +35,16 @@ export function ProductPreview() {
           </p>
         </div>
         <div className="mt-12 flex items-end justify-center gap-6">
-          {phones.map((phone, i) => (
+          {works.map((w, i) => (
             <motion.div
-              key={phone.title}
+              key={w.src}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 + i * 0.1 }}
               className="flex-1 max-w-[260px]"
             >
-              <PhoneMockup {...phone} />
+              <PhoneMockup src={w.src} alt={w.alt} />
             </motion.div>
           ))}
         </div>

@@ -110,6 +110,19 @@ async def get_all_applications(
     }
 
 
+@router.get("/analytics", summary="Get Analytics & Big Data Insights")
+async def get_analytics(
+    admin_token: dict = Depends(verify_admin_token),
+    start_date: str = None,
+    end_date: str = None,
+    faculty: str = None,
+    category: str = None,
+    granularity: str = "monthly",
+    svc: AdminService = Depends(),
+):
+    return response_success(await svc.get_analytics(start_date, end_date, faculty, category, granularity))
+
+
 @router.get("/competitions", summary="Get Recent Competitions for Admin")
 async def get_recent_competitions(
     admin_token: dict = Depends(verify_admin_token),

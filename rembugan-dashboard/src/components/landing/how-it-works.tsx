@@ -37,6 +37,7 @@ export function HowItWorks() {
             </motion.div>
           ))}
         </div>
+
       </div>
     </section>
   )

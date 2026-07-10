@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException, UploadFile
 from prisma import Prisma, Json
 from app.core.database import get_db
 from app.schemas.user import UserProfileInput
+from app.core.tasks import fire_and_forget
 from app.services.embedding import reembed_user
 from app.services.ai_vision import extract_photo_from_pdf
 from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_ai
@@ -88,7 +89,7 @@ class OnboardingService:
                 data=[{"user_id": uid, "skill_id": name_to_id[n]} for n in data.skills]
             )
 
-        await reembed_user(self.db, uid)
+        fire_and_forget(reembed_user(self.db, uid), name="reembed_user_onboarding")
 
         await self.db.experience.delete_many(where={"user_id": uid})
 
