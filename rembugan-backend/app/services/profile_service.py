@@ -321,8 +321,10 @@ class ProfileService(BaseService):
         skills = [s.skill.name for s in user.skills] if user.skills else []
 
         all_projects = []
+        seen_ids = set()
         if user.ownedProjects:
             for p in user.ownedProjects:
+                seen_ids.add(p.id)
                 all_projects.append({
                     "id": p.id,
                     "title": p.title,
@@ -332,13 +334,15 @@ class ProfileService(BaseService):
                 })
         if user.memberships:
             for m in user.memberships:
-                all_projects.append({
-                    "id": m.project.id,
-                    "title": m.project.title,
-                    "status": m.project.status,
-                    "role": m.role,
-                    "created_at": m.project.created_at.isoformat(),
-                })
+                if m.project_id not in seen_ids:
+                    seen_ids.add(m.project_id)
+                    all_projects.append({
+                        "id": m.project.id,
+                        "title": m.project.title,
+                        "status": m.project.status,
+                        "role": m.role,
+                        "created_at": m.project.created_at.isoformat(),
+                    })
         all_projects.sort(key=lambda x: x["created_at"], reverse=True)
 
         connection_count = await self.db.connection.count(

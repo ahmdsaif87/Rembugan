@@ -106,10 +106,20 @@ class OnboardingService:
                 "end_date": end_date,
             })
 
+        handle = user.handle
+        if not handle:
+            import re, secrets
+            base = re.sub(r'[^a-z0-9]', '', user.full_name.lower())[:20]
+            if not base:
+                base = f"user{secrets.token_hex(4)}"
+            handle = base + secrets.token_hex(2)
+            await self.db.user.update(where={"id": uid}, data={"handle": handle})
+
         return {
             "id": user.id,
             "nim": user.nim,
             "full_name": user.full_name,
+            "handle": handle,
             "bio": user.bio,
             "photo_url": user.photo_url,
             "skills": data.skills,

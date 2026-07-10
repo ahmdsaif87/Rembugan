@@ -47,6 +47,7 @@ class FypService:
                 'SELECT id, content, media_urls, tags, author_id, created_at, '
                 '1 - (embedding <=> $1::vector) AS match_score '
                 'FROM "Showcase" WHERE author_id != $2 '
+                'AND 1 - (embedding <=> $1::vector) > 0.15 '
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, user_id
             )
@@ -92,6 +93,7 @@ class FypService:
                 'SELECT id, title, description, required_skills, owner_id, created_at, '
                 '1 - (embedding <=> $1::vector) AS match_score '
                 'FROM "Project" WHERE status = $2 '
+                'AND 1 - (embedding <=> $1::vector) > 0.15 '
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, PJ_OPEN
             )
