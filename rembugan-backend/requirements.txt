@@ -23,6 +23,7 @@ bcrypt
 # 4. AI & PDF PROCESSING & EMBEDDING
 PyMuPDF
 mistralai
+fastembed
 
 # 5. CACHE & RATE LIMIT
 redis
