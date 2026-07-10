@@ -1,35 +1,33 @@
 import asyncio
+import os
+import httpx
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-_model = None
-_model_lock = asyncio.Lock()
-
-
-async def _get_model():
-    global _model
-    if _model is None:
-        async with _model_lock:
-            if _model is None:
-                from fastembed import TextEmbedding
-                loop = asyncio.get_running_loop()
-                _model = await loop.run_in_executor(
-                    None, lambda: TextEmbedding("BAAI/bge-small-en-v1.5")
-                )
-    return _model
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
+MISTRAL_EMBED_URL = "https://api.mistral.ai/v1/embeddings"
 
 
 async def generate(text: str) -> list[float]:
     if not text.strip():
         text = " "
+    if not MISTRAL_API_KEY:
+        logger.warning("MISTRAL_API_KEY tidak diset")
+        return []
     try:
-        model = await _get_model()
-        loop = asyncio.get_running_loop()
-        emb = await loop.run_in_executor(None, lambda: list(model.embed(text))[0])
-        return [float(v) for v in emb]
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                MISTRAL_EMBED_URL,
+                json={"model": "mistral-embed", "input": [text]},
+                headers={"Authorization": f"Bearer {MISTRAL_API_KEY}"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            emb = data["data"][0]["embedding"]
+            return [float(v) for v in emb]
     except Exception as e:
-        logger.warning(f"fastembed error: {e}")
+        logger.warning(f"Mistral embedding error: {e}")
         return []
 
 
