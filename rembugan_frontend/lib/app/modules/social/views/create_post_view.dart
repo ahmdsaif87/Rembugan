@@ -594,9 +594,12 @@ class _CreatePostViewState extends State<CreatePostView> {
       ),
     );
     if (source == null) return;
-    final picked = await _picker.pickImage(source: source, imageQuality: 85);
-    if (picked != null) {
-      setState(() => _images.add(picked));
+    if (source == ImageSource.camera) {
+      final picked = await _picker.pickImage(source: source, imageQuality: 85);
+      if (picked != null) setState(() => _images.add(picked));
+    } else {
+      final picked = await _picker.pickMultiImage(imageQuality: 85);
+      setState(() => _images.addAll(picked));
     }
   }
 }

@@ -63,7 +63,12 @@ class ProfileView extends GetView<ProfileController> {
         }
         final profile = svc.profile.value;
 
-        return ListView(
+        return RefreshIndicator(
+          onRefresh: () async {
+            final pc = Get.find<ProfileController>();
+            await pc.loadProfile();
+          },
+          child: ListView(
           padding: EdgeInsets.zero,
           children: [
             _ProfileCover(
@@ -105,7 +110,8 @@ class ProfileView extends GetView<ProfileController> {
               ),
             ),
           ],
-        );
+        ),
+      );
       }),
 
     );
@@ -292,7 +298,7 @@ class _ProfileIdentity extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             profile.bio,
-            maxLines: 3,
+            maxLines: 5,
             overflow: TextOverflow.ellipsis,
             style: AppFonts.satoshiStyle(
               fontSize: 13,
@@ -649,6 +655,7 @@ class _ProfileTabContentState extends State<_ProfileTabContent> {
             else timeAgo = '${(diff.inDays / 7).floor()}mg lalu';
           } catch (_) {}
 
+          final tags = (s['tags'] as List<dynamic>?)?.cast<String>();
           return PostCardWidget(
             showcaseId: showcaseId,
             authorId: widget.authorId,
@@ -656,6 +663,7 @@ class _ProfileTabContentState extends State<_ProfileTabContent> {
             name: widget.authorName,
             subtitle: timeAgo,
             content: s['content'] as String? ?? '',
+            tags: tags,
             mediaUrls: (s['media_urls'] as List<dynamic>?)?.cast<String>(),
             isLiked: pc.likedShowcaseIds.contains(showcaseId),
             initialLikes: s['likes_count'] as int? ?? 0,
