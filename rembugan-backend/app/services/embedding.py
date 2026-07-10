@@ -1,35 +1,33 @@
 import asyncio
+import os
+import httpx
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-_model = None
-_model_lock = asyncio.Lock()
-
-
-async def _get_model():
-    global _model
-    if _model is None:
-        async with _model_lock:
-            if _model is None:
-                from fastembed import TextEmbedding
-                loop = asyncio.get_running_loop()
-                _model = await loop.run_in_executor(
-                    None, lambda: TextEmbedding("BAAI/bge-small-en-v1.5")
-                )
-    return _model
+HF_TOKEN = os.getenv("HF_TOKEN", "")
+HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/BAAI/bge-small-en-v1.5"
 
 
 async def generate(text: str) -> list[float]:
     if not text.strip():
         text = " "
+    if not HF_TOKEN:
+        logger.warning("HF_TOKEN tidak diset")
+        return []
     try:
-        model = await _get_model()
-        loop = asyncio.get_running_loop()
-        emb = await loop.run_in_executor(None, lambda: list(model.embed(text))[0])
-        return [float(v) for v in emb]
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                HF_API_URL,
+                json={"inputs": text, "options": {"wait_for_model": True}},
+                headers={"Authorization": f"Bearer {HF_TOKEN}"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            emb = data[0] if isinstance(data, list) and isinstance(data[0], list) else data
+            return [float(v) for v in emb]
     except Exception as e:
-        logger.warning(f"fastembed error: {e}")
+        logger.warning(f"HF API error ({type(e).__name__}): {e}")
         return []
 
 
