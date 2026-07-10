@@ -60,6 +60,7 @@ void showImageViewer(
 }
 
 void showMediaViewer(BuildContext context, List<String> urls, {int initialPage = 0}) {
+  final pageNotifier = ValueNotifier<int>(initialPage);
   showDialog<void>(
     context: context,
     barrierColor: Colors.black,
@@ -90,6 +91,7 @@ void showMediaViewer(BuildContext context, List<String> urls, {int initialPage =
             child: PageView.builder(
               controller: PageController(initialPage: initialPage),
               itemCount: urls.length,
+              onPageChanged: (i) => pageNotifier.value = i,
               itemBuilder: (_, i) => InteractiveViewer(
                 clipBehavior: Clip.none,
                 maxScale: 4.0,
@@ -110,15 +112,18 @@ void showMediaViewer(BuildContext context, List<String> urls, {int initialPage =
             left: 0,
             right: 0,
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${initialPage + 1} / ${urls.length}',
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+              child: ValueListenableBuilder<int>(
+                valueListenable: pageNotifier,
+                builder: (_, page, __) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${page + 1} / ${urls.length}',
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),

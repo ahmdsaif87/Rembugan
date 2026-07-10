@@ -308,7 +308,7 @@ class ExploreView extends GetView<ExploreController> {
           itemBuilder: (context, index) {
             if (index == 0) {
               return _SectionHeader(
-                title: 'Orang Disekitar',
+                title: 'Rekomendasi',
                 trailing: '${controller.filteredPeople.length} hasil',
               );
             }

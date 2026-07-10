@@ -1752,7 +1752,7 @@ class _TaskTab extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () => _showAddTaskSheet(context),
                 icon: const Icon(FluentIcons.add_24_regular, size: 16),
-                label: const Text('Tambah Tugas'),
+                label: const Text('Tambah Tugas', overflow: TextOverflow.visible),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   foregroundColor: AppColors.white,
