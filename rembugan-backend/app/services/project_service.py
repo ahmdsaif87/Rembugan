@@ -144,8 +144,13 @@ class ProjectService(BaseService):
             p_emb = project_embeddings.get(p.id)
             if user_embedding and p_emb:
                 score = round(cosine_similarity(user_embedding, p_emb) * 100)
+            elif user_has_skills and p.required_skills:
+                # Fallback keyword matching kalo gak ada embedding
+                req_skills = {s.lower() for s in (p.required_skills or [])} - {""}
+                if req_skills & user_skill_names:
+                    score = round(len(req_skills & user_skill_names) / len(req_skills) * 100)
 
-            if user_has_skills:
+            if user_has_skills and score > 0:
                 req_skills = {s.lower() for s in (p.required_skills or [])} - {""}
                 if req_skills and not (req_skills & user_skill_names):
                     score = 0
