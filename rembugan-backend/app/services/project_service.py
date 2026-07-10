@@ -143,7 +143,7 @@ class ProjectService(BaseService):
             score = 0
             p_emb = project_embeddings.get(p.id)
             if user_embedding and p_emb:
-                score = int(cosine_similarity(user_embedding, p_emb) * 100)
+                score = round(cosine_similarity(user_embedding, p_emb) * 100)
 
             if user_has_skills:
                 req_skills = {s.lower() for s in (p.required_skills or [])} - {""}
