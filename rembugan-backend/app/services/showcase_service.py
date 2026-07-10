@@ -46,7 +46,6 @@ class ShowcaseService:
             rows = await self.db.query_raw(
                 'SELECT id, 1 - (embedding <=> $1::vector) AS match_score '
                 'FROM "Showcase" WHERE author_id != $2 '
-                'AND 1 - (embedding <=> $1::vector) > 0.25 '
                 'ORDER BY embedding <=> $1::vector '
                 'OFFSET $3 LIMIT $4',
                 vec, user_id, (page - 1) * limit, limit
@@ -58,7 +57,13 @@ class ShowcaseService:
             score_map = {}
 
         if not ids:
-            showcases = []
+            showcases = await self.db.showcase.find_many(
+                where={"author_id": {"not": user_id}},
+                order={"created_at": "desc"},
+                skip=(page - 1) * limit,
+                take=limit,
+                include={"author": True, "likes": True, "comments": True},
+            )
         else:
             showcases = await self.db.showcase.find_many(
                 where={"id": {"in": ids}},

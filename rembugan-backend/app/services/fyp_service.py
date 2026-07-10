@@ -47,12 +47,16 @@ class FypService:
                 'SELECT id, content, media_urls, tags, author_id, created_at, '
                 '1 - (embedding <=> $1::vector) AS match_score '
                 'FROM "Showcase" WHERE author_id != $2 '
-                'AND 1 - (embedding <=> $1::vector) > 0.25 '
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, user_id
             )
         if not vec or not rows:
-            rows = []
+            rows = await self.db.query_raw(
+                'SELECT id, content, media_urls, tags, author_id, created_at, 0 AS match_score '
+                'FROM "Showcase" WHERE author_id != $1 '
+                'ORDER BY created_at DESC LIMIT 10',
+                user_id
+            )
         if rows:
             s_ids = [r["id"] for r in rows]
             s_map = {r["id"]: r for r in rows}
@@ -88,12 +92,16 @@ class FypService:
                 'SELECT id, title, description, required_skills, owner_id, created_at, '
                 '1 - (embedding <=> $1::vector) AS match_score '
                 'FROM "Project" WHERE status = $2 '
-                'AND 1 - (embedding <=> $1::vector) > 0.25 '
                 'ORDER BY embedding <=> $1::vector LIMIT 10',
                 vec, PJ_OPEN
             )
         if not vec or not rows:
-            rows = []
+            rows = await self.db.query_raw(
+                'SELECT id, title, description, required_skills, owner_id, created_at, 0 AS match_score '
+                'FROM "Project" WHERE status = $1 '
+                'ORDER BY created_at DESC LIMIT 10',
+                PJ_OPEN
+            )
         if rows:
                 p_ids = [r["id"] for r in rows]
                 p_map = {r["id"]: r for r in rows}
