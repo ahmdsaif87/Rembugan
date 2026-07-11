@@ -1292,7 +1292,6 @@ class _DiscussionTabState extends State<_DiscussionTab> {
                       ),
                       const SizedBox(width: 12),
 
-                      // Text Field
                       Expanded(
                         child: TextField(
                           controller: _msgCtrl,
@@ -1302,36 +1301,26 @@ class _DiscussionTabState extends State<_DiscussionTab> {
                             hintText: 'Tulis pesan...',
                             hintStyle: AppFonts.satoshiStyle(
                               fontSize: 14,
-                              color: c.textTertiary.withValues(
-                                alpha: 0.6,
-                              ),
+                              color: c.textTertiary,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: AppSpacing.sm,
+                              horizontal: 14,
+                              vertical: 10,
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color: c.border.withValues(alpha: 0.8),
-                                width: 1.0,
-                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide(
-                                color: c.textPrimary.withValues(
-                                  alpha: 0.4,
-                                ),
-                                width: 1.2,
+                                color: c.primarySoft,
+                                width: 1,
                               ),
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color: c.border.withValues(alpha: 0.8),
-                                width: 1.0,
-                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
                             ),
                           ),
                           style: AppFonts.satoshiStyle(

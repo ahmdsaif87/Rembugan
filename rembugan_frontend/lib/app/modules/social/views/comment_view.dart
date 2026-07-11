@@ -2,6 +2,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/profile_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/skeleton.dart';
@@ -296,7 +297,13 @@ class _ReplyComposer extends StatelessWidget {
           }),
           Row(
             children: [
-              const AppAvatar(radius: 16),
+              Obx(() {
+                final photoUrl = Get.find<ProfileService>().profile.value.photoUrl;
+                return AppAvatar(
+                  photoUrl: photoUrl.isNotEmpty ? photoUrl : null,
+                  radius: 16,
+                );
+              }),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(

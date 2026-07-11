@@ -66,7 +66,10 @@ class ProfileView extends GetView<ProfileController> {
         return RefreshIndicator(
           onRefresh: () async {
             final pc = Get.find<ProfileController>();
-            await pc.loadProfile();
+            await Future.wait([
+              pc.profileService.fetchProfile(),
+              pc.fetchShowcases(),
+            ]);
           },
           child: ListView(
           padding: EdgeInsets.zero,

@@ -165,23 +165,28 @@ class TeamView extends GetView<TeamController> {
                             ),
                             const SizedBox(height: 22),
                             SizedBox(
-                              width: 180,
-                              height: 42,
-                              child: ElevatedButton.icon(
+                              height: 44,
+                              child: OutlinedButton.icon(
                                 onPressed: () => Get.find<MainShellController>().changeTab(1),
-                                icon: const Icon(FluentIcons.search_24_regular, size: 16),
+                                icon: Icon(
+                                  FluentIcons.search_24_regular,
+                                  size: 16,
+                                  color: c.textPrimary,
+                                ),
                                 label: Text(
                                   'Jelajahi Proyek',
                                   style: AppFonts.satoshiStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.white,
+                                    color: c.textPrimary,
                                   ),
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary500,
-                                  foregroundColor: AppColors.white,
-                                  elevation: 0,
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: c.border),
+                                  foregroundColor: c.textPrimary,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.lg,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(AppRadius.sm),
                                   ),

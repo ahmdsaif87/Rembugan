@@ -16,26 +16,6 @@ class OnboardingView extends GetView<OnboardingController> {
         top: false,
         child: Column(
           children: [
-            Padding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 8,
-                right: AppSpacing.md,
-              ),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: controller.skipOnboarding,
-                  child: Text(
-                    'Lewati',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: c.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
             Expanded(
               child: PageView.builder(
                 controller: controller.pageController,
