@@ -50,12 +50,12 @@ class FypService:
             result = await self.session.execute(
                 text(
                     'SELECT id, content, media_urls, tags, author_id, created_at, '
-                    '1 - (embedding <=> :vec::vector) AS match_score '
+                    f'1 - (embedding <=> \'{vec}\'::vector) AS match_score '
                     'FROM "Showcase" WHERE author_id != :uid '
-                    'AND 1 - (embedding <=> :vec::vector) > 0.15 '
-                    'ORDER BY embedding <=> :vec::vector LIMIT 10'
+                    f'AND 1 - (embedding <=> \'{vec}\'::vector) > 0.15 '
+                    f'ORDER BY embedding <=> \'{vec}\'::vector LIMIT 10'
                 ),
-                {"vec": vec, "uid": user_id},
+                {"uid": user_id},
             )
             rows = result.fetchall()
         if not vec or not rows:
@@ -111,12 +111,12 @@ class FypService:
             result = await self.session.execute(
                 text(
                     'SELECT id, title, description, required_skills, owner_id, created_at, '
-                    '1 - (embedding <=> :vec::vector) AS match_score '
+                    f'1 - (embedding <=> \'{vec}\'::vector) AS match_score '
                     'FROM "Project" WHERE status = :status '
-                    'AND 1 - (embedding <=> :vec::vector) > 0.15 '
-                    'ORDER BY embedding <=> :vec::vector LIMIT 10'
+                    f'AND 1 - (embedding <=> \'{vec}\'::vector) > 0.15 '
+                    f'ORDER BY embedding <=> \'{vec}\'::vector LIMIT 10'
                 ),
-                {"vec": vec, "status": PJ_OPEN},
+                {"status": PJ_OPEN},
             )
             rows = result.fetchall()
         if not vec or not rows:

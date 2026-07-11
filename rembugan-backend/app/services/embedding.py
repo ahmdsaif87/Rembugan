@@ -83,8 +83,8 @@ async def reembed_user(session: AsyncSession, user_id: str):
         if emb:
             vec = f'[{",".join(str(x) for x in emb)}]'
             await session.execute(
-                text('UPDATE "User" SET embedding = :vec::vector WHERE id = :uid'),
-                {"vec": vec, "uid": user_id},
+                text(f'UPDATE "User" SET embedding = \'{vec}\'::vector WHERE id = :uid'),
+                {"uid": user_id},
             )
             await session.commit()
 
@@ -98,8 +98,8 @@ async def reembed_project(session: AsyncSession, project_id: int):
         if emb:
             vec = f'[{",".join(str(x) for x in emb)}]'
             await session.execute(
-                text('UPDATE "Project" SET embedding = :vec::vector WHERE id = :pid'),
-                {"vec": vec, "pid": project_id},
+                text(f'UPDATE "Project" SET embedding = \'{vec}\'::vector WHERE id = :pid'),
+                {"pid": project_id},
             )
             await session.commit()
 
@@ -114,7 +114,7 @@ async def reembed_showcase(session: AsyncSession, showcase_id: str):
         if emb:
             vec = f'[{",".join(str(x) for x in emb)}]'
             await session.execute(
-                text('UPDATE "Showcase" SET embedding = :vec::vector WHERE id = :sid'),
-                {"vec": vec, "sid": showcase_id},
+                text(f'UPDATE "Showcase" SET embedding = \'{vec}\'::vector WHERE id = :sid'),
+                {"sid": showcase_id},
             )
             await session.commit()

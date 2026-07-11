@@ -241,12 +241,12 @@ class ProfileService:
             raw = await self.session.execute(
                 text(
                     f'SELECT id, full_name, photo_url, major, bio, '
-                    '1 - (embedding <=> :vec::vector) AS match_score '
+                    f'1 - (embedding <=> \'{vec}\'::vector) AS match_score '
                     f'FROM "User" WHERE id NOT IN ({exclude_list}) '
                     'AND embedding IS NOT NULL '
-                    'ORDER BY embedding <=> :vec::vector LIMIT :lim'
+                    f'ORDER BY embedding <=> \'{vec}\'::vector LIMIT :lim'
                 ),
-                {"vec": vec, "lim": limit},
+                {"lim": limit},
             )
             rows = raw.fetchall()
 

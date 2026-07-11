@@ -51,16 +51,16 @@ class ShowcaseService:
         total = result.scalar() or 0
 
         if user_emb:
-            vec = f'[{",".join(str(x) for x in user_emb)}]'
+            vec_str = f'[{",".join(str(x) for x in user_emb)}]'
             rows_result = await self.session.execute(
                 text(
-                    'SELECT id, 1 - (embedding <=> :vec::vector) AS match_score '
-                    'FROM "Showcase" WHERE author_id != :uid '
-                    'AND 1 - (embedding <=> :vec::vector) > 0.15 '
-                    'ORDER BY embedding <=> :vec::vector '
+                    f'SELECT id, 1 - (embedding <=> \'{vec_str}\'::vector) AS match_score '
+                    f'FROM "Showcase" WHERE author_id != :uid '
+                    f'AND 1 - (embedding <=> \'{vec_str}\'::vector) > 0.15 '
+                    f'ORDER BY embedding <=> \'{vec_str}\'::vector '
                     'OFFSET :offset LIMIT :lim'
                 ),
-                {"vec": vec, "uid": user_id, "offset": (page - 1) * limit, "lim": limit},
+                {"uid": user_id, "offset": (page - 1) * limit, "lim": limit},
             )
             rows = rows_result.fetchall()
             ids = [r[0] for r in rows]

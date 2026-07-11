@@ -34,8 +34,16 @@ setup_cloudinary()
 async def lifespan(app: FastAPI):
     try:
         from sqlalchemy import text
-        async with sql_engine.connect() as conn:
+        async with sql_engine.begin() as conn:
             await conn.execute(text("SELECT 1"))
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            for tbl in ("User", "Project", "Showcase"):
+                try:
+                    await conn.execute(
+                        text(f'ALTER TABLE "{tbl}" ALTER COLUMN embedding TYPE vector(384) USING embedding::text::vector')
+                    )
+                except Exception:
+                    pass
         logger.info("Database terhubung (SQLAlchemy)!")
     except Exception as e:
         logger.error(f"Gagal konek database: {e}")
