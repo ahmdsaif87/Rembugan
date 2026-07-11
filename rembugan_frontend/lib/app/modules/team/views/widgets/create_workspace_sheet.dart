@@ -386,6 +386,10 @@ class _CreateWorkspaceSheetState extends State<CreateWorkspaceSheet> {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         borderSide: const BorderSide(color: AppColors.danger500),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderSide: const BorderSide(color: AppColors.danger500, width: 1.5),
+      ),
     );
   }
 }

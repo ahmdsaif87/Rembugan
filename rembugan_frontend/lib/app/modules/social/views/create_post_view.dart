@@ -185,6 +185,14 @@ class _CreatePostViewState extends State<CreatePostView> {
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               borderSide: BorderSide.none,
                             ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: const BorderSide(color: AppColors.error500, width: 1.2),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderSide: const BorderSide(color: AppColors.error500, width: 1.2),
+                            ),
                             contentPadding: const EdgeInsets.all(AppSpacing.md),
                           ),
                           style: AppFonts.satoshiStyle(
