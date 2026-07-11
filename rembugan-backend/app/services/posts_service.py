@@ -122,11 +122,9 @@ class PostsService:
         dm_content = f"📌 {sender_name} membagikan {('postingan' if post_type == 'post' else 'proyek')}:\n\n{preview}\n\n🔗 {share_link}"
 
         sent_to = []
+        message_data = []
         for friend_id in connected_ids:
-            sorted_ids = sorted([user_id, friend_id])
-            room_id = f"dm_{sorted_ids[0]}_{sorted_ids[1]}"
-
-            await self.db.message.create(data={
+            message_data.append({
                 "content": dm_content,
                 "type": "share",
                 "sender_id": user_id,
@@ -134,6 +132,8 @@ class PostsService:
                 "attachment_url": share_link,
                 "attachment_name": share_title,
             })
+        if message_data:
+            await self.db.message.create_many(data=message_data)
 
             try:
                 from app.services.chat_manager import manager

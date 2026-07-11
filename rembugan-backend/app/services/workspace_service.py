@@ -203,14 +203,18 @@ class WorkspaceService:
 
     # ── Public API ──
 
-    async def list_workspaces(self, user_id: str) -> list[dict]:
+    async def list_workspaces(self, user_id: str, skip: int = 0, limit: int = 20) -> list[dict]:
         owned = await self.db.project.find_many(
             where={"owner_id": user_id},
             order={"created_at": "desc"},
+            skip=skip,
+            take=limit,
         )
         memberships = await self.db.projectmember.find_many(
             where={"user_id": user_id},
             include={"project": True},
+            skip=skip,
+            take=limit,
         )
 
         project_map = {}
@@ -309,7 +313,7 @@ class WorkspaceService:
             })
         return result
 
-    async def list_files(self, project_id: int, user_id: str) -> list[dict]:
+    async def list_files(self, project_id: int, user_id: str, skip: int = 0, limit: int = 50) -> list[dict]:
         project, _ = await self._get_user_role(project_id, user_id)
         if not project:
             raise HTTPException(status_code=404, detail="Workspace tidak ditemukan")
@@ -318,6 +322,8 @@ class WorkspaceService:
             where={"project_id": project_id},
             order={"created_at": "desc"},
             include={"uploader": True},
+            skip=skip,
+            take=limit,
         )
 
         result = []
@@ -606,7 +612,7 @@ class WorkspaceService:
             "status": updated.status,
         }
 
-    async def get_tasks(self, project_id: int, user_id: str) -> dict:
+    async def get_tasks(self, project_id: int, user_id: str, skip: int = 0, limit: int = 50) -> dict:
         project = await self.db.project.find_unique(where={"id": project_id})
         if not project:
             raise HTTPException(status_code=404, detail="Proyek tidak ditemukan.")
@@ -615,6 +621,8 @@ class WorkspaceService:
             where={"project_id": project_id},
             include={"assignees": {"include": {"user": True}}},
             order={"created_at": "asc"},
+            skip=skip,
+            take=limit,
         )
 
         board = {TASK_TODO: [], TASK_DOING: [], TASK_DONE: []}
@@ -660,8 +668,11 @@ class WorkspaceService:
 
         if assignee_ids is not None:
             await self.db.taskassignee.delete_many(where={"task_id": task_id})
+            if assignee_ids:
+                await self.db.taskassignee.create_many(
+                    data=[{"task_id": task_id, "user_id": uid} for uid in assignee_ids]
+                )
             for uid in assignee_ids:
-                await self.db.taskassignee.create(data={"task_id": task_id, "user_id": uid})
                 if uid != user_id:
                     await notify(
                         db=self.db,

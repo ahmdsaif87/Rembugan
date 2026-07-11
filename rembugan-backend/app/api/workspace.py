@@ -9,10 +9,13 @@ router = APIRouter(prefix="/workspace", tags=["6. Workspace & Kanban"])
 
 @router.get("/", summary="Daftar Workspace Saya")
 async def list_workspaces(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     user_token: dict = Depends(verify_token),
     svc: WorkspaceService = Depends(),
 ):
-    data = await svc.list_workspaces(user_token["uid"])
+    skip = (page - 1) * limit
+    data = await svc.list_workspaces(user_token["uid"], skip=skip, limit=limit)
     return response_success(data)
 
 
@@ -40,10 +43,13 @@ async def get_workspace_discussions(
 @router.get("/{project_id}/files", summary="Daftar File Workspace")
 async def list_workspace_files(
     project_id: int,
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
     user_token: dict = Depends(verify_token),
     svc: WorkspaceService = Depends(),
 ):
-    data = await svc.list_files(project_id, user_token["uid"])
+    skip = (page - 1) * limit
+    data = await svc.list_files(project_id, user_token["uid"], skip=skip, limit=limit)
     return response_success(data)
 
 
@@ -128,10 +134,13 @@ async def move_task(
 @router.get("/{project_id}/tasks", summary="Ambil Semua Tugas Proyek")
 async def get_project_tasks(
     project_id: int,
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=100),
     user_token: dict = Depends(verify_token),
     svc: WorkspaceService = Depends(),
 ):
-    data = await svc.get_tasks(project_id, user_token["uid"])
+    skip = (page - 1) * limit
+    data = await svc.get_tasks(project_id, user_token["uid"], skip=skip, limit=limit)
     return response_success(data)
 
 

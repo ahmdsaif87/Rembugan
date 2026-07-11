@@ -73,7 +73,7 @@ class ChatService:
             "size": size,
         }
 
-    async def get_my_rooms(self, uid: str) -> list[dict]:
+    async def get_my_rooms(self, uid: str, skip: int = 0, limit: int = 20) -> list[dict]:
         read_states = await self.db.roomread.find_many(where={"user_id": uid})
         read_map = {r.room_id: r.last_read_at for r in read_states}
 
@@ -87,10 +87,12 @@ class ChatService:
             },
             include={"sender": True, "receiver": True},
             order={"created_at": "desc"},
+            skip=skip,
+            take=limit * 3,
         )
 
         seen = set()
-        rooms = []
+        room_other_pairs = []
         for m in messages:
             if not m.receiver_id:
                 continue
@@ -98,26 +100,40 @@ class ChatService:
             other = m.receiver if m.sender_id == uid else m.sender
             sorted_ids = "_".join(sorted([uid, other_id]))
             room_id = f"dm_{sorted_ids}"
-
             if room_id not in seen:
                 seen.add(room_id)
-                last_read = read_map.get(room_id)
-                unread_where = {"sender_id": other_id, "receiver_id": uid}
-                if last_read:
-                    unread_where["created_at"] = {"gt": last_read}
-                unread = await self.db.message.count(where=unread_where)
+                room_other_pairs.append((room_id, other_id, other, m))
 
-                rooms.append({
-                    "room_id": room_id,
-                    "type": "dm",
-                    "name": other.full_name if other else "User",
-                    "other_user_id": other_id,
-                    "photo_url": other.photo_url if other else None,
-                    "last_message": m.attachment_name if m.type == "share" and m.attachment_name else (m.content[:80] if m.content else ""),
-                    "last_time": tz_iso(m.created_at),
-                    "unread": unread,
-                    "is_online": manager.is_online(other_id),
-                })
+        unread_by_room = {}
+        if room_other_pairs:
+            other_ids = [p[1] for p in room_other_pairs]
+            unread_msgs = await self.db.message.find_many(
+                where={
+                    "sender_id": {"in": other_ids},
+                    "receiver_id": uid,
+                    "project_id": None,
+                },
+                order={"created_at": "desc"},
+            )
+            for msg in unread_msgs:
+                rid = f"dm_{'_'.join(sorted([msg.sender_id, uid]))}"
+                last_read = read_map.get(rid)
+                if last_read is None or (msg.created_at and msg.created_at > last_read):
+                    unread_by_room[rid] = unread_by_room.get(rid, 0) + 1
+
+        rooms = []
+        for room_id, other_id, other, m in room_other_pairs:
+            rooms.append({
+                "room_id": room_id,
+                "type": "dm",
+                "name": other.full_name if other else "User",
+                "other_user_id": other_id,
+                "photo_url": other.photo_url if other else None,
+                "last_message": m.attachment_name if m.type == "share" and m.attachment_name else (m.content[:80] if m.content else ""),
+                "last_time": tz_iso(m.created_at),
+                "unread": unread_by_room.get(room_id, 0),
+                "is_online": manager.is_online(other_id),
+            })
 
         return rooms
 
@@ -130,16 +146,22 @@ class ChatService:
             },
         )
 
-    async def get_chat_history(self, uid: str, room_id: str, limit: int = 50) -> dict:
+    async def get_chat_history(self, uid: str, room_id: str, limit: int = 50, before_id: int | None = None) -> dict:
         other_user_online = None
+
+        def _before_filter():
+            if before_id is None:
+                return {}
+            return {"id": {"lt": before_id}}
 
         if room_id.isdigit():
             messages = await self.db.message.find_many(
-                where={"project_id": int(room_id)},
+                where={"project_id": int(room_id), **_before_filter()},
                 include={"sender": True},
-                order={"created_at": "asc"},
+                order={"id": "desc"},
                 take=limit,
             )
+            messages.reverse()
         else:
             parts = room_id.split("_")
             if len(parts) >= 3:
@@ -148,15 +170,17 @@ class ChatService:
                 other_user_online = manager.is_online(other_id)
                 messages = await self.db.message.find_many(
                     where={
+                        **_before_filter(),
                         "OR": [
                             {"sender_id": user1, "receiver_id": user2},
                             {"sender_id": user2, "receiver_id": user1},
                         ]
                     },
                     include={"sender": True},
-                    order={"created_at": "asc"},
+                    order={"id": "desc"},
                     take=limit,
                 )
+                messages.reverse()
             else:
                 raise HTTPException(status_code=400, detail="Format room_id tidak valid.")
 

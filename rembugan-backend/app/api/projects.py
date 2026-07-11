@@ -52,11 +52,14 @@ async def get_project_suggestions(
 
 @router.get("/my-projects", summary="Lihat Proyek Milik Saya")
 async def get_my_projects(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     user_token: dict = Depends(verify_token),
     service: ProjectService = Depends(ProjectService),
 ):
     user_id = user_token.get("uid")
-    projects = await service.get_my_projects(user_id)
+    skip = (page - 1) * limit
+    projects = await service.get_my_projects(user_id, skip=skip, limit=limit)
     return response_success(projects)
 
 

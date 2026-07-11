@@ -222,11 +222,14 @@ async def upload_dm_file(
 
 @router.get("/rooms", summary="Daftar Room Chat Saya")
 async def get_my_rooms(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     service: ChatService = Depends(ChatService),
     user_token: dict = Depends(verify_token),
 ):
     uid = user_token.get("uid")
-    data = await service.get_my_rooms(uid)
+    skip = (page - 1) * limit
+    data = await service.get_my_rooms(uid, skip=skip, limit=limit)
     return response_success(data)
 
 
@@ -245,9 +248,10 @@ async def mark_room_read(
 async def get_chat_history(
     room_id: str,
     limit: int = Query(50, ge=1, le=CHAT_HISTORY_MAX),
+    before_id: int | None = Query(None, description="Ambil pesan sebelum ID ini (cursor)"),
     service: ChatService = Depends(ChatService),
     user_token: dict = Depends(verify_token),
 ):
     uid = user_token.get("uid")
-    data = await service.get_chat_history(uid, room_id, limit)
+    data = await service.get_chat_history(uid, room_id, limit, before_id=before_id)
     return response_success(data)

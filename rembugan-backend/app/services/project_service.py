@@ -192,11 +192,13 @@ class ProjectService(BaseService):
         await cache.set(cache_key, result, ttl=300)
         return result
 
-    async def get_my_projects(self, user_id: str) -> list[ProjectData]:
+    async def get_my_projects(self, user_id: str, skip: int = 0, limit: int = 20) -> list[ProjectData]:
         projects = await self.db.project.find_many(
             where={"owner_id": user_id},
             include={"members": True},
             order={"created_at": "desc"},
+            skip=skip,
+            take=limit,
         )
 
         result = []
