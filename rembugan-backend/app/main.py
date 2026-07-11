@@ -24,6 +24,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload, qr, saved, posts
 from app.api.admin import router as admin_router
+from app.api.profile_sql import router as profile_sql_router
 
 # Inisialisasi Layanan External
 setup_cloudinary()
@@ -106,6 +107,7 @@ app.include_router(qr.router)
 app.include_router(saved.router)
 app.include_router(posts.router)
 app.include_router(admin_router)
+app.include_router(profile_sql_router)
 
 # Serve static files (poster images, etc.)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
