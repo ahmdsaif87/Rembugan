@@ -1,9 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/services/auth_service.dart';
 import '../../../routes/app_pages.dart';
 import '../../../core/widgets/app_toast.dart';
+
+enum LoginErrorType { invalidCredentials, network, server, unknown }
 
 class LoginController extends GetxController {
   final _auth = Get.find<AuthService>();
@@ -12,8 +15,10 @@ class LoginController extends GetxController {
   final passwordController = TextEditingController();
   final isPasswordHidden = true.obs;
   final isLoading = false.obs;
-  final errorMessage = Rxn<String>();
   final formKey = GlobalKey<FormState>();
+
+  final errorMessage = Rxn<String>();
+  final errorType = Rx<LoginErrorType?>(null);
 
   void togglePasswordVisibility() {
     isPasswordHidden.value = !isPasswordHidden.value;
@@ -21,11 +26,12 @@ class LoginController extends GetxController {
 
   void clearError() {
     errorMessage.value = null;
+    errorType.value = null;
   }
 
   void onLogin() async {
     if (!formKey.currentState!.validate()) return;
-    errorMessage.value = null;
+    clearError();
     isLoading.value = true;
 
     try {
@@ -36,6 +42,7 @@ class LoginController extends GetxController {
 
       if (error != null) {
         errorMessage.value = error;
+        errorType.value = LoginErrorType.invalidCredentials;
         return;
       }
 
@@ -50,8 +57,25 @@ class LoginController extends GetxController {
       } else {
         Get.offAllNamed(Routes.HOME);
       }
-    } catch (e) {
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        errorMessage.value = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
+        errorType.value = LoginErrorType.network;
+      } else if (e.response?.statusCode == 401) {
+        errorMessage.value = 'Email/NIM atau kata sandi salah.';
+        errorType.value = LoginErrorType.invalidCredentials;
+      } else if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
+        errorMessage.value = 'Server sedang sibuk. Coba lagi nanti.';
+        errorType.value = LoginErrorType.server;
+      } else {
+        errorMessage.value = e.response?.data?['detail'] ?? 'Terjadi kesalahan. Coba lagi.';
+        errorType.value = LoginErrorType.unknown;
+      }
+    } catch (_) {
       errorMessage.value = 'Terjadi kesalahan. Coba lagi.';
+      errorType.value = LoginErrorType.unknown;
     } finally {
       isLoading.value = false;
     }

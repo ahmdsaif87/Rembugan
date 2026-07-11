@@ -103,44 +103,67 @@ class LoginView extends GetView<LoginController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Obx(() {
-            if (controller.errorMessage.value == null) {
-              return const SizedBox.shrink();
+            final msg = controller.errorMessage.value;
+            final type = controller.errorType.value;
+            if (msg == null) return const SizedBox.shrink();
+
+            final isNetwork = type == LoginErrorType.network;
+            final isCredentials = type == LoginErrorType.invalidCredentials;
+            final isServer = type == LoginErrorType.server;
+
+            Color bgColor;
+            Color borderColor;
+            Color iconColor;
+            IconData icon;
+
+            if (isNetwork || isServer) {
+              bgColor = AppColors.warning50;
+              borderColor = AppColors.warning500.withValues(alpha: 0.3);
+              iconColor = AppColors.warning500;
+              icon = FluentIcons.wifi_off_24_regular;
+            } else if (isCredentials) {
+              bgColor = AppColors.danger50;
+              borderColor = AppColors.error500.withValues(alpha: 0.3);
+              iconColor = AppColors.error500;
+              icon = FluentIcons.error_circle_24_filled;
+            } else {
+              bgColor = AppColors.danger50;
+              borderColor = AppColors.error500.withValues(alpha: 0.3);
+              iconColor = AppColors.error500;
+              icon = FluentIcons.error_circle_24_filled;
             }
+
             return Container(
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.danger50,
+                color: bgColor,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.error500.withValues(alpha: 0.3),
-                ),
+                border: Border.all(color: borderColor),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    FluentIcons.error_circle_24_filled,
-                    size: 18,
-                    color: AppColors.error500,
-                  ),
+                  Icon(icon, size: 18, color: iconColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      controller.errorMessage.value!,
+                      msg,
                       style: AppFonts.satoshiStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.error500,
+                        color: iconColor,
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: controller.clearError,
                     child: Icon(
                       FluentIcons.dismiss_24_regular,
                       size: 16,
-                      color: AppColors.error500,
+                      color: iconColor,
                     ),
                   ),
                 ],
