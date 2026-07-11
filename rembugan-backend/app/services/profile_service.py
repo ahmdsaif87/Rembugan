@@ -1,16 +1,14 @@
 import re
+import json
 from datetime import datetime
-from dataclasses import dataclass
-from typing import Optional
 from fastapi import Depends, HTTPException
-from prisma import Prisma, Json
-from app.core.database import get_db
+from sqlalchemy import select, or_, and_, func as sa_func, text, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import get_db_session
 from app.core.constants import PJ_OPEN, ROLE_KETUA, ROLE_ADMIN
 from app.schemas.profile import SettingsUpdateInput
-from app.schemas.user import ExperienceInput
 from app.core.cache import cache
-from app.services.embedding import reembed_user
-from app.services.base import BaseService
+from app.models import User, Skill, UserSkill, Experience, Project, ProjectMember, Showcase, Connection
 
 
 def _parse_date(s: str) -> datetime | None:
@@ -74,45 +72,47 @@ def _parse_duration(duration: str) -> tuple[datetime, datetime | None]:
     return datetime.now(), None
 
 
-@dataclass
-class ProfileService(BaseService):
-    db: Prisma = Depends(get_db)
+class ProfileService:
+    def __init__(self, session: AsyncSession = Depends(get_db_session)):
+        self.session = session
 
     async def update_settings(self, user_id: str, data: SettingsUpdateInput) -> dict:
         update_data = {}
         skill_names = None
         experiences = None
 
+        stmt = select(User).where(User.id == user_id)
+        result = await self.session.execute(stmt)
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan")
+
         if data.full_name is not None:
             name = data.full_name.strip()
             if not name:
                 raise HTTPException(status_code=400, detail="Nama wajib diisi")
-            update_data["full_name"] = name
+            user.full_name = name
 
         if data.handle is not None:
-            existing = await self.db.user.find_first(
-                where={"handle": data.handle, "id": {"not": user_id}}
+            existing = await self.session.execute(
+                select(User).where(and_(User.handle == data.handle, User.id != user_id))
             )
-            if existing:
+            if existing.scalar_one_or_none():
                 raise HTTPException(status_code=400, detail="Username sudah digunakan")
-            update_data["handle"] = data.handle
+            user.handle = data.handle
 
         if data.bio is not None:
-            update_data["bio"] = data.bio
+            user.bio = data.bio
         if data.interest is not None:
-            update_data["interest"] = data.interest
+            user.interest = data.interest
         if data.photo_url is not None:
-            update_data["photo_url"] = data.photo_url
+            user.photo_url = data.photo_url
         if data.cover_url is not None:
-            update_data["cover_url"] = data.cover_url
+            user.cover_url = data.cover_url
         if data.social_links is not None:
-            update_data["social_links"] = Json(data.social_links)
+            user.social_links = data.social_links
 
-        if update_data:
-            await self.db.user.update(
-                where={"id": user_id},
-                data=update_data,
-            )
+        await self.session.flush()
 
         if data.skills is not None:
             skill_names = []
@@ -124,26 +124,35 @@ class ProfileService(BaseService):
                     seen.add(key)
                     skill_names.append(skill_name)
 
-            await self.db.userskill.delete_many(where={"user_id": user_id})
+            await self.session.execute(
+                delete(UserSkill).where(UserSkill.user_id == user_id)
+            )
             for skill_name in skill_names:
-                skill = await self.db.skill.find_unique(where={"name": skill_name})
+                stmt = select(Skill).where(Skill.name == skill_name)
+                skill = (await self.session.execute(stmt)).scalar_one_or_none()
                 if skill is None:
-                    skill = await self.db.skill.create(data={"name": skill_name})
-                await self.db.userskill.create(data={"user_id": user_id, "skill_id": skill.id})
+                    skill = Skill(name=skill_name)
+                    self.session.add(skill)
+                    await self.session.flush()
+                self.session.add(UserSkill(user_id=user_id, skill_id=skill.id))
 
         if data.experiences is not None:
             experiences = []
-            await self.db.experience.delete_many(where={"user_id": user_id})
+            await self.session.execute(
+                delete(Experience).where(Experience.user_id == user_id)
+            )
             for exp in data.experiences:
                 start_date, end_date = _parse_duration(exp.duration)
-                created = await self.db.experience.create(data={
-                    "user_id": user_id,
-                    "title": exp.title,
-                    "company": exp.organization,
-                    "description": exp.description,
-                    "start_date": start_date,
-                    "end_date": end_date,
-                })
+                created = Experience(
+                    user_id=user_id,
+                    title=exp.title,
+                    company=exp.organization,
+                    description=exp.description,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+                self.session.add(created)
+                await self.session.flush()
                 experiences.append({
                     "id": created.id,
                     "title": created.title,
@@ -153,13 +162,11 @@ class ProfileService(BaseService):
                     "end_date": created.end_date.isoformat() if created.end_date else None,
                 })
 
-        if update_data or data.skills is not None or data.experiences is not None:
-            await reembed_user(self.db, user_id)
+        await self.session.commit()
 
-        user = await self.db.user.find_unique(
-            where={"id": user_id},
-            include={"experiences": True},
-        )
+        # Refetch for response
+        stmt = select(User).where(User.id == user_id)
+        user = (await self.session.execute(stmt)).scalar_one()
 
         return {
             "handle": user.handle,
@@ -189,22 +196,22 @@ class ProfileService(BaseService):
         if cached is not None:
             return cached
 
-        current_user = await self.db.user.find_unique(
-            where={"id": user_id},
-            include={"skills": {"include": {"skill": True}}, "ownedProjects": True},
-        )
+        stmt = select(User).where(User.id == user_id)
+        current_user = (await self.session.execute(stmt)).scalar_one_or_none()
         if not current_user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
-        user_embedding = None
-        emb_row = await self.db.query_raw(
-            'SELECT embedding::text FROM "User" WHERE id = $1', user_id
+        # Get embedding
+        raw = await self.session.execute(
+            text('SELECT embedding::text FROM "User" WHERE id = :uid'),
+            {"uid": user_id},
         )
-        if emb_row and emb_row[0]["embedding"]:
-            import json
-            user_embedding = json.loads(emb_row[0]["embedding"])
+        emb_row = raw.fetchone()
+        user_embedding = json.loads(emb_row[0]) if emb_row and emb_row[0] else None
 
-        open_projects = [p for p in (current_user.ownedProjects or []) if p.status == PJ_OPEN]
+        # Get user's open projects
+        stmt = select(Project).where(and_(Project.owner_id == user_id, Project.status == PJ_OPEN))
+        open_projects = (await self.session.execute(stmt)).scalars().all()
         has_open_offerings = len(open_projects) > 0
 
         project_required_skills: set[str] = set()
@@ -212,15 +219,14 @@ class ProfileService(BaseService):
             for p in open_projects:
                 project_required_skills.update(p.required_skills or [])
 
-        connections = await self.db.connection.find_many(
-            where={
-                "status": "accepted",
-                "OR": [
-                    {"sender_id": user_id},
-                    {"receiver_id": user_id},
-                ],
-            },
+        # Get connected user IDs
+        stmt = select(Connection).where(
+            and_(
+                Connection.status == "accepted",
+                or_(Connection.sender_id == user_id, Connection.receiver_id == user_id),
+            )
         )
+        connections = (await self.session.execute(stmt)).scalars().all()
         connected_ids = set()
         for c in connections:
             other = c.receiver_id if c.sender_id == user_id else c.sender_id
@@ -229,56 +235,59 @@ class ProfileService(BaseService):
         exclude_ids = [user_id, *connected_ids]
         exclude_list = ", ".join(f"'{e}'" for e in exclude_ids)
 
+        rows = []
         if user_embedding:
             vec = f'[{",".join(str(x) for x in user_embedding)}]'
-            rows = await self.db.query_raw(
-                f'SELECT id, full_name, photo_url, major, bio, '
-                '1 - (embedding <=> $1::vector) AS match_score '
-                f'FROM "User" WHERE id NOT IN ({exclude_list}) '
-                'AND embedding IS NOT NULL '
-                'ORDER BY embedding <=> $1::vector LIMIT $2',
-                vec, limit
+            raw = await self.session.execute(
+                text(
+                    f'SELECT id, full_name, photo_url, major, bio, '
+                    '1 - (embedding <=> :vec::vector) AS match_score '
+                    f'FROM "User" WHERE id NOT IN ({exclude_list}) '
+                    'AND embedding IS NOT NULL '
+                    'ORDER BY embedding <=> :vec::vector LIMIT :lim'
+                ),
+                {"vec": vec, "lim": limit},
             )
-        else:
-            rows = []
+            rows = raw.fetchall()
 
-        other_ids = [r["id"] for r in rows]
+        other_ids = [r[0] for r in rows]
 
-        # Batch fetch connections
-        all_conns = await self.db.connection.find_many(
-            where={
-                "OR": [
-                    {"sender_id": user_id, "receiver_id": {"in": other_ids}},
-                    {"sender_id": {"in": other_ids}, "receiver_id": user_id},
-                ]
-            }
-        )
+        # Batch fetch connection status
         conn_map = {}
-        for conn in all_conns:
-            other = conn.receiver_id if conn.sender_id == user_id else conn.sender_id
-            conn_map[other] = conn.status
+        if other_ids:
+            stmt = select(Connection).where(
+                or_(
+                    and_(Connection.sender_id == user_id, Connection.receiver_id.in_(other_ids)),
+                    and_(Connection.sender_id.in_(other_ids), Connection.receiver_id == user_id),
+                )
+            )
+            conns = (await self.session.execute(stmt)).scalars().all()
+            for conn in conns:
+                other = conn.receiver_id if conn.sender_id == user_id else conn.sender_id
+                conn_map[other] = conn.status
 
         # Batch fetch users with skills
-        users_with_skills = await self.db.user.find_many(
-            where={"id": {"in": other_ids}},
-            include={"skills": {"include": {"skill": True}}}
-        )
-        skills_map = {u.id: u.skills for u in users_with_skills}
+        skills_map = {}
+        if other_ids:
+            stmt = select(User).where(User.id.in_(other_ids))
+            users = (await self.session.execute(stmt)).scalars().all()
+            for u in users:
+                skills_map[u.id] = [s.skill.name for s in (u.skills or [])]
 
         result = []
         for r in rows:
-            uid = r["id"]
+            uid = r[0]
             u_skills = skills_map.get(uid, [])
             conn_status = conn_map.get(uid)
             result.append({
                 "id": uid,
-                "full_name": r["full_name"],
+                "full_name": r[1],
                 "handle": None,
                 "nim": None,
-                "major": r["major"],
-                "bio": r["bio"],
-                "photo_url": r["photo_url"],
-                "skills": [s.skill.name for s in u_skills] if u_skills else [],
+                "major": r[3],
+                "bio": r[4],
+                "photo_url": r[2],
+                "skills": u_skills,
                 "connection_status": conn_status,
             })
 
@@ -286,96 +295,102 @@ class ProfileService(BaseService):
         return result
 
     async def search(self, query: str) -> list[dict]:
-        users = await self.db.user.find_many(
-            where={
-                "OR": [
-                    {"full_name": {"contains": query, "mode": "insensitive"}},
-                    {"nim": {"contains": query}},
-                ]
-            },
-            take=20,
-            order={"full_name": "asc"},
+        stmt = (
+            select(User)
+            .where(
+                or_(
+                    User.full_name.ilike(f"%{query}%"),
+                    User.nim.ilike(f"%{query}%"),
+                )
+            )
+            .order_by(User.full_name.asc())
+            .limit(20)
         )
-
-        result = []
-        for u in users:
-            result.append({
+        users = (await self.session.execute(stmt)).scalars().all()
+        return [
+            {
                 "id": u.id,
                 "full_name": u.full_name,
                 "nim": u.nim,
                 "bio": u.bio,
                 "photo_url": u.photo_url,
                 "major": u.major,
-            })
-
-        return result
+            }
+            for u in users
+        ]
 
     async def get_profile(self, target_user_id: str, user_token: dict | None = None) -> dict:
-        user = await self.db.user.find_unique(
-            where={"id": target_user_id},
-            include={
-                "skills": {"include": {"skill": True}},
-                "experiences": True,
-                "showcases": {"include": {"likes": True, "comments": True}},
-                "ownedProjects": True,
-                "memberships": {"include": {"project": True}},
-            }
-        )
-
+        stmt = select(User).where(User.id == target_user_id)
+        user = (await self.session.execute(stmt)).scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
-        skills = [s.skill.name for s in user.skills] if user.skills else []
+        skills = [s.skill.name for s in (user.skills or [])]
+
+        # Get all projects (owned + member)
+        stmt = select(Project).where(Project.owner_id == target_user_id)
+        owned_projects = (await self.session.execute(stmt)).scalars().all()
+        stmt = select(ProjectMember).where(ProjectMember.user_id == target_user_id)
+        memberships = (await self.session.execute(stmt)).scalars().all()
 
         all_projects = []
         seen_ids = set()
-        if user.ownedProjects:
-            for p in user.ownedProjects:
-                seen_ids.add(p.id)
-                all_projects.append({
-                    "id": p.id,
-                    "title": p.title,
-                    "status": p.status,
-                    "role": ROLE_KETUA,
-                    "created_at": p.created_at.isoformat(),
-                })
-        if user.memberships:
-            for m in user.memberships:
+        for p in owned_projects:
+            seen_ids.add(p.id)
+            all_projects.append({
+                "id": p.id,
+                "title": p.title,
+                "status": p.status,
+                "role": ROLE_KETUA,
+                "created_at": p.created_at.isoformat(),
+            })
+        member_project_ids = [m.project_id for m in memberships if m.project_id not in seen_ids]
+        if member_project_ids:
+            stmt = select(Project).where(Project.id.in_(member_project_ids))
+            member_projects = (await self.session.execute(stmt)).scalars().all()
+            mp_map = {p.id: p for p in member_projects}
+            for m in memberships:
                 if m.project_id not in seen_ids:
                     seen_ids.add(m.project_id)
-                    all_projects.append({
-                        "id": m.project.id,
-                        "title": m.project.title,
-                        "status": m.project.status,
-                        "role": m.role,
-                        "created_at": m.project.created_at.isoformat(),
-                    })
+                    p = mp_map.get(m.project_id)
+                    if p:
+                        all_projects.append({
+                            "id": p.id,
+                            "title": p.title,
+                            "status": p.status,
+                            "role": m.role,
+                            "created_at": p.created_at.isoformat(),
+                        })
         all_projects.sort(key=lambda x: x["created_at"], reverse=True)
 
-        connection_count = await self.db.connection.count(
-            where={
-                "OR": [
-                    {"sender_id": user.id, "status": "accepted"},
-                    {"receiver_id": user.id, "status": "accepted"},
-                ]
-            },
+        # Connection count
+        raw = await self.session.execute(
+            text("""
+                SELECT COUNT(*) FROM "Connection"
+                WHERE ("sender_id" = :uid OR "receiver_id" = :uid) AND status = 'accepted'
+            """),
+            {"uid": target_user_id},
         )
+        connection_count = raw.scalar() or 0
 
-        is_own_profile = user_token and user_token.get("uid") == user.id
+        # Showcases
+        stmt = select(Showcase).where(Showcase.author_id == target_user_id)
+        showcases = (await self.session.execute(stmt)).scalars().all()
+
+        is_own_profile = user_token and user_token.get("uid") == target_user_id
 
         connection_status = None
         connection_id = None
         is_incoming = None
         if not is_own_profile and user_token:
             viewer_id = user_token.get("uid")
-            existing_conn = await self.db.connection.find_first(
-                where={
-                    "OR": [
-                        {"sender_id": viewer_id, "receiver_id": user.id},
-                        {"sender_id": user.id, "receiver_id": viewer_id},
-                    ]
-                }
+            stmt = select(Connection).where(
+                or_(
+                    and_(Connection.sender_id == viewer_id, Connection.receiver_id == target_user_id),
+                    and_(Connection.sender_id == target_user_id, Connection.receiver_id == viewer_id),
+                )
             )
+            existing_conn = (await self.session.execute(stmt)).scalar_one_or_none()
             if existing_conn:
                 connection_status = existing_conn.status
                 connection_id = existing_conn.id
@@ -419,8 +434,8 @@ class ProfileService(BaseService):
                     "likes_count": len(s.likes) if s.likes else 0,
                     "comments_count": len(s.comments) if s.comments else 0,
                     "created_at": s.created_at.isoformat(),
-                } for s in user.showcases
-            ], key=lambda x: x["created_at"], reverse=True) if user.showcases else [],
+                } for s in showcases
+            ], key=lambda x: x["created_at"], reverse=True) if showcases else [],
         }
 
         if is_own_profile or (user_token and user_token.get("role") == ROLE_ADMIN):

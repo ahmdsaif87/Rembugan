@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.config import setup_cloudinary
-from app.core.database import db, connect_db_with_retry
+from app.core.database_sql import engine as sql_engine, close_engine
 from app.core.cache import cache
 from app.core.tasks import fire_and_forget
 from app.core.rate_limit import limiter
@@ -24,7 +24,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload, qr, saved, posts
 from app.api.admin import router as admin_router
-from app.api.profile_sql import router as profile_sql_router
+
 
 # Inisialisasi Layanan External
 setup_cloudinary()
@@ -33,18 +33,19 @@ setup_cloudinary()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        await connect_db_with_retry(retries=3, delay=2.0)
-        logger.info("Database terhubung!")
+        from sqlalchemy import text
+        async with sql_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        logger.info("Database terhubung (SQLAlchemy)!")
     except Exception as e:
-        logger.error(f"Gagal konek database setelah retry: {e}")
+        logger.error(f"Gagal konek database: {e}")
         raise
     await cache.init()
     logger.info(f"Cache backend: {cache.stats()['backend']}")
 
-    # Model embedding di-load lazy saat generate() pertama — hindari OOM di startup
     yield
     await cache.disconnect()
-    await db.disconnect()
+    await close_engine()
     logger.info("Database terputus.")
 
 # Inisialisasi App
@@ -107,7 +108,6 @@ app.include_router(qr.router)
 app.include_router(saved.router)
 app.include_router(posts.router)
 app.include_router(admin_router)
-app.include_router(profile_sql_router)
 
 # Serve static files (poster images, etc.)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
