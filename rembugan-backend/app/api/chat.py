@@ -39,8 +39,8 @@ async def websocket_chat(
         await websocket.close(code=4001, reason="Token tidak valid")
         return
 
+    # Verify project membership or DM room authorization
     async with async_session_factory() as session:
-        # Verify project membership or DM room authorization
         if room_id.isdigit():
             project_id = int(room_id)
             stmt = select(ProjectMember).where(
@@ -58,52 +58,54 @@ async def websocket_chat(
                     await websocket.close(code=4003, reason="Tidak diizinkan masuk room DM ini")
                     return
 
-        await manager.connect(websocket, room_id, user_id)
+    await manager.connect(websocket, room_id, user_id)
 
-        try:
+    try:
+        async with async_session_factory() as session:
             stmt = select(User).where(User.id == user_id)
             sender = (await session.execute(stmt)).scalar_one_or_none()
             sender_name = sender.full_name if sender else "Seseorang"
 
-            while True:
-                try:
-                    raw = await asyncio.wait_for(websocket.receive_text(), timeout=70)
-                except asyncio.TimeoutError:
-                    break
-                if raw == "ping":
-                    await websocket.send_text("pong")
-                    continue
-                now = datetime.now(timezone.utc)
+        while True:
+            try:
+                raw = await asyncio.wait_for(websocket.receive_text(), timeout=70)
+            except asyncio.TimeoutError:
+                break
+            if raw == "ping":
+                await websocket.send_text("pong")
+                continue
+            now = datetime.now(timezone.utc)
 
-                try:
-                    data = json.loads(raw)
-                    text = data.get("text", "")
-                    msg_type = data.get("type", "text")
-                    attachment_url = data.get("attachment_url")
-                    attachment_name = data.get("attachment_name")
-                    attachment_size = data.get("attachment_size")
-                    reply_to_id = data.get("reply_to_id")
-                except json.JSONDecodeError:
-                    text = raw
-                    msg_type = "text"
-                    attachment_url = None
-                    attachment_name = None
-                    attachment_size = None
-                    reply_to_id = None
+            try:
+                data = json.loads(raw)
+                text = data.get("text", "")
+                msg_type = data.get("type", "text")
+                attachment_url = data.get("attachment_url")
+                attachment_name = data.get("attachment_name")
+                attachment_size = data.get("attachment_size")
+                reply_to_id = data.get("reply_to_id")
+            except json.JSONDecodeError:
+                text = raw
+                msg_type = "text"
+                attachment_url = None
+                attachment_name = None
+                attachment_size = None
+                reply_to_id = None
 
-                logger.info(f"=== WS RECEIVED from {user_id} in {room_id} ({msg_type}, {len(text)} chars)")
+            logger.info(f"=== WS RECEIVED from {user_id} in {room_id} ({msg_type}, {len(text)} chars)")
 
-                pesan = {
-                    "sender_id": user_id,
-                    "sender_name": sender_name,
-                    "text": text,
-                    "type": msg_type,
-                    "attachment_url": attachment_url,
-                    "attachment_name": attachment_name,
-                    "attachment_size": attachment_size,
-                    "timestamp": now.isoformat(),
-                }
+            pesan = {
+                "sender_id": user_id,
+                "sender_name": sender_name,
+                "text": text,
+                "type": msg_type,
+                "attachment_url": attachment_url,
+                "attachment_name": attachment_name,
+                "attachment_size": attachment_size,
+                "timestamp": now.isoformat(),
+            }
 
+            async with async_session_factory() as ws_session:
                 if room_id.isdigit():
                     project_id = int(room_id)
                     msg = Message(
@@ -114,11 +116,10 @@ async def websocket_chat(
                         attachment_size=attachment_size,
                         reply_to_id=reply_to_id,
                     )
-                    session.add(msg)
-                    await session.commit()
-                    await session.refresh(msg)
+                    ws_session.add(msg)
+                    await ws_session.commit()
 
-                    service = ChatService(session)
+                    service = ChatService(ws_session)
                     await manager.broadcast(pesan, room_id)
 
                     fire_and_forget(
@@ -149,11 +150,10 @@ async def websocket_chat(
                         attachment_size=attachment_size,
                         reply_to_id=reply_to_id,
                     )
-                    session.add(msg)
-                    await session.commit()
-                    await session.refresh(msg)
+                    ws_session.add(msg)
+                    await ws_session.commit()
 
-                    service = ChatService(session)
+                    service = ChatService(ws_session)
                     await manager.broadcast(pesan, room_id)
 
                     if receiver_id:
@@ -168,9 +168,9 @@ async def websocket_chat(
                             "handle_dm_notification"
                         )
 
-        except WebSocketDisconnect:
-            pass
-        manager.disconnect(websocket, room_id, user_id)
+    except WebSocketDisconnect:
+        pass
+    manager.disconnect(websocket, room_id, user_id)
 
 
 @router.websocket("/ws/feed")
