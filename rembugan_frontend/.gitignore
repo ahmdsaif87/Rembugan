@@ -16,6 +16,7 @@ migrate_working_dir/
 .gemini/
 .impeccable/
 
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -28,7 +29,7 @@ migrate_working_dir/
 #.vscode/
 
 # Firebase config (credentials — jangan di-commit)
-/google-services.json
+/android/app/google-services.json
 /ios/Runner/GoogleService-Info.plist
 
 # Flutter/Dart/Pub related
