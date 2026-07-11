@@ -3,8 +3,6 @@ from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-FCM_CREDENTIALS_PATH = os.getenv("FCM_CREDENTIALS_PATH", "firebase-admin.json")
-
 _admin_sdk = None
 
 def _get_app():
@@ -14,12 +12,21 @@ def _get_app():
     try:
         import firebase_admin
         from firebase_admin import credentials
-        if os.path.exists(FCM_CREDENTIALS_PATH):
-            cred = credentials.Certificate(FCM_CREDENTIALS_PATH)
+
+        cred_json = os.getenv("FCM_CREDENTIALS_JSON")
+        if cred_json:
+            import json
+            cred = credentials.Certificate(json.loads(cred_json))
             _admin_sdk = firebase_admin.initialize_app(cred)
-            logger.info("Firebase Admin SDK initialized")
+            logger.info("Firebase Admin SDK initialized from env var")
         else:
-            logger.warning(f"FCM credentials not found at {FCM_CREDENTIALS_PATH}")
+            path = os.getenv("FCM_CREDENTIALS_PATH", "firebase-admin.json")
+            if os.path.exists(path):
+                cred = credentials.Certificate(path)
+                _admin_sdk = firebase_admin.initialize_app(cred)
+                logger.info("Firebase Admin SDK initialized from file")
+            else:
+                logger.warning(f"FCM credentials not found at {path}")
         return _admin_sdk
     except Exception as e:
         logger.warning(f"Firebase Admin SDK not available: {e}")

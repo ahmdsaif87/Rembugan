@@ -5,11 +5,16 @@ from prisma import Prisma
 _DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 # Pastikan pakai pooled URL untuk Neon & tambah param penting
+_DATABASE_URL = _DATABASE_URL.replace("channel_binding=require", "channel_binding=prefer")
+
 if "neon.tech" in _DATABASE_URL and "-pooler" not in _DATABASE_URL:
     _DATABASE_URL = _DATABASE_URL.replace(".neon.tech", "-pooler.neon.tech")
 if "neon.tech" in _DATABASE_URL and "pgbouncer=true" not in _DATABASE_URL:
     sep = "&" if "?" in _DATABASE_URL else "?"
     _DATABASE_URL = f"{_DATABASE_URL}{sep}pgbouncer=true&connection_limit=5&pool_timeout=20"
+if "connect_timeout" not in _DATABASE_URL:
+    sep = "&" if "?" in _DATABASE_URL else "?"
+    _DATABASE_URL = f"{_DATABASE_URL}{sep}connect_timeout=30"
 if "sslmode" not in _DATABASE_URL:
     sep = "&" if "?" in _DATABASE_URL else "?"
     _DATABASE_URL = f"{_DATABASE_URL}{sep}sslmode=require"
