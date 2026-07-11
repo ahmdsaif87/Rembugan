@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from fastapi import Depends, HTTPException
 from sqlalchemy import select, or_, and_, func as sa_func, text, delete
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database_sql import get_db_session
 from app.core.constants import PJ_OPEN, ROLE_KETUA, ROLE_ADMIN
@@ -320,7 +321,14 @@ class ProfileService:
         ]
 
     async def get_profile(self, target_user_id: str, user_token: dict | None = None) -> dict:
-        stmt = select(User).where(User.id == target_user_id)
+        stmt = (
+            select(User)
+            .options(
+                selectinload(User.skills).selectinload(UserSkill.skill),
+                selectinload(User.experiences),
+            )
+            .where(User.id == target_user_id)
+        )
         user = (await self.session.execute(stmt)).scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
@@ -374,7 +382,11 @@ class ProfileService:
         connection_count = raw.scalar() or 0
 
         # Showcases
-        stmt = select(Showcase).where(Showcase.author_id == target_user_id)
+        stmt = (
+            select(Showcase)
+            .options(selectinload(Showcase.likes), selectinload(Showcase.comments))
+            .where(Showcase.author_id == target_user_id)
+        )
         showcases = (await self.session.execute(stmt)).scalars().all()
 
         is_own_profile = user_token and user_token.get("uid") == target_user_id

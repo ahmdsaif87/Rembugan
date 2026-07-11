@@ -27,7 +27,7 @@ class ShowcaseLike(Base):
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("User.id", ondelete="CASCADE"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    showcase = relationship("Showcase", back_populates="likes")
+    showcase = relationship("Showcase", back_populates="likes", lazy="selectin")
 
 
 class ShowcaseComment(Base):
@@ -40,7 +40,7 @@ class ShowcaseComment(Base):
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("ShowcaseComment.id", ondelete="CASCADE"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    showcase = relationship("Showcase", back_populates="comments")
+    showcase = relationship("Showcase", back_populates="comments", lazy="selectin")
     user = relationship("User", lazy="selectin")
 
 

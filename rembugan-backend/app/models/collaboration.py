@@ -32,7 +32,7 @@ class ProjectApplication(Base):
     status: Mapped[str] = mapped_column(String(20), default="pending")
     applied_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    project = relationship("Project", back_populates="applications")
+    project = relationship("Project", back_populates="applications", lazy="selectin")
 
 
 class ProjectMember(Base):
@@ -43,7 +43,7 @@ class ProjectMember(Base):
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("User.id", ondelete="CASCADE"))
     role: Mapped[str] = mapped_column(String(50), default="Anggota")
 
-    project = relationship("Project", back_populates="members")
+    project = relationship("Project", back_populates="members", lazy="selectin")
     user = relationship("User", lazy="selectin")
 
 
@@ -79,7 +79,7 @@ class Task(Base):
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    project = relationship("Project", back_populates="tasks")
+    project = relationship("Project", back_populates="tasks", lazy="selectin")
     assignees = relationship("TaskAssignee", back_populates="task", lazy="selectin")
 
 
@@ -89,5 +89,5 @@ class TaskAssignee(Base):
     task_id: Mapped[int] = mapped_column(ForeignKey("Task.id", ondelete="CASCADE"), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("User.id", ondelete="CASCADE"), primary_key=True)
 
-    task = relationship("Task", back_populates="assignees")
+    task = relationship("Task", back_populates="assignees", lazy="selectin")
     user = relationship("User", lazy="selectin")

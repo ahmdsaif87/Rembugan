@@ -19,8 +19,8 @@ class UserSkill(Base):
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("User.id", ondelete="CASCADE"), primary_key=True)
     skill_id: Mapped[int] = mapped_column(ForeignKey("Skill.id", ondelete="CASCADE"), primary_key=True)
 
-    user = relationship("User", back_populates="skills")
-    skill = relationship("Skill", back_populates="users")
+    user = relationship("User", back_populates="skills", lazy="selectin")
+    skill = relationship("Skill", back_populates="users", lazy="selectin")
 
 
 class Experience(Base):
@@ -34,4 +34,4 @@ class Experience(Base):
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    user = relationship("User", back_populates="experiences")
+    user = relationship("User", back_populates="experiences", lazy="selectin")
