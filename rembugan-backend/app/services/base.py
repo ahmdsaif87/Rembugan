@@ -1,9 +1,9 @@
 from dataclasses import dataclass
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
-from prisma import Prisma
-from app.core.database import get_db
+from app.core.database_sql import get_db_session
 
 
 @dataclass
 class BaseService:
-    db: Prisma = Depends(get_db)
+    session: AsyncSession = Depends(get_db_session)

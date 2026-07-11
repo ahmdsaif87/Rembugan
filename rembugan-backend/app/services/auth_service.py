@@ -1,27 +1,33 @@
 from fastapi import Depends, HTTPException
-from prisma import Prisma
-from app.core.database import get_db
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import get_db_session
 from app.core.security import hash_password, verify_password, create_jwt_token
 from app.core.constants import ROLE_ADMIN
 from app.core.types import AuthData
+from app.models import User
 from app.services.otp import send_otp_to_email, verify_otp_code
 
 
 class AuthService:
-    def __init__(self, db: Prisma = Depends(get_db)):
-        self.db = db
+    def __init__(self, session: AsyncSession = Depends(get_db_session)):
+        self.session = session
 
     async def register(self, nim: str, password: str, full_name: str, major: str) -> AuthData:
-        existing = await self.db.user.find_unique(where={"nim": nim})
+        result = await self.session.execute(select(User).where(User.nim == nim))
+        existing = result.scalar_one_or_none()
         if existing:
             raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
 
-        user = await self.db.user.create(data={
-            "nim": nim,
-            "password": hash_password(password),
-            "full_name": full_name,
-            "major": major,
-        })
+        user = User(
+            nim=nim,
+            password=hash_password(password),
+            full_name=full_name,
+            major=major,
+        )
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
 
         token = create_jwt_token(user.id, user.email)
         return {
@@ -34,20 +40,23 @@ class AuthService:
         }
 
     async def register_verify_otp(self, email: str, otp: str):
-        user = await self.db.user.find_unique(where={"email": email})
+        result = await self.session.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
         if user.email_verified:
             raise HTTPException(status_code=400, detail="Email sudah diverifikasi.")
 
-        await verify_otp_code(self.db, user.id, user.email, otp)
-        await self.db.user.update(where={"id": user.id}, data={"email_verified": True})
+        await verify_otp_code(self.session, user.id, user.email, otp)
+        user.email_verified = True
+        await self.session.commit()
 
     async def login(self, identifier: str, password: str) -> AuthData:
         if "@" in identifier:
-            user = await self.db.user.find_unique(where={"email": identifier})
+            result = await self.session.execute(select(User).where(User.email == identifier))
         else:
-            user = await self.db.user.find_unique(where={"nim": identifier})
+            result = await self.session.execute(select(User).where(User.nim == identifier))
+        user = result.scalar_one_or_none()
 
         if not user:
             raise HTTPException(status_code=401, detail="NIM/Email atau password salah.")
@@ -77,7 +86,8 @@ class AuthService:
         }
 
     async def admin_login(self, email: str, password: str) -> AuthData:
-        user = await self.db.user.find_unique(where={"email": email})
+        result = await self.session.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
         if not user or not user.is_admin or not verify_password(password, user.password):
             raise HTTPException(status_code=401, detail="Email atau password admin salah.")
         token = create_jwt_token(user.id, email, role=ROLE_ADMIN)
@@ -89,21 +99,25 @@ class AuthService:
         }
 
     async def send_otp(self, user_id: str, email: str):
-        existing = await self.db.user.find_unique(where={"email": email})
+        result = await self.session.execute(select(User).where(User.email == email))
+        existing = result.scalar_one_or_none()
         if existing and existing.id != user_id:
             raise HTTPException(status_code=400, detail="Email sudah digunakan oleh akun lain.")
-        return await send_otp_to_email(self.db, user_id, email)
+        return await send_otp_to_email(self.session, user_id, email)
 
     async def verify_otp(self, user_id: str, email: str, otp: str) -> AuthData:
-        await verify_otp_code(self.db, user_id, email, otp)
-        await self.db.user.update(
-            where={"id": user_id},
-            data={"email": email, "email_verified": True},
-        )
+        await verify_otp_code(self.session, user_id, email, otp)
+        result = await self.session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user.email = email
+            user.email_verified = True
+            await self.session.commit()
         return {"email": email, "email_verified": True}
 
     async def forgot_password_send_otp(self, nim: str):
-        user = await self.db.user.find_unique(where={"nim": nim})
+        result = await self.session.execute(select(User).where(User.nim == nim))
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="NIM tidak ditemukan.")
         if not user.email or not user.email_verified:
@@ -111,10 +125,11 @@ class AuthService:
                 status_code=400,
                 detail="Akun ini belum memiliki email terverifikasi. Silakan hubungi admin untuk reset password.",
             )
-        await send_otp_to_email(self.db, user.id, user.email)
+        await send_otp_to_email(self.session, user.id, user.email)
 
     async def forgot_password_reset(self, nim: str, otp: str, new_password: str):
-        user = await self.db.user.find_unique(where={"nim": nim})
+        result = await self.session.execute(select(User).where(User.nim == nim))
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="NIM tidak ditemukan.")
         if not user.email or not user.email_verified:
@@ -122,14 +137,13 @@ class AuthService:
                 status_code=400,
                 detail="Akun ini belum memiliki email terverifikasi. Silakan hubungi admin untuk reset password.",
             )
-        await verify_otp_code(self.db, user.id, user.email, otp)
-        await self.db.user.update(
-            where={"id": user.id},
-            data={"password": hash_password(new_password)},
-        )
+        await verify_otp_code(self.session, user.id, user.email, otp)
+        user.password = hash_password(new_password)
+        await self.session.commit()
 
     async def get_me(self, user_id: str) -> AuthData:
-        user = await self.db.user.find_unique(where={"id": user_id})
+        result = await self.session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan.")
         return {

@@ -1,49 +1,52 @@
 import asyncio
 from fastapi import Depends, HTTPException
-from prisma import Prisma
-from app.core.database import get_db
+from sqlalchemy import select, func, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import get_db_session
 from app.core.security import hash_password
 from app.schemas.auth import AdminCreateUserInput, AdminResetPasswordInput, ImportUsersInput
 from app.core.constants import PJ_COMPLETED, APP_PENDING
+from app.models import User
+from app.models.social import Showcase, ShowcaseLike, ShowcaseComment, ProjectFile
+from app.models.collaboration import Project, ProjectMember, ProjectApplication, Task, TaskAssignee
 from app.services.competitions import get_competition_collection
 
 
 class AdminService:
-    def __init__(self, db: Prisma = Depends(get_db)):
-        self.db = db
+    def __init__(self, session: AsyncSession = Depends(get_db_session)):
+        self.session = session
 
     async def reset_user_password(self, nim: str, new_password: str):
-        user = await self.db.user.find_unique(where={"nim": nim})
+        result = await self.session.execute(select(User).where(User.nim == nim))
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User dengan NIM tersebut tidak ditemukan.")
-        new_hashed = hash_password(new_password)
-        await self.db.user.update(
-            where={"id": user.id},
-            data={"password": new_hashed},
-        )
+        user.password = hash_password(new_password)
+        await self.session.commit()
 
     async def create_user(self, data: AdminCreateUserInput) -> dict:
         if data.email:
-            existing = await self.db.user.find_unique(where={"email": data.email})
-            if existing:
+            result = await self.session.execute(select(User).where(User.email == data.email))
+            if result.scalar_one_or_none():
                 raise HTTPException(status_code=400, detail="Email sudah terdaftar.")
         if data.nim:
-            existing = await self.db.user.find_unique(where={"nim": data.nim})
-            if existing:
+            result = await self.session.execute(select(User).where(User.nim == data.nim))
+            if result.scalar_one_or_none():
                 raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
         hashed = hash_password(data.password)
-        user = await self.db.user.create(
-            data={
-                "email": data.email or None,
-                "nim": data.nim or None,
-                "faculty": data.faculty or None,
-                "major": data.major or None,
-                "password": hashed,
-                "full_name": data.full_name,
-                "interest": data.interest,
-                "email_verified": True if data.email else False,
-            }
+        user = User(
+            email=data.email or None,
+            nim=data.nim or None,
+            faculty=data.faculty or None,
+            major=data.major or None,
+            password=hashed,
+            full_name=data.full_name,
+            interest=data.interest,
+            email_verified=True if data.email else False,
         )
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
         return {
             "id": user.id,
             "nim": user.nim,
@@ -56,15 +59,43 @@ class AdminService:
         }
 
     async def get_stats(self) -> dict:
-        total_users, active_projects, total_projects, total_showcases, pending_applications, total_tasks, scraped_competitions = await asyncio.gather(
-            self.db.user.count(),
-            self.db.project.count(where={"status": {"not": PJ_COMPLETED}}),
-            self.db.project.count(),
-            self.db.showcase.count(),
-            self.db.projectapplication.count(where={"status": APP_PENDING}),
-            self.db.task.count(),
-            self._count_competitions(),
+        async def count_users():
+            result = await self.session.execute(select(func.count(User.id)))
+            return result.scalar() or 0
+
+        async def count_active_projects():
+            result = await self.session.execute(
+                select(func.count(Project.id)).where(Project.status != PJ_COMPLETED)
+            )
+            return result.scalar() or 0
+
+        async def count_total_projects():
+            result = await self.session.execute(select(func.count(Project.id)))
+            return result.scalar() or 0
+
+        async def count_showcases():
+            result = await self.session.execute(select(func.count(Showcase.id)))
+            return result.scalar() or 0
+
+        async def count_pending_apps():
+            result = await self.session.execute(
+                select(func.count(ProjectApplication.id)).where(ProjectApplication.status == APP_PENDING)
+            )
+            return result.scalar() or 0
+
+        async def count_tasks():
+            result = await self.session.execute(select(func.count(Task.id)))
+            return result.scalar() or 0
+
+        total_users, active_projects, total_projects, total_showcases, pending_applications, total_tasks = await asyncio.gather(
+            count_users(),
+            count_active_projects(),
+            count_total_projects(),
+            count_showcases(),
+            count_pending_apps(),
+            count_tasks(),
         )
+        scraped_competitions = await self._count_competitions()
         return {
             "total_users": total_users,
             "active_projects": active_projects,
@@ -76,64 +107,48 @@ class AdminService:
         }
 
     async def get_users(self, skip: int, limit: int) -> tuple[list, int]:
-        users = await self.db.user.find_many(
-            skip=skip,
-            take=limit,
-            order={"created_at": "desc"},
+        result = await self.session.execute(
+            select(User).order_by(User.created_at.desc()).offset(skip).limit(limit)
         )
-        total = await self.db.user.count()
+        users = result.scalars().all()
+        total_result = await self.session.execute(select(func.count(User.id)))
+        total = total_result.scalar() or 0
         return users, total
 
     async def get_projects(self, skip: int, limit: int) -> tuple[list, int]:
-        projects = await self.db.project.find_many(
-            skip=skip,
-            take=limit,
-            include={
-                "owner": True,
-                "members": {"include": {"user": True}},
-                "applications": {"include": {"applicant": True}},
-                "tasks": True,
-            },
-            order={"created_at": "desc"},
+        result = await self.session.execute(
+            select(Project).order_by(Project.created_at.desc()).offset(skip).limit(limit)
         )
-        total = await self.db.project.count()
+        projects = result.scalars().all()
+        total_result = await self.session.execute(select(func.count(Project.id)))
+        total = total_result.scalar() or 0
         return projects, total
 
     async def get_showcases(self, skip: int, limit: int) -> tuple[list, int]:
-        showcases = await self.db.showcase.find_many(
-            skip=skip,
-            take=limit,
-            include={
-                "author": True,
-                "project": True,
-                "likes": {"include": {"user": True}},
-                "comments": {
-                    "include": {"user": True, "replies": {"include": {"user": True}}}
-                },
-            },
-            order={"created_at": "desc"},
+        result = await self.session.execute(
+            select(Showcase).order_by(Showcase.created_at.desc()).offset(skip).limit(limit)
         )
-        total = await self.db.showcase.count()
+        showcases = result.scalars().all()
+        total_result = await self.session.execute(select(func.count(Showcase.id)))
+        total = total_result.scalar() or 0
         return showcases, total
 
     async def get_tasks(self, skip: int, limit: int) -> tuple[list, int]:
-        tasks = await self.db.task.find_many(
-            skip=skip,
-            take=limit,
-            include={"project": True, "assignees": {"include": {"user": True}}},
-            order={"created_at": "desc"},
+        result = await self.session.execute(
+            select(Task).order_by(Task.created_at.desc()).offset(skip).limit(limit)
         )
-        total = await self.db.task.count()
+        tasks = result.scalars().all()
+        total_result = await self.session.execute(select(func.count(Task.id)))
+        total = total_result.scalar() or 0
         return tasks, total
 
     async def get_applications(self, skip: int, limit: int) -> tuple[list, int]:
-        applications = await self.db.projectapplication.find_many(
-            skip=skip,
-            take=limit,
-            include={"project": True, "applicant": True},
-            order={"applied_at": "desc"},
+        result = await self.session.execute(
+            select(ProjectApplication).order_by(ProjectApplication.applied_at.desc()).offset(skip).limit(limit)
         )
-        total = await self.db.projectapplication.count()
+        applications = result.scalars().all()
+        total_result = await self.session.execute(select(func.count(ProjectApplication.id)))
+        total = total_result.scalar() or 0
         return applications, total
 
     async def get_competitions(self, limit: int) -> tuple[list, int]:
@@ -154,21 +169,22 @@ class AdminService:
         imported = []
         for i, item in enumerate(users):
             try:
-                existing_nim = await self.db.user.find_unique(where={"nim": item.nim})
-                if existing_nim:
+                result = await self.session.execute(select(User).where(User.nim == item.nim))
+                if result.scalar_one_or_none():
                     errors.append({"row": i + 1, "nim": item.nim, "message": "NIM sudah terdaftar"})
                     continue
-                user = await self.db.user.create(
-                    data={
-                        "nim": item.nim,
-                        "full_name": item.full_name,
-                        "faculty": item.faculty,
-                        "major": item.major,
-                        "interest": item.interest or None,
-                        "password": hashed,
-                        "email_verified": True,
-                    }
+                user = User(
+                    nim=item.nim,
+                    full_name=item.full_name,
+                    faculty=item.faculty,
+                    major=item.major,
+                    interest=item.interest or None,
+                    password=hashed,
+                    email_verified=True,
                 )
+                self.session.add(user)
+                await self.session.commit()
+                await self.session.refresh(user)
                 success_count += 1
                 imported.append({
                     "nim": user.nim,
@@ -187,31 +203,58 @@ class AdminService:
 
     async def delete_user(self, user_id: str):
         try:
-            await self.db.user.delete(where={"id": user_id})
+            result = await self.session.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            if not user:
+                raise HTTPException(status_code=404, detail="User tidak ditemukan")
+            await self.session.delete(user)
+            await self.session.commit()
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
     async def delete_project(self, project_id: str):
         try:
-            await self.db.project.delete(where={"id": project_id})
+            result = await self.session.execute(select(Project).where(Project.id == int(project_id)))
+            project = result.scalar_one_or_none()
+            if not project:
+                raise HTTPException(status_code=404, detail="Project tidak ditemukan")
+            await self.session.delete(project)
+            await self.session.commit()
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
     async def delete_showcase(self, showcase_id: str):
         try:
-            await self.db.showcase.delete(where={"id": showcase_id})
+            result = await self.session.execute(select(Showcase).where(Showcase.id == showcase_id))
+            showcase = result.scalar_one_or_none()
+            if not showcase:
+                raise HTTPException(status_code=404, detail="Showcase tidak ditemukan")
+            await self.session.delete(showcase)
+            await self.session.commit()
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
     async def delete_task(self, task_id: str):
         try:
-            await self.db.task.delete(where={"id": task_id})
+            result = await self.session.execute(select(Task).where(Task.id == int(task_id)))
+            task = result.scalar_one_or_none()
+            if not task:
+                raise HTTPException(status_code=404, detail="Task tidak ditemukan")
+            await self.session.delete(task)
+            await self.session.commit()
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
     async def delete_application(self, application_id: str):
         try:
-            await self.db.projectapplication.delete(where={"id": application_id})
+            result = await self.session.execute(
+                select(ProjectApplication).where(ProjectApplication.id == int(application_id))
+            )
+            app = result.scalar_one_or_none()
+            if not app:
+                raise HTTPException(status_code=404, detail="Application tidak ditemukan")
+            await self.session.delete(app)
+            await self.session.commit()
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -229,106 +272,101 @@ class AdminService:
         if granularity == "yearly":
             fmt = "YYYY"
 
-        # ── Build filter clauses per query group ──
-        def build_where(params: list, *clauses: tuple[str, str]) -> str:
-            where = ""
-            for col, val in clauses:
-                if val:
-                    where += f" AND {col} = ${len(params) + 1}"
-                    params.append(val)
-            return where
-
         user_p, user_w = [], ""
         if start_date:
-            user_w += f" AND created_at >= ${len(user_p) + 1}::date"
+            user_w += f" AND created_at >= :u{len(user_p)}::date"
             user_p.append(start_date)
         if end_date:
-            user_w += f" AND created_at <= ${len(user_p) + 1}::date"
+            user_w += f" AND created_at <= :u{len(user_p)}::date"
             user_p.append(end_date)
         if faculty:
-            user_w += f" AND faculty = ${len(user_p) + 1}"
+            user_w += f" AND faculty = :u{len(user_p)}"
             user_p.append(faculty)
 
         proj_p, proj_w, proj_j = [], "", ""
         if start_date:
-            proj_w += f" AND p.created_at >= ${len(proj_p) + 1}::date"
+            proj_w += f" AND p.created_at >= :pj{len(proj_p)}::date"
             proj_p.append(start_date)
         if end_date:
-            proj_w += f" AND p.created_at <= ${len(proj_p) + 1}::date"
+            proj_w += f" AND p.created_at <= :pj{len(proj_p)}::date"
             proj_p.append(end_date)
         if category:
-            proj_w += f" AND p.category = ${len(proj_p) + 1}"
+            proj_w += f" AND p.category = :pj{len(proj_p)}"
             proj_p.append(category)
         if faculty:
             proj_j = ' JOIN "User" u_own ON u_own.id = p.owner_id'
-            proj_w += f" AND u_own.faculty = ${len(proj_p) + 1}"
+            proj_w += f" AND u_own.faculty = :pj{len(proj_p)}"
             proj_p.append(faculty)
 
         task_p, task_w, task_j = [], "", ""
         if start_date:
-            task_w += f" AND p.created_at >= ${len(task_p) + 1}::date"
+            task_w += f" AND p.created_at >= :t{len(task_p)}::date"
             task_p.append(start_date)
         if end_date:
-            task_w += f" AND p.created_at <= ${len(task_p) + 1}::date"
+            task_w += f" AND p.created_at <= :t{len(task_p)}::date"
             task_p.append(end_date)
         if category:
-            task_w += f" AND p.category = ${len(task_p) + 1}"
+            task_w += f" AND p.category = :t{len(task_p)}"
             task_p.append(category)
         if faculty:
             task_j = ' JOIN "User" u_ta ON u_ta.id = ta.user_id'
-            task_w += f" AND u_ta.faculty = ${len(task_p) + 1}"
+            task_w += f" AND u_ta.faculty = :t{len(task_p)}"
             task_p.append(faculty)
 
         show_p, show_w = [], ""
         if start_date:
-            show_w += f" AND s.created_at >= ${len(show_p) + 1}::date"
+            show_w += f" AND s.created_at >= :s{len(show_p)}::date"
             show_p.append(start_date)
         if end_date:
-            show_w += f" AND s.created_at <= ${len(show_p) + 1}::date"
+            show_w += f" AND s.created_at <= :s{len(show_p)}::date"
             show_p.append(end_date)
         if faculty:
-            show_w += f" AND u.faculty = ${len(show_p) + 1}"
+            show_w += f" AND u.faculty = :s{len(show_p)}"
             show_p.append(faculty)
 
-        # ── 7 queries total, all run in parallel ──
-        user_regs_q = self.db.query_raw(
-            f"""SELECT to_char(created_at, '{fmt}') AS period, COUNT(*)::int AS total,
+        user_dict = {f"u{i}": v for i, v in enumerate(user_p)}
+        proj_dict = {f"pj{i}": v for i, v in enumerate(proj_p)}
+        task_dict = {f"t{i}": v for i, v in enumerate(task_p)}
+        show_dict = {f"s{i}": v for i, v in enumerate(show_p)}
+
+        user_regs_q = self.session.execute(
+            text(f"""SELECT to_char(created_at, '{fmt}') AS period, COUNT(*)::int AS total,
                 SUM(COUNT(*)) OVER ()::int AS grand_total
-                FROM "User" WHERE 1=1{user_w} GROUP BY period ORDER BY period""",
-            *user_p,
+                FROM "User" WHERE 1=1{user_w} GROUP BY period ORDER BY period"""),
+            user_dict or None,
         )
-        users_by_fac_q = self.db.query_raw(
-            f"""SELECT faculty, COUNT(*)::int AS total
-                FROM "User" WHERE faculty IS NOT NULL{user_w} GROUP BY faculty ORDER BY total DESC""",
-            *user_p,
+        users_by_fac_q = self.session.execute(
+            text(f"""SELECT faculty, COUNT(*)::int AS total
+                FROM "User" WHERE faculty IS NOT NULL{user_w} GROUP BY faculty ORDER BY total DESC"""),
+            user_dict or None,
         )
-        proj_creations_q = self.db.query_raw(
-            f"""SELECT to_char(p.created_at, '{fmt}') AS period, COUNT(*)::int AS total,
+        proj_creations_q = self.session.execute(
+            text(f"""SELECT to_char(p.created_at, '{fmt}') AS period, COUNT(*)::int AS total,
                 SUM(COUNT(*)) OVER ()::int AS grand_total
-                FROM "Project" p{proj_j} WHERE 1=1{proj_w} GROUP BY period ORDER BY period""",
-            *proj_p,
+                FROM "Project" p{proj_j} WHERE 1=1{proj_w} GROUP BY period ORDER BY period"""),
+            proj_dict or None,
         )
-        proj_by_cat_q = self.db.query_raw(
-            f"""SELECT p.category, COUNT(*)::int AS total
-                FROM "Project" p{proj_j} WHERE p.category IS NOT NULL{proj_w} GROUP BY p.category ORDER BY total DESC""",
-            *proj_p,
+        proj_by_cat_q = self.session.execute(
+            text(f"""SELECT p.category, COUNT(*)::int AS total
+                FROM "Project" p{proj_j} WHERE p.category IS NOT NULL{proj_w} GROUP BY p.category ORDER BY total DESC"""),
+            proj_dict or None,
         )
-        proj_by_status_q = self.db.query_raw(
-            f"""SELECT p.status, COUNT(*)::int AS total
-                FROM "Project" p{proj_j} WHERE 1=1{proj_w} GROUP BY p.status""",
-            *proj_p,
+        proj_by_status_q = self.session.execute(
+            text(f"""SELECT p.status, COUNT(*)::int AS total
+                FROM "Project" p{proj_j} WHERE 1=1{proj_w} GROUP BY p.status"""),
+            proj_dict or None,
         )
-        task_dist_q = self.db.query_raw(
-            f"""SELECT t.status, COUNT(*)::int AS total
+        task_dist_q = self.session.execute(
+            text(f"""SELECT t.status, COUNT(*)::int AS total
                 FROM "Task" t
                 JOIN "TaskAssignee" ta ON ta.task_id = t.id
                 JOIN "Project" p ON p.id = t.project_id{task_j}
                 WHERE 1=1{task_w}
-                GROUP BY t.status""",
-            *task_p,
+                GROUP BY t.status"""),
+            task_dict or None,
         )
-        showcase_q = self.db.query_raw(
-            f"""SELECT
+        showcase_q = self.session.execute(
+            text(f"""SELECT
                 COALESCE((SELECT COUNT(*)::int FROM "ShowcaseLike" sl
                           JOIN "Showcase" s ON s.id = sl.showcase_id
                           LEFT JOIN "User" u ON u.id = s.author_id WHERE 1=1{show_w}), 0) AS total_likes,
@@ -336,14 +374,14 @@ class AdminService:
                           JOIN "Showcase" s ON s.id = sc.showcase_id
                           LEFT JOIN "User" u ON u.id = s.author_id WHERE 1=1{show_w}), 0) AS total_comments,
                 COALESCE((SELECT COUNT(*)::int FROM "Showcase" s
-                          LEFT JOIN "User" u ON u.id = s.author_id WHERE 1=1{show_w}), 0) AS total_showcases""",
-            *show_p,
+                          LEFT JOIN "User" u ON u.id = s.author_id WHERE 1=1{show_w}), 0) AS total_showcases"""),
+            show_dict or None,
         )
-        faculties_q = self.db.query_raw(
-            """SELECT DISTINCT faculty FROM "User" WHERE faculty IS NOT NULL AND faculty != '' ORDER BY faculty""",
+        faculties_q = self.session.execute(
+            text("""SELECT DISTINCT faculty FROM "User" WHERE faculty IS NOT NULL AND faculty != '' ORDER BY faculty"""),
         )
-        categories_q = self.db.query_raw(
-            """SELECT DISTINCT category FROM "Project" WHERE category IS NOT NULL AND category != '' ORDER BY category""",
+        categories_q = self.session.execute(
+            text("""SELECT DISTINCT category FROM "Project" WHERE category IS NOT NULL AND category != '' ORDER BY category"""),
         )
 
         (user_regs, users_by_faculty, proj_creations, proj_by_cat, proj_by_status,
@@ -352,28 +390,35 @@ class AdminService:
             task_dist_q, showcase_q, faculties_q, categories_q,
         )
 
-        total_users = user_regs[0]["grand_total"] if user_regs else 0
-        total_projects = proj_creations[0]["grand_total"] if proj_creations else 0
-        showcase_res = showcase_res[0] if showcase_res else {}
-        available_faculties = [r["faculty"] for r in (fac_raw or [])]
-        available_categories = [r["category"] for r in (cat_raw or [])]
+        user_regs_list = [{"period": r[0], "total": r[1], "grand_total": r[2]} for r in user_regs.fetchall()] if user_regs else []
+        users_by_faculty_list = [{"faculty": r[0], "total": r[1]} for r in users_by_faculty.fetchall()] if users_by_faculty else []
+        proj_creations_list = [{"period": r[0], "total": r[1], "grand_total": r[2]} for r in proj_creations.fetchall()] if proj_creations else []
+        proj_by_cat_list = [{"category": r[0], "total": r[1]} for r in proj_by_cat.fetchall()] if proj_by_cat else []
+        proj_by_status_list = [{"status": r[0], "total": r[1]} for r in proj_by_status.fetchall()] if proj_by_status else []
+        task_dist_list = [{"status": r[0], "total": r[1]} for r in task_dist.fetchall()] if task_dist else []
+        showcase_row = showcase_res.fetchone() if showcase_res else None
+        fac_list = [r[0] for r in fac_raw.fetchall()] if fac_raw else []
+        cat_list = [r[0] for r in cat_raw.fetchall()] if cat_raw else []
+
+        total_users = user_regs_list[0]["grand_total"] if user_regs_list else 0
+        total_projects = proj_creations_list[0]["grand_total"] if proj_creations_list else 0
 
         return {
-            "user_registrations": user_regs or [],
-            "project_creations": proj_creations or [],
-            "users_by_faculty": users_by_faculty or [],
-            "projects_by_category": proj_by_cat or [],
-            "projects_by_status": proj_by_status or [],
-            "task_distribution": task_dist or [],
+            "user_registrations": user_regs_list,
+            "project_creations": proj_creations_list,
+            "users_by_faculty": users_by_faculty_list,
+            "projects_by_category": proj_by_cat_list,
+            "projects_by_status": proj_by_status_list,
+            "task_distribution": task_dist_list,
             "showcase_engagement": {
-                "total_likes": showcase_res.get("total_likes", 0),
-                "total_comments": showcase_res.get("total_comments", 0),
-                "total_showcases": showcase_res.get("total_showcases", 0),
+                "total_likes": showcase_row[0] if showcase_row else 0,
+                "total_comments": showcase_row[1] if showcase_row else 0,
+                "total_showcases": showcase_row[2] if showcase_row else 0,
             },
             "total_users": total_users,
             "total_projects": total_projects,
-            "available_faculties": available_faculties,
-            "available_categories": available_categories,
+            "available_faculties": fac_list,
+            "available_categories": cat_list,
         }
 
     async def _count_competitions(self) -> int:

@@ -1,25 +1,28 @@
 from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException
-from prisma import Prisma
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.constants import OTP_MAX_PER_HOUR, OTP_EXPIRY_MINUTES, OTP_MAX_ATTEMPTS
+from app.models.auth import OtpCode
 from app.services.email import generate_otp, hash_otp, send_otp_email
 
 
 async def send_otp_to_email(
-    db: Prisma,
+    session: AsyncSession,
     user_id: str,
     email: str,
 ):
     """Generate, save, and send OTP — with per-user rate limit."""
     one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-    recent = await db.otpcode.count(
-        where={
-            "user_id": user_id,
-            "email": email,
-            "used": False,
-            "created_at": {"gte": one_hour_ago},
-        }
+    result = await session.execute(
+        select(func.count(OtpCode.id)).where(
+            OtpCode.user_id == user_id,
+            OtpCode.email == email,
+            OtpCode.used == False,
+            OtpCode.created_at >= one_hour_ago,
+        )
     )
+    recent = result.scalar() or 0
     if recent >= OTP_MAX_PER_HOUR:
         raise HTTPException(
             status_code=429,
@@ -27,35 +30,35 @@ async def send_otp_to_email(
         )
 
     otp = generate_otp()
-    await db.otpcode.create(
-        data={
-            "user_id": user_id,
-            "email": email,
-            "code_hash": hash_otp(otp),
-            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES),
-        }
+    record = OtpCode(
+        user_id=user_id,
+        email=email,
+        code_hash=hash_otp(otp),
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES),
     )
+    session.add(record)
+    await session.commit()
 
     await send_otp_email(email, otp)
     return email
 
 
 async def verify_otp_code(
-    db: Prisma,
+    session: AsyncSession,
     user_id: str,
     email: str,
     otp: str,
 ):
     """Verify OTP for a user+email — increments attempts on failure."""
-    record = await db.otpcode.find_first(
-        where={
-            "user_id": user_id,
-            "email": email,
-            "used": False,
-            "expires_at": {"gte": datetime.now(timezone.utc)},
-        },
-        order={"created_at": "desc"},
+    result = await session.execute(
+        select(OtpCode).where(
+            OtpCode.user_id == user_id,
+            OtpCode.email == email,
+            OtpCode.used == False,
+            OtpCode.expires_at >= datetime.now(timezone.utc),
+        ).order_by(OtpCode.created_at.desc()).limit(1)
     )
+    record = result.scalar_one_or_none()
 
     if not record:
         raise HTTPException(status_code=400, detail="Kode OTP tidak valid atau sudah kadaluarsa.")
@@ -64,13 +67,9 @@ async def verify_otp_code(
         raise HTTPException(status_code=400, detail="Terlalu banyak percobaan salah. Minta OTP baru.")
 
     if hash_otp(otp) != record.code_hash:
-        await db.otpcode.update(
-            where={"id": record.id},
-            data={"attempts": record.attempts + 1},
-        )
+        record.attempts += 1
+        await session.commit()
         raise HTTPException(status_code=400, detail="Kode OTP salah.")
 
-    await db.otpcode.update(
-        where={"id": record.id},
-        data={"used": True},
-    )
+    record.used = True
+    await session.commit()

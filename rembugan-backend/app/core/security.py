@@ -4,8 +4,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import bcrypt
-from prisma import Prisma
-from app.core.database import get_db
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import get_db_session
 
 security = HTTPBearer()
 
@@ -84,7 +85,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
 # ==========================================
 async def verify_admin_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Prisma = Depends(get_db),
+    session: AsyncSession = Depends(get_db_session),
 ) -> dict:
     """
     Verifikasi token admin dari header Authorization.
@@ -106,8 +107,9 @@ async def verify_admin_token(
             detail="Akses ditolak. Hanya admin yang dapat mengakses resource ini.",
         )
 
-    # Double-check di DB
-    user = await db.user.find_unique(where={"id": payload["uid"]})
+    from app.models import User
+    result = await session.execute(select(User).where(User.id == payload["uid"]))
+    user = result.scalar_one_or_none()
     if not user or not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

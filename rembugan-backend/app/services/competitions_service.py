@@ -1,10 +1,12 @@
 import os
 import hashlib
 from fastapi import Depends, HTTPException
-from prisma import Prisma
-from app.core.database import get_db
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import get_db_session
 from app.core.tasks import fire_and_forget
 from app.core.cache import cache
+from app.models import User
 from app.services.competitions import get_competition_collection
 from app.services.embedding import generate, cosine_similarity
 
@@ -20,8 +22,8 @@ class CompetitionsService:
         "machine learning", "cyber security", "jaringan",
     }
 
-    def __init__(self, db: Prisma = Depends(get_db)):
-        self.db = db
+    def __init__(self, session: AsyncSession = Depends(get_db_session)):
+        self.session = session
 
     @staticmethod
     def _full_text(item: dict) -> str:
@@ -52,17 +54,20 @@ class CompetitionsService:
             pass
 
     async def get_all(self, user_id: str, base_url: str):
-        user = await self.db.user.find_unique(
-            where={"id": user_id},
-            include={"skills": {"include": {"skill": True}}},
-        )
+        result = await self.session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+
         user_embedding = None
         if user:
-            emb_row = await self.db.query_raw('SELECT embedding::text FROM "User" WHERE id = $1', user_id)
-            if emb_row and emb_row[0]["embedding"]:
+            raw = await self.session.execute(
+                text('SELECT embedding::text FROM "User" WHERE id = :uid'),
+                {"uid": user_id},
+            )
+            emb_row = raw.fetchone()
+            if emb_row and emb_row[0]:
                 import json
-                user_embedding = json.loads(emb_row[0]["embedding"])
-        user_skill_names = {s.skill.name.lower() for s in user.skills} if user and user.skills else set()
+                user_embedding = json.loads(emb_row[0])
+        user_skill_names = {s.skill.name.lower() for s in (user.skills or [])} if user and user.skills else set()
 
         try:
             collection = get_competition_collection()
@@ -102,13 +107,13 @@ class CompetitionsService:
                 if score == 0 and domain_match:
                     score = 30
                     if user_skill_names:
-                        text = self._full_text(item)
-                        if any(s in text for s in user_skill_names):
+                        text_content = self._full_text(item)
+                        if any(s in text_content for s in user_skill_names):
                             score = 60
 
                 if user_skill_names and score > 0:
-                    text = self._full_text(item)
-                    skill_in_text = any(s in text for s in user_skill_names)
+                    text_content = self._full_text(item)
+                    skill_in_text = any(s in text_content for s in user_skill_names)
                     if not skill_in_text and not domain_match:
                         score = 0
 
@@ -166,19 +171,21 @@ class CompetitionsService:
             raise HTTPException(status_code=500, detail=f"Gagal memuat statistik: {str(e)}")
 
     async def get_relevant(self, user_id: str):
-        user = await self.db.user.find_unique(
-            where={"id": user_id},
-            include={"skills": {"include": {"skill": True}}},
-        )
+        result = await self.session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
 
         user_embedding = None
-        emb_row = await self.db.query_raw('SELECT embedding::text FROM "User" WHERE id = $1', user_id)
-        if emb_row and emb_row[0]["embedding"]:
+        raw = await self.session.execute(
+            text('SELECT embedding::text FROM "User" WHERE id = :uid'),
+            {"uid": user_id},
+        )
+        emb_row = raw.fetchone()
+        if emb_row and emb_row[0]:
             import json
-            user_embedding = json.loads(emb_row[0]["embedding"])
-        user_skill_names = {s.skill.name.lower() for s in user.skills} if user.skills else set()
+            user_embedding = json.loads(emb_row[0])
+        user_skill_names = {s.skill.name.lower() for s in (user.skills or [])} if user.skills else set()
 
         try:
             collection = get_competition_collection()
@@ -212,13 +219,13 @@ class CompetitionsService:
             if score == 0 and domain_match:
                 score = 30
                 if user_skill_names:
-                    text = self._full_text(item)
-                    if any(s in text for s in user_skill_names):
+                    text_content = self._full_text(item)
+                    if any(s in text_content for s in user_skill_names):
                         score = 60
 
             if user_skill_names and score > 0:
-                text = self._full_text(item)
-                skill_in_text = any(s in text for s in user_skill_names)
+                text_content = self._full_text(item)
+                skill_in_text = any(s in text_content for s in user_skill_names)
                 if not skill_in_text and not domain_match:
                     score = 0
 

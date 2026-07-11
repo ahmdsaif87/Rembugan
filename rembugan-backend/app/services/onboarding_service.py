@@ -1,7 +1,11 @@
 import asyncio
+import re
+import secrets
 from fastapi import Depends, HTTPException, UploadFile
-from prisma import Prisma, Json
-from app.core.database import get_db
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import get_db_session
+from app.models import User, Skill, UserSkill, Experience
 from app.schemas.user import UserProfileInput
 from app.core.tasks import fire_and_forget
 from app.services.embedding import reembed_user
@@ -11,8 +15,8 @@ from app.services.storage import upload_image_to_cloudinary
 
 
 class OnboardingService:
-    def __init__(self, db: Prisma = Depends(get_db)):
-        self.db = db
+    def __init__(self, session: AsyncSession = Depends(get_db_session)):
+        self.session = session
 
     def _format_nama(self, nama: str) -> str:
         if not nama or nama == "Tidak Terdeteksi":
@@ -49,72 +53,68 @@ class OnboardingService:
         }
 
     async def save_profile(self, uid: str, data: UserProfileInput) -> dict:
-        existing = await self.db.user.find_unique(where={"id": uid})
-        if not existing:
+        result = await self.session.execute(select(User).where(User.id == uid))
+        user = result.scalar_one_or_none()
+        if not user:
             raise HTTPException(status_code=404, detail="User belum terdaftar. Silakan register dulu via /auth/register.")
 
-        update_data = {
-            "full_name": data.full_name,
-            "bio": data.bio,
-            "photo_url": data.photo_url,
-            "is_onboarded": True,
-        }
-
+        user.full_name = data.full_name
+        user.bio = data.bio
+        user.photo_url = data.photo_url
+        user.is_onboarded = True
         if data.social_links:
-            update_data["social_links"] = Json(data.social_links)
+            user.social_links = data.social_links
+        await self.session.flush()
 
-        user = await self.db.user.update(
-            where={"id": uid},
-            data=update_data,
-        )
-
-        await self.db.userskill.delete_many(where={"user_id": uid})
-
+        # Skills
+        await self.session.execute(delete(UserSkill).where(UserSkill.user_id == uid))
         if data.skills:
-            existing_skills = await self.db.skill.find_many(
-                where={"name": {"in": data.skills}}
+            existing_skills = await self.session.execute(
+                select(Skill).where(Skill.name.in_(data.skills))
             )
-            name_to_id = {s.name: s.id for s in existing_skills}
+            existing_skills_list = existing_skills.scalars().all()
+            name_to_id = {s.name: s.id for s in existing_skills_list}
 
             new_names = [n for n in data.skills if n not in name_to_id]
-            if new_names:
-                await self.db.skill.create_many(data=[{"name": n} for n in new_names])
-                new_skills = await self.db.skill.find_many(
-                    where={"name": {"in": new_names}}
-                )
-                for s in new_skills:
-                    name_to_id[s.name] = s.id
+            for skill_name in new_names:
+                skill = Skill(name=skill_name)
+                self.session.add(skill)
+                await self.session.flush()
+                name_to_id[skill_name] = skill.id
 
-            await self.db.userskill.create_many(
-                data=[{"user_id": uid, "skill_id": name_to_id[n]} for n in data.skills]
-            )
+            for skill_name in data.skills:
+                self.session.add(UserSkill(user_id=uid, skill_id=name_to_id[skill_name]))
 
-        fire_and_forget(reembed_user(self.db, uid), name="reembed_user_onboarding")
+        await self.session.commit()
 
-        await self.db.experience.delete_many(where={"user_id": uid})
+        fire_and_forget(reembed_user(self.session, uid), name="reembed_user_onboarding")
+
+        # Experiences
+        await self.session.execute(delete(Experience).where(Experience.user_id == uid))
 
         from datetime import datetime, timezone
 
         for exp in data.experiences:
             start_date = exp.start_date or datetime.now(timezone.utc)
             end_date = exp.end_date
-            await self.db.experience.create(data={
-                "user_id": uid,
-                "title": exp.title,
-                "company": exp.organization,
-                "description": exp.description,
-                "start_date": start_date,
-                "end_date": end_date,
-            })
+            self.session.add(Experience(
+                user_id=uid,
+                title=exp.title,
+                company=exp.organization,
+                description=exp.description,
+                start_date=start_date,
+                end_date=end_date,
+            ))
+        await self.session.commit()
 
         handle = user.handle
         if not handle:
-            import re, secrets
             base = re.sub(r'[^a-z0-9]', '', user.full_name.lower())[:20]
             if not base:
                 base = f"user{secrets.token_hex(4)}"
             handle = base + secrets.token_hex(2)
-            await self.db.user.update(where={"id": uid}, data={"handle": handle})
+            user.handle = handle
+            await self.session.commit()
 
         return {
             "id": user.id,
@@ -127,15 +127,13 @@ class OnboardingService:
         }
 
     async def get_my_profile(self, uid: str) -> dict:
-        user = await self.db.user.find_unique(
-            where={"id": uid},
-            include={"skills": {"include": {"skill": True}}},
-        )
+        result = await self.session.execute(select(User).where(User.id == uid))
+        user = result.scalar_one_or_none()
 
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan.")
 
-        skill_names = [us.skill.name for us in user.skills] if user.skills else []
+        skill_names = [us.skill.name for us in (user.skills or [])]
 
         return {
             "id": user.id,

@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from app.core.database import get_db
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import get_db_session
 from app.core.response import response_success
 from app.core.security import verify_token
 from app.services.notifications_service import NotificationsService
-from prisma import Prisma
+from app.models.social import DeviceToken
 
 router = APIRouter(prefix="/notifications", tags=["Notifikasi"])
 
@@ -18,23 +20,23 @@ class FCMTokenInput(BaseModel):
 async def register_fcm_token(
     body: FCMTokenInput,
     user_token: dict = Depends(verify_token),
-    db: Prisma = Depends(get_db),
+    session: AsyncSession = Depends(get_db_session),
 ):
     user_id = user_token["uid"]
-    existing = await db.devicetoken.find_first(
-        where={"user_id": user_id, "token": body.token},
-    )
-    if existing:
-        await db.devicetoken.update(
-            where={"id": existing.id},
-            data={"platform": body.platform},
+    result = await session.execute(
+        select(DeviceToken).where(
+            DeviceToken.user_id == user_id,
+            DeviceToken.token == body.token,
         )
+    )
+    existing = result.scalar_one_or_none()
+    if existing:
+        existing.platform = body.platform
+        await session.commit()
     else:
-        await db.devicetoken.create(data={
-            "user_id": user_id,
-            "token": body.token,
-            "platform": body.platform,
-        })
+        dt = DeviceToken(user_id=user_id, token=body.token, platform=body.platform)
+        session.add(dt)
+        await session.commit()
     return response_success(message="FCM token registered")
 
 
@@ -42,12 +44,19 @@ async def register_fcm_token(
 async def unregister_fcm_token(
     token: str,
     user_token: dict = Depends(verify_token),
-    db: Prisma = Depends(get_db),
+    session: AsyncSession = Depends(get_db_session),
 ):
     user_id = user_token["uid"]
-    await db.devicetoken.delete_many(
-        where={"user_id": user_id, "token": token},
+    result = await session.execute(
+        select(DeviceToken).where(
+            DeviceToken.user_id == user_id,
+            DeviceToken.token == token,
+        )
     )
+    dt = result.scalar_one_or_none()
+    if dt:
+        await session.delete(dt)
+        await session.commit()
     return response_success(message="FCM token removed")
 
 

@@ -1,5 +1,10 @@
 import asyncio
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database_sql import async_session_factory
 from app.core.logger import get_logger
+from app.models.user import User
+from app.models.collaboration import Project
 
 logger = get_logger(__name__)
 
@@ -69,43 +74,47 @@ def text_for_showcase(content: str, tags: list[str]) -> str:
     return " ".join(parts)
 
 
-async def reembed_user(db, user_id: str):
-    user = await db.user.find_unique(
-        where={"id": user_id},
-        include={"skills": {"include": {"skill": True}}},
-    )
+async def reembed_user(session: AsyncSession, user_id: str):
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
     if user:
         txt = text_for_user(user)
         emb = await generate(txt)
         if emb:
             vec = f'[{",".join(str(x) for x in emb)}]'
-            await db.query_raw(
-                'UPDATE "User" SET embedding = $1::vector WHERE id = $2',
-                vec, user_id
+            await session.execute(
+                text('UPDATE "User" SET embedding = :vec::vector WHERE id = :uid'),
+                {"vec": vec, "uid": user_id},
             )
+            await session.commit()
 
 
-async def reembed_project(db, project_id: int):
-    project = await db.project.find_unique(where={"id": project_id})
+async def reembed_project(session: AsyncSession, project_id: int):
+    result = await session.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
     if project:
         txt = text_for_project(project.title, project.description, project.required_skills or [])
         emb = await generate(txt)
         if emb:
             vec = f'[{",".join(str(x) for x in emb)}]'
-            await db.query_raw(
-                'UPDATE "Project" SET embedding = $1::vector WHERE id = $2',
-                vec, project_id
+            await session.execute(
+                text('UPDATE "Project" SET embedding = :vec::vector WHERE id = :pid'),
+                {"vec": vec, "pid": project_id},
             )
+            await session.commit()
 
 
-async def reembed_showcase(db, showcase_id: str):
-    showcase = await db.showcase.find_unique(where={"id": showcase_id})
+async def reembed_showcase(session: AsyncSession, showcase_id: str):
+    from app.models.social import Showcase
+    result = await session.execute(select(Showcase).where(Showcase.id == showcase_id))
+    showcase = result.scalar_one_or_none()
     if showcase:
         txt = text_for_showcase(showcase.content, showcase.tags or [])
         emb = await generate(txt)
         if emb:
             vec = f'[{",".join(str(x) for x in emb)}]'
-            await db.query_raw(
-                'UPDATE "Showcase" SET embedding = $1::vector WHERE id = $2',
-                vec, showcase_id
+            await session.execute(
+                text('UPDATE "Showcase" SET embedding = :vec::vector WHERE id = :sid'),
+                {"vec": vec, "sid": showcase_id},
             )
+            await session.commit()

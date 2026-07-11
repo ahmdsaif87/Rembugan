@@ -12,12 +12,10 @@ python-dotenv
 pydantic
 tzdata
 
-# 2. DATABASE & ORM (SQLAlchemy + asyncpg — replacing Prisma)
+# 2. DATABASE & ORM (SQLAlchemy + asyncpg)
 sqlalchemy[asyncio]
 asyncpg
 alembic
-# Prisma masih dipake selama transisi
-prisma
 
 # 3. AUTHENTICATION & CLOUD STORAGE
 cloudinary
