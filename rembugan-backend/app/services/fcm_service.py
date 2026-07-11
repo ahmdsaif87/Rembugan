@@ -16,7 +16,11 @@ def _get_app():
         cred_json = os.getenv("FCM_CREDENTIALS_JSON")
         if cred_json:
             import json
-            cred_data = json.loads(cred_json)
+            try:
+                cred_data = json.loads(cred_json)
+            except json.JSONDecodeError:
+                cred_json_clean = cred_json.replace("\\n", "\n").replace("\\\"", "\"").replace("\\t", "\t")
+                cred_data = json.loads(cred_json_clean)
             cred = credentials.Certificate(cred_data)
             _admin_sdk = firebase_admin.initialize_app(cred)
             logger.info(f"Firebase Admin SDK initialized: project={cred_data.get('project_id')}")
