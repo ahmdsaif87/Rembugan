@@ -16,9 +16,10 @@ def _get_app():
         cred_json = os.getenv("FCM_CREDENTIALS_JSON")
         if cred_json:
             import json
-            cred = credentials.Certificate(json.loads(cred_json))
+            cred_data = json.loads(cred_json)
+            cred = credentials.Certificate(cred_data)
             _admin_sdk = firebase_admin.initialize_app(cred)
-            logger.info("Firebase Admin SDK initialized from env var")
+            logger.info(f"Firebase Admin SDK initialized: project={cred_data.get('project_id')}")
         else:
             path = os.getenv("FCM_CREDENTIALS_PATH", "firebase-admin.json")
             if os.path.exists(path):
@@ -53,7 +54,7 @@ async def send_push_notification(
         response = messaging.send(message)
         logger.debug(f"FCM sent: {response}")
     except Exception as e:
-        logger.error(f"FCM send failed: {e}")
+        logger.error(f"FCM send failed: token_prefix={token[:20]}... err={e}")
 
 
 async def send_multicast_push(
