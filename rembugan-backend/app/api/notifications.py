@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database_sql import get_db_session
 from app.core.response import response_success
@@ -23,20 +23,13 @@ async def register_fcm_token(
     session: AsyncSession = Depends(get_db_session),
 ):
     user_id = user_token["uid"]
-    result = await session.execute(
-        select(DeviceToken).where(
-            DeviceToken.user_id == user_id,
-            DeviceToken.token == body.token,
-        )
+    # Hapus semua token lama user, simpan yang baru
+    await session.execute(
+        delete(DeviceToken).where(DeviceToken.user_id == user_id)
     )
-    existing = result.scalar_one_or_none()
-    if existing:
-        existing.platform = body.platform
-        await session.commit()
-    else:
-        dt = DeviceToken(user_id=user_id, token=body.token, platform=body.platform)
-        session.add(dt)
-        await session.commit()
+    dt = DeviceToken(user_id=user_id, token=body.token, platform=body.platform)
+    session.add(dt)
+    await session.commit()
     return response_success(message="FCM token registered")
 
 
