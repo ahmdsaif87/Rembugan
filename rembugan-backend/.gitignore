@@ -10,6 +10,7 @@ firebase-admin.json
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
 
 # IDE
 .vscode/
