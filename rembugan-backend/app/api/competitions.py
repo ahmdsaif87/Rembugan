@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from app.core.response import response_success
 from app.core.security import verify_token
 from app.services.competitions_service import CompetitionsService
@@ -8,13 +8,11 @@ router = APIRouter(prefix="/competitions", tags=["Lomba / Competitions"])
 
 @router.get("/all", summary="Lihat Semua Lomba")
 async def get_all_competitions(
-    request: Request,
     user_token: dict = Depends(verify_token),
     svc: CompetitionsService = Depends(),
 ):
     uid = user_token.get("uid")
-    base_url = str(request.base_url).rstrip("/")
-    result = await svc.get_all(uid, base_url)
+    result = await svc.get_all(uid)
     return response_success(result)
 
 
