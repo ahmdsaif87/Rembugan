@@ -23,10 +23,7 @@ class MainShellView extends GetView<MainShellController> {
     return Obx(() {
       final tab = controller.currentIndex.value;
       return Scaffold(
-        body: IndexedStack(
-          index: tab,
-          children: _tabs,
-        ),
+        body: _tabs[tab],
         bottomNavigationBar: AppBottomNav(
           current: _destinations[tab],
           onTap: controller.changeTab,
