@@ -8,6 +8,7 @@ import '../../modules/notification/controllers/notification_controller.dart';
 import '../../routes/app_pages.dart';
 import 'api_client.dart';
 import 'chat_socket_service.dart';
+import 'fcm_service.dart';
 
 class AuthService extends GetxService {
   final _api = Get.find<ApiClient>();
@@ -64,6 +65,10 @@ class AuthService extends GetxService {
         isOnboarded: data['is_onboarded'] ?? false,
       );
       isLoggedIn.value = true;
+
+      if (Get.isRegistered<FcmService>()) {
+        Get.find<FcmService>().init();
+      }
 
       return null;
     } on DioException catch (e) {
@@ -190,6 +195,9 @@ class AuthService extends GetxService {
   }
 
   Future<void> logout() async {
+    if (Get.isRegistered<FcmService>()) {
+      await Get.find<FcmService>().deleteToken();
+    }
     await _api.clearToken();
     currentUser.value = null;
     isLoggedIn.value = false;

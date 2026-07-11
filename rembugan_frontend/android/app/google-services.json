@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "146280176062",
+    "project_id": "rembugan-af412",
+    "storage_bucket": "rembugan-af412.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146280176062:android:a7d4e0eaecfd02c15dc1ef",
+        "android_client_info": {
+          "package_name": "com.rembugan.rembugan_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzCl5GcKvFOK1_8qftnK_vaWW81frqnvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

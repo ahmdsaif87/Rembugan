@@ -44,3 +44,6 @@ motor
 
 # 8. EMAIL SERVICE
 resend
+
+# 9. FCM PUSH NOTIFICATION
+firebase-admin

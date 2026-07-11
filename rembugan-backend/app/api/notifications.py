@@ -1,9 +1,54 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from app.core.database import get_db
 from app.core.response import response_success
 from app.core.security import verify_token
 from app.services.notifications_service import NotificationsService
+from prisma import Prisma
 
 router = APIRouter(prefix="/notifications", tags=["Notifikasi"])
+
+
+class FCMTokenInput(BaseModel):
+    token: str
+    platform: str = "unknown"
+
+
+@router.post("/fcm-token", summary="Daftarkan FCM Token untuk Push Notification")
+async def register_fcm_token(
+    body: FCMTokenInput,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    user_id = user_token["uid"]
+    existing = await db.devicetoken.find_first(
+        where={"user_id": user_id, "token": body.token},
+    )
+    if existing:
+        await db.devicetoken.update(
+            where={"id": existing.id},
+            data={"platform": body.platform},
+        )
+    else:
+        await db.devicetoken.create(data={
+            "user_id": user_id,
+            "token": body.token,
+            "platform": body.platform,
+        })
+    return response_success(message="FCM token registered")
+
+
+@router.delete("/fcm-token", summary="Hapus FCM Token")
+async def unregister_fcm_token(
+    token: str,
+    user_token: dict = Depends(verify_token),
+    db: Prisma = Depends(get_db),
+):
+    user_id = user_token["uid"]
+    await db.devicetoken.delete_many(
+        where={"user_id": user_id, "token": token},
+    )
+    return response_success(message="FCM token removed")
 
 
 @router.get("/", summary="Lihat Semua Notifikasi")

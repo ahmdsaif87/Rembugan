@@ -62,6 +62,7 @@ model User {
   // Relasi ke OTP & Saved Items
   otp_codes     OtpCode[]
   savedItems    SavedItem[]
+  deviceTokens  DeviceToken[]
 
   // pgvector embedding untuk cosine similarity
   embedding     Unsupported("vector(384)")?
@@ -372,6 +373,22 @@ model Notification {
 
   @@index([user_id, is_read])
   @@index([type])
+}
+
+// 7b. FCM TOKEN UNTUK PUSH NOTIFICATION
+model DeviceToken {
+  id         Int      @id @default(autoincrement())
+  user_id    String
+  token      String   // FCM registration token
+  platform   String   @default("unknown") // "android", "ios", "web"
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, token])
+  @@index([user_id])
+  @@index([token])
 }
 
 model RoomRead {
