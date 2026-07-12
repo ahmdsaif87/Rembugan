@@ -263,6 +263,24 @@ class TeamController extends GetxController {
     super.onClose();
   }
 
+  Future<void> refreshOnActive() async {
+    if (selectedWorkspace.value == null) {
+      await fetchWorkspaces();
+    } else {
+      final pid = int.tryParse(selectedWorkspace.value!.id);
+      if (pid != null) {
+        final results = await Future.wait([
+          _repo.getDiscussions(pid),
+          _repo.getTasks(pid),
+          _repo.getFiles(pid),
+        ]);
+        discussions.assignAll(results[0] as List<DiscussionMessage>);
+        tasks.assignAll(results[1] as List<WorkspaceTask>);
+        files.assignAll(results[2] as List<WorkspaceFile>);
+      }
+    }
+  }
+
   void _connectWs() {
     final ws = selectedWorkspace.value;
     if (ws == null) return;

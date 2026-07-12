@@ -228,28 +228,30 @@ class ChatService:
 
     async def _handle_mentions(self, sender_id: str, project_id: int, preview: str, mentions: list[str]):
         try:
-            result = await self.session.execute(select(User).where(User.id == sender_id))
-            sender = result.scalar_one_or_none()
-            sender_name = sender.full_name if sender else "Seseorang"
+            from app.core.database_sql import async_session_factory
+            async with async_session_factory() as s:
+                result = await s.execute(select(User).where(User.id == sender_id))
+                sender = result.scalar_one_or_none()
+                sender_name = sender.full_name if sender else "Seseorang"
 
-            result = await self.session.execute(select(Project).where(Project.id == project_id))
-            project = result.scalar_one_or_none()
-            project_title = project.title if project else "Proyek"
+                result = await s.execute(select(Project).where(Project.id == project_id))
+                project = result.scalar_one_or_none()
+                project_title = project.title if project else "Proyek"
 
-            result = await self.session.execute(
-                select(User).where(func.lower(User.full_name).in_([m.lower() for m in mentions]))
-            )
-            mentioned_users = result.scalars().all()
-            mentioned_map = {u.full_name.lower(): u for u in mentioned_users}
-            for mention in mentions:
-                mentioned_user = mentioned_map.get(mention.lower())
-                if mentioned_user and mentioned_user.id != sender_id:
-                    await notify(
-                        self.session, mentioned_user.id, NOTIF_GROUP_TAG,
-                        f"Anda dimention di grup '{project_title}'",
-                        f"{sender_name} men-tag anda: {preview}",
-                        f"/workspace/{project_id}",
-                    )
+                result = await s.execute(
+                    select(User).where(func.lower(User.full_name).in_([m.lower() for m in mentions]))
+                )
+                mentioned_users = result.scalars().all()
+                mentioned_map = {u.full_name.lower(): u for u in mentioned_users}
+                for mention in mentions:
+                    mentioned_user = mentioned_map.get(mention.lower())
+                    if mentioned_user and mentioned_user.id != sender_id:
+                        await notify(
+                            s, mentioned_user.id, NOTIF_GROUP_TAG,
+                            f"Anda dimention di grup '{project_title}'",
+                            f"{sender_name} men-tag anda: {preview}",
+                            f"/workspace/{project_id}",
+                        )
         except Exception as e:
             logger.error(f"Gagal proses mention: {e}")
 
@@ -289,14 +291,16 @@ class ChatService:
 
     async def _handle_dm_notification(self, sender_id: str, receiver_id: str, preview: str, room_id: str):
         try:
-            result = await self.session.execute(select(User).where(User.id == sender_id))
-            sender = result.scalar_one_or_none()
-            sender_name = sender.full_name if sender else "Seseorang"
-            await notify(
-                self.session, receiver_id, NOTIF_CHAT,
-                f"Pesan baru dari {sender_name}",
-                preview,
-                f"/chat/{room_id}",
-            )
+            from app.core.database_sql import async_session_factory
+            async with async_session_factory() as s:
+                result = await s.execute(select(User).where(User.id == sender_id))
+                sender = result.scalar_one_or_none()
+                sender_name = sender.full_name if sender else "Seseorang"
+                await notify(
+                    s, receiver_id, NOTIF_CHAT,
+                    f"Pesan baru dari {sender_name}",
+                    preview,
+                    f"/chat/{room_id}",
+                )
         except Exception as e:
             logger.error(f"Gagal proses notif DM: {e}")

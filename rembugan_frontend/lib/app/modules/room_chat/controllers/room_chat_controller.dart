@@ -72,6 +72,7 @@ class RoomChatController extends GetxController {
   }
 
   Future<void> _init() async {
+    messages.clear();
     await _socket.connect(room.roomId);
     isWsConnected.value = true;
     _wsSub?.cancel();

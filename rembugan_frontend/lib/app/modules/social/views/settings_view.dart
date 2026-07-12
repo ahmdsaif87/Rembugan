@@ -1,5 +1,6 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../core/services/auth_service.dart';
@@ -471,7 +472,7 @@ class _SettingsViewState extends State<SettingsView> {
                       FluentIcons.chevron_right_24_regular,
                       color: subtitleColor,
                       size: 18,
-                    ),
+                ),
               ],
             ),
           ),
@@ -673,13 +674,10 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                   if (otpSent) ...[
                     const SizedBox(height: 14),
-                    AppTextField(
-                      controller: otpController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      textAlign: TextAlign.center,
-                      labelText: 'Kode OTP',
-                      hintText: '000000',
+                    _OtpFields(
+                      onCompleted: (code) {
+                        otpController.text = code;
+                      },
                     ),
                     const SizedBox(height: 8),
                     Align(
@@ -698,7 +696,6 @@ class _SettingsViewState extends State<SettingsView> {
                                 setModalState(() {
                                   isSending = false;
                                   if (err == null) {
-                                    otpController.clear();
                                     errorMessage = null;
                                   } else {
                                     errorMessage = err;
@@ -947,6 +944,88 @@ class _SettingsViewState extends State<SettingsView> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _OtpFields extends StatefulWidget {
+  final void Function(String code) onCompleted;
+  const _OtpFields({required this.onCompleted});
+
+  @override
+  State<_OtpFields> createState() => _OtpFieldsState();
+}
+
+class _OtpFieldsState extends State<_OtpFields> {
+  final controllers = List.generate(6, (_) => TextEditingController());
+  final focusNodes = List.generate(6, (_) => FocusNode());
+
+  @override
+  void dispose() {
+    for (final c in controllers) {
+      c.dispose();
+    }
+    for (final fn in focusNodes) {
+      fn.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onChanged(int index, String value) {
+    if (value.isNotEmpty && index < 5) {
+      focusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      focusNodes[index - 1].requestFocus();
+    }
+    final code = controllers.map((c) => c.text).join();
+    if (code.length == 6) {
+      widget.onCompleted(code);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppC.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(6, (index) {
+        return Padding(
+          padding: EdgeInsets.only(right: index == 5 ? 0 : 8),
+          child: SizedBox(
+            width: 48,
+            height: 54,
+            child: TextField(
+              controller: controllers[index],
+              focusNode: focusNodes[index],
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(1),
+              ],
+              style: AppFonts.satoshiStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: c.grey900,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: c.grey100,
+                contentPadding: EdgeInsets.zero,
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: c.grey200),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: AppColors.primary500, width: 1.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onChanged: (value) => _onChanged(index, value),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

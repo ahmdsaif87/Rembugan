@@ -199,13 +199,16 @@ class TeamView extends GetView<TeamController> {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(0, 8, 0, AppSpacing.xl),
-                    itemCount: list.length,
-                    itemBuilder: (context, index) {
-                      final ws = list[index];
-                      return _WorkspaceRow(ws: ws, onTap: () => _open(ws));
-                    },
+                  return RefreshIndicator(
+                    onRefresh: controller.fetchWorkspaces,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(0, 8, 0, AppSpacing.xl),
+                      itemCount: list.length,
+                      itemBuilder: (context, index) {
+                        final ws = list[index];
+                        return _WorkspaceRow(ws: ws, onTap: () => _open(ws));
+                      },
+                    ),
                   );
                 }),
               ),

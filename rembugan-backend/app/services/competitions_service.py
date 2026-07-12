@@ -1,5 +1,3 @@
-import os
-import hashlib
 from fastapi import Depends, HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,9 +7,6 @@ from app.core.cache import cache
 from app.models import User
 from app.services.competitions import get_competition_collection
 from app.services.embedding import generate, cosine_similarity
-
-POSTERS_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "posters")
-
 
 class CompetitionsService:
     EMB_VERSION = 3
@@ -30,16 +25,6 @@ class CompetitionsService:
         parts = [item.get("judul", ""), item.get("caption", ""), item.get("kategori", "")]
         return " ".join(p.lower() for p in parts if p)
 
-    @staticmethod
-    def _local_poster_url(poster_url: str) -> str:
-        if not poster_url:
-            return ""
-        url_hash = hashlib.md5(poster_url.encode()).hexdigest()
-        local_path = os.path.join(POSTERS_DIR, f"{url_hash}.jpg")
-        if os.path.exists(local_path):
-            return f"/static/posters/{url_hash}.jpg"
-        return ""
-
     async def _cache_missing_embeddings(self, collection, items: list[dict]):
         try:
             for item in items:
@@ -53,7 +38,7 @@ class CompetitionsService:
         except Exception:
             pass
 
-    async def get_all(self, user_id: str, base_url: str):
+    async def get_all(self, user_id: str):
         result = await self.session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
 
@@ -83,9 +68,6 @@ class CompetitionsService:
                 data = await cursor.to_list(length=20)
                 for item in data:
                     item["_id"] = str(item["_id"])
-                    poster = item.get("poster", "")
-                    local = self._local_poster_url(poster)
-                    item["poster"] = f"{base_url}{local}" if local else ""
                 await cache.set(cache_key, data, ttl=300)
 
             items_needing_embed: list[dict] = []

@@ -187,15 +187,16 @@ class HomeView extends GetView<HomeController> {
                 style: AppFonts.satoshiStyle(fontSize: 14, color: c.textSecondary, height: 1.45),
               ),
               const SizedBox(height: 24),
-              SizedBox(width: 180, height: 44,
+              SizedBox(height: 44,
                 child: OutlinedButton(
-                    onPressed: () => Get.find<MainShellController>().changeTab(1),
+                  onPressed: () => Get.find<MainShellController>().changeTab(1),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: c.textPrimary,
                     side: BorderSide(color: c.border),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
                   ),
-                    child: Text('Cari Orang', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
+                  child: Text('Cari Orang', style: AppFonts.satoshiStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
                 ),
               ),
             ],
@@ -383,7 +384,10 @@ class HomeView extends GetView<HomeController> {
               final project = controller.recommendedProjects[index];
               return RecommendedProjectCard(
                 project: project, index: index,
-                onTap: () => ExploreView.showProjectSheet(context, project),
+                onTap: () => ExploreView.showProjectSheet(
+                  context, project,
+                  onApply: controller.applyToProject,
+                ),
               );
             },
           ),

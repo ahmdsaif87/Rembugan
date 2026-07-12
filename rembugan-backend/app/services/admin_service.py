@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException
 from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +35,7 @@ class AdminService:
             if result.scalar_one_or_none():
                 raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
         hashed = hash_password(data.password)
+        now = datetime.now(timezone.utc)
         user = User(
             email=data.email or None,
             nim=data.nim or None,
@@ -43,6 +45,8 @@ class AdminService:
             full_name=data.full_name,
             interest=data.interest,
             email_verified=True if data.email else False,
+            created_at=now,
+            updated_at=now,
         )
         self.session.add(user)
         await self.session.commit()
@@ -173,6 +177,7 @@ class AdminService:
                 if result.scalar_one_or_none():
                     errors.append({"row": i + 1, "nim": item.nim, "message": "NIM sudah terdaftar"})
                     continue
+                now = datetime.now(timezone.utc)
                 user = User(
                     nim=item.nim,
                     full_name=item.full_name,
@@ -181,6 +186,8 @@ class AdminService:
                     interest=item.interest or None,
                     password=hashed,
                     email_verified=True,
+                    created_at=now,
+                    updated_at=now,
                 )
                 self.session.add(user)
                 await self.session.commit()
