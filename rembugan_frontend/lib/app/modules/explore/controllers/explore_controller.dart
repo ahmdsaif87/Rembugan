@@ -263,6 +263,9 @@ class ExploreController extends GetxController {
     searchTextController.clear();
     searchQuery.value = '';
     applyFilters();
+    if (tab.isPeople && people.isEmpty) {
+      loadExploreData();
+    }
   }
 
   int get activeFilterCount {

@@ -1332,28 +1332,41 @@ class _DiscussionTabState extends State<_DiscussionTab> {
                       const SizedBox(width: 12),
 
                       // Send Button
-                      GestureDetector(
-                        onTap: () {
-                          final text = _msgCtrl.text.trim();
-                          if (text.isEmpty &&
-                              _ctrl.attachedGroupFileName.value == null)
-                            return;
-                          _ctrl.sendMessage(text);
-                          _msgCtrl.clear();
-                          _ctrl.removeGroupAttachment();
-                        },
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary500,
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              FluentIcons.send_24_filled,
-                              size: 16,
-                              color: AppColors.white,
+                      Obx(
+                        () => GestureDetector(
+                          onTap: _ctrl.isUploading.value
+                              ? null
+                              : () {
+                                  final text = _msgCtrl.text.trim();
+                                  if (text.isEmpty &&
+                                      _ctrl.attachedGroupFileName.value == null)
+                                    return;
+                                  _ctrl.sendMessage(text);
+                                  _msgCtrl.clear();
+                                  _ctrl.removeGroupAttachment();
+                                },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary500,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: Center(
+                              child: _ctrl.isUploading.value
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      FluentIcons.send_24_filled,
+                                      size: 16,
+                                      color: AppColors.white,
+                                    ),
                             ),
                           ),
                         ),

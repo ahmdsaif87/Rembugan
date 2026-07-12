@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/api_client.dart';
@@ -210,6 +211,41 @@ class HomeController extends GetxController {
       recommendedPeople.refresh();
     } catch (e) {
       AppToast.error('Gagal: $e');
+    }
+  }
+
+  Future<String?> applyToProject(int projectId) async {
+    try {
+      final repo = Get.find<ExploreRepository>();
+      await repo.applyToProject(projectId);
+      final pIdx = recommendedProjects.indexWhere((p) => p.projectId == projectId);
+      if (pIdx >= 0) {
+        recommendedProjects[pIdx] = Project(
+          projectId: recommendedProjects[pIdx].projectId,
+          title: recommendedProjects[pIdx].title,
+          description: recommendedProjects[pIdx].description,
+          postedBy: recommendedProjects[pIdx].postedBy,
+          posterRole: recommendedProjects[pIdx].posterRole,
+          avatarUrl: recommendedProjects[pIdx].avatarUrl,
+          posterId: recommendedProjects[pIdx].posterId,
+          deadline: recommendedProjects[pIdx].deadline,
+          university: recommendedProjects[pIdx].university,
+          postedAgo: recommendedProjects[pIdx].postedAgo,
+          totalSlots: recommendedProjects[pIdx].totalSlots,
+          filledSlots: recommendedProjects[pIdx].filledSlots,
+          matchScore: recommendedProjects[pIdx].matchScore,
+          hasApplied: true,
+          isMember: recommendedProjects[pIdx].isMember,
+          skills: recommendedProjects[pIdx].skills,
+          memberAvatars: recommendedProjects[pIdx].memberAvatars,
+          memberNames: recommendedProjects[pIdx].memberNames,
+        );
+      }
+      return null;
+    } on dio.DioException catch (e) {
+      return e.response?.data?['detail'] as String? ?? 'Gagal mengirim lamaran';
+    } catch (_) {
+      return 'Terjadi kesalahan. Coba lagi.';
     }
   }
 
