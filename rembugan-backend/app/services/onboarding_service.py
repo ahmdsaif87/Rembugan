@@ -87,7 +87,7 @@ class OnboardingService:
 
         await self.session.commit()
 
-        fire_and_forget(reembed_user(self.session, uid), name="reembed_user_onboarding")
+        fire_and_forget(reembed_user(uid), name="reembed_user_onboarding")
 
         # Experiences
         await self.session.execute(delete(Experience).where(Experience.user_id == uid))

@@ -40,8 +40,8 @@ class ProjectService(BaseService):
         await self.session.commit()
         await self.session.refresh(project)
 
-        fire_and_forget(reembed_project(self.session, project.id), name="reembed_project")
-        fire_and_forget(reembed_user(self.session, user_id), name="reembed_user")
+        fire_and_forget(reembed_project(project.id), name="reembed_project")
+        fire_and_forget(reembed_user(user_id), name="reembed_user")
 
         await cache.invalidate("explore:")
         return {

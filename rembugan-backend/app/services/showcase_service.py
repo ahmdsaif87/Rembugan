@@ -26,7 +26,7 @@ class ShowcaseService:
         self.session.add(showcase)
         await self.session.commit()
         await self.session.refresh(showcase)
-        fire_and_forget(reembed_showcase(self.session, showcase.id), name="reembed_showcase")
+        fire_and_forget(reembed_showcase(showcase.id), name="reembed_showcase")
         return showcase
 
     async def get_feed(self, user_id: str, page: int, limit: int) -> tuple[list[ShowcaseData], int]:

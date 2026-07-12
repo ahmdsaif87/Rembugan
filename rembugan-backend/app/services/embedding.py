@@ -1,6 +1,5 @@
 import asyncio
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database_sql import async_session_factory
 from app.core.logger import get_logger
 from app.models.user import User
@@ -74,47 +73,53 @@ def text_for_showcase(content: str, tags: list[str]) -> str:
     return " ".join(parts)
 
 
-async def reembed_user(session: AsyncSession, user_id: str):
-    result = await session.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if user:
-        txt = text_for_user(user)
-        emb = await generate(txt)
-        if emb:
-            vec = f'[{",".join(str(x) for x in emb)}]'
-            await session.execute(
-                text(f'UPDATE "User" SET embedding = \'{vec}\'::vector WHERE id = :uid'),
-                {"uid": user_id},
-            )
-            await session.commit()
+async def reembed_user(user_id: str):
+    from app.core.database_sql import async_session_factory
+    async with async_session_factory() as session:
+        result = await session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            txt = text_for_user(user)
+            emb = await generate(txt)
+            if emb:
+                vec = f'[{",".join(str(x) for x in emb)}]'
+                await session.execute(
+                    text(f'UPDATE "User" SET embedding = \'{vec}\'::vector WHERE id = :uid'),
+                    {"uid": user_id},
+                )
+                await session.commit()
 
 
-async def reembed_project(session: AsyncSession, project_id: int):
-    result = await session.execute(select(Project).where(Project.id == project_id))
-    project = result.scalar_one_or_none()
-    if project:
-        txt = text_for_project(project.title, project.description, project.required_skills or [])
-        emb = await generate(txt)
-        if emb:
-            vec = f'[{",".join(str(x) for x in emb)}]'
-            await session.execute(
-                text(f'UPDATE "Project" SET embedding = \'{vec}\'::vector WHERE id = :pid'),
-                {"pid": project_id},
-            )
-            await session.commit()
+async def reembed_project(project_id: int):
+    from app.core.database_sql import async_session_factory
+    async with async_session_factory() as session:
+        result = await session.execute(select(Project).where(Project.id == project_id))
+        project = result.scalar_one_or_none()
+        if project:
+            txt = text_for_project(project.title, project.description, project.required_skills or [])
+            emb = await generate(txt)
+            if emb:
+                vec = f'[{",".join(str(x) for x in emb)}]'
+                await session.execute(
+                    text(f'UPDATE "Project" SET embedding = \'{vec}\'::vector WHERE id = :pid'),
+                    {"pid": project_id},
+                )
+                await session.commit()
 
 
-async def reembed_showcase(session: AsyncSession, showcase_id: str):
+async def reembed_showcase(showcase_id: str):
+    from app.core.database_sql import async_session_factory
     from app.models.social import Showcase
-    result = await session.execute(select(Showcase).where(Showcase.id == showcase_id))
-    showcase = result.scalar_one_or_none()
-    if showcase:
-        txt = text_for_showcase(showcase.content, showcase.tags or [])
-        emb = await generate(txt)
-        if emb:
-            vec = f'[{",".join(str(x) for x in emb)}]'
-            await session.execute(
-                text(f'UPDATE "Showcase" SET embedding = \'{vec}\'::vector WHERE id = :sid'),
-                {"sid": showcase_id},
-            )
-            await session.commit()
+    async with async_session_factory() as session:
+        result = await session.execute(select(Showcase).where(Showcase.id == showcase_id))
+        showcase = result.scalar_one_or_none()
+        if showcase:
+            txt = text_for_showcase(showcase.content, showcase.tags or [])
+            emb = await generate(txt)
+            if emb:
+                vec = f'[{",".join(str(x) for x in emb)}]'
+                await session.execute(
+                    text(f'UPDATE "Showcase" SET embedding = \'{vec}\'::vector WHERE id = :sid'),
+                    {"sid": showcase_id},
+                )
+                await session.commit()
