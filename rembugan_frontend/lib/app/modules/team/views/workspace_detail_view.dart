@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_avatar.dart';
@@ -907,11 +908,17 @@ class _DiscussionTabState extends State<_DiscussionTab> {
   StreamSubscription? _discSub;
   StreamSubscription? _loadingSub;
 
+  final _mentionSuggestions = <WorkspaceMember>[].obs;
+  final _mentionLayer = LayerLink();
+  OverlayEntry? _mentionOverlay;
+  int _mentionIndex = -1;
+
   @override
   void initState() {
     super.initState();
     _msgCtrl = TextEditingController();
     _ctrl = Get.find<TeamController>();
+    _msgCtrl.addListener(_onMessageChanged);
     _discSub = _ctrl.discussions.listen((_) {
       if (_scrollCtrl.hasClients) {
         final isNearBottom = _scrollCtrl.position.maxScrollExtent - _scrollCtrl.position.pixels < 50;
@@ -922,6 +929,97 @@ class _DiscussionTabState extends State<_DiscussionTab> {
       if (!loading) _afterFrame(_scrollToBottom);
     });
     _scrollCtrl.addListener(_onScrollChanged);
+  }
+
+  void _onMessageChanged() {
+    final text = _msgCtrl.text;
+    final cursor = _msgCtrl.selection.baseOffset;
+    if (cursor < 0) { _hideMention(); return; }
+    final before = text.substring(0, cursor);
+    final atIdx = before.lastIndexOf('@');
+    if (atIdx < 0 || (atIdx > 0 && before[atIdx - 1] != ' ' && before[atIdx - 1] != '\n')) {
+      _hideMention();
+      return;
+    }
+    final query = before.substring(atIdx + 1).toLowerCase();
+    _mentionIndex = atIdx;
+
+    final ws = _ctrl.selectedWorkspace.value;
+    if (ws == null || query.isEmpty) { _hideMention(); return; }
+
+    final myId = Get.find<AuthService>().currentUser.value?.id ?? '';
+    final filtered = ws.members.where((m) =>
+      m.name.toLowerCase().contains(query) && m.id != myId
+    ).toList();
+
+    if (filtered.isEmpty) { _hideMention(); return; }
+    _mentionSuggestions.assignAll(filtered.take(5));
+    _showMention();
+  }
+
+  void _showMention() {
+    _mentionOverlay?.remove();
+    _mentionOverlay = OverlayEntry(
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setState) {
+          final c = AppC.of(ctx);
+          return Positioned(
+            width: 240,
+            child: CompositedTransformFollower(
+              link: _mentionLayer,
+              showWhenUnlinked: false,
+              offset: const Offset(0, -240),
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(10),
+                color: c.surface,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: _mentionSuggestions.map((m) => InkWell(
+                    onTap: () => _insertMention(m.name),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      child: Row(
+                        children: [
+                          Icon(FluentIcons.person_24_regular, size: 18, color: c.textSecondary),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(m.name, style: AppFonts.satoshiStyle(fontSize: 13, color: c.textPrimary)),
+                          ),
+                          Text(m.role, style: AppFonts.satoshiStyle(fontSize: 11, color: c.textSecondary)),
+                        ],
+                      ),
+                    ),
+                  )).toList(),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    Overlay.of(context).insert(_mentionOverlay!);
+  }
+
+  void _hideMention() {
+    _mentionOverlay?.remove();
+    _mentionOverlay = null;
+    _mentionSuggestions.clear();
+  }
+
+  void _insertMention(String name) {
+    if (_mentionIndex < 0) { _hideMention(); return; }
+    final before = _msgCtrl.text.substring(0, _mentionIndex);
+    final after = _msgCtrl.text.substring(_msgCtrl.selection.baseOffset);
+    final cursor = _msgCtrl.selection.baseOffset;
+    final beforeAt = _msgCtrl.text.lastIndexOf('@', cursor - 1);
+    if (beforeAt < 0) { _hideMention(); return; }
+    final afterSpace = _msgCtrl.text.indexOf(' ', cursor);
+    final end = afterSpace < 0 ? _msgCtrl.text.length : afterSpace;
+    final newText = _msgCtrl.text.substring(0, beforeAt) + '@$name ' + _msgCtrl.text.substring(end);
+    _msgCtrl.text = newText;
+    _msgCtrl.selection = TextSelection.collapsed(offset: beforeAt + name.length + 2);
+    _hideMention();
   }
 
   double? _lastExtent;
@@ -944,6 +1042,8 @@ class _DiscussionTabState extends State<_DiscussionTab> {
 
   @override
   void dispose() {
+    _msgCtrl.removeListener(_onMessageChanged);
+    _hideMention();
     _discSub?.cancel();
     _loadingSub?.cancel();
     _scrollCtrl.removeListener(_onScrollChanged);
@@ -1293,12 +1393,14 @@ class _DiscussionTabState extends State<_DiscussionTab> {
                       const SizedBox(width: 12),
 
                       Expanded(
-                        child: TextField(
-                          controller: _msgCtrl,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: c.surfaceSecondary,
-                            hintText: 'Tulis pesan...',
+                        child: CompositedTransformTarget(
+                          link: _mentionLayer,
+                          child: TextField(
+                            controller: _msgCtrl,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: c.surfaceSecondary,
+                              hintText: 'Tulis pesan...',
                             hintStyle: AppFonts.satoshiStyle(
                               fontSize: 14,
                               color: c.textTertiary,
@@ -1969,6 +2071,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
   final descCtrl = TextEditingController();
 
   bool isExpanded = false;
+  bool _isSaving = false;
   late List<String> memberNames;
   late Map<String, String> memberIdByName;
   late List<String> memberIds;
@@ -2589,44 +2692,56 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
               width: double.infinity,
               height: 44,
               child: GestureDetector(
-                onTap: () async {
-                  if (titleCtrl.text.trim().isEmpty) return;
-                  final title = titleCtrl.text.trim();
-                  final deadline = selectedDeadline != null
-                      ? '${selectedDeadline!.year.toString().padLeft(4, '0')}-${selectedDeadline!.month.toString().padLeft(2, '0')}-${selectedDeadline!.day.toString().padLeft(2, '0')}'
-                      : deadlineCtrl.text.trim().isNotEmpty
-                          ? deadlineCtrl.text.trim()
-                          : null;
-                  if (_isEditing) {
-                    await widget.ctrl.updateTask(
-                      widget.existingTask!.id,
-                      title: title,
-                      assigneeIds: selectedMemberIds.toList(),
-                      deadline: deadline,
-                    );
-                  } else {
-                    await widget.ctrl.createTask(
-                      title,
-                      selectedMemberIds.toList(),
-                      deadline,
-                    );
-                  }
-                  if (context.mounted) Navigator.pop(context);
-                },
+                onTap: _isSaving
+                    ? null
+                    : () async {
+                        if (titleCtrl.text.trim().isEmpty) return;
+                        setState(() => _isSaving = true);
+                        final title = titleCtrl.text.trim();
+                        final deadline = selectedDeadline != null
+                            ? '${selectedDeadline!.year.toString().padLeft(4, '0')}-${selectedDeadline!.month.toString().padLeft(2, '0')}-${selectedDeadline!.day.toString().padLeft(2, '0')}'
+                            : deadlineCtrl.text.trim().isNotEmpty
+                                ? deadlineCtrl.text.trim()
+                                : null;
+                        if (_isEditing) {
+                          await widget.ctrl.updateTask(
+                            widget.existingTask!.id,
+                            title: title,
+                            assigneeIds: selectedMemberIds.toList(),
+                            deadline: deadline,
+                          );
+                        } else {
+                          await widget.ctrl.createTask(
+                            title,
+                            selectedMemberIds.toList(),
+                            deadline,
+                          );
+                        }
+                        if (context.mounted) Navigator.pop(context);
+                      },
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppColors.primary500,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Text(
-                    _isEditing ? 'Simpan' : 'Tambah Tugas',
-                    style: AppFonts.satoshiStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.white,
+                          ),
+                        )
+                      : Text(
+                          _isEditing ? 'Simpan' : 'Tambah Tugas',
+                          style: AppFonts.satoshiStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.white,
+                          ),
+                        ),
                 ),
               ),
             ),
