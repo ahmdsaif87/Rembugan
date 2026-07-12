@@ -59,9 +59,11 @@ class AuthService extends GetxService {
       await _api.saveToken(token);
       currentUser.value = UserModel(
         id: data['user_id'],
-        nim: '',
+        nim: data['nim'] as String? ?? '',
         fullName: data['full_name'],
         handle: data['handle'] ?? '',
+        email: data['email'] as String?,
+        emailVerified: data['email_verified'] as bool? ?? (data['email'] != null),
         isOnboarded: data['is_onboarded'] ?? false,
       );
       isLoggedIn.value = true;
