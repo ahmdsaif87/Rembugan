@@ -112,11 +112,11 @@ class FakeExploreRepository implements ExploreRepository {
 
   @override
   Future<({List<FeedShowcase> showcases, bool hasNext})> getShowcases({int page = 1, int limit = 10}) async {
-    return (showcases: const [], hasNext: false);
+    return (showcases: <FeedShowcase>[], hasNext: false);
   }
 
   @override
   Future<({List<FeedShowcase> showcases, bool hasNext})> getFollowingShowcases({int page = 1, int limit = 10}) async {
-    return (showcases: const [], hasNext: false);
+    return (showcases: <FeedShowcase>[], hasNext: false);
   }
 }
