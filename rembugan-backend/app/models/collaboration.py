@@ -80,7 +80,7 @@ class Task(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     project = relationship("Project", back_populates="tasks", lazy="selectin")
-    assignees = relationship("TaskAssignee", back_populates="task", lazy="selectin")
+    assignees = relationship("TaskAssignee", back_populates="task", lazy="selectin", cascade="all, delete-orphan")
 
 
 class TaskAssignee(Base):

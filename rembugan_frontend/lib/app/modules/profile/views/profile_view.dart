@@ -209,14 +209,22 @@ class _ProfileCircleButton extends StatelessWidget {
   }
 }
 
-class _ProfileIdentity extends StatelessWidget {
+class _ProfileIdentity extends StatefulWidget {
   const _ProfileIdentity({required this.profile});
 
   final ProfileData profile;
 
   @override
+  State<_ProfileIdentity> createState() => _ProfileIdentityState();
+}
+
+class _ProfileIdentityState extends State<_ProfileIdentity> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
+    final profile = widget.profile;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -299,15 +307,59 @@ class _ProfileIdentity extends StatelessWidget {
         ],
         if (profile.bio.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text(
-            profile.bio,
-            maxLines: 5,
-            overflow: TextOverflow.ellipsis,
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              height: 1.32,
-              color: c.grey900,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final textSpan = TextSpan(
+                text: profile.bio,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  height: 1.32,
+                  color: c.grey900,
+                ),
+              );
+
+              final tp = TextPainter(
+                text: textSpan,
+                textDirection: TextDirection.ltr,
+                maxLines: 5,
+              );
+              tp.layout(maxWidth: constraints.maxWidth);
+              final isOverflowing = tp.didExceedMaxLines;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    profile.bio,
+                    maxLines: _isExpanded ? null : 5,
+                    overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13,
+                      height: 1.32,
+                      color: c.grey900,
+                    ),
+                  ),
+                  if (isOverflowing || _isExpanded) ...[
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isExpanded = !_isExpanded;
+                        });
+                      },
+                      child: Text(
+                        _isExpanded ? 'Lihat Lebih Sedikit' : 'Lihat Selengkapnya',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ],
         if (profile.socialLinks.isNotEmpty) ...[

@@ -381,7 +381,7 @@ class _ProfileCircleButton extends StatelessWidget {
   }
 }
 
-class _ProfileIdentity extends StatelessWidget {
+class _ProfileIdentity extends StatefulWidget {
   const _ProfileIdentity({
     required this.userId,
     required this.name,
@@ -405,8 +405,25 @@ class _ProfileIdentity extends StatelessWidget {
   final List<Map<String, dynamic>> projectHistory;
 
   @override
+  State<_ProfileIdentity> createState() => _ProfileIdentityState();
+}
+
+class _ProfileIdentityState extends State<_ProfileIdentity> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
+    final name = widget.name;
+    final major = widget.major;
+    final userId = widget.userId;
+    final connectionCount = widget.connectionCount;
+    final projectCount = widget.projectCount;
+    final projectHistory = widget.projectHistory;
+    final interest = widget.interest;
+    final bio = widget.bio;
+    final socialLinks = widget.socialLinks;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -489,15 +506,59 @@ class _ProfileIdentity extends StatelessWidget {
         ],
         if (bio.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text(
-            bio,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: AppFonts.satoshiStyle(
-              fontSize: 13,
-              height: 1.32,
-              color: c.grey900,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final textSpan = TextSpan(
+                text: bio,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  height: 1.32,
+                  color: c.grey900,
+                ),
+              );
+
+              final tp = TextPainter(
+                text: textSpan,
+                textDirection: TextDirection.ltr,
+                maxLines: 3,
+              );
+              tp.layout(maxWidth: constraints.maxWidth);
+              final isOverflowing = tp.didExceedMaxLines;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    bio,
+                    maxLines: _isExpanded ? null : 3,
+                    overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    style: AppFonts.satoshiStyle(
+                      fontSize: 13,
+                      height: 1.32,
+                      color: c.grey900,
+                    ),
+                  ),
+                  if (isOverflowing || _isExpanded) ...[
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isExpanded = !_isExpanded;
+                        });
+                      },
+                      child: Text(
+                        _isExpanded ? 'Lihat Lebih Sedikit' : 'Lihat Selengkapnya',
+                        style: AppFonts.satoshiStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ],
         if (socialLinks.isNotEmpty) ...[

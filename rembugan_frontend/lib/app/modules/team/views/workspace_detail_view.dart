@@ -1738,17 +1738,25 @@ class _TaskTab extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               height: 44,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: () => _showAddTaskSheet(context),
-                icon: const Icon(FluentIcons.add_24_regular, size: 16),
-                label: const Text('Tambah Tugas', overflow: TextOverflow.visible),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary500,
                   foregroundColor: AppColors.white,
                   elevation: 0,
+                  minimumSize: const Size(double.infinity, 44),
+                  padding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(FluentIcons.add_24_regular, size: 16),
+                    SizedBox(width: 8),
+                    Text('Tambah Tugas'),
+                  ],
                 ),
               ),
             ),
@@ -2755,11 +2763,11 @@ class _KanbanTaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
-    final isDone = task.status == 'Done';
+    final isDone = task.isDone;
     return Material(
       color: AppColors.transparent,
       child: InkWell(
-        onTap: isDone ? null : onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
           decoration: BoxDecoration(
