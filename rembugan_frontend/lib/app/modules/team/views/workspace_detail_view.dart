@@ -2081,6 +2081,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
 
   bool isExpanded = false;
   bool _isSaving = false;
+  String? _titleError;
   late List<String> memberNames;
   late Map<String, String> memberIdByName;
   late List<String> memberIds;
@@ -2341,6 +2342,13 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
             TextField(
               controller: titleCtrl,
               autofocus: true,
+              onChanged: (val) {
+                if (_titleError != null && val.trim().isNotEmpty) {
+                  setState(() {
+                    _titleError = null;
+                  });
+                }
+              },
               decoration: InputDecoration(
                 filled: true,
                 fillColor: c.grey50,
@@ -2349,6 +2357,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                   fontSize: 13.5,
                   color: c.textTertiary,
                 ),
+                errorText: _titleError,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.sm,
@@ -2704,8 +2713,16 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                 onTap: _isSaving
                     ? null
                     : () async {
-                        if (titleCtrl.text.trim().isEmpty) return;
-                        setState(() => _isSaving = true);
+                        if (titleCtrl.text.trim().isEmpty) {
+                          setState(() {
+                            _titleError = 'Nama tugas tidak boleh kosong';
+                          });
+                          return;
+                        }
+                        setState(() {
+                          _titleError = null;
+                          _isSaving = true;
+                        });
                         final title = titleCtrl.text.trim();
                         final deadline = selectedDeadline != null
                             ? '${selectedDeadline!.year.toString().padLeft(4, '0')}-${selectedDeadline!.month.toString().padLeft(2, '0')}-${selectedDeadline!.day.toString().padLeft(2, '0')}'

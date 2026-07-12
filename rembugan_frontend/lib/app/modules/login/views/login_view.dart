@@ -105,7 +105,7 @@ class LoginView extends GetView<LoginController> {
           Obx(() {
             final msg = controller.errorMessage.value;
             final type = controller.errorType.value;
-            if (msg == null) return const SizedBox.shrink();
+            if (msg == null || type == LoginErrorType.invalidCredentials) return const SizedBox.shrink();
 
             final isNetwork = type == LoginErrorType.network;
             final isCredentials = type == LoginErrorType.invalidCredentials;
@@ -170,16 +170,24 @@ class LoginView extends GetView<LoginController> {
               ),
             );
           }),
-          AppTextField(
-            controller: controller.emailOrNimController,
-            labelText: 'Email atau NIM',
-            hintText: 'nanda@gmail.com atau 23090122',
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              final v = value?.trim() ?? '';
-              if (v.isEmpty) return 'Email/NIM wajib diisi';
-              return null;
-            },
+          Obx(
+            () => AppTextField(
+              controller: controller.emailOrNimController,
+              labelText: 'Email atau NIM',
+              hintText: 'nanda@gmail.com atau 23090122',
+              keyboardType: TextInputType.emailAddress,
+              errorText: controller.emailOrNimError.value,
+              onChanged: (val) {
+                if (controller.emailOrNimError.value != null) {
+                  controller.emailOrNimError.value = null;
+                }
+              },
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return 'Email/NIM wajib diisi';
+                return null;
+              },
+            ),
           ),
           const SizedBox(height: 28),
           _buildPasswordField(c),
@@ -199,6 +207,12 @@ class LoginView extends GetView<LoginController> {
         labelText: 'Kata Sandi',
         hintText: 'Masukan kata sandi',
         obscureText: controller.isPasswordHidden.value,
+        errorText: controller.passwordError.value,
+        onChanged: (val) {
+          if (controller.passwordError.value != null) {
+            controller.passwordError.value = null;
+          }
+        },
         validator: (value) {
           if (value == null || value.isEmpty) return 'Kata sandi wajib diisi';
           if (value.length < 6) return 'Kata sandi minimal 6 karakter';

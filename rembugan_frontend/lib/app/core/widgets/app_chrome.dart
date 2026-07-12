@@ -546,6 +546,7 @@ class AppTextField extends StatelessWidget {
     this.initialValue,
     this.hintText,
     this.labelText,
+    this.errorText,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.textInputAction,
@@ -584,6 +585,7 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onFieldSubmitted;
   final bool enabled;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -617,6 +619,7 @@ class AppTextField extends StatelessWidget {
           style: AppTextStyles.bodyMedium(color: c.textPrimary),
           decoration: InputDecoration(
             hintText: hintText,
+            errorText: errorText,
             counterText: maxLength == null ? null : '',
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,

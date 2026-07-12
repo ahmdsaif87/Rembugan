@@ -19,6 +19,8 @@ class LoginController extends GetxController {
 
   final errorMessage = Rxn<String>();
   final errorType = Rx<LoginErrorType?>(null);
+  final emailOrNimError = Rxn<String>();
+  final passwordError = Rxn<String>();
 
   void togglePasswordVisibility() {
     isPasswordHidden.value = !isPasswordHidden.value;
@@ -27,6 +29,19 @@ class LoginController extends GetxController {
   void clearError() {
     errorMessage.value = null;
     errorType.value = null;
+    emailOrNimError.value = null;
+    passwordError.value = null;
+  }
+
+  void _setCredentialsError(String msg) {
+    final lowerMsg = msg.toLowerCase();
+    if (lowerMsg.contains('nim') || lowerMsg.contains('email') || lowerMsg.contains('tidak ditemukan') || lowerMsg.contains('user not found')) {
+      emailOrNimError.value = msg;
+    } else if (lowerMsg.contains('password') || lowerMsg.contains('sandi') || lowerMsg.contains('salah') || lowerMsg.contains('incorrect')) {
+      passwordError.value = msg;
+    } else {
+      errorMessage.value = msg;
+    }
   }
 
   void onLogin() async {
@@ -41,7 +56,7 @@ class LoginController extends GetxController {
       );
 
       if (error != null) {
-        errorMessage.value = error;
+        _setCredentialsError(error);
         errorType.value = LoginErrorType.invalidCredentials;
         return;
       }
@@ -65,7 +80,7 @@ class LoginController extends GetxController {
         errorMessage.value = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
         errorType.value = LoginErrorType.network;
       } else if (e.response?.statusCode == 401) {
-        errorMessage.value = detail;
+        _setCredentialsError(detail);
         errorType.value = LoginErrorType.invalidCredentials;
       } else if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
         errorMessage.value = 'Server sedang sibuk. Coba lagi nanti.';
