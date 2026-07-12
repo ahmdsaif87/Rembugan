@@ -1401,33 +1401,34 @@ class _DiscussionTabState extends State<_DiscussionTab> {
                               filled: true,
                               fillColor: c.surfaceSecondary,
                               hintText: 'Tulis pesan...',
-                            hintStyle: AppFonts.satoshiStyle(
-                              fontSize: 14,
-                              color: c.textTertiary,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide(
-                                color: c.primarySoft,
-                                width: 1,
+                              hintStyle: AppFonts.satoshiStyle(
+                                fontSize: 14,
+                                color: c.textTertiary,
                               ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide(
+                                  color: c.primarySoft,
+                                  width: 1,
+                                ),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              ),
+                            style: AppFonts.satoshiStyle(
+                              fontSize: 14,
+                              color: c.textPrimary,
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          style: AppFonts.satoshiStyle(
-                            fontSize: 14,
-                            color: c.textPrimary,
                           ),
                         ),
                       ),
