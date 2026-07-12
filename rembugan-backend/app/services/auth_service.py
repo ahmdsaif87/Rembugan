@@ -63,7 +63,7 @@ class AuthService:
         user = result.scalar_one_or_none()
 
         if not user:
-            raise HTTPException(status_code=401, detail="NIM/Email atau password salah.")
+            raise HTTPException(status_code=401, detail="NIM/Email tidak ditemukan.")
 
         if not user.email_verified and not user.nim:
             raise HTTPException(
@@ -72,7 +72,7 @@ class AuthService:
             )
 
         if not verify_password(password, user.password):
-            raise HTTPException(status_code=401, detail="NIM/Email atau password salah.")
+            raise HTTPException(status_code=401, detail="Password salah.")
 
         token = create_jwt_token(user.id, user.email or user.nim or "")
         return {

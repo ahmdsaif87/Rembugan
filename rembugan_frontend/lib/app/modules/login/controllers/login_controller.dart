@@ -58,19 +58,20 @@ class LoginController extends GetxController {
         Get.offAllNamed(Routes.HOME);
       }
     } on DioException catch (e) {
+      final detail = e.response?.data?['detail']?.toString() ?? '';
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.connectionError) {
         errorMessage.value = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
         errorType.value = LoginErrorType.network;
       } else if (e.response?.statusCode == 401) {
-        errorMessage.value = 'Email/NIM atau kata sandi salah.';
+        errorMessage.value = detail;
         errorType.value = LoginErrorType.invalidCredentials;
       } else if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
         errorMessage.value = 'Server sedang sibuk. Coba lagi nanti.';
         errorType.value = LoginErrorType.server;
       } else {
-        errorMessage.value = e.response?.data?['detail'] ?? 'Terjadi kesalahan. Coba lagi.';
+        errorMessage.value = detail.isEmpty ? 'Terjadi kesalahan. Coba lagi.' : detail;
         errorType.value = LoginErrorType.unknown;
       }
     } catch (_) {

@@ -175,6 +175,11 @@ class LoginView extends GetView<LoginController> {
             labelText: 'Email atau NIM',
             hintText: 'nanda@gmail.com atau 23090122',
             keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return 'Email/NIM wajib diisi';
+              return null;
+            },
           ),
           const SizedBox(height: 28),
           _buildPasswordField(c),
@@ -194,6 +199,11 @@ class LoginView extends GetView<LoginController> {
         labelText: 'Kata Sandi',
         hintText: 'Masukan kata sandi',
         obscureText: controller.isPasswordHidden.value,
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Kata sandi wajib diisi';
+          if (value.length < 6) return 'Kata sandi minimal 6 karakter';
+          return null;
+        },
         suffixIcon: GestureDetector(
           onTap: controller.togglePasswordVisibility,
           child: Padding(

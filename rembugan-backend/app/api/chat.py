@@ -13,7 +13,7 @@ from app.core.database_sql import get_db_session, async_session_factory
 from app.core.response import response_success
 from app.core.security import verify_token
 from app.core.constants import CHAT_HISTORY_MAX, NOTIF_GROUP_TAG, NOTIF_CHAT, NOTIF_FILE_UPLOADED
-from app.models import User, Message, ProjectMember
+from app.models import User, Message, Project, ProjectMember
 from app.services.chat_manager import manager
 from app.services.notification import notify
 from app.services.storage import upload_image_to_cloudinary
@@ -43,14 +43,18 @@ async def websocket_chat(
     async with async_session_factory() as session:
         if room_id.isdigit():
             project_id = int(room_id)
-            stmt = select(ProjectMember).where(
-                ProjectMember.project_id == project_id,
-                ProjectMember.user_id == user_id,
-            )
-            is_member = (await session.execute(stmt)).scalar_one_or_none()
-            if not is_member:
-                await websocket.close(code=4003, reason="Bukan anggota proyek ini")
-                return
+            proj = (await session.execute(select(Project).where(Project.id == project_id))).scalar_one_or_none()
+            if proj and proj.owner_id == user_id:
+                pass
+            else:
+                stmt = select(ProjectMember).where(
+                    ProjectMember.project_id == project_id,
+                    ProjectMember.user_id == user_id,
+                )
+                is_member = (await session.execute(stmt)).scalar_one_or_none()
+                if not is_member:
+                    await websocket.close(code=4003, reason="Bukan anggota proyek ini")
+                    return
         elif room_id.startswith("dm_"):
             parts = room_id.split("_")
             if len(parts) >= 3:
