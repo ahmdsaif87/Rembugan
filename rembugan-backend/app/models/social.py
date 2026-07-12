@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime, Integer, Text, ForeignKey, func
+from sqlalchemy import String, Boolean, DateTime, Integer, Text, ForeignKey, ARRAY, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database_sql import Base
 
@@ -10,8 +10,8 @@ class Showcase(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     author_id: Mapped[str] = mapped_column(String(36), ForeignKey("User.id", ondelete="CASCADE"))
     content: Mapped[str] = mapped_column(Text)
-    media_urls: Mapped[list[str]] = mapped_column("media_urls", String(500))
-    tags: Mapped[list[str]] = mapped_column("tags", String(255))
+    media_urls: Mapped[list[str]] = mapped_column("media_urls", ARRAY(Text))
+    tags: Mapped[list[str]] = mapped_column("tags", ARRAY(String(255)))
     linked_project_id: Mapped[int | None] = mapped_column(ForeignKey("Project.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

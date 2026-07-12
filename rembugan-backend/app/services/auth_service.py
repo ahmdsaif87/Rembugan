@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,11 +20,14 @@ class AuthService:
         if existing:
             raise HTTPException(status_code=400, detail="NIM sudah terdaftar.")
 
+        now = datetime.now(timezone.utc)
         user = User(
             nim=nim,
             password=hash_password(password),
             full_name=full_name,
             major=major,
+            created_at=now,
+            updated_at=now,
         )
         self.session.add(user)
         await self.session.commit()
