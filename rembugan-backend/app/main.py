@@ -20,7 +20,6 @@ setup_logging()
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload, qr, saved, posts
 from app.api.admin import router as admin_router
@@ -145,9 +144,6 @@ app.add_middleware(
     ],
     expose_headers=["X-Request-ID"],
 )
-
-# Kompresi respons (gzip) — hemat bandwidth
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Request body size limit — 10MB
 MAX_BODY_SIZE = 10 * 1024 * 1024
