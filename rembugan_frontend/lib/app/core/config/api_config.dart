@@ -7,7 +7,7 @@ class ApiConfig {
 
   static const String _compileTimeBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000',
+    defaultValue: 'http://192.168.1.5:8000',
   );
 
   static String get baseUrl =>
