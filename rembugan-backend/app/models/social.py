@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from sqlalchemy import String, Boolean, DateTime, Integer, Text, ForeignKey, ARRAY, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -7,7 +8,7 @@ from app.core.database_sql import Base
 class Showcase(Base):
     __tablename__ = "Showcase"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     author_id: Mapped[str] = mapped_column(String(36), ForeignKey("User.id", ondelete="CASCADE"))
     content: Mapped[str] = mapped_column(Text)
     media_urls: Mapped[list[str]] = mapped_column("media_urls", ARRAY(Text))

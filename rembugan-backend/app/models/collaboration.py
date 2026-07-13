@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from sqlalchemy import String, Boolean, DateTime, Integer, Text, ForeignKey, ARRAY, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -50,7 +51,7 @@ class ProjectMember(Base):
 class ProjectInvite(Base):
     __tablename__ = "ProjectInvite"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     project_id: Mapped[int] = mapped_column(ForeignKey("Project.id", ondelete="CASCADE"))
     token: Mapped[str] = mapped_column(String(255), unique=True)
     created_by: Mapped[str] = mapped_column(String(36))
