@@ -85,7 +85,6 @@ class WorkspaceRepository {
           tasks.add(WorkspaceTask(
             id: raw['id'] as int? ?? 0,
             title: raw['title'] as String? ?? '',
-            description: raw['description'] as String? ?? '',
             assigneeNames: assigneeList
                 .map((a) => a['name'] as String? ?? '')
                 .toList(),
@@ -175,13 +174,12 @@ class WorkspaceRepository {
     );
   }
 
-  Future<Map<String, dynamic>?> createTask(int projectId, String title, List<String> assigneeIds, String? deadline, {String? description}) async {
+  Future<Map<String, dynamic>?> createTask(int projectId, String title, List<String> assigneeIds, String? deadline) async {
     try {
       final response = await _api.post('/workspace/$projectId/tasks', data: {
         'title': title,
         'assignee_ids': assigneeIds,
         if (deadline != null) 'deadline': deadline,
-        if (description != null && description.isNotEmpty) 'description': description,
       });
       final data = response.data as Map<String, dynamic>;
       return data;
@@ -201,13 +199,12 @@ class WorkspaceRepository {
     }
   }
 
-  Future<Map<String, dynamic>?> updateTask(int taskId, {String? title, List<String>? assigneeIds, String? deadline, String? description}) async {
+  Future<Map<String, dynamic>?> updateTask(int taskId, {String? title, List<String>? assigneeIds, String? deadline}) async {
     try {
       final data = <String, dynamic>{};
       if (title != null) data['title'] = title;
       if (assigneeIds != null) data['assignee_ids'] = assigneeIds;
       if (deadline != null) data['deadline'] = deadline;
-      if (description != null) data['description'] = description;
       final response = await _api.put('/workspace/tasks/$taskId', data: data);
       return response.data as Map<String, dynamic>;
     } catch (e) {

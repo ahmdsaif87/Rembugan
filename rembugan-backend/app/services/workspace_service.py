@@ -19,16 +19,6 @@ from app.services.chat_manager import manager
 from app.services.notification import notify
 
 
-def _parse_dt(value: str) -> datetime | None:
-    dt = datetime.fromisoformat(value)
-    if isinstance(dt, datetime):
-        return dt
-    from datetime import date
-    if isinstance(dt, date):
-        return datetime.combine(dt, datetime.min.time())
-    return dt
-
-
 @dataclass
 class WorkspaceService:
     session: AsyncSession = Depends(get_db_session)
@@ -681,8 +671,7 @@ class WorkspaceService:
 
     async def create_task(
         self, project_id: int, user_id: str,
-        title: str, assignee_ids: list[str], deadline: str | None,
-        description: str | None = None,
+        title: str, assignee_ids: list[str], deadline: str | None
     ) -> dict:
         result = await self.session.execute(select(Project).where(Project.id == project_id))
         project = result.scalar_one_or_none()
@@ -699,7 +688,7 @@ class WorkspaceService:
         if not member and project.owner_id != user_id:
             raise HTTPException(status_code=403, detail="Kamu bukan member proyek ini.")
 
-        deadline_dt = _parse_dt(deadline) if deadline else None
+        deadline_dt = datetime.fromisoformat(deadline) if deadline else None
 
         valid_assignee_ids = []
         if assignee_ids:
@@ -713,7 +702,6 @@ class WorkspaceService:
         task = Task(
             project_id=project_id,
             title=title,
-            description=description,
             status=TASK_TODO,
             deadline=deadline_dt,
         )
@@ -750,7 +738,6 @@ class WorkspaceService:
         return {
             "id": task.id,
             "title": task.title,
-            "description": task.description,
             "status": task.status,
             "assignees": [
                 {"id": a.user_id, "name": a_users_map.get(a.user_id).full_name if a_users_map.get(a.user_id) else None}
@@ -823,7 +810,6 @@ class WorkspaceService:
             item = {
                 "id": t.id,
                 "title": t.title,
-                "description": t.description,
                 "status": t.status,
                 "assignees": [
                     {"id": a.user_id, "name": a_users_map.get(a.user_id).full_name if a_users_map.get(a.user_id) else None}
@@ -839,8 +825,7 @@ class WorkspaceService:
 
     async def update_task(
         self, task_id: int, user_id: str,
-        title: str | None, deadline: str | None, assignee_ids: list[str] | None,
-        description: str | None = None,
+        title: str | None, deadline: str | None, assignee_ids: list[str] | None
     ) -> dict:
         result = await self.session.execute(
             select(Task).where(Task.id == task_id)
@@ -864,10 +849,8 @@ class WorkspaceService:
 
         if title is not None:
             task.title = title
-        if description is not None:
-            task.description = description
         if deadline is not None:
-            task.deadline = _parse_dt(deadline)
+            task.deadline = datetime.fromisoformat(deadline)
 
         if assignee_ids is not None:
             await self.session.execute(
@@ -901,7 +884,6 @@ class WorkspaceService:
         return {
             "id": task.id,
             "title": task.title,
-            "description": task.description,
             "status": task.status,
             "assignees": [
                 {"id": a.user_id, "name": a_users_map.get(a.user_id).full_name if a_users_map.get(a.user_id) else None}

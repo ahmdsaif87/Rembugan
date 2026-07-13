@@ -169,7 +169,6 @@ class AttachmentData {
 class WorkspaceTask {
   final int id;
   final String title;
-  final String description;
   final List<String> assigneeNames;
   final List<String> assigneeIds;
   final String deadline;
@@ -178,7 +177,6 @@ class WorkspaceTask {
   const WorkspaceTask({
     this.id = 0,
     required this.title,
-    this.description = '',
     this.assigneeNames = const [],
     this.assigneeIds = const [],
     required this.deadline,
@@ -218,7 +216,6 @@ class TeamController extends GetxController {
   final attachedGroupFileName = RxnString();
   final attachedGroupFileSize = RxnString();
   final isUploading = false.obs;
-  final moveLoadingIds = <int>{};
 
   void attachGroupFile(String name, String size) {
     attachedGroupFileName.value = name;
@@ -476,31 +473,26 @@ class TeamController extends GetxController {
     detailTabIndex.value = 0;
   }
 
-  Future<void> createTask(String title, List<String> assigneeIds, String? deadline, {String? description}) async {
+  Future<void> createTask(String title, List<String> assigneeIds, String? deadline) async {
     final ws = selectedWorkspace.value;
     if (ws == null) return;
     final pid = int.tryParse(ws.id);
     if (pid == null) return;
-    await _repo.createTask(pid, title, assigneeIds, deadline, description: description);
+    await _repo.createTask(pid, title, assigneeIds, deadline);
     tasks.assignAll(await _repo.getTasks(pid));
   }
 
   Future<void> moveTask(int taskId, String newStatus) async {
-    moveLoadingIds.add(taskId);
-    try {
-      await _repo.moveTask(taskId, newStatus);
-      final ws = selectedWorkspace.value;
-      if (ws == null) return;
-      final pid = int.tryParse(ws.id);
-      if (pid == null) return;
-      tasks.assignAll(await _repo.getTasks(pid));
-    } finally {
-      moveLoadingIds.remove(taskId);
-    }
+    await _repo.moveTask(taskId, newStatus);
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final pid = int.tryParse(ws.id);
+    if (pid == null) return;
+    tasks.assignAll(await _repo.getTasks(pid));
   }
 
-  Future<void> updateTask(int taskId, {String? title, List<String>? assigneeIds, String? deadline, String? description}) async {
-    await _repo.updateTask(taskId, title: title, assigneeIds: assigneeIds, deadline: deadline, description: description);
+  Future<void> updateTask(int taskId, {String? title, List<String>? assigneeIds, String? deadline}) async {
+    await _repo.updateTask(taskId, title: title, assigneeIds: assigneeIds, deadline: deadline);
     final ws = selectedWorkspace.value;
     if (ws == null) return;
     final pid = int.tryParse(ws.id);
@@ -509,17 +501,12 @@ class TeamController extends GetxController {
   }
 
   Future<void> deleteTask(int taskId) async {
-    moveLoadingIds.add(taskId);
-    try {
-      await _repo.deleteTask(taskId);
-      final ws = selectedWorkspace.value;
-      if (ws == null) return;
-      final pid = int.tryParse(ws.id);
-      if (pid == null) return;
-      tasks.assignAll(await _repo.getTasks(pid));
-    } finally {
-      moveLoadingIds.remove(taskId);
-    }
+    await _repo.deleteTask(taskId);
+    final ws = selectedWorkspace.value;
+    if (ws == null) return;
+    final pid = int.tryParse(ws.id);
+    if (pid == null) return;
+    tasks.assignAll(await _repo.getTasks(pid));
   }
 
   Future<bool> createProject({
