@@ -8,6 +8,17 @@ from app.services.profile_service import ProfileService
 router = APIRouter(prefix="/profile", tags=["Profil User"])
 
 
+@router.get("/recommended-for-project/{project_id}", summary="Rekomendasi User untuk Offering Proyek")
+async def get_recommended_for_project(
+    project_id: int,
+    limit: int = Query(10, ge=1, le=50),
+    user_token: dict = Depends(verify_token),
+    svc: ProfileService = Depends(),
+):
+    result = await svc.get_recommended_for_project(user_token["uid"], project_id, limit)
+    return response_success(result)
+
+
 @router.patch("/settings", summary="Update Settings Profil")
 async def update_settings(
     data: SettingsUpdateInput,

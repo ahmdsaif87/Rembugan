@@ -130,6 +130,22 @@ class ApiExploreRepository implements ExploreRepository {
   }
 
   @override
+  Future<List<ExplorePerson>> getOfferingPeople(int projectId) async {
+    try {
+      final response = await _api.get('/profile/recommended-for-project/$projectId');
+      final data = response.data as Map<String, dynamic>;
+      final items = data['data'] as List<dynamic>;
+      return items.map((item) {
+        final raw = item as Map<String, dynamic>;
+        return _mapToPerson(raw);
+      }).toList();
+    } catch (e) {
+      debugPrint('ApiExploreRepository.getOfferingPeople error: $e');
+      return [];
+    }
+  }
+
+  @override
   Future<List<ExplorePerson>> searchPeople(String query) async {
     try {
       final response = await _api.get('/profile/search', queryParameters: {'q': query});

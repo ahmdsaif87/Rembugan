@@ -251,6 +251,12 @@ class ProfileService:
             )
             rows = raw.fetchall()
 
+        # Fallback: no embedding or no vector results — match by skills & interest
+        if not rows:
+            rows = await self._fallback_recommend_by_skills(
+                user_id, limit, connected_ids
+            )
+
         other_ids = [r[0] for r in rows]
 
         # Batch fetch connection status
@@ -293,6 +299,143 @@ class ProfileService:
             })
 
         await cache.set(cache_key, result, ttl=60)
+        return result
+
+    async def _fallback_recommend_by_skills(
+        self, user_id: str, limit: int, connected_ids: set
+    ) -> list[tuple]:
+        stmt = (
+            select(User)
+            .options(selectinload(User.skills).selectinload(UserSkill.skill))
+            .where(User.id == user_id)
+        )
+        user = (await self.session.execute(stmt)).scalar_one_or_none()
+        if not user:
+            return []
+
+        user_skill_names = {s.skill.name.lower() for s in (user.skills or [])}
+        user_interest = (user.interest or "").lower()
+
+        if not user_skill_names and not user_interest:
+            return []
+
+        exclude_ids = {user_id, *connected_ids}
+        stmt = (
+            select(User)
+            .options(selectinload(User.skills).selectinload(UserSkill.skill))
+            .where(User.id.notin_(exclude_ids))
+        )
+        all_others = (await self.session.execute(stmt)).scalars().all()
+
+        scored: list[tuple[int, User]] = []
+        for other in all_others:
+            other_skills = {s.skill.name.lower() for s in (other.skills or [])}
+            score = 0
+            if user_skill_names and other_skills:
+                score += len(user_skill_names & other_skills) * 10
+            if user_interest and other.interest:
+                oi = other.interest.lower()
+                if user_interest in oi or oi in user_interest:
+                    score += 5
+            if score > 0:
+                scored.append((score, other))
+
+        scored.sort(key=lambda x: -x[0])
+        scored = scored[:limit]
+
+        return [
+            (
+                u.id,
+                u.full_name,
+                u.photo_url,
+                u.major,
+                u.bio,
+            )
+            for _, u in scored
+        ]
+
+    async def get_recommended_for_project(
+        self, user_id: str, project_id: int, limit: int
+    ) -> list[dict]:
+        stmt = select(Project).where(Project.id == project_id)
+        project = (await self.session.execute(stmt)).scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=404, detail="Proyek tidak ditemukan")
+        if project.owner_id != user_id:
+            raise HTTPException(status_code=403, detail="Hanya pemilik proyek yang bisa melihat rekomendasi ini")
+
+        required_skills = [s.lower().strip() for s in (project.required_skills or []) if s.strip()]
+        if not required_skills:
+            return []
+
+        # Get connected user IDs
+        stmt = select(Connection).where(
+            and_(
+                Connection.status == "accepted",
+                or_(Connection.sender_id == user_id, Connection.receiver_id == user_id),
+            )
+        )
+        connections = (await self.session.execute(stmt)).scalars().all()
+        connected_ids = {user_id}
+        for c in connections:
+            other = c.receiver_id if c.sender_id == user_id else c.sender_id
+            connected_ids.add(other)
+
+        # Find users with matching skills
+        stmt = (
+            select(
+                User.id,
+                User.full_name,
+                User.photo_url,
+                User.major,
+                User.bio,
+                sa_func.array_agg(Skill.name).label("matched_skills"),
+                sa_func.count(Skill.id).label("match_count"),
+            )
+            .select_from(User)
+            .join(UserSkill, UserSkill.user_id == User.id)
+            .join(Skill, Skill.id == UserSkill.skill_id)
+            .where(
+                and_(
+                    sa_func.lower(Skill.name).in_(required_skills),
+                    User.id.notin_(list(connected_ids)),
+                )
+            )
+            .group_by(User.id, User.full_name, User.photo_url, User.major, User.bio)
+            .order_by(sa_func.count(Skill.id).desc())
+            .limit(limit)
+        )
+        raw = await self.session.execute(stmt)
+        rows = raw.fetchall()
+
+        # Connection status
+        other_ids = [r[0] for r in rows]
+        conn_map = {}
+        if other_ids:
+            stmt = select(Connection).where(
+                or_(
+                    and_(Connection.sender_id == user_id, Connection.receiver_id.in_(other_ids)),
+                    and_(Connection.sender_id.in_(other_ids), Connection.receiver_id == user_id),
+                )
+            )
+            conns = (await self.session.execute(stmt)).scalars().all()
+            for conn in conns:
+                other = conn.receiver_id if conn.sender_id == user_id else conn.sender_id
+                conn_map[other] = conn.status
+
+        result = []
+        for r in rows:
+            result.append({
+                "id": r[0],
+                "full_name": r[1],
+                "photo_url": r[2],
+                "major": r[3],
+                "bio": r[4],
+                "skills": list(r[5]) if r[5] else [],
+                "match_count": r[6] or 0,
+                "connection_status": conn_map.get(r[0]),
+            })
+
         return result
 
     async def search(self, query: str) -> list[dict]:

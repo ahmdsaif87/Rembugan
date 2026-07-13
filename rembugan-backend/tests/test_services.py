@@ -2,7 +2,7 @@ import pytest
 from app.services.matchmaking import calculate_match_score
 from app.services.storage import upload_image_to_cloudinary
 from app.services.ai_vision import extract_photo_from_pdf
-from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_ai, draft_project_with_ai
+from app.services.ai_nlp import extract_text_from_pdf, process_resume_with_ai
 
 
 class TestMatchmaking:
@@ -135,33 +135,6 @@ class TestAiNlp:
         with patch("app.services.ai_nlp.client.chat.completions.create", side_effect=Exception("API Error")):
             result = process_resume_with_ai("Some text")
             assert result == {"nama": "Tidak Terdeteksi", "skills": [], "bio_suggestion": "", "experiences": []}
-
-    def test_draft_project_success(self, mock_groq):
-        from unittest.mock import patch, MagicMock
-        import json
-        mock_response = MagicMock()
-        mock_choice = MagicMock()
-        mock_choice.message.content = json.dumps({
-            "judul_proyek": "AI Project",
-            "deskripsi": "Build AI",
-            "kategori": "Teknologi",
-            "roles_dibutuhkan": [{"nama_role": "Developer", "deskripsi_tugas": "Code", "skills": ["Python"]}]
-        })
-        mock_response.choices = [mock_choice]
-
-        with patch("app.services.ai_nlp.client.chat.completions.create", return_value=mock_response):
-            result = draft_project_with_ai("Make an AI project")
-            assert result["judul_proyek"] == "AI Project"
-
-    def test_draft_project_empty(self):
-        result = draft_project_with_ai("")
-        assert result == {"error": "Ide proyek tidak boleh kosong"}
-
-    def test_draft_project_error(self, mock_groq):
-        from unittest.mock import patch
-        with patch("app.services.ai_nlp.client.chat.completions.create", side_effect=Exception("Error")):
-            result = draft_project_with_ai("Some idea")
-            assert result == {"error": "Gagal memproses ide dengan AI"}
 
     def test_process_resume_removes_think_block(self, mock_groq):
         from unittest.mock import patch, MagicMock

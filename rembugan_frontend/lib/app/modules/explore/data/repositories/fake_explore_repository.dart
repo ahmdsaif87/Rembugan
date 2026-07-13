@@ -98,6 +98,11 @@ class FakeExploreRepository implements ExploreRepository {
   }
 
   @override
+  Future<List<ExplorePerson>> getOfferingPeople(int projectId) async {
+    return const [];
+  }
+
+  @override
   Future<List<ExplorePerson>> searchPeople(String query) async {
     return const [];
   }

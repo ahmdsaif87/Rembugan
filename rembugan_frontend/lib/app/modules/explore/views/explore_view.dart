@@ -292,13 +292,20 @@ class ExploreView extends GetView<ExploreController> {
     return Obx(
       () {
         if (controller.filteredPeople.isEmpty) {
+          final emptyMsg = controller.hasActiveOffering
+              ? 'Belum ada pengguna dengan skill yang cocok untuk "${controller.activeOfferingTitle.value}".'
+              : 'Coba ubah kata kunci atau filter untuk menemukan pengguna lain.';
           return _buildEmptyState(
             context,
             icon: FluentIcons.person_search_24_regular,
             title: 'Orang tidak ditemukan',
-            message: 'Coba ubah kata kunci atau filter untuk menemukan pengguna lain.',
-            actionLabel: 'Reset Filter',
-            onAction: controller.clearAllFilters,
+            message: emptyMsg,
+            actionLabel: controller.hasActiveOffering
+                ? 'Kembali ke rekomendasi umum'
+                : 'Reset Filter',
+            onAction: controller.hasActiveOffering
+                ? controller.clearActiveOffering
+                : controller.clearAllFilters,
           );
         }
         return ListView.separated(
@@ -307,9 +314,22 @@ class ExploreView extends GetView<ExploreController> {
           separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 12 : 16),
           itemBuilder: (context, index) {
             if (index == 0) {
-              return _SectionHeader(
-                title: 'Rekomendasi',
-                trailing: '${controller.filteredPeople.length} hasil',
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (controller.hasActiveOffering)
+                    _OfferingContextHeader(
+                      projectTitle: controller.activeOfferingTitle.value!,
+                      onBackToGeneral: controller.clearActiveOffering,
+                    ),
+                  const SizedBox(height: 8),
+                  _SectionHeader(
+                    title: controller.hasActiveOffering
+                        ? 'Rekomendasi untuk "${controller.activeOfferingTitle.value}"'
+                        : 'Rekomendasi',
+                    trailing: '${controller.filteredPeople.length} hasil',
+                  ),
+                ],
               );
             }
 
@@ -500,6 +520,13 @@ class ExploreView extends GetView<ExploreController> {
   }) {
     final c = AppC.of(context);
     var applying = false;
+
+    final ctrl = Get.find<ExploreController>();
+    if (project.isOwner) {
+      ctrl.setActiveOffering(project.projectId, project.title);
+    } else if (ctrl.hasActiveOffering) {
+      ctrl.clearActiveOffering();
+    }
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -1598,6 +1625,81 @@ class _CompleteProfileBanner extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _OfferingContextHeader extends StatelessWidget {
+  const _OfferingContextHeader({
+    required this.projectTitle,
+    required this.onBackToGeneral,
+  });
+
+  final String projectTitle;
+  final VoidCallback onBackToGeneral;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.primary50,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.primary200),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mencari anggota untuk proyekmu',
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  projectTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.satoshiStyle(
+                    fontSize: 11,
+                    color: AppColors.primary600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onBackToGeneral,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+                border: Border.all(color: AppColors.primary200),
+              ),
+              child: Text(
+                'Ganti',
+                style: AppFonts.satoshiStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
