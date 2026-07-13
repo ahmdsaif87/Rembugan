@@ -34,6 +34,27 @@ class ExploreController extends GetxController {
 
   final activeTab = ExploreTab.project.obs;
 
+  // Active offering state
+  final activeOfferingProjectId = RxnInt();
+  final activeOfferingTitle = RxnString();
+  bool get hasActiveOffering => activeOfferingProjectId.value != null;
+
+  void setActiveOffering(int projectId, String title) {
+    activeOfferingProjectId.value = projectId;
+    activeOfferingTitle.value = title;
+    if (activeTab.value == ExploreTab.people) {
+      _loadPeople();
+    }
+  }
+
+  void clearActiveOffering() {
+    activeOfferingProjectId.value = null;
+    activeOfferingTitle.value = null;
+    if (activeTab.value == ExploreTab.people) {
+      _loadPeople();
+    }
+  }
+
   // Dynamic filter observables
   final selectedSort = 'Paling relevan'.obs;
   final selectedFaculty = 'Semua jurusan'.obs;
@@ -127,6 +148,24 @@ class ExploreController extends GetxController {
     }
   }
 
+  Future<void> _loadPeople() async {
+    List<ExplorePerson> loadedPeople;
+
+    if (hasActiveOffering) {
+      loadedPeople = await _repository.getOfferingPeople(
+        activeOfferingProjectId.value!,
+      );
+    } else {
+      loadedPeople = await _repository.getRecommendedPeople();
+    }
+
+    _savedRecommendedPeople
+      ..clear()
+      ..addAll(loadedPeople);
+    people.assignAll(loadedPeople);
+    filteredPeople.assignAll(loadedPeople);
+  }
+
   void loadExploreData() async {
     isLoading.value = true;
     hasError.value = false;
@@ -138,64 +177,22 @@ class ExploreController extends GetxController {
       filteredProjects.assignAll(projectResult.projects);
       projectTotalAvailable = projectResult.total;
 
-      final results = await Future.wait([
-        _repository.getCompetitions(),
-        _repository.getRecommendedPeople(),
-        _repository.getMyOfferingsSkills(),
-      ]);
-
-      final loadedCompetitions = results[0] as List<Competition>;
+      final loadedCompetitions = await _repository.getCompetitions();
       competitions.assignAll(loadedCompetitions);
       filteredCompetitions.assignAll(loadedCompetitions);
 
-      final loadedPeople = results[1] as List<ExplorePerson>;
-      final offeringSkills = results[2] as List<String>;
-
-      // Set matchLabel only when offering exists with matching skills
-      List<ExplorePerson> processedPeople;
-      if (offeringSkills.isNotEmpty) {
-        final offeringLower = offeringSkills.map((s) => s.toLowerCase()).toSet();
-        processedPeople = loadedPeople.map((person) {
-          final hasMatch = person.tags.any(
-            (t) => offeringLower.contains(t.toLowerCase()),
-          );
-          return ExplorePerson(
-            id: person.id,
-            name: person.name,
-            role: person.role,
-            avatarUrl: person.avatarUrl,
-            tags: person.tags,
-            matchLabel: hasMatch ? 'Rekomendasi untukmu' : '',
-          );
-        }).toList();
-      } else {
-        processedPeople = loadedPeople.map((p) => ExplorePerson(
-          id: p.id,
-          name: p.name,
-          role: p.role,
-          avatarUrl: p.avatarUrl,
-          tags: p.tags,
-          matchLabel: '',
-        )).toList();
-      }
-
-      _savedRecommendedPeople
-        ..clear()
-        ..addAll(processedPeople);
-      people.assignAll(processedPeople);
-      filteredPeople.assignAll(processedPeople);
+      await _loadPeople();
 
       applyFilters();
     } catch (e) {
       debugPrint('ExploreController.loadExploreData error: $e');
       hasError.value = true;
       errorMessage.value = 'Gagal memuat data. Periksa koneksi atau coba lagi.';
-      // If offering endpoint fails, show people without badge
-      final loadedPeople = _savedRecommendedPeople.isNotEmpty
+      final saved = _savedRecommendedPeople.isNotEmpty
           ? _savedRecommendedPeople
           : <ExplorePerson>[];
-      people.assignAll(loadedPeople);
-      filteredPeople.assignAll(loadedPeople);
+      people.assignAll(saved);
+      filteredPeople.assignAll(saved);
     } finally {
       isLoading.value = false;
     }
@@ -264,22 +261,34 @@ class ExploreController extends GetxController {
     searchQuery.value = '';
     applyFilters();
     if (tab.isPeople && people.isEmpty) {
-      loadExploreData();
+      _loadPeople();
     }
   }
 
   int get activeFilterCount {
     var count = 0;
-    if (selectedSort.value != 'Paling relevan' && selectedSort.value.isNotEmpty)
+    if (selectedSort.value != 'Paling relevan' && selectedSort.value.isNotEmpty) {
       count++;
-    if (selectedFaculty.value != 'Semua jurusan') count++;
+    }
+    if (selectedFaculty.value != 'Semua jurusan') {
+      count++;
+    }
     if (selectedCategory.value != 'Semua kategori' &&
-        selectedCategory.value != 'Semua kategori lomba')
+        selectedCategory.value != 'Semua kategori lomba') {
       count++;
-    if (selectedSkill.value != 'Semua skill') count++;
-    if (selectedDeadline.value != 'Semua deadline') count++;
-    if (selectedSlot.value != 'Semua slot') count++;
-    if (selectedAvailability.value != 'Terbuka kolaborasi') count++;
+    }
+    if (selectedSkill.value != 'Semua skill') {
+      count++;
+    }
+    if (selectedDeadline.value != 'Semua deadline') {
+      count++;
+    }
+    if (selectedSlot.value != 'Semua slot') {
+      count++;
+    }
+    if (selectedAvailability.value != 'Terbuka kolaborasi') {
+      count++;
+    }
     return count;
   }
 
