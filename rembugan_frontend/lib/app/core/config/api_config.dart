@@ -7,7 +7,7 @@ class ApiConfig {
 
   static const String _compileTimeBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.1.5:8000',
+    defaultValue: 'https://rembugan.onrender.com',
   );
 
   static String get baseUrl =>
