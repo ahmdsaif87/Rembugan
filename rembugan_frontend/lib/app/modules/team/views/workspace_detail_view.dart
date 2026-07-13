@@ -859,19 +859,21 @@ class _SheetButton extends StatelessWidget {
     required this.onTap,
     this.danger = false,
     this.outlined = false,
+    this.loading = false,
   });
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool danger;
   final bool outlined;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
     final color = danger ? AppColors.danger600 : AppColors.primary500;
     return GestureDetector(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       child: Container(
         height: 42,
         alignment: Alignment.center,
@@ -880,17 +882,27 @@ class _SheetButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: outlined ? Border.all(color: c.border) : null,
         ),
-        child: Text(
-          label,
-          style: AppFonts.satoshiStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: outlined ? color : AppColors.white,
-          ),
-        ),
+        child: loading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.white,
+                ),
+              )
+            : Text(
+                label,
+                style: AppFonts.satoshiStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: outlined ? color : AppColors.white,
+                ),
+              ),
       ),
     );
   }
+}
 }
 
 class _DiscussionTab extends StatefulWidget {
@@ -1915,7 +1927,7 @@ class _SectionConfig {
   const _SectionConfig(this.title, this.color, this.status, this.emptyHint);
 }
 
-class _TaskActionSheet extends StatelessWidget {
+class _TaskActionSheet extends StatefulWidget {
   const _TaskActionSheet({
     required this.task,
     required this.taskIndex,
@@ -1926,11 +1938,20 @@ class _TaskActionSheet extends StatelessWidget {
   final int taskIndex;
   final TeamController ctrl;
 
+  @override
+  State<_TaskActionSheet> createState() => _TaskActionSheetState();
+}
+
+class _TaskActionSheetState extends State<_TaskActionSheet> {
+  bool _isLoading = false;
+
   static const _allStatuses = ['todo', 'doing', 'done'];
 
   @override
   Widget build(BuildContext context) {
     final c = AppC.of(context);
+    final task = widget.task;
+    final ctrl = widget.ctrl;
     return _SheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1980,10 +2001,13 @@ class _TaskActionSheet extends StatelessWidget {
                       icon: _statusIcon(status),
                       title: _statusLabel(status),
                       subtitle: '',
-                      onTap: () async {
-                        await ctrl.moveTask(task.id, status);
-                        if (context.mounted) Navigator.pop(context);
-                      },
+                      onTap: _isLoading
+                          ? null
+                          : () async {
+                              setState(() => _isLoading = true);
+                              await ctrl.moveTask(task.id, status);
+                              if (context.mounted) Navigator.pop(context);
+                            },
                     ),
                   ))),
           const SizedBox(height: 12),
@@ -1992,30 +2016,36 @@ class _TaskActionSheet extends StatelessWidget {
               Expanded(
                 child: _SheetButton(
                   label: 'Edit Tugas',
-                  onTap: () {
-                    Navigator.pop(context);
-                    showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: AppColors.transparent,
-                      builder: (_) => _AddTaskSheet(
-                        ctrl: ctrl,
-                        existingTask: task,
-                        taskIndex: taskIndex,
-                      ),
-                    );
-                  },
+                  onTap: _isLoading
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          showModalBottomSheet<void>(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: AppColors.transparent,
+                            builder: (_) => _AddTaskSheet(
+                              ctrl: ctrl,
+                              existingTask: task,
+                              taskIndex: widget.taskIndex,
+                            ),
+                          );
+                        },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _SheetButton(
-                  label: 'Hapus',
+                  label: _isLoading ? 'Menghapus...' : 'Hapus',
                   danger: true,
-                  onTap: () async {
-                    await ctrl.deleteTask(task.id);
-                    if (context.mounted) Navigator.pop(context);
-                  },
+                  loading: _isLoading,
+                  onTap: _isLoading
+                      ? null
+                      : () async {
+                          setState(() => _isLoading = true);
+                          await ctrl.deleteTask(task.id);
+                          if (context.mounted) Navigator.pop(context);
+                        },
                 ),
               ),
             ],
@@ -2107,6 +2137,7 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
     final t = widget.existingTask;
     if (t != null) {
       titleCtrl.text = t.title;
+      descCtrl.text = t.description;
       deadlineCtrl.text = _formatDeadline(t.deadline);
       selectedDeadline = DateTime.tryParse(t.deadline);
       for (final uid in t.assigneeIds) {
@@ -2729,18 +2760,21 @@ class _AddTaskSheetState extends State<_AddTaskSheet> {
                             : deadlineCtrl.text.trim().isNotEmpty
                                 ? deadlineCtrl.text.trim()
                                 : null;
+                        final description = descCtrl.text.trim();
                         if (_isEditing) {
                           await widget.ctrl.updateTask(
                             widget.existingTask!.id,
                             title: title,
                             assigneeIds: selectedMemberIds.toList(),
                             deadline: deadline,
+                            description: description,
                           );
                         } else {
                           await widget.ctrl.createTask(
                             title,
                             selectedMemberIds.toList(),
                             deadline,
+                            description: description,
                           );
                         }
                         if (context.mounted) Navigator.pop(context);
@@ -2948,6 +2982,21 @@ class _KanbanTaskCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
+                          if (task.description.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Text(
+                                task.description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppFonts.satoshiStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: c.textTertiary,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
                           if (task.assigneeNames.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 6),

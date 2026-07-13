@@ -112,7 +112,7 @@ async def create_task(
 ):
     user_id = user_token["uid"]
     result = await svc.create_task(
-        project_id, user_id, data.title, data.assignee_ids, data.deadline
+        project_id, user_id, data.title, data.assignee_ids, data.deadline, data.description
     )
     return response_success(result, f"Tugas '{result['title']}' berhasil dibuat!")
 
@@ -153,7 +153,7 @@ async def update_task(
 ):
     user_id = user_token["uid"]
     result = await svc.update_task(
-        task_id, user_id, data.title, data.deadline, data.assignee_ids
+        task_id, user_id, data.title, data.deadline, data.assignee_ids, data.description
     )
     return response_success(result, f"Tugas '{result['title']}' berhasil diupdate!")
 
