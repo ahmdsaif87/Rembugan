@@ -263,7 +263,7 @@ class WorkspaceService:
     async def list_workspaces(self, user_id: str, skip: int = 0, limit: int = 20) -> list[dict]:
         result = await self.session.execute(
             select(Project)
-            .where(Project.owner_id == user_id)
+            .where(Project.owner_id == user_id, Project.status != PJ_COMPLETED)
             .order_by(Project.created_at.desc())
             .offset(skip)
             .limit(limit)
