@@ -207,3 +207,14 @@ async def delete_competition(
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Competition not found")
     return response_success(message="Competition deleted successfully")
+
+
+@router.put("/privacy-policy", summary="Update Privacy Policy")
+async def update_privacy_policy(
+    data: dict,
+    admin_token: dict = Depends(verify_admin_token),
+    svc: AdminService = Depends(),
+):
+    content = data.get("content", "")
+    await svc.update_privacy_policy(content)
+    return response_success(message="Privacy policy updated successfully")

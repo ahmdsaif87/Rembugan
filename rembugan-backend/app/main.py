@@ -23,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api import auth, onboarding, projects, collaboration, showcase, chat, workspace, competitions, fyp, profile, notifications, connections, upload, qr, saved, posts
 from app.api.admin import router as admin_router
+from app.api.public import router as public_router
 
 
 # Inisialisasi Layanan External
@@ -114,6 +115,7 @@ app.include_router(upload.router)
 app.include_router(qr.router)
 app.include_router(saved.router)
 app.include_router(posts.router)
+app.include_router(public_router)
 app.include_router(admin_router)
 
 # Serve static files (poster images, etc.)

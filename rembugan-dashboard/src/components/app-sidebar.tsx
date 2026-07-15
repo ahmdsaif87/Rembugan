@@ -13,6 +13,7 @@ import {
   FileText,
   MessageSquare,
   Trophy,
+  ShieldCheck,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -36,6 +37,7 @@ const navItems = [
   { title: "Showcases", url: "/dashboard/showcases", icon: Sparkles },
   { title: "Tasks", url: "/dashboard/tasks", icon: ListChecks },
   { title: "Applications", url: "/dashboard/applications", icon: FileText },
+  { title: "Privacy Policy", url: "/dashboard/privacy-policy", icon: ShieldCheck },
 ]
 
 const adminUser = {
