@@ -231,28 +231,3 @@ export async function deleteCompetition(id: string) {
   }
 }
 
-export async function fetchPrivacyPolicy() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/admin/privacy-policy`, { headers: getAuthHeaders() })
-    if (!response.ok) throw new Error('Failed to fetch privacy policy')
-    return response.json()
-  } catch (error) {
-    console.error('Error fetching privacy policy:', error)
-    return { status: 'error', data: { content: '' } }
-  }
-}
-
-export async function updatePrivacyPolicy(content: string) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/admin/privacy-policy`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ content }),
-    })
-    if (!response.ok) throw new Error('Failed to update privacy policy')
-    return response.json()
-  } catch (error) {
-    console.error('Error updating privacy policy:', error)
-    return { status: 'error', detail: 'Network error' }
-  }
-}

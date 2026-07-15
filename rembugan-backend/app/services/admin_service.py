@@ -435,46 +435,4 @@ class AdminService:
         except Exception:
             return 0
 
-    async def get_privacy_policy(self) -> str:
-        try:
-            result = await self.session.execute(
-                text("SELECT value FROM \"AppSetting\" WHERE key = 'privacy_policy' LIMIT 1")
-            )
-            row = result.fetchone()
-            return row[0] if row else ""
-        except Exception:
-            return ""
 
-    async def update_privacy_policy(self, content: str):
-        try:
-            await self.session.execute(
-                text("""
-                    INSERT INTO "AppSetting" (key, value, updated_at)
-                    VALUES ('privacy_policy', :content, NOW())
-                    ON CONFLICT (key)
-                    DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
-                """),
-                {"content": content},
-            )
-            await self.session.commit()
-        except Exception:
-            await self.session.execute(
-                text("""
-                    CREATE TABLE IF NOT EXISTS "AppSetting" (
-                        key TEXT PRIMARY KEY,
-                        value TEXT NOT NULL DEFAULT '',
-                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                    )
-                """)
-            )
-            await self.session.commit()
-            await self.session.execute(
-                text("""
-                    INSERT INTO "AppSetting" (key, value, updated_at)
-                    VALUES ('privacy_policy', :content, NOW())
-                    ON CONFLICT (key)
-                    DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
-                """),
-                {"content": content},
-            )
-            await self.session.commit()
