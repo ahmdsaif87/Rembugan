@@ -903,7 +903,6 @@ class _SheetButton extends StatelessWidget {
     );
   }
 }
-}
 
 class _DiscussionTab extends StatefulWidget {
   const _DiscussionTab();
